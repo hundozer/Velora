@@ -51,10 +51,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const match = document.cookie.match(/intimo_user_data=([^;]+)/);
         if (match) {
           const cookieUserData = JSON.parse(decodeURIComponent(match[1]));
+          const savedNickname = localStorage.getItem(`intimo_nickname_${cookieUserData.email.toLowerCase()}`);
+          const effectiveName = savedNickname || cookieUserData.username || cookieUserData.email.split("@")[0];
+
           const cookieUser: User = {
             id: cookieUserData.id,
             email: cookieUserData.email,
-            username: cookieUserData.username,
+            username: effectiveName,
             role: "MEMBER",
             memberTier: "PREMIUM",
             verificationStatus: "VERIFIED",
@@ -65,7 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const cookieProfile: Profile = {
             id: `prof_${cookieUserData.id}`,
             userId: cookieUserData.id,
-            displayName: cookieUserData.username || cookieUserData.email.split("@")[0],
+            displayName: effectiveName,
             dateOfBirth: "1998-05-15",
             age: 26,
             gender: "FEMALE",
@@ -119,6 +122,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (typeof window !== "undefined") {
       localStorage.setItem("intimo_active_user", JSON.stringify(newUser));
       localStorage.setItem("intimo_active_profile", JSON.stringify(newProfile));
+      if (newUser.email && newProfile.displayName) {
+        localStorage.setItem(`intimo_nickname_${newUser.email.toLowerCase()}`, newProfile.displayName);
+      }
     }
   };
 
