@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
+import { MediaManager } from "@/components/media/MediaManager";
 import {
   Sparkles,
   MapPin,
   Heart,
-  Shield,
+  ShieldCheck,
   Upload,
   CheckCircle2,
   ArrowRight,
@@ -19,76 +20,132 @@ import {
   EyeOff,
   UserCheck,
   Lock,
+  Globe,
+  Tag,
+  Smile,
+  Shield,
 } from "lucide-react";
 
-export default function OnboardingWizard() {
+export default function OnboardingWizardPage() {
   const router = useRouter();
   const { user, profile, role } = useAuth();
 
   const [wizardStep, setWizardStep] = useState<number>(1);
 
-  const [profileData, setProfileData] = useState({
+  // Form State covering all 5 Steps
+  const [formData, setFormData] = useState({
+    // Step 1: Basic Info
+    username: user?.username || "elena_vance",
     displayName: profile?.displayName || "Elena Vance",
+    dateOfBirth: profile?.dateOfBirth || "2000-04-12",
     age: profile?.age || 26,
     gender: profile?.gender || "FEMALE",
     sexualOrientation: profile?.sexualOrientation || "BISEXUAL",
-    location: profile?.location || "London / Monaco",
+    relationshipStatus: profile?.relationshipStatus || "SINGLE",
+    country: profile?.country || "Monaco",
+    city: profile?.city || "Monte Carlo",
+    languages: profile?.languages || ["English", "French", "Italian"],
     partnerDisplayName: profile?.partnerDisplayName || "Sophia",
     partnerAge: profile?.partnerAge || 28,
-    bio: profile?.bio || "Art curator, luxury lifestyle collector & private salon host.",
-    interests: profile?.interests || ["Contemporary Art", "Fine Wine", "Private Aviation"],
-    lookingFor: profile?.lookingFor || ["Discreet Connections", "Fine Dining"],
+
+    // Step 2: About Me
+    headline: profile?.headline || "Art Curator & High-Discretion Private Hostess",
+    bio: profile?.bio || "Art curator, wine enthusiast & private event hostess. Looking for high-discretion connections and exclusive dining experiences across Europe.",
+    interests: profile?.interests || ["Contemporary Art", "Fine Wine", "Private Aviation", "Yachting"],
+    lifestyleTags: profile?.lifestyleTags || ["Luxury Lifestyle", "Gourmet Dining", "VIP Social Club"],
+    hobbies: profile?.hobbies || ["Classical Piano", "Polo", "Vintage Champagne Tasting"],
+
+    // Step 3: Looking For
+    lookingFor: profile?.lookingFor || ["Dating", "Casual Connection", "Social Events", "Travel Partner"],
+
+    // Step 4: Preferences
+    minAge: 21,
+    maxAge: 55,
+    maxDistanceKm: 150,
+    preferredGenders: ["MALE", "FEMALE", "COUPLE_MF"],
+    preferredProfileTypes: ["INDIVIDUAL", "COUPLE", "CREATOR"],
+
+    // Step 5: Privacy Settings & Media
+    publicProfileVisibility: true,
+    photoVisibilityDefault: "PUBLIC",
+    locationPrecision: "CITY",
     showOnlineStatus: true,
     showDistance: true,
+    allowDirectMessages: true,
     requireVerificationToMessage: false,
   });
 
-  const [newInterestInput, setNewInterestInput] = useState("");
+  const [newTagInput, setNewTagInput] = useState({ type: "interest", value: "" });
 
-  const handleAddInterest = () => {
-    if (newInterestInput.trim() && !profileData.interests.includes(newInterestInput.trim())) {
-      setProfileData({
-        ...profileData,
-        interests: [...profileData.interests, newInterestInput.trim()],
-      });
-      setNewInterestInput("");
-    }
+  const calculateAgeFromDOB = (dobStr: string) => {
+    if (!dobStr) return 18;
+    const dob = new Date(dobStr);
+    const diffMs = Date.now() - dob.getTime();
+    const ageDate = new Date(diffMs);
+    return Math.abs(ageDate.getUTCFullYear() - 1970);
   };
 
-  const handleRemoveInterest = (interest: string) => {
-    setProfileData({
-      ...profileData,
-      interests: profileData.interests.filter((i) => i !== interest),
+  const handleDOBChange = (dobStr: string) => {
+    const calculated = calculateAgeFromDOB(dobStr);
+    setFormData({
+      ...formData,
+      dateOfBirth: dobStr,
+      age: calculated,
     });
+  };
+
+  const toggleArrayItem = (field: keyof typeof formData, item: string) => {
+    const currentList = (formData[field] as string[]) || [];
+    if (currentList.includes(item)) {
+      setFormData({
+        ...formData,
+        [field]: currentList.filter((i) => i !== item),
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [field]: [...currentList, item],
+      });
+    }
   };
 
   const handleFinish = () => {
     router.push("/dashboard");
   };
 
+  const lookingForOptions = [
+    { id: "Dating", label: "Dating & Companionship" },
+    { id: "Casual Connection", label: "Casual Connection" },
+    { id: "Friendship", label: "Discreet Friendship" },
+    { id: "Couples", label: "Couples & Lifestyle" },
+    { id: "Social Events", label: "VIP Social Events & Dining" },
+    { id: "Online Interaction", label: "Online Interaction" },
+    { id: "Creator Followers", label: "Creator Subscribers & Fans" },
+  ];
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12">
-      {/* Wizard Header */}
+    <div className="max-w-4xl mx-auto px-4 py-12 text-left">
+      {/* Header */}
       <div className="text-center space-y-3 mb-10">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-panel-gold">
-          <Sparkles className="w-3.5 h-3.5 text-velora-gold" />
-          <span className="text-[11px] font-bold uppercase tracking-wider text-velora-gold">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-panel-gold shadow-gold-glow">
+          <Sparkles className="w-4 h-4 text-velora-gold" />
+          <span className="text-xs font-bold uppercase tracking-wider text-velora-gold">
             Profile Creation Wizard • {role} Mode
           </span>
         </div>
-        <h1 className="text-3xl font-serif font-bold text-velora-textPrimary">
-          Customize Your Luxury Profile
+        <h1 className="text-3xl sm:text-4xl font-serif font-bold text-velora-textPrimary">
+          Build Your Private Club Profile
         </h1>
         <p className="text-xs text-velora-textSecondary max-w-lg mx-auto">
-          Complete your profile details to customize discovery preferences and unlock verified member matches.
+          Complete your 5-step profile details to tune discovery preferences, establish privacy boundaries, and unlock compatible verified matches.
         </p>
 
-        {/* Progress Bar */}
+        {/* Step Progress Dots */}
         <div className="flex items-center justify-center gap-2 max-w-md mx-auto pt-4">
-          {[1, 2, 3, 4].map((s) => (
+          {[1, 2, 3, 4, 5].map((s) => (
             <div
               key={s}
-              className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+              className={`h-2 flex-1 rounded-full transition-all duration-300 ${
                 wizardStep >= s ? "bg-gold-gradient shadow-gold-glow" : "bg-white/10"
               }`}
             />
@@ -102,39 +159,39 @@ export default function OnboardingWizard() {
           <div className="space-y-6 animate-in fade-in">
             <div className="border-b border-white/10 pb-4 mb-6">
               <h2 className="text-xl font-serif font-bold text-velora-textPrimary">
-                1. Basic Identity & Location
+                Step 1 of 5: Basic Identity & Location
               </h2>
               <p className="text-xs text-velora-textMuted">
-                Specify your public presentation and primary region.
+                Identity details, date of birth (strictly 18+), presentation, and geographical location.
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <Input
-                label="Display Name"
-                value={profileData.displayName}
-                onChange={(e) => setProfileData({ ...profileData, displayName: e.target.value })}
+                label="Username / Handle"
+                value={formData.username}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
               />
 
               <Input
-                label="Primary Location (City / Country)"
-                icon={<MapPin className="w-4 h-4" />}
-                value={profileData.location}
-                onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
+                label="Display Name"
+                value={formData.displayName}
+                onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
               />
 
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
-                  Age
+                  Date of Birth (Calculated Age: {formData.age} yrs)
                 </label>
                 <input
-                  type="number"
-                  min={18}
-                  max={99}
-                  value={profileData.age}
-                  onChange={(e) => setProfileData({ ...profileData, age: parseInt(e.target.value) || 18 })}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-velora-textPrimary focus:outline-none focus:border-velora-gold/60"
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={(e) => handleDOBChange(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
                 />
+                {formData.age < 18 && (
+                  <p className="text-xs text-red-400 font-bold mt-1">You must be 18+ to enter Velora.</p>
+                )}
               </div>
 
               <div>
@@ -142,9 +199,9 @@ export default function OnboardingWizard() {
                   Gender Presentation
                 </label>
                 <select
-                  value={profileData.gender}
-                  onChange={(e) => setProfileData({ ...profileData, gender: e.target.value as any })}
-                  className="w-full bg-velora-card border border-white/10 rounded-2xl px-4 py-3 text-sm text-velora-textPrimary focus:outline-none focus:border-velora-gold/60"
+                  value={formData.gender}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value as any })}
+                  className="w-full bg-velora-card border border-white/10 rounded-2xl px-4 py-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
                 >
                   <option value="FEMALE">Female</option>
                   <option value="MALE">Male</option>
@@ -155,61 +212,15 @@ export default function OnboardingWizard() {
                   <option value="TRANSGENDER">Transgender</option>
                 </select>
               </div>
-            </div>
 
-            {/* Couple Specific Additional Fields */}
-            {(role === "COUPLE" || profileData.gender.startsWith("COUPLE")) && (
-              <div className="p-6 glass-panel rounded-2xl border border-purple-500/30 space-y-4">
-                <div className="flex items-center gap-2">
-                  <Badge type="couple" />
-                  <h3 className="text-sm font-serif font-bold text-purple-300">Partner Details</h3>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input
-                    label="Partner Name"
-                    value={profileData.partnerDisplayName}
-                    onChange={(e) => setProfileData({ ...profileData, partnerDisplayName: e.target.value })}
-                  />
-                  <Input
-                    label="Partner Age"
-                    type="number"
-                    value={profileData.partnerAge}
-                    onChange={(e) => setProfileData({ ...profileData, partnerAge: parseInt(e.target.value) || 18 })}
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-end pt-4">
-              <Button variant="gold" className="text-xs uppercase font-bold tracking-wider gap-2" onClick={() => setWizardStep(2)}>
-                Next: Preferences
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 2: Orientation & Preferences */}
-        {wizardStep === 2 && (
-          <div className="space-y-6 animate-in fade-in">
-            <div className="border-b border-white/10 pb-4 mb-6">
-              <h2 className="text-xl font-serif font-bold text-velora-textPrimary">
-                2. Orientation & Looking For
-              </h2>
-              <p className="text-xs text-velora-textMuted">
-                Tune discovery matching parameters.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
                   Sexual Orientation
                 </label>
                 <select
-                  value={profileData.sexualOrientation}
-                  onChange={(e) => setProfileData({ ...profileData, sexualOrientation: e.target.value as any })}
-                  className="w-full bg-velora-card border border-white/10 rounded-2xl px-4 py-3 text-sm text-velora-textPrimary focus:outline-none focus:border-velora-gold/60"
+                  value={formData.sexualOrientation}
+                  onChange={(e) => setFormData({ ...formData, sexualOrientation: e.target.value as any })}
+                  className="w-full bg-velora-card border border-white/10 rounded-2xl px-4 py-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
                 >
                   <option value="BISEXUAL">Bisexual</option>
                   <option value="HETEROSEXUAL">Heterosexual</option>
@@ -222,35 +233,151 @@ export default function OnboardingWizard() {
 
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
-                  Primary Connection Intent
+                  Relationship Status
                 </label>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {["Discreet Connections", "Fine Dining", "Travel Partner", "Couples", "Private Parties"].map((tag) => {
-                    const selected = profileData.lookingFor.includes(tag);
+                <select
+                  value={formData.relationshipStatus}
+                  onChange={(e) => setFormData({ ...formData, relationshipStatus: e.target.value as any })}
+                  className="w-full bg-velora-card border border-white/10 rounded-2xl px-4 py-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
+                >
+                  <option value="SINGLE">Single</option>
+                  <option value="ATTACHED">Attached</option>
+                  <option value="OPEN_RELATIONSHIP">Open Relationship</option>
+                  <option value="COUPLE">Couple</option>
+                  <option value="SWINGER">Swinger</option>
+                  <option value="POLYAMOROUS">Polyamorous</option>
+                </select>
+              </div>
+
+              <Input
+                label="Country"
+                icon={<Globe className="w-4 h-4" />}
+                value={formData.country}
+                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+              />
+
+              <Input
+                label="City / Region"
+                icon={<MapPin className="w-4 h-4" />}
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+              />
+            </div>
+
+            {/* Couple Profile Extra Partner Fields */}
+            {(role === "COUPLE" || formData.gender.startsWith("COUPLE")) && (
+              <div className="p-6 glass-panel rounded-2xl border border-purple-500/30 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Badge type="couple" />
+                  <h3 className="text-sm font-serif font-bold text-purple-300">Partner Details</h3>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    label="Partner Name"
+                    value={formData.partnerDisplayName}
+                    onChange={(e) => setFormData({ ...formData, partnerDisplayName: e.target.value })}
+                  />
+                  <Input
+                    label="Partner Age"
+                    type="number"
+                    value={formData.partnerAge}
+                    onChange={(e) => setFormData({ ...formData, partnerAge: parseInt(e.target.value) || 18 })}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end pt-4">
+              <Button
+                variant="gold"
+                className="text-xs uppercase font-bold tracking-wider gap-2"
+                disabled={formData.age < 18}
+                onClick={() => setWizardStep(2)}
+              >
+                Step 2: About Me
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 2: About Me */}
+        {wizardStep === 2 && (
+          <div className="space-y-6 animate-in fade-in">
+            <div className="border-b border-white/10 pb-4 mb-6">
+              <h2 className="text-xl font-serif font-bold text-velora-textPrimary">
+                Step 2 of 5: About Me & Lifestyle
+              </h2>
+              <p className="text-xs text-velora-textMuted">
+                Craft your luxury profile headline, personal bio, lifestyle passions, and hobbies.
+              </p>
+            </div>
+
+            <Input
+              label="Profile Headline (Short Catchphrase)"
+              placeholder="e.g. Art Curator & High-Discretion Private Hostess"
+              value={formData.headline}
+              onChange={(e) => setFormData({ ...formData, headline: e.target.value })}
+            />
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
+                Biography / Philosophy
+              </label>
+              <textarea
+                rows={4}
+                value={formData.bio}
+                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-xs text-velora-textPrimary placeholder:text-velora-textMuted focus:outline-none focus:border-velora-gold"
+              />
+            </div>
+
+            {/* Interests & Hobbies Tags */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
+                  Lifestyle Passions
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {["Contemporary Art", "Fine Wine", "Private Aviation", "Yachting", "High Fashion", "Architecture"].map((item) => {
+                    const active = formData.interests.includes(item);
                     return (
                       <button
-                        key={tag}
                         type="button"
-                        onClick={() => {
-                          if (selected) {
-                            setProfileData({
-                              ...profileData,
-                              lookingFor: profileData.lookingFor.filter((t) => t !== tag),
-                            });
-                          } else {
-                            setProfileData({
-                              ...profileData,
-                              lookingFor: [...profileData.lookingFor, tag],
-                            });
-                          }
-                        }}
+                        key={item}
+                        onClick={() => toggleArrayItem("interests", item)}
                         className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                          selected
+                          active
                             ? "bg-velora-gold/20 text-velora-gold border-velora-gold/60"
                             : "bg-white/5 text-velora-textSecondary border-white/10 hover:border-white/20"
                         }`}
                       >
-                        {tag}
+                        {item}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
+                  Personal Hobbies
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {["Classical Piano", "Polo", "Vintage Champagne", "Skiing", "Mixology", "Wellness"].map((item) => {
+                    const active = formData.hobbies.includes(item);
+                    return (
+                      <button
+                        type="button"
+                        key={item}
+                        onClick={() => toggleArrayItem("hobbies", item)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                          active
+                            ? "bg-purple-500/20 text-purple-300 border-purple-500/60"
+                            : "bg-white/5 text-velora-textSecondary border-white/10 hover:border-white/20"
+                        }`}
+                      >
+                        {item}
                       </button>
                     );
                   })}
@@ -263,71 +390,43 @@ export default function OnboardingWizard() {
                 Back
               </Button>
               <Button variant="gold" className="text-xs uppercase font-bold tracking-wider gap-2" onClick={() => setWizardStep(3)}>
-                Next: Bio & Lifestyle
+                Step 3: Looking For
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
           </div>
         )}
 
-        {/* STEP 3: Bio & Interests */}
+        {/* STEP 3: Looking For */}
         {wizardStep === 3 && (
           <div className="space-y-6 animate-in fade-in">
             <div className="border-b border-white/10 pb-4 mb-6">
               <h2 className="text-xl font-serif font-bold text-velora-textPrimary">
-                3. Bio & Interest Tags
+                Step 3 of 5: What Are You Looking For?
               </h2>
               <p className="text-xs text-velora-textMuted">
-                Express your lifestyle, taste, and conversation hooks.
+                Select all connection types that align with your lifestyle goals.
               </p>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
-                Personal Bio
-              </label>
-              <textarea
-                rows={4}
-                value={profileData.bio}
-                onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-velora-textPrimary placeholder:text-velora-textMuted focus:outline-none focus:border-velora-gold/60"
-                placeholder="Share your interests, travel plans, and discreet preferences..."
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
-                Lifestyle & Passions
-              </label>
-              <div className="flex gap-2 mb-3">
-                <input
-                  type="text"
-                  placeholder="Add passion (e.g. Yachting, Fine Art)"
-                  value={newInterestInput}
-                  onChange={(e) => setNewInterestInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddInterest())}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
-                />
-                <Button variant="glass" size="sm" onClick={handleAddInterest}>
-                  Add Tag
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {profileData.interests.map((interest) => (
-                  <span
-                    key={interest}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-white/10 text-velora-gold border border-white/10"
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {lookingForOptions.map((opt) => {
+                const isSelected = formData.lookingFor.includes(opt.id);
+                return (
+                  <div
+                    key={opt.id}
+                    onClick={() => toggleArrayItem("lookingFor", opt.id)}
+                    className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${
+                      isSelected
+                        ? "glass-panel-gold border-velora-gold shadow-gold-glow"
+                        : "glass-panel hover:border-white/20"
+                    }`}
                   >
-                    {interest}
-                    <button
-                      onClick={() => handleRemoveInterest(interest)}
-                      className="text-velora-textMuted hover:text-red-400 font-bold ml-1"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
+                    <span className="text-xs font-bold text-velora-textPrimary">{opt.label}</span>
+                    {isSelected && <CheckCircle2 className="w-4 h-4 text-velora-gold" />}
+                  </div>
+                );
+              })}
             </div>
 
             <div className="flex justify-between pt-6 border-t border-white/10">
@@ -335,39 +434,125 @@ export default function OnboardingWizard() {
                 Back
               </Button>
               <Button variant="gold" className="text-xs uppercase font-bold tracking-wider gap-2" onClick={() => setWizardStep(4)}>
-                Next: Privacy & Media
+                Step 4: Preferences
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
           </div>
         )}
 
-        {/* STEP 4: Privacy Settings & Media Preview */}
+        {/* STEP 4: Structured Preferences */}
         {wizardStep === 4 && (
           <div className="space-y-6 animate-in fade-in">
             <div className="border-b border-white/10 pb-4 mb-6">
               <h2 className="text-xl font-serif font-bold text-velora-textPrimary">
-                4. Privacy Controls & Media Vault
+                Step 4 of 5: Match Preferences & Compatibility
               </h2>
               <p className="text-xs text-velora-textMuted">
-                Set visibility restrictions and manage your public & private photos.
+                Set parameter weights for discovery recommendations and compatibility scores.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
+                  Preferred Age Range ({formData.minAge} - {formData.maxAge} yrs)
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min={18}
+                    max={80}
+                    value={formData.maxAge}
+                    onChange={(e) => setFormData({ ...formData, maxAge: parseInt(e.target.value) })}
+                    className="w-full accent-velora-gold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
+                  Max Radius Distance ({formData.maxDistanceKm} km)
+                </label>
+                <input
+                  type="range"
+                  min={10}
+                  max={500}
+                  step={25}
+                  value={formData.maxDistanceKm}
+                  onChange={(e) => setFormData({ ...formData, maxDistanceKm: parseInt(e.target.value) })}
+                  className="w-full accent-velora-gold"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
+                Preferred Profile Types
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { id: "INDIVIDUAL", label: "Single Individuals" },
+                  { id: "COUPLE", label: "Couple Profiles" },
+                  { id: "CREATOR", label: "Verified Creators" },
+                ].map((type) => {
+                  const active = formData.preferredProfileTypes.includes(type.id);
+                  return (
+                    <button
+                      key={type.id}
+                      type="button"
+                      onClick={() => toggleArrayItem("preferredProfileTypes", type.id)}
+                      className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all ${
+                        active
+                          ? "bg-gold-gradient text-velora-bg font-bold shadow-gold-glow"
+                          : "bg-white/5 text-velora-textSecondary border-white/10"
+                      }`}
+                    >
+                      {type.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex justify-between pt-6 border-t border-white/10">
+              <Button variant="ghost" className="text-xs" onClick={() => setWizardStep(3)}>
+                Back
+              </Button>
+              <Button variant="gold" className="text-xs uppercase font-bold tracking-wider gap-2" onClick={() => setWizardStep(5)}>
+                Step 5: Privacy & Media Vault
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 5: Privacy Controls & Media Vault */}
+        {wizardStep === 5 && (
+          <div className="space-y-6 animate-in fade-in">
+            <div className="border-b border-white/10 pb-4 mb-6">
+              <h2 className="text-xl font-serif font-bold text-velora-textPrimary">
+                Step 5 of 5: Privacy Controls & Media Vault
+              </h2>
+              <p className="text-xs text-velora-textMuted">
+                Manage your public/private photo visibility, location precision, and messaging rules.
               </p>
             </div>
 
             {/* Privacy Toggles */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex items-center justify-between p-4 glass-panel rounded-2xl">
                 <div className="flex items-center gap-3">
                   <EyeOff className="w-5 h-5 text-velora-gold" />
                   <div>
-                    <p className="text-xs font-bold text-velora-textPrimary">Show Online Active Indicator</p>
-                    <p className="text-[11px] text-velora-textMuted">Allow compatible members to see when you are online</p>
+                    <p className="text-xs font-bold text-velora-textPrimary">Public Profile Visibility</p>
+                    <p className="text-[11px] text-velora-textMuted">Allow profile to appear in public discovery search</p>
                   </div>
                 </div>
                 <input
                   type="checkbox"
-                  checked={profileData.showOnlineStatus}
-                  onChange={(e) => setProfileData({ ...profileData, showOnlineStatus: e.target.checked })}
+                  checked={formData.publicProfileVisibility}
+                  onChange={(e) => setFormData({ ...formData, publicProfileVisibility: e.target.checked })}
                   className="accent-velora-gold w-5 h-5 rounded cursor-pointer"
                 />
               </div>
@@ -377,37 +562,28 @@ export default function OnboardingWizard() {
                   <Lock className="w-5 h-5 text-purple-400" />
                   <div>
                     <p className="text-xs font-bold text-velora-textPrimary">Require ID Verification to Message</p>
-                    <p className="text-[11px] text-velora-textMuted">Only allow verified adult members to send direct messages</p>
+                    <p className="text-[11px] text-velora-textMuted">Only allow 100% ID verified adult members to message you</p>
                   </div>
                 </div>
                 <input
                   type="checkbox"
-                  checked={profileData.requireVerificationToMessage}
-                  onChange={(e) => setProfileData({ ...profileData, requireVerificationToMessage: e.target.checked })}
+                  checked={formData.requireVerificationToMessage}
+                  onChange={(e) => setFormData({ ...formData, requireVerificationToMessage: e.target.checked })}
                   className="accent-velora-gold w-5 h-5 rounded cursor-pointer"
                 />
               </div>
             </div>
 
-            {/* Photo Vault Placeholder */}
-            <div className="p-6 glass-panel rounded-2xl border border-dashed border-velora-gold/30 text-center space-y-3">
-              <Upload className="w-8 h-8 text-velora-gold mx-auto" />
-              <div>
-                <p className="text-xs font-bold text-velora-textPrimary">Upload Profile & Private Vault Photos</p>
-                <p className="text-[11px] text-velora-textMuted mt-0.5">
-                  Drag & drop images here or browse. Photos can be set to Public, Private Unlock, or Subscriber Only.
-                </p>
-              </div>
-              <Button variant="glass" size="sm" className="mt-2">
-                Select Photo Files
-              </Button>
+            {/* Media Manager System */}
+            <div className="pt-4 border-t border-white/10">
+              <MediaManager />
             </div>
 
             <div className="flex justify-between pt-6 border-t border-white/10">
-              <Button variant="ghost" className="text-xs" onClick={() => setWizardStep(3)}>
+              <Button variant="ghost" className="text-xs" onClick={() => setWizardStep(4)}>
                 Back
               </Button>
-              <Button variant="gold" size="lg" className="text-xs uppercase font-bold tracking-wider gap-2" onClick={handleFinish}>
+              <Button variant="gold" size="lg" className="text-xs font-bold uppercase tracking-wider gap-2" onClick={handleFinish}>
                 Complete Profile & Enter Marketplace
                 <CheckCircle2 className="w-4 h-4" />
               </Button>

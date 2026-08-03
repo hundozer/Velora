@@ -28,9 +28,9 @@ enum Gender {
   FEMALE
   NON_BINARY
   TRANSGENDER
-  COUPLE_MF // Male + Female
-  COUPLE_FF // Female + Female
-  COUPLE_MM // Male + Male
+  COUPLE_MF
+  COUPLE_FF
+  COUPLE_MM
   OTHER
 }
 
@@ -65,6 +65,15 @@ enum MediaType {
   VIDEO
   ALBUM
   LIVE_STREAM
+}
+
+enum NotificationType {
+  PROFILE_VIEW
+  FAVORITED
+  NEW_MESSAGE
+  VERIFICATION_APPROVED
+  VERIFICATION_REJECTED
+  CONTENT_UNLOCKED
 }
 
 enum ReportReason {
@@ -124,6 +133,7 @@ model User {
   favoritedBy          UserFavorite[]            @relation("TargetFavorites")
   blockedUsers         UserBlock[]               @relation("BlockerUsers")
   blockedBy            UserBlock[]               @relation("BlockedUsers")
+  notifications        Notification[]            @relation("UserNotifications")
 
   @@index([email])
   @@index([username])
@@ -136,14 +146,21 @@ model Profile {
   userId             String             @unique
   user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   displayName        String
+  dateOfBirth        DateTime
   age                Int
   gender             Gender
   sexualOrientation  SexualOrientation
+  country            String
+  city               String
   location           String
   latitude           Float?
   longitude          Float?
+  languages          String[]
+  headline           String?            @db.VarChar(255)
   bio                String?            @db.Text
   interests          String[]
+  hobbies            String[]
+  lifestyleTags      String[]
   relationshipStatus RelationshipStatus
   lookingFor         String[]
   isCoupleProfile    Boolean            @default(false)
@@ -154,9 +171,12 @@ model Profile {
   partnerGender      Gender?
 
   // Privacy Settings
-  showOnlineStatus   Boolean            @default(true)
-  showDistance       Boolean            @default(true)
-  allowDirectMessages Boolean           @default(true)
+  publicProfileVisibility Boolean       @default(true)
+  photoVisibilityDefault  Visibility    @default(PUBLIC)
+  locationPrecision       String        @default("CITY") // CITY, EXACT, DISTANCE_ONLY
+  showOnlineStatus        Boolean       @default(true)
+  showDistance            Boolean       @default(true)
+  allowDirectMessages     Boolean       @default(true)
   requireVerificationToMessage Boolean  @default(false)
 
   createdAt          DateTime           @default(now())
@@ -166,6 +186,8 @@ model Profile {
   media              Media[]
 
   @@index([location])
+  @@index([country])
+  @@index([city])
   @@index([age])
   @@index([gender])
   @@index([relationshipStatus])
@@ -180,6 +202,8 @@ model Preferences {
   maxDistanceKm         Int         @default(100)
   preferredGenders      Gender[]
   preferredOrientations SexualOrientation[]
+  preferredProfileTypes String[]    // INDIVIDUAL, COUPLE, CREATOR
+  preferredLookingFor   String[]
   verifiedOnly          Boolean     @default(false)
   creatorsOnly          Boolean     @default(false)
   photosAvailableOnly   Boolean     @default(true)
@@ -200,6 +224,7 @@ model Media {
   price        Float?     @default(0)
   title        String?
   description  String?
+  sortOrder    Int        @default(0)
   isProfilePhoto Boolean  @default(false)
   isCoverPhoto Boolean    @default(false)
 
@@ -238,12 +263,29 @@ model Subscription {
   creatorProfileId String
   creatorProfile   CreatorProfile @relation("CreatorSubscriptions", fields: [creatorProfileId], references: [id], onDelete: Cascade)
   price            Float
-  status           String         @default("ACTIVE") // ACTIVE, CANCELLED, EXPIRED
+  status           String         @default("ACTIVE")
   renewsAt         DateTime
   createdAt        DateTime       @default(now())
 
   @@index([subscriberId])
   @@index([creatorProfileId])
+}
+
+model Notification {
+  id         String           @id @default(uuid())
+  userId     String
+  user       User             @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  type       NotificationType
+  title      String
+  message    String
+  actorName  String?
+  actorAvatar String?
+  targetLink String?
+  isRead     Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+
+  @@index([userId])
+  @@index([isRead])
 }
 
 model Conversation {
@@ -349,7 +391,7 @@ model PaymentTransaction {
   currency    String        @default("USD")
   type        PaymentType
   status      PaymentStatus @default(PENDING)
-  metadata    String?       // JSON stringified details
+  metadata    String?
   createdAt   DateTime      @default(now())
 
   @@index([buyerId])

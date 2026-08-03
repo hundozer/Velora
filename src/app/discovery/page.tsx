@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Tabs } from "@/components/ui/Tabs";
+import { ProfileCard } from "@/components/discovery/ProfileCard";
 import { MOCK_PROFILES } from "@/lib/mockData";
-import { Profile, Gender, UserRole } from "@/types";
+import { Profile, Gender } from "@/types";
 import {
   Compass,
   SlidersHorizontal,
@@ -22,20 +23,28 @@ import {
   MessageSquare,
   Heart,
   X,
+  ArrowUpDown,
+  Flame,
 } from "lucide-react";
 
-export default function DiscoveryPage() {
+export default function DiscoveryMarketplacePage() {
   const [activeTab, setActiveTab] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [showFiltersDrawer, setShowFiltersDrawer] = useState(false);
+  const [sortBy, setSortBy] = useState<"ACTIVE" | "COMPATIBILITY" | "DISTANCE">("COMPATIBILITY");
 
-  // Discovery Filter Engine State
+  // Advanced Phase 2 Filter Engine State
   const [filters, setFilters] = useState({
+    country: "ALL",
+    city: "",
+    distanceKm: 200,
     minAge: 18,
-    maxAge: 50,
-    distanceKm: 100,
+    maxAge: 55,
     gender: "ALL",
+    orientation: "ALL",
+    lookingFor: "ALL",
     verifiedOnly: false,
+    photosOnly: true,
     onlineOnly: false,
     couplesOnly: false,
     creatorsOnly: false,
@@ -47,50 +56,70 @@ export default function DiscoveryPage() {
     if (activeTab === "COUPLES" && !p.isCoupleProfile) return false;
     if (activeTab === "CREATORS" && p.userId !== "user-3") return false;
 
-    // Search Query Filter
+    // Search Bar Text Match
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       const matchName = p.displayName.toLowerCase().includes(q);
       const matchLocation = p.location.toLowerCase().includes(q);
+      const matchCountry = p.country.toLowerCase().includes(q);
+      const matchCity = p.city.toLowerCase().includes(q);
+      const matchHeadline = (p.headline || "").toLowerCase().includes(q);
       const matchBio = p.bio.toLowerCase().includes(q);
       const matchInterest = p.interests.some((i) => i.toLowerCase().includes(q));
-      if (!matchName && !matchLocation && !matchBio && !matchInterest) return false;
+      if (!matchName && !matchLocation && !matchCountry && !matchCity && !matchHeadline && !matchBio && !matchInterest)
+        return false;
     }
+
+    // Country Filter
+    if (filters.country !== "ALL" && p.country.toLowerCase() !== filters.country.toLowerCase()) return false;
 
     // Age Filter
     if (p.age < filters.minAge || p.age > filters.maxAge) return false;
 
-    // Verified Filter
+    // Gender Filter
+    if (filters.gender !== "ALL" && p.gender !== filters.gender) return false;
+
+    // Orientation Filter
+    if (filters.orientation !== "ALL" && p.sexualOrientation !== filters.orientation) return false;
+
+    // Trust & Activity Filters
     if (filters.verifiedOnly && !p.verified) return false;
-
-    // Online Filter
     if (filters.onlineOnly && !p.isOnline) return false;
-
-    // Couples Only Filter
     if (filters.couplesOnly && !p.isCoupleProfile) return false;
 
     return true;
+  }).sort((a, b) => {
+    if (sortBy === "COMPATIBILITY") {
+      return (b.compatibilityScore || 0) - (a.compatibilityScore || 0);
+    }
+    if (sortBy === "DISTANCE") {
+      return (a.distanceKm || 999) - (b.distanceKm || 999);
+    }
+    return a.isOnline ? -1 : 1;
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Discovery Header & Search Bar */}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-left">
+      {/* Page Header */}
       <div className="space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
           <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Badge type="verified" label="Discovery Marketplace" />
+            </div>
             <h1 className="text-3xl font-serif font-bold text-velora-textPrimary flex items-center gap-3">
               <Compass className="w-8 h-8 text-velora-gold" />
-              Discovery Marketplace
+              Private Discovery Marketplace
             </h1>
             <p className="text-xs text-velora-textSecondary mt-1">
-              Search verified members, couples, and creators using advanced lifestyle filters.
+              Search verified adults, couples, and creators using structured lifestyle filters.
             </p>
           </div>
 
           <Tabs
             tabs={[
-              { id: "ALL", label: "All Profiles", count: MOCK_PROFILES.length },
-              { id: "MEMBERS", label: "Members", count: 2 },
+              { id: "ALL", label: "All Members", count: MOCK_PROFILES.length },
+              { id: "MEMBERS", label: "Individuals", count: 2 },
               { id: "COUPLES", label: "Couples", count: 1 },
               { id: "CREATORS", label: "Creators", count: 1 },
             ]}
@@ -99,12 +128,46 @@ export default function DiscoveryPage() {
           />
         </div>
 
-        {/* Search & Filter Bar */}
+        {/* Recommendations Placeholder Banner */}
+        <div className="glass-panel-gold rounded-3xl p-6 shadow-gold-glow flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gold-gradient p-[1px] shadow-gold-glow shrink-0 flex items-center justify-center">
+              <div className="w-full h-full bg-velora-bg rounded-2xl flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-velora-gold" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-sm font-serif font-bold text-velora-textPrimary">
+                Curated Recommendations Engine Active
+              </h3>
+              <p className="text-xs text-velora-textMuted mt-0.5">
+                Profiles below are ranked by your lifestyle compatibility score weights and location proximity.
+              </p>
+            </div>
+          </div>
+
+          {/* Sort Dropdown */}
+          <div className="flex items-center gap-2 shrink-0">
+            <ArrowUpDown className="w-4 h-4 text-velora-gold" />
+            <span className="text-xs text-velora-textMuted uppercase tracking-wider font-semibold">Sort:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
+            >
+              <option value="COMPATIBILITY">Highest Compatibility %</option>
+              <option value="ACTIVE">Recently Active Online</option>
+              <option value="DISTANCE">Closest Proximity Radius</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Search Bar & Filter Toggle */}
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <div className="flex-1">
             <Input
               icon={<Search className="w-4 h-4 text-velora-gold" />}
-              placeholder="Search by name, city (Monaco, London, Paris), interests, or bio keywords..."
+              placeholder="Search by name, city (Monte Carlo, London, Zurich), passions, or bio..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -116,57 +179,57 @@ export default function DiscoveryPage() {
             onClick={() => setShowFiltersDrawer(!showFiltersDrawer)}
           >
             <SlidersHorizontal className="w-4 h-4" />
-            Advanced Filters
+            Advanced Filter System
             {(filters.verifiedOnly || filters.onlineOnly || filters.couplesOnly) && (
-              <span className="w-2 h-2 rounded-full bg-velora-gold" />
+              <span className="w-2.5 h-2.5 rounded-full bg-velora-gold shadow-gold-glow" />
             )}
           </Button>
         </div>
 
-        {/* Expandable Advanced Filter Drawer */}
+        {/* Advanced Filter Drawer */}
         {showFiltersDrawer && (
-          <Card variant="goldBorder" className="p-6 space-y-6 animate-in fade-in slide-in-from-top-2">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+          <Card variant="goldBorder" className="p-6 sm:p-8 space-y-6 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
               <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-velora-gold" />
-                <h3 className="text-sm font-serif font-bold text-velora-textPrimary">
-                  Discovery Engine Parameters
+                <Filter className="w-5 h-5 text-velora-gold" />
+                <h3 className="text-base font-serif font-bold text-velora-textPrimary">
+                  Multi-Faceted Search Filters
                 </h3>
               </div>
               <button
                 onClick={() => setShowFiltersDrawer(false)}
-                className="text-xs text-velora-textMuted hover:text-velora-textPrimary"
+                className="text-xs text-velora-textMuted hover:text-white"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
-              {/* Age Range */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
+              {/* Location & Radius */}
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
-                  Age Range: {filters.minAge} - {filters.maxAge}
+                  Country
                 </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min={18}
-                    max={80}
-                    value={filters.maxAge}
-                    onChange={(e) => setFilters({ ...filters, maxAge: parseInt(e.target.value) })}
-                    className="w-full accent-velora-gold"
-                  />
-                </div>
+                <select
+                  value={filters.country}
+                  onChange={(e) => setFilters({ ...filters, country: e.target.value })}
+                  className="w-full bg-velora-card border border-white/10 rounded-xl p-2.5 text-xs text-velora-textPrimary"
+                >
+                  <option value="ALL">All Countries</option>
+                  <option value="Monaco">Monaco</option>
+                  <option value="Switzerland">Switzerland</option>
+                  <option value="United Kingdom">United Kingdom</option>
+                  <option value="France">France</option>
+                </select>
               </div>
 
-              {/* Distance Radius */}
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
-                  Max Radius: {filters.distanceKm} km
+                  Max Radius ({filters.distanceKm} km)
                 </label>
                 <input
                   type="range"
-                  min={5}
+                  min={10}
                   max={500}
                   step={25}
                   value={filters.distanceKm}
@@ -175,38 +238,69 @@ export default function DiscoveryPage() {
                 />
               </div>
 
-              {/* Toggle Options */}
-              <div className="space-y-2">
-                <label className="flex items-center gap-2.5 text-xs text-velora-textSecondary cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={filters.verifiedOnly}
-                    onChange={(e) => setFilters({ ...filters, verifiedOnly: e.target.checked })}
-                    className="accent-velora-gold w-4 h-4 rounded"
-                  />
-                  <span>100% ID Verified Only</span>
+              {/* Personal Attributes */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
+                  Age Range ({filters.minAge} - {filters.maxAge} yrs)
                 </label>
-
-                <label className="flex items-center gap-2.5 text-xs text-velora-textSecondary cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={filters.onlineOnly}
-                    onChange={(e) => setFilters({ ...filters, onlineOnly: e.target.checked })}
-                    className="accent-velora-gold w-4 h-4 rounded"
-                  />
-                  <span>Active Online Now Only</span>
-                </label>
-
-                <label className="flex items-center gap-2.5 text-xs text-velora-textSecondary cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={filters.couplesOnly}
-                    onChange={(e) => setFilters({ ...filters, couplesOnly: e.target.checked })}
-                    className="accent-velora-gold w-4 h-4 rounded"
-                  />
-                  <span>Couple Profiles Only</span>
-                </label>
+                <input
+                  type="range"
+                  min={18}
+                  max={80}
+                  value={filters.maxAge}
+                  onChange={(e) => setFilters({ ...filters, maxAge: parseInt(e.target.value) })}
+                  className="w-full accent-velora-gold"
+                />
               </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
+                  Gender Presentation
+                </label>
+                <select
+                  value={filters.gender}
+                  onChange={(e) => setFilters({ ...filters, gender: e.target.value })}
+                  className="w-full bg-velora-card border border-white/10 rounded-xl p-2.5 text-xs text-velora-textPrimary"
+                >
+                  <option value="ALL">All Genders</option>
+                  <option value="FEMALE">Female</option>
+                  <option value="MALE">Male</option>
+                  <option value="COUPLE_MF">Couple Profiles</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Trust & Activity Toggles */}
+            <div className="pt-4 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <label className="flex items-center gap-3 p-3 glass-panel rounded-xl cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={filters.verifiedOnly}
+                  onChange={(e) => setFilters({ ...filters, verifiedOnly: e.target.checked })}
+                  className="accent-velora-gold w-4 h-4 rounded"
+                />
+                <span className="text-xs text-velora-textPrimary font-semibold">100% ID Verified Only</span>
+              </label>
+
+              <label className="flex items-center gap-3 p-3 glass-panel rounded-xl cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={filters.onlineOnly}
+                  onChange={(e) => setFilters({ ...filters, onlineOnly: e.target.checked })}
+                  className="accent-velora-gold w-4 h-4 rounded"
+                />
+                <span className="text-xs text-velora-textPrimary font-semibold">Online Active Now Only</span>
+              </label>
+
+              <label className="flex items-center gap-3 p-3 glass-panel rounded-xl cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={filters.couplesOnly}
+                  onChange={(e) => setFilters({ ...filters, couplesOnly: e.target.checked })}
+                  className="accent-velora-gold w-4 h-4 rounded"
+                />
+                <span className="text-xs text-velora-textPrimary font-semibold">Couple Profiles Only</span>
+              </label>
             </div>
 
             <div className="flex justify-end border-t border-white/10 pt-4 gap-3">
@@ -216,18 +310,23 @@ export default function DiscoveryPage() {
                 className="text-xs"
                 onClick={() =>
                   setFilters({
+                    country: "ALL",
+                    city: "",
+                    distanceKm: 200,
                     minAge: 18,
-                    maxAge: 50,
-                    distanceKm: 100,
+                    maxAge: 55,
                     gender: "ALL",
+                    orientation: "ALL",
+                    lookingFor: "ALL",
                     verifiedOnly: false,
+                    photosOnly: true,
                     onlineOnly: false,
                     couplesOnly: false,
                     creatorsOnly: false,
                   })
                 }
               >
-                Reset Filters
+                Reset All
               </Button>
               <Button variant="gold" size="sm" className="text-xs font-bold" onClick={() => setShowFiltersDrawer(false)}>
                 Apply Search Parameters
@@ -237,79 +336,19 @@ export default function DiscoveryPage() {
         )}
       </div>
 
-      {/* Discovery Profile Grid */}
+      {/* Profile Card Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredProfiles.length > 0 ? (
           filteredProfiles.map((p) => (
-            <Card key={p.id} variant="glass" className="group overflow-hidden flex flex-col justify-between">
-              {/* Profile Cover & Avatar */}
-              <div className="relative h-72 w-full bg-velora-card overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={p.avatarUrl}
-                  alt={p.displayName}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-velora-bg via-transparent to-transparent opacity-95" />
-
-                <div className="absolute top-4 left-4 flex flex-col gap-1.5">
-                  {p.verified && <Badge type="verified" />}
-                  {p.isCoupleProfile && <Badge type="couple" />}
-                  {p.userId === "user-3" && <Badge type="creator" />}
-                </div>
-
-                <div className="absolute top-4 right-4">
-                  {p.isOnline && <Badge type="online" />}
-                </div>
-
-                <div className="absolute bottom-4 left-4 right-4 text-left">
-                  <h3 className="text-2xl font-serif font-bold text-white flex items-center gap-2">
-                    {p.displayName}, {p.age}
-                  </h3>
-                  <p className="text-xs text-velora-gold flex items-center gap-1 mt-1 font-medium">
-                    <MapPin className="w-3.5 h-3.5" />
-                    {p.location} {p.distanceKm ? `(${p.distanceKm} km away)` : ""}
-                  </p>
-                </div>
-              </div>
-
-              {/* Bio & Details */}
-              <div className="p-6 space-y-4 text-left flex-1 flex flex-col justify-between">
-                <p className="text-xs text-velora-textSecondary line-clamp-3 leading-relaxed">
-                  {p.bio}
-                </p>
-
-                <div className="space-y-2">
-                  <p className="text-[10px] uppercase font-bold tracking-wider text-velora-textMuted">Looking For</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {p.lookingFor.map((item) => (
-                      <span key={item} className="px-2.5 py-0.5 rounded-full text-[11px] bg-white/5 text-velora-gold border border-white/10 font-medium">
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-white/10 flex items-center gap-3">
-                  <Link href={`/profile/${p.id}`} className="flex-1">
-                    <Button variant="gold" size="sm" className="w-full text-xs font-bold uppercase tracking-wider">
-                      View Full Profile
-                    </Button>
-                  </Link>
-                  <Link href="/messages">
-                    <button className="p-2.5 rounded-full glass-panel text-velora-textSecondary hover:text-velora-gold hover:border-velora-gold/40 transition-colors">
-                      <MessageSquare className="w-4 h-4" />
-                    </button>
-                  </Link>
-                </div>
-              </div>
-            </Card>
+            <ProfileCard key={p.id} profile={p} />
           ))
         ) : (
-          <div className="col-span-full py-16 text-center space-y-4 glass-panel rounded-3xl">
+          <div className="col-span-full py-20 text-center space-y-4 glass-panel rounded-3xl">
             <Search className="w-12 h-12 text-velora-textMuted mx-auto" />
-            <h3 className="text-lg font-serif font-bold text-velora-textPrimary">No Compatible Members Found</h3>
-            <p className="text-xs text-velora-textMuted">Try expanding your age or distance radius search filters.</p>
+            <h3 className="text-xl font-serif font-bold text-velora-textPrimary">No Profiles Matching Filter Criteria</h3>
+            <p className="text-xs text-velora-textMuted max-w-sm mx-auto">
+              Try adjusting your age, distance radius, or location filter settings.
+            </p>
           </div>
         )}
       </div>

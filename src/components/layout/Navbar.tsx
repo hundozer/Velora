@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { UserRole } from "@/types";
 import { Badge } from "@/components/ui/Badge";
+import { NotificationDrawer } from "@/components/notifications/NotificationDrawer";
 import {
   Compass,
   MessageSquare,
@@ -18,6 +19,7 @@ import {
   Settings,
   Heart,
   Wallet,
+  Bell,
 } from "lucide-react";
 
 export const Navbar: React.FC = () => {
@@ -25,6 +27,7 @@ export const Navbar: React.FC = () => {
   const { user, profile, role, switchRole, logout } = useAuth();
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   const rolesList: { role: UserRole; label: string; icon: React.ReactNode }[] = [
     { role: "MEMBER", label: "Member Mode", icon: <UserCheck className="w-4 h-4 text-blue-400" /> },
@@ -120,8 +123,29 @@ export const Navbar: React.FC = () => {
           )}
         </nav>
 
-        {/* Right Section: Role Quick Switcher & User Profile */}
-        <div className="flex items-center gap-3">
+        {/* Right Section: Notifications, Role Switcher & Profile */}
+        <div className="flex items-center gap-3 relative">
+          {/* Notifications Trigger */}
+          {user && (
+            <div className="relative">
+              <button
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                className="p-2.5 rounded-full bg-white/5 border border-white/10 text-velora-textSecondary hover:text-velora-gold hover:bg-white/10 transition-colors relative"
+                title="Notifications"
+              >
+                <Bell className="w-4 h-4" />
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-velora-gold text-velora-bg font-bold text-[10px] flex items-center justify-center shadow-gold-glow">
+                  2
+                </span>
+              </button>
+
+              <NotificationDrawer
+                isOpen={isNotificationsOpen}
+                onClose={() => setIsNotificationsOpen(false)}
+              />
+            </div>
+          )}
+
           {/* Quick Role Switcher Pill for reviewer testing */}
           <div className="relative">
             <button
@@ -213,6 +237,14 @@ export const Navbar: React.FC = () => {
                   >
                     <Heart className="w-4 h-4 text-rose-400" />
                     Saved Favorites
+                  </Link>
+
+                  <Link
+                    href="/notifications"
+                    className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl"
+                  >
+                    <Bell className="w-4 h-4 text-blue-400" />
+                    Notifications Center
                   </Link>
 
                   <Link
