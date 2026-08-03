@@ -2,6 +2,7 @@ export interface SentEmailLog {
   id: string;
   to: string;
   subject: string;
+  confirmationLink: string;
   bodyHtml: string;
   sentAt: string;
 }
@@ -10,7 +11,8 @@ const OUTBOX: SentEmailLog[] = [];
 
 export class EmailNotificationService {
   /**
-   * Generates and dispatches a transactional email confirmation message
+   * Generates and dispatches a transactional email confirmation message.
+   * In local/demo mode, stores in OUTBOX and logs to console.
    */
   public static sendVerificationEmail(email: string, token: string, baseUrl: string = "http://localhost:3000"): SentEmailLog {
     const confirmationLink = `${baseUrl}/verify-email?token=${encodeURIComponent(token)}`;
@@ -27,9 +29,9 @@ export class EmailNotificationService {
           .title { font-family: Georgia, serif; font-size: 26px; font-weight: bold; color: #f3e5ab; text-align: center; margin-bottom: 12px; }
           .subtitle { font-size: 13px; color: #a1a1aa; text-align: center; margin-bottom: 32px; line-height: 1.6; }
           .button-container { text-align: center; margin: 36px 0; }
-          .btn { display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f3e5ab 100%); color: #0b0c10; font-weight: bold; font-size: 13px; text-transform: uppercase; tracking-spacing: 0.1em; padding: 16px 36px; border-radius: 9999px; text-decoration: none; box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4); }
+          .btn { display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f3e5ab 100%); color: #0b0c10; font-weight: bold; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; padding: 16px 36px; border-radius: 9999px; text-decoration: none; box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4); }
           .link-box { background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 12px; font-size: 11px; word-break: break-all; color: #d4af37; text-align: center; margin-top: 24px; }
-          .footer { margin-top: 36px; font-size: 11px; color: #71717a; text-align: center; border-t: 1px solid rgba(255, 255, 255, 0.1); padding-top: 20px; }
+          .footer { margin-top: 36px; font-size: 11px; color: #71717a; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 20px; }
         </style>
       </head>
       <body>
@@ -65,6 +67,7 @@ export class EmailNotificationService {
       id: `mail-${Date.now()}`,
       to: email,
       subject: "Action Required: Confirm Your Velora Account Email",
+      confirmationLink,
       bodyHtml,
       sentAt: new Date().toISOString(),
     };
@@ -73,6 +76,11 @@ export class EmailNotificationService {
     console.log(`[TRANSACTIONAL EMAIL SENT] To: ${email} | Confirmation Link: ${confirmationLink}`);
 
     return logEntry;
+  }
+
+  public static getLatestEmailFor(email: string): SentEmailLog | undefined {
+    const clean = email.toLowerCase();
+    return OUTBOX.find((m) => m.to.toLowerCase() === clean);
   }
 
   public static getOutbox(): SentEmailLog[] {

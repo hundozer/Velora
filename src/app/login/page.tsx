@@ -94,23 +94,31 @@ export default function LoginPage() {
         <Card variant="goldBorder" className="p-8 space-y-6 bg-gold-card">
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/40 text-xs text-amber-300 space-y-2">
-                <p>{error}</p>
+              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/40 text-xs text-amber-300 space-y-3">
+                <p className="font-semibold">{error}</p>
                 {needsVerification && (
-                  <div>
-                    {resendNotice ? (
-                      <p className="text-[11px] font-bold text-emerald-400">
-                        ✓ Fresh confirmation link sent! Check your inbox.
-                      </p>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleResendEmail}
-                        className="text-[11px] font-bold text-velora-gold hover:underline font-mono"
-                      >
-                        Click here to resend confirmation email →
-                      </button>
-                    )}
+                  <div className="space-y-2 pt-1 border-t border-amber-500/20">
+                    {(() => {
+                      const latest = EmailNotificationService.getLatestEmailFor(email);
+                      if (latest) {
+                        return (
+                          <Link href={latest.confirmationLink} className="block">
+                            <Button variant="gold" size="sm" className="w-full text-xs font-bold gap-2 shadow-gold-glow">
+                              <CheckCircle2 className="w-4 h-4" /> ⚡ Click to Confirm Email & Activate Account
+                            </Button>
+                          </Link>
+                        );
+                      }
+                      return (
+                        <button
+                          type="button"
+                          onClick={handleResendEmail}
+                          className="text-[11px] font-bold text-velora-gold hover:underline font-mono"
+                        >
+                          Click here to resend confirmation email →
+                        </button>
+                      );
+                    })()}
                   </div>
                 )}
               </div>

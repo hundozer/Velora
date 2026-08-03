@@ -46,9 +46,11 @@ export default function RegisterPage() {
   };
 
   if (isSubmitted) {
+    const latestEmail = EmailNotificationService.getLatestEmailFor(email);
+
     return (
       <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 text-left">
-        <div className="max-w-md w-full space-y-6">
+        <div className="max-w-lg w-full space-y-6">
           <Card variant="goldBorder" className="p-8 space-y-6 text-center bg-gold-card">
             <div className="w-16 h-16 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center mx-auto shadow-2xl">
               <Mail className="w-9 h-9" />
@@ -59,22 +61,42 @@ export default function RegisterPage() {
                 Check Your Email Inbox
               </h2>
               <p className="text-xs text-velora-textSecondary leading-relaxed">
-                We sent a confirmation email to <span className="text-velora-gold font-bold">{email}</span>.
+                We generated a confirmation email for <span className="text-velora-gold font-bold">{email}</span>.
               </p>
             </div>
 
-            <div className="p-4 glass-panel rounded-2xl border border-white/10 text-left text-xs space-y-2 font-mono text-velora-textSecondary">
-              <p className="flex items-center gap-2 text-velora-gold font-bold">
-                <ShieldCheck className="w-4 h-4" /> Email Verification Required
-              </p>
-              <p className="text-[11px] leading-relaxed">
-                To complete your registration and activate your Velora account, please open the email and click the confirmation link before logging in.
-              </p>
+            {/* Local Sandbox / Demo Email Box */}
+            <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-left space-y-3 font-mono text-xs">
+              <div className="flex items-center justify-between pb-2 border-b border-amber-500/20">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5" /> Simulated Email Inbox (Development Mode)
+                </span>
+                <span className="text-[10px] text-velora-textMuted">Just Now</span>
+              </div>
+
+              <div className="space-y-1 text-[11px]">
+                <p><span className="text-velora-textMuted">To:</span> <span className="text-white font-bold">{email}</span></p>
+                <p><span className="text-velora-textMuted">Subject:</span> <span className="text-amber-200">Action Required: Confirm Your Velora Account Email</span></p>
+              </div>
+
+              <div className="p-3 bg-black/40 rounded-xl border border-white/5 space-y-2">
+                <p className="text-[11px] text-velora-textSecondary">
+                  Since live SMTP credentials are not active in this sandbox, click the button below to simulate receiving the email and confirming your address:
+                </p>
+
+                {latestEmail ? (
+                  <Link href={latestEmail.confirmationLink} className="block pt-1">
+                    <Button variant="gold" size="sm" className="w-full text-xs font-bold gap-2 shadow-gold-glow">
+                      <CheckCircle2 className="w-4 h-4" /> ⚡ Click to Confirm Email & Activate Account
+                    </Button>
+                  </Link>
+                ) : null}
+              </div>
             </div>
 
             {resendSent ? (
               <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/40 text-xs text-emerald-300">
-                ✓ Fresh confirmation link sent to {email}!
+                ✓ Fresh confirmation link generated for {email}!
               </div>
             ) : (
               <Button
@@ -89,9 +111,8 @@ export default function RegisterPage() {
 
             <div className="pt-2">
               <Link href="/login">
-                <Button variant="gold" size="lg" className="w-full text-xs font-bold uppercase tracking-wider shadow-gold-glow flex items-center justify-center gap-2">
-                  <span>Go to Login</span>
-                  <ArrowRight className="w-4 h-4" />
+                <Button variant="ghost" size="sm" className="w-full text-xs text-velora-textMuted hover:text-velora-gold">
+                  Return to Sign In
                 </Button>
               </Link>
             </div>
