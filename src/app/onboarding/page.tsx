@@ -316,6 +316,8 @@ export default function OnboardingWizardPage() {
               <div className="flex flex-wrap gap-1.5">
                 {[
                   "Oral Pleasure",
+                  "Anal",
+                  "Piss / Watersports",
                   "Sensual Massage",
                   "BDSM",
                   "Roleplay",

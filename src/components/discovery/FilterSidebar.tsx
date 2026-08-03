@@ -527,6 +527,8 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
               <div className="flex flex-wrap gap-1.5">
                 {[
                   "Oral Pleasure",
+                  "Anal",
+                  "Piss / Watersports",
                   "Sensual Massage",
                   "BDSM",
                   "Roleplay",
