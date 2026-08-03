@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { LOCATION_DATA } from "@/lib/locationData";
 import { Sparkles, ArrowRight, CheckCircle2, Heart, ShieldCheck, Compass, User, Users, Crown, Camera, Flame } from "lucide-react";
 
 export default function OnboardingWizardPage() {
@@ -219,14 +220,39 @@ export default function OnboardingWizardPage() {
                 <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-1">
                   Country
                 </label>
-                <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="e.g. Czech Republic" />
+                <select
+                  value={country}
+                  onChange={(e) => {
+                    const newCountry = e.target.value;
+                    setCountry(newCountry);
+                    const availableCities = LOCATION_DATA.getCitiesForCountry(newCountry);
+                    setCity(availableCities[0] || "");
+                  }}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
+                >
+                  {LOCATION_DATA.COUNTRIES.map((c) => (
+                    <option key={c.code} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-1">
                   City
                 </label>
-                <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Prague" />
+                <select
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
+                >
+                  {LOCATION_DATA.getCitiesForCountry(country).map((ct) => (
+                    <option key={ct} value={ct}>
+                      {ct}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 

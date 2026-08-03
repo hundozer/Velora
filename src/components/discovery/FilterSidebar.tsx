@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { LOCATION_DATA } from "@/lib/locationData";
 import {
   Filter,
   MapPin,
@@ -337,35 +338,42 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
               <select
                 value={country}
                 onChange={(e) => {
-                  setCountry(e.target.value);
-                  notifyChange({ country: e.target.value });
+                  const newCountry = e.target.value;
+                  setCountry(newCountry);
+                  setCity("ALL");
+                  notifyChange({ country: newCountry, city: "ALL" });
                 }}
                 className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
               >
                 <option value="ALL">All Countries</option>
-                <option value="Czech Republic">Czech Republic</option>
-                <option value="Germany">Germany</option>
-                <option value="United Kingdom">United Kingdom</option>
-                <option value="Monaco">Monaco</option>
-                <option value="Austria">Austria</option>
-                <option value="France">France</option>
-                <option value="Hungary">Hungary</option>
-                <option value="Slovakia">Slovakia</option>
-                <option value="Romania">Romania</option>
+                {LOCATION_DATA.COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div>
               <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1">City Filter</label>
-              <Input
+              <select
                 value={city}
                 onChange={(e) => {
                   setCity(e.target.value);
                   notifyChange({ city: e.target.value });
                 }}
-                placeholder="e.g. Prague, Berlin, Munich..."
-                className="text-xs py-2"
-              />
+                className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
+              >
+                <option value="ALL">All Cities</option>
+                {(country !== "ALL"
+                  ? LOCATION_DATA.getCitiesForCountry(country)
+                  : LOCATION_DATA.COUNTRIES.flatMap((c) => c.cities)
+                ).map((ct) => (
+                  <option key={ct} value={ct}>
+                    {ct}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-1">
