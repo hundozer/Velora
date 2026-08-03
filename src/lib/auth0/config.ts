@@ -27,7 +27,7 @@ const DOMAIN = process.env.AUTH0_ISSUER_BASE_URL || "https://simpleafiedeu.eu.au
 export const AUTH0_CONFIG: Auth0EnvironmentConfig = {
   domain: DOMAIN,
   clientId: process.env.AUTH0_CLIENT_ID || "2wfjGUy76NmH8rdoxXxqg8CrbchkutTl",
-  clientSecret: process.env.AUTH0_CLIENT_SECRET || "6Otyzf0BIT5lVEDqWiiwate1kAPlXMHV8N4Eq8iBJ3tmF5vBi7VkxydX9brkdd6D",
+  clientSecret: process.env.AUTH0_CLIENT_SECRET || "pLz9jWA2wxZszV6AzQpYzVX7GkL-7uSdELBAsskUD8RyjznX-aSDuX9i91cooW0F",
   secret: process.env.AUTH0_SECRET || "velora_long_session_secret_cookie_key_32bytes!",
   baseUrl: BASE_URL,
   issuer: DOMAIN.endsWith("/") ? DOMAIN : `${DOMAIN}/`,
