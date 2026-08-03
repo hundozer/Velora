@@ -5,22 +5,24 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Sparkles, ArrowRight, CheckCircle2, Heart, ShieldCheck, Compass } from "lucide-react";
+import { Sparkles, ArrowRight, CheckCircle2, Heart, ShieldCheck, Compass, User, Users, Crown, Camera } from "lucide-react";
 
 export default function OnboardingWizardPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
 
-  // Form Data
-  const [headline, setHeadline] = useState("Art Curator & High-Discretion Private Hostess");
-  const [bio, setBio] = useState("Open-minded, confident, and looking for authentic chemistry and luxury experiences across Europe.");
-  const [selectedLookingFor, setSelectedLookingFor] = useState<string[]>(["Dating", "Social Events", "Travel Partner"]);
+  // Form State
+  const [profileType, setProfileType] = useState<"SINGLE" | "COUPLE" | "CREATOR" | "LIFESTYLE">("SINGLE");
+  const [selectedInterests, setSelectedInterests] = useState<string[]>(["Casual Encounters", "Chemistry & Dating"]);
+  const [city, setCity] = useState("Prague");
+  const [headline, setHeadline] = useState("Outgoing, adventurous and looking for real chemistry");
+  const [avatarUrl, setAvatarUrl] = useState("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80");
 
-  const toggleLookingFor = (item: string) => {
-    if (selectedLookingFor.includes(item)) {
-      setSelectedLookingFor(selectedLookingFor.filter((i) => i !== item));
+  const toggleInterest = (item: string) => {
+    if (selectedInterests.includes(item)) {
+      setSelectedInterests(selectedInterests.filter((i) => i !== item));
     } else {
-      setSelectedLookingFor([...selectedLookingFor, item]);
+      setSelectedInterests([...selectedInterests, item]);
     }
   };
 
@@ -33,41 +35,91 @@ export default function OnboardingWizardPage() {
       {/* Step Indicator Bar */}
       <div className="space-y-2 text-center">
         <span className="text-xs font-mono uppercase tracking-widest text-velora-gold">
-          Step {step} of 3 • Craft Your Private Identity
+          Step {step} of 5 • Enter Velora Adults-Only Community
         </span>
         <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
           <div
-            style={{ width: `${(step / 3) * 100}%` }}
+            style={{ width: `${(step / 5) * 100}%` }}
             className="h-full bg-gold-gradient transition-all duration-500 shadow-gold-glow"
           />
         </div>
       </div>
 
       <Card variant="goldBorder" className="p-8 space-y-6">
+        {/* STEP 1: CHOOSE PROFILE TYPE */}
         {step === 1 && (
           <div className="space-y-5">
             <h2 className="text-2xl font-serif font-bold text-velora-textPrimary">
-              Tell us what you are looking for
+              1. Choose Your Profile Type
             </h2>
             <p className="text-xs text-velora-textSecondary leading-relaxed">
-              Velora members are clear and transparent about their desires. Select all that match your intent.
+              Select how you would like to participate in the Velora adult social marketplace.
             </p>
 
             <div className="grid grid-cols-2 gap-3 pt-2">
               {[
-                "Dating & Chemistry",
-                "Casual Connections",
-                "Social & Dining Events",
+                { id: "SINGLE", title: "Single Member", desc: "Individual profile", icon: User },
+                { id: "COUPLE", title: "Couple Profile", desc: "Couples exploring together", icon: Users },
+                { id: "CREATOR", title: "Creator & Host", desc: "Content & live salons", icon: Crown },
+                { id: "LIFESTYLE", title: "Lifestyle Member", desc: "Open-minded experiences", icon: Sparkles },
+              ].map((item) => {
+                const isSelected = profileType === item.id;
+                const IconComp = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setProfileType(item.id as any)}
+                    className={`p-4 rounded-2xl border text-left transition-all ${
+                      isSelected
+                        ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold shadow-gold-glow"
+                        : "glass-panel text-velora-textMuted hover:text-white"
+                    }`}
+                  >
+                    <IconComp className="w-5 h-5 mb-2" />
+                    <div className="text-xs font-bold">{item.title}</div>
+                    <div className="text-[10px] opacity-80 mt-0.5">{item.desc}</div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <Button
+              variant="gold"
+              className="w-full text-xs font-bold uppercase tracking-wider py-3 shadow-gold-glow flex items-center justify-center gap-2"
+              onClick={() => setStep(2)}
+            >
+              <span>Next: Define Interests</span>
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+
+        {/* STEP 2: DEFINE WHAT YOU ARE INTERESTED IN */}
+        {step === 2 && (
+          <div className="space-y-5">
+            <h2 className="text-2xl font-serif font-bold text-velora-textPrimary">
+              2. Define What You Are Interested In
+            </h2>
+            <p className="text-xs text-velora-textSecondary leading-relaxed">
+              Be open about what you are looking for. Select all that apply.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              {[
+                "Casual Encounters",
+                "Chemistry & Attraction",
+                "Social & Dining Salons",
                 "Travel Partner",
                 "Couples Networking",
-                "Creator Content & Livestreams",
+                "Exclusive Creator Salons",
               ].map((item) => {
-                const isSelected = selectedLookingFor.includes(item);
+                const isSelected = selectedInterests.includes(item);
                 return (
                   <button
                     key={item}
                     type="button"
-                    onClick={() => toggleLookingFor(item)}
+                    onClick={() => toggleInterest(item)}
                     className={`p-3.5 rounded-2xl border text-xs font-semibold text-left transition-all ${
                       isSelected
                         ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold shadow-gold-glow"
@@ -80,49 +132,6 @@ export default function OnboardingWizardPage() {
               })}
             </div>
 
-            <Button
-              variant="gold"
-              className="w-full text-xs font-bold uppercase tracking-wider py-3 shadow-gold-glow flex items-center justify-center gap-2"
-              onClick={() => setStep(2)}
-            >
-              <span>Next: About Your Persona</span>
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-5">
-            <h2 className="text-2xl font-serif font-bold text-velora-textPrimary">
-              Profile Headline & Biography
-            </h2>
-            <p className="text-xs text-velora-textSecondary leading-relaxed">
-              Express your personality, lifestyle, and discretion preferences to attract compatible members.
-            </p>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-1">
-                Profile Headline
-              </label>
-              <Input
-                value={headline}
-                onChange={(e) => setHeadline(e.target.value)}
-                placeholder="e.g. Seductive Art Curator & Hostess"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-1">
-                About Your Persona
-              </label>
-              <textarea
-                rows={4}
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
-              />
-            </div>
-
             <div className="flex gap-3">
               <Button variant="ghost" className="w-1/3 text-xs" onClick={() => setStep(1)}>
                 Back
@@ -132,21 +141,98 @@ export default function OnboardingWizardPage() {
                 className="w-2/3 text-xs font-bold uppercase tracking-wider py-3 shadow-gold-glow flex items-center justify-center gap-2"
                 onClick={() => setStep(3)}
               >
-                <span>Next: Verification Check</span>
+                <span>Next: Preferences</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
           </div>
         )}
 
+        {/* STEP 3: SET DISCOVERY PREFERENCES */}
         {step === 3 && (
+          <div className="space-y-5">
+            <h2 className="text-2xl font-serif font-bold text-velora-textPrimary">
+              3. Set Discovery Preferences
+            </h2>
+            <p className="text-xs text-velora-textSecondary leading-relaxed">
+              Set your location and headline to help nearby members find you.
+            </p>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-1">
+                City / Location
+              </label>
+              <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Prague" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-1">
+                Profile Headline
+              </label>
+              <Input value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="e.g. Outgoing & open-minded" />
+            </div>
+
+            <div className="flex gap-3">
+              <Button variant="ghost" className="w-1/3 text-xs" onClick={() => setStep(2)}>
+                Back
+              </Button>
+              <Button
+                variant="gold"
+                className="w-2/3 text-xs font-bold uppercase tracking-wider py-3 shadow-gold-glow flex items-center justify-center gap-2"
+                onClick={() => setStep(4)}
+              >
+                <span>Next: Add Photos</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4: ADD PHOTOS */}
+        {step === 4 && (
+          <div className="space-y-5">
+            <h2 className="text-2xl font-serif font-bold text-velora-textPrimary">
+              4. Add Profile Photo
+            </h2>
+            <p className="text-xs text-velora-textSecondary leading-relaxed">
+              Upload a clear photo to present your persona to the community.
+            </p>
+
+            <div className="flex flex-col items-center space-y-4 pt-2">
+              <div className="w-32 h-32 rounded-3xl border-2 border-velora-gold overflow-hidden bg-velora-card relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={avatarUrl} alt="Avatar Preview" className="w-full h-full object-cover" />
+              </div>
+              <Button variant="glass" size="sm" className="text-xs gap-1.5 border-white/20">
+                <Camera className="w-4 h-4 text-velora-gold" /> Upload New Photo
+              </Button>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button variant="ghost" className="w-1/3 text-xs" onClick={() => setStep(3)}>
+                Back
+              </Button>
+              <Button
+                variant="gold"
+                className="w-2/3 text-xs font-bold uppercase tracking-wider py-3 shadow-gold-glow flex items-center justify-center gap-2"
+                onClick={() => setStep(5)}
+              >
+                <span>Next: Start Exploring</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 5: START EXPLORING */}
+        {step === 5 && (
           <div className="space-y-6 text-center">
             <ShieldCheck className="w-12 h-12 text-velora-gold mx-auto" />
             <h2 className="text-2xl font-serif font-bold text-velora-textPrimary">
-              Your Private Identity is Ready
+              Your Adult Identity is Ready
             </h2>
             <p className="text-xs text-velora-textSecondary leading-relaxed max-w-md mx-auto">
-              Your profile is created. You can now start discovering open-minded adults nearby or complete Level 3 Biometric Verification for maximum trust.
+              Welcome to Velora. Start exploring open-minded adults nearby, viewing private profiles, and connecting.
             </p>
 
             <Button
@@ -156,7 +242,7 @@ export default function OnboardingWizardPage() {
               onClick={handleFinish}
             >
               <Compass className="w-4 h-4" />
-              <span>Start Discovering People Nearby</span>
+              <span>Start Exploring Members</span>
             </Button>
           </div>
         )}
