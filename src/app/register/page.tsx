@@ -8,7 +8,9 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
-import { Sparkles, ShieldCheck, Lock, ArrowRight, User, Users, Crown } from "lucide-react";
+import { EmailVerificationService } from "@/lib/auth/emailVerification";
+import { EmailNotificationService } from "@/lib/notifications/emailService";
+import { Sparkles, ShieldCheck, Lock, ArrowRight, User, Users, Crown, Mail, CheckCircle2 } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -17,6 +19,8 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [selectedRole, setSelectedRole] = useState<"MEMBER" | "COUPLE" | "CREATOR">("MEMBER");
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,8 +32,74 @@ export default function RegisterPage() {
       role: selectedRole,
     });
 
-    router.push("/onboarding");
+    setIsSubmitted(true);
   };
+
+  const handleResend = () => {
+    if (!email) return;
+    const pending = EmailVerificationService.resendToken(email);
+    if (pending) {
+      const originUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+      EmailNotificationService.sendVerificationEmail(email, pending.token, originUrl);
+      setResendSent(true);
+    }
+  };
+
+  if (isSubmitted) {
+    return (
+      <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 text-left">
+        <div className="max-w-md w-full space-y-6">
+          <Card variant="goldBorder" className="p-8 space-y-6 text-center bg-gold-card">
+            <div className="w-16 h-16 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center mx-auto shadow-2xl">
+              <Mail className="w-9 h-9" />
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-2xl font-serif font-bold text-velora-textPrimary">
+                Check Your Email Inbox
+              </h2>
+              <p className="text-xs text-velora-textSecondary leading-relaxed">
+                We sent a confirmation email to <span className="text-velora-gold font-bold">{email}</span>.
+              </p>
+            </div>
+
+            <div className="p-4 glass-panel rounded-2xl border border-white/10 text-left text-xs space-y-2 font-mono text-velora-textSecondary">
+              <p className="flex items-center gap-2 text-velora-gold font-bold">
+                <ShieldCheck className="w-4 h-4" /> Email Verification Required
+              </p>
+              <p className="text-[11px] leading-relaxed">
+                To complete your registration and activate your Velora account, please open the email and click the confirmation link before logging in.
+              </p>
+            </div>
+
+            {resendSent ? (
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/40 text-xs text-emerald-300">
+                ✓ Fresh confirmation link sent to {email}!
+              </div>
+            ) : (
+              <Button
+                variant="glass"
+                size="sm"
+                className="w-full text-xs font-bold gap-2 border-white/20 hover:border-velora-gold/40"
+                onClick={handleResend}
+              >
+                <Mail className="w-4 h-4 text-velora-gold" /> Resend Confirmation Email
+              </Button>
+            )}
+
+            <div className="pt-2">
+              <Link href="/login">
+                <Button variant="gold" size="lg" className="w-full text-xs font-bold uppercase tracking-wider shadow-gold-glow flex items-center justify-center gap-2">
+                  <span>Go to Login</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 text-left">

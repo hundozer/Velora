@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, UserRole, Profile, VerificationStatus } from "@/types";
+import { EmailVerificationService } from "@/lib/auth/emailVerification";
+import { EmailNotificationService } from "@/lib/notifications/emailService";
 
 interface AuthContextType {
   user: User | null;
@@ -10,8 +12,8 @@ interface AuthContextType {
   isAgeVerified: boolean;
   confirmAge: () => void;
   switchRole: (newRole: UserRole) => void;
-  login: (email: string, role?: UserRole) => void;
-  register: (data: Partial<User> & { displayName: string }) => void;
+  login: (email: string, role?: UserRole) => { success: boolean; message?: string };
+  register: (data: Partial<User> & { displayName: string }) => { success: boolean; pendingVerification: boolean; email: string };
   logout: () => void;
 }
 
@@ -129,6 +131,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = (email: string, selectedRole: UserRole = "MEMBER") => {
+    // Check if email has been verified via EmailVerificationService
+    const isVerified = EmailVerificationService.isEmailVerified(email);
+
+    if (!isVerified) {
+      return {
+        success: false,
+        message: "Email verification required. Please click the confirmation link sent to your email before signing in.",
+      };
+    }
+
     const newUser: User = {
       id: "usr-" + Date.now(),
       email,
@@ -139,31 +151,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       verificationLevel: "LEVEL_3_PROFILE_BIOMETRIC",
       createdAt: new Date().toISOString().split("T")[0],
     };
+
     setUser(newUser);
     setRole(selectedRole);
+    return { success: true };
   };
 
   const register = (data: Partial<User> & { displayName: string }) => {
-    const newUser: User = {
-      id: "usr-" + Date.now(),
-      email: data.email || "user@velora.club",
-      username: data.username || "new_velora_member",
-      role: data.role || "MEMBER",
-      memberTier: "FREE",
-      verificationStatus: "PENDING",
-      verificationLevel: "LEVEL_1_EMAIL",
-      createdAt: new Date().toISOString().split("T")[0],
+    const userEmail = data.email || "user@velora.club";
+    const userId = "usr-" + Date.now();
+
+    // Create pending email verification token and trigger email dispatch
+    const pendingToken = EmailVerificationService.createVerificationToken(userId, userEmail);
+    const originUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+    EmailNotificationService.sendVerificationEmail(userEmail, pendingToken.token, originUrl);
+
+    // Do NOT set active user session until email token is confirmed!
+    setUser(null);
+    setProfile(null);
+
+    return {
+      success: true,
+      pendingVerification: true,
+      email: userEmail,
     };
-    const newProfile: Profile = {
-      ...DEFAULT_PROFILE,
-      id: "prof-" + Date.now(),
-      userId: newUser.id,
-      displayName: data.displayName,
-      isCoupleProfile: data.role === "COUPLE",
-    };
-    setUser(newUser);
-    setProfile(newProfile);
-    setRole(data.role || "MEMBER");
   };
 
   const logout = () => {

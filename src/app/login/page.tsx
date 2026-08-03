@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "@/context/LanguageContext";
 import { UserRole } from "@/types";
+import { EmailVerificationService } from "@/lib/auth/emailVerification";
+import { EmailNotificationService } from "@/lib/notifications/emailService";
 import {
   Sparkles,
   Lock,
@@ -29,15 +31,39 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [selectedRole, setSelectedRole] = useState<UserRole>("MEMBER");
   const [error, setError] = useState("");
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resendNotice, setResendNotice] = useState(false);
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setNeedsVerification(false);
+    setResendNotice(false);
+
     if (!email.trim()) {
       setError("Please enter your email or username.");
       return;
     }
-    login(email, selectedRole);
+
+    const res = login(email, selectedRole);
+
+    if (res && !res.success) {
+      setError(res.message || "Email verification required.");
+      setNeedsVerification(true);
+      return;
+    }
+
     window.location.href = "/discovery";
+  };
+
+  const handleResendEmail = () => {
+    if (!email) return;
+    const pending = EmailVerificationService.resendToken(email);
+    if (pending) {
+      const originUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+      EmailNotificationService.sendVerificationEmail(email, pending.token, originUrl);
+      setResendNotice(true);
+    }
   };
 
   const handleQuickDemoLogin = (demoRole: UserRole, demoEmail: string) => {
@@ -68,8 +94,25 @@ export default function LoginPage() {
         <Card variant="goldBorder" className="p-8 space-y-6 bg-gold-card">
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/40 text-xs text-red-300">
-                {error}
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/40 text-xs text-amber-300 space-y-2">
+                <p>{error}</p>
+                {needsVerification && (
+                  <div>
+                    {resendNotice ? (
+                      <p className="text-[11px] font-bold text-emerald-400">
+                        ✓ Fresh confirmation link sent! Check your inbox.
+                      </p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleResendEmail}
+                        className="text-[11px] font-bold text-velora-gold hover:underline font-mono"
+                      >
+                        Click here to resend confirmation email →
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
