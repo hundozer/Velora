@@ -13,6 +13,8 @@ import {
   PayoutRequest,
   RefundItem,
   WalletInfo,
+  LiveStream,
+  LiveChatMessage,
 } from "@/types";
 
 export const CREATOR_CATEGORIES = [
@@ -34,50 +36,84 @@ export const MOCK_WALLET: WalletInfo = {
   currency: "USD",
 };
 
+export const MOCK_LIVE_STREAMS: LiveStream[] = [
+  {
+    id: "ls-1",
+    creatorId: "prof-3",
+    creatorName: "Aria Thorne",
+    creatorAvatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80",
+    title: "Geneva Alpine Residence - Private Evening Solo Concert",
+    description: "Exclusive live 4K WebRTC stream performing Paganini & Bach from a private chalet in the Swiss Alps.",
+    category: "Classical Music",
+    thumbnailUrl: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
+    accessType: "TICKETED_PPV",
+    ticketPrice: 20.00,
+    status: "LIVE",
+    scheduledStartTime: "Live Now",
+    durationMinutes: 90,
+    currentViewersCount: 242,
+    peakViewersCount: 310,
+    totalRevenue: 4840.00,
+    streamUrl: "https://assets.mixkit.co/videos/preview/mixkit-classical-violinist-performing-41584-large.mp4",
+    createdAt: "1 hour ago",
+  },
+  {
+    id: "ls-2",
+    creatorId: "prof-1",
+    creatorName: "Elena Vance",
+    creatorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+    title: "Monte Carlo Yacht Salon - Private Art Auction Preview",
+    description: "Live walkthrough of contemporary rare pieces before tomorrow's private auction.",
+    category: "Contemporary Art",
+    thumbnailUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+    accessType: "SUBSCRIBER_ONLY",
+    ticketPrice: 0,
+    status: "SCHEDULED",
+    scheduledStartTime: "Tonight, 9:00 PM CET",
+    durationMinutes: 60,
+    currentViewersCount: 0,
+    peakViewersCount: 0,
+    totalRevenue: 0,
+    createdAt: "3 hours ago",
+  },
+];
+
+export const MOCK_LIVE_CHAT: LiveChatMessage[] = [
+  {
+    id: "lc-1",
+    streamId: "ls-1",
+    senderName: "Julian & Sophia",
+    senderAvatar: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=800&q=80",
+    content: "Breathtaking acoustics! Enjoying this from Zurich.",
+    createdAt: "10:32 AM",
+  },
+  {
+    id: "lc-2",
+    streamId: "ls-1",
+    senderName: "Elena Vance",
+    senderAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+    content: "Tipped $50.00: \"Sublime Bach performance Aria!\"",
+    isTipMessage: true,
+    tipAmount: 50.00,
+    createdAt: "10:35 AM",
+  },
+];
+
 export const MOCK_TRANSACTIONS: PaymentTransaction[] = [
   {
     id: "tx-101",
     buyerUsername: "elena_vance",
     sellerUsername: "aria_thorne",
-    productTitle: "Violin Solo Performance - Private Salon Concert",
-    grossAmount: 35.00,
-    platformCut: 5.25,
-    creatorEarnings: 28.00,
-    taxAmount: 1.75,
+    productTitle: "Violin Solo Performance - Private Salon Concert Ticket",
+    grossAmount: 20.00,
+    platformCut: 3.00,
+    creatorEarnings: 16.00,
+    taxAmount: 1.00,
     currency: "USD",
-    type: "PRIVATE_VIDEO_UNLOCK",
+    type: "LIVE_EXPERIENCE_TICKET",
     status: "COMPLETED",
     provider: "VELORA_WALLET",
     createdAt: "10:30 AM",
-  },
-  {
-    id: "tx-102",
-    buyerUsername: "julian_sophia",
-    sellerUsername: "elena_vance",
-    productTitle: "Monthly Creator Channel Subscription",
-    grossAmount: 24.99,
-    platformCut: 3.75,
-    creatorEarnings: 19.99,
-    taxAmount: 1.25,
-    currency: "USD",
-    type: "CREATOR_SUBSCRIPTION",
-    status: "COMPLETED",
-    provider: "STRIPE_CONNECT",
-    createdAt: "Yesterday",
-  },
-  {
-    id: "tx-103",
-    buyerUsername: "elena_vance",
-    productTitle: "Wallet Top-up (Credit Card)",
-    grossAmount: 100.00,
-    platformCut: 0.00,
-    creatorEarnings: 0.00,
-    taxAmount: 0.00,
-    currency: "USD",
-    type: "WALLET_TOPUP",
-    status: "COMPLETED",
-    provider: "STRIPE_CONNECT",
-    createdAt: "3 days ago",
   },
 ];
 
@@ -91,16 +127,6 @@ export const MOCK_PAYOUT_REQUESTS: PayoutRequest[] = [
     payoutDetails: "CH93 0000 0000 0000 0000 0",
     status: "PENDING",
     requestedAt: "2026-08-02 18:30",
-  },
-  {
-    id: "po-2",
-    username: "elena_vance",
-    amount: 850.00,
-    currency: "USD",
-    payoutMethod: "Wire Transfer",
-    payoutDetails: "SWIFT MONCMC22",
-    status: "APPROVED",
-    requestedAt: "2026-08-01 10:15",
   },
 ];
 
@@ -159,32 +185,7 @@ export const MOCK_PROFILES: Profile[] = [
     compatibilityScore: 95,
     avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
     coverPhotoUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
-    galleryImages: [
-      {
-        id: "m-1",
-        url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
-        type: "IMAGE",
-        visibility: "PUBLIC",
-        sortOrder: 1,
-        isProfilePhoto: true,
-      },
-      {
-        id: "m-2",
-        url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80",
-        type: "IMAGE",
-        visibility: "PRIVATE_MEMBERS",
-        sortOrder: 2,
-      },
-      {
-        id: "m-3",
-        url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80",
-        type: "IMAGE",
-        visibility: "FAVORITES_ONLY",
-        price: 25,
-        title: "Exclusive Private Lounge Album",
-        sortOrder: 3,
-      },
-    ],
+    galleryImages: [],
   },
   {
     id: "prof-2",
@@ -231,23 +232,7 @@ export const MOCK_PROFILES: Profile[] = [
     compatibilityScore: 88,
     avatarUrl: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=800&q=80",
     coverPhotoUrl: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80",
-    galleryImages: [
-      {
-        id: "m-4",
-        url: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=800&q=80",
-        type: "IMAGE",
-        visibility: "PUBLIC",
-        sortOrder: 1,
-        isProfilePhoto: true,
-      },
-      {
-        id: "m-5",
-        url: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=800&q=80",
-        type: "IMAGE",
-        visibility: "PRIVATE_MEMBERS",
-        sortOrder: 2,
-      },
-    ],
+    galleryImages: [],
   },
   {
     id: "prof-3",
@@ -290,16 +275,7 @@ export const MOCK_PROFILES: Profile[] = [
     compatibilityScore: 92,
     avatarUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80",
     coverPhotoUrl: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=80",
-    galleryImages: [
-      {
-        id: "m-6",
-        url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80",
-        type: "IMAGE",
-        visibility: "PUBLIC",
-        sortOrder: 1,
-        isProfilePhoto: true,
-      },
-    ],
+    galleryImages: [],
   },
 ];
 
@@ -315,10 +291,7 @@ export const MOCK_CREATOR_ALBUMS: ContentAlbum[] = [
     previewImages: [
       "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
     ],
-    lockedImages: [
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80",
-    ],
+    lockedImages: [],
     price: 25.0,
     visibility: "PAID_PER_VIEW",
     publicationStatus: "PUBLISHED",
@@ -396,56 +369,7 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
   },
 ];
 
-export const MOCK_VERIFICATION_REQUESTS: VerificationRequest[] = [
-  {
-    id: "verif-101",
-    user: {
-      id: "usr-88",
-      username: "seraphina_v",
-      email: "seraphina@velora.club",
-      role: "CREATOR",
-    },
-    requestedLevel: "LEVEL_4_CREATOR",
-    idDocumentUrl: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80",
-    selfieWithNoteUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80",
-    submittedAt: "2026-08-02 14:30",
-    status: "PENDING",
-  },
-];
-
-export const MOCK_REPORTS: ReportItem[] = [
-  {
-    id: "rep-1",
-    reporterUsername: "elena_vance",
-    reportedUsername: "fake_user_99",
-    reportedUserRole: "MEMBER",
-    reason: "UNDERAGE_SUSPICION",
-    details: "User posted media that raises age verification concerns. Requesting immediate verification audit.",
-    evidenceUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80",
-    status: "INVESTIGATING",
-    submittedAt: "2026-08-02 18:00",
-  },
-];
-
-export const MOCK_MODERATION_LOGS: ModerationLog[] = [
-  {
-    id: "log-1",
-    adminUsername: "admin_compliance",
-    targetUsername: "suspicious_account_12",
-    action: "SUSPEND_ACCOUNT_7_DAYS",
-    reason: "Offsite payment solicitation & repeated spam links.",
-    timestamp: "2026-08-02 22:15",
-  },
-];
-
-export const MOCK_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: "notif-1",
-    userId: "usr-demo-1",
-    type: "PAYMENT_RECEIVED",
-    title: "Payment Received",
-    message: "You earned $28.00 from a Private Video Unlock purchase.",
-    isRead: false,
-    createdAt: "10 mins ago",
-  },
-];
+export const MOCK_VERIFICATION_REQUESTS: VerificationRequest[] = [];
+export const MOCK_REPORTS: ReportItem[] = [];
+export const MOCK_MODERATION_LOGS: ModerationLog[] = [];
+export const MOCK_NOTIFICATIONS: NotificationItem[] = [];

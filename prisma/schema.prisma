@@ -67,17 +67,25 @@ enum Visibility {
   PAID_PER_VIEW
 }
 
-enum MediaType {
-  IMAGE
-  VIDEO
-  ALBUM
-  LIVE_STREAM
-}
-
 enum ContentPublicationStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+enum StreamAccessType {
+  FREE
+  TICKETED_PPV
+  SUBSCRIBER_ONLY
+  PRIVATE_ONE_ON_ONE
+}
+
+enum StreamStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+  CANCELLED
+  SUSPENDED
 }
 
 enum MessageStatus {
@@ -111,6 +119,8 @@ enum NotificationType {
   NEW_SUBSCRIBER
   PAYMENT_RECEIVED
   PAYOUT_STATUS_UPDATE
+  STREAM_SCHEDULED
+  STREAM_LIVE_NOW
   REPORT_STATUS_UPDATE
 }
 
@@ -139,6 +149,7 @@ enum ModerationActionType {
   SUSPEND_ACCOUNT_30_DAYS
   BAN_USER_PERMANENT
   REMOVE_CONTENT
+  SUSPEND_LIVE_STREAM
 }
 
 enum PaymentType {
@@ -207,6 +218,9 @@ model User {
   contentPurchases     ContentPurchase[]         @relation("UserContentPurchases")
   payoutRequests       PayoutRequest[]           @relation("UserPayoutRequests")
   refundRequests       RefundRequest[]           @relation("UserRefundRequests")
+  streamTickets        StreamTicket[]            @relation("UserStreamTickets")
+  liveTipsSent         LiveTip[]                 @relation("TipsSent")
+  chatMessagesSent     LiveChatMessage[]         @relation("UserLiveChatMessages")
 
   @@index([email])
   @@index([username])
@@ -364,8 +378,82 @@ model CreatorProfile {
   videos             ContentVideo[]   @relation("CreatorVideos")
   contentPurchases   ContentPurchase[] @relation("CreatorContentSales")
   payoutRequests     PayoutRequest[]  @relation("CreatorPayoutRequests")
+  liveStreams        LiveStream[]     @relation("CreatorLiveStreams")
+  tipsReceived       LiveTip[]        @relation("TipsReceived")
 
   @@index([userId])
+}
+
+model LiveStream {
+  id                String           @id @default(uuid())
+  creatorId         String
+  creator           CreatorProfile   @relation("CreatorLiveStreams", fields: [creatorId], references: [id], onDelete: Cascade)
+  title             String
+  description       String?          @db.Text
+  category          String
+  thumbnailUrl      String
+  accessType        StreamAccessType @default(TICKETED_PPV)
+  ticketPrice       Float            @default(0)
+  status            StreamStatus     @default(SCHEDULED)
+  scheduledStartTime DateTime
+  durationMinutes   Int              @default(60)
+  currentViewersCount Int            @default(0)
+  peakViewersCount  Int              @default(0)
+  totalRevenue      Float            @default(0)
+  streamUrl         String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  tickets           StreamTicket[]   @relation("StreamTickets")
+  tips              LiveTip[]        @relation("StreamTips")
+  chatMessages      LiveChatMessage[] @relation("StreamChatMessages")
+
+  @@index([creatorId])
+  @@index([status])
+  @@index([accessType])
+}
+
+model StreamTicket {
+  id           String     @id @default(uuid())
+  streamId     String
+  stream       LiveStream @relation("StreamTickets", fields: [streamId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User       @relation("UserStreamTickets", fields: [userId], references: [id], onDelete: Cascade)
+  pricePaid    Float
+  purchasedAt  DateTime   @default(now())
+
+  @@unique([streamId, userId])
+}
+
+model LiveTip {
+  id           String     @id @default(uuid())
+  streamId     String
+  stream       LiveStream @relation("StreamTips", fields: [streamId], references: [id], onDelete: Cascade)
+  senderId     String
+  sender       User       @relation("TipsSent", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId   String
+  receiver     CreatorProfile @relation("TipsReceived", fields: [receiverId], references: [id], onDelete: Cascade)
+  amount       Float
+  message      String?
+  createdAt    DateTime   @default(now())
+
+  @@index([streamId])
+}
+
+model LiveChatMessage {
+  id           String     @id @default(uuid())
+  streamId     String
+  stream       LiveStream @relation("StreamChatMessages", fields: [streamId], references: [id], onDelete: Cascade)
+  senderId     String
+  sender       User       @relation("UserLiveChatMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  senderName   String
+  senderAvatar String
+  content      String     @db.Text
+  isTipMessage Boolean    @default(false)
+  tipAmount    Float?
+  createdAt    DateTime   @default(now())
+
+  @@index([streamId])
 }
 
 model ContentAlbum {
@@ -656,7 +744,7 @@ model PaymentTransaction {
   currency        String        @default("USD")
   type            PaymentType
   status          PaymentStatus @default(PENDING)
-  provider        String        @default("STRIPE_CONNECT") // STRIPE_CONNECT, ADYEN, VELORA_WALLET
+  provider        String        @default("STRIPE_CONNECT")
   metadata        String?
   createdAt       DateTime      @default(now())
 

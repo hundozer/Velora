@@ -43,6 +43,10 @@ export type VisibilityLevel =
 
 export type ContentPublicationStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 
+export type StreamAccessType = "FREE" | "TICKETED_PPV" | "SUBSCRIBER_ONLY" | "PRIVATE_ONE_ON_ONE";
+
+export type StreamStatus = "SCHEDULED" | "LIVE" | "ENDED" | "CANCELLED" | "SUSPENDED";
+
 export type MessageStatus = "SENT" | "DELIVERED" | "READ";
 
 export type PaymentType =
@@ -82,6 +86,8 @@ export type NotificationType =
   | "NEW_SUBSCRIBER"
   | "PAYMENT_RECEIVED"
   | "PAYOUT_STATUS_UPDATE"
+  | "STREAM_SCHEDULED"
+  | "STREAM_LIVE_NOW"
   | "REPORT_STATUS_UPDATE";
 
 export type ModerationActionType =
@@ -89,7 +95,8 @@ export type ModerationActionType =
   | "SUSPEND_ACCOUNT_7_DAYS"
   | "SUSPEND_ACCOUNT_30_DAYS"
   | "BAN_USER_PERMANENT"
-  | "REMOVE_CONTENT";
+  | "REMOVE_CONTENT"
+  | "SUSPEND_LIVE_STREAM";
 
 export interface User {
   id: string;
@@ -151,6 +158,47 @@ export interface Profile {
   coverPhotoUrl?: string;
   avatarUrl: string;
   galleryImages: MediaItem[];
+}
+
+export interface LiveStream {
+  id: string;
+  creatorId: string;
+  creatorName: string;
+  creatorAvatar: string;
+  title: string;
+  description: string;
+  category: string;
+  thumbnailUrl: string;
+  accessType: StreamAccessType;
+  ticketPrice: number;
+  status: StreamStatus;
+  scheduledStartTime: string;
+  durationMinutes: number;
+  currentViewersCount: number;
+  peakViewersCount: number;
+  totalRevenue: number;
+  streamUrl?: string;
+  createdAt: string;
+}
+
+export interface LiveChatMessage {
+  id: string;
+  streamId: string;
+  senderName: string;
+  senderAvatar: string;
+  content: string;
+  isTipMessage?: boolean;
+  tipAmount?: number;
+  createdAt: string;
+}
+
+export interface LiveTip {
+  id: string;
+  streamId: string;
+  senderName: string;
+  amount: number;
+  message?: string;
+  createdAt: string;
 }
 
 export interface MediaItem {

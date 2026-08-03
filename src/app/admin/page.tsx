@@ -12,6 +12,7 @@ import {
   MOCK_CREATOR_APPLICATIONS,
   MOCK_PAYOUT_REQUESTS,
   MOCK_REFUND_REQUESTS,
+  MOCK_LIVE_STREAMS,
 } from "@/lib/mockData";
 import {
   VerificationRequest,
@@ -20,6 +21,7 @@ import {
   CreatorApplication,
   PayoutRequest,
   RefundItem,
+  LiveStream,
 } from "@/types";
 import {
   ShieldCheck,
@@ -40,6 +42,7 @@ import {
   ArrowUpRight,
   RefreshCw,
   Receipt,
+  Radio,
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
@@ -49,7 +52,22 @@ export default function AdminDashboardPage() {
   const [creatorApps, setCreatorApps] = useState<CreatorApplication[]>(MOCK_CREATOR_APPLICATIONS);
   const [payouts, setPayouts] = useState<PayoutRequest[]>(MOCK_PAYOUT_REQUESTS);
   const [refunds, setRefunds] = useState<RefundItem[]>(MOCK_REFUND_REQUESTS);
+  const [streams, setStreams] = useState<LiveStream[]>(MOCK_LIVE_STREAMS);
   const [logs, setLogs] = useState<ModerationLog[]>(MOCK_MODERATION_LOGS);
+
+  const handleSuspendStream = (streamId: string, title: string) => {
+    setStreams(streams.map((s) => (s.id === streamId ? { ...s, status: "SUSPENDED" } : s)));
+
+    const newLog: ModerationLog = {
+      id: "log-" + Date.now(),
+      adminUsername: "admin_compliance",
+      targetUsername: title,
+      action: "SUSPEND_LIVE_STREAM",
+      reason: "Emergency live stream suspension enforced by compliance desk.",
+      timestamp: "Just now",
+    };
+    setLogs([newLog, ...logs]);
+  };
 
   const handleApprovePayout = (id: string) => {
     setPayouts(payouts.map((p) => (p.id === id ? { ...p, status: "APPROVED" } : p)));
@@ -63,14 +81,6 @@ export default function AdminDashboardPage() {
     setRefunds(refunds.map((r) => (r.id === id ? { ...r, status: "APPROVED" } : r)));
   };
 
-  const handleApproveVerification = (id: string) => {
-    setVerifications(verifications.map((v) => (v.id === id ? { ...v, status: "VERIFIED" } : v)));
-  };
-
-  const handleRejectVerification = (id: string) => {
-    setVerifications(verifications.map((v) => (v.id === id ? { ...v, status: "REJECTED" } : v)));
-  };
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-left">
       {/* Header */}
@@ -81,19 +91,19 @@ export default function AdminDashboardPage() {
           </div>
           <h1 className="text-3xl font-serif font-bold text-velora-textPrimary flex items-center gap-3">
             <ShieldCheck className="w-8 h-8 text-red-400" />
-            Compliance, Financial & Moderation Portal
+            Compliance, Financial & Live Stream Portal
           </h1>
           <p className="text-xs text-velora-textSecondary mt-1">
-            Audit platform financial volume, approve creator payouts, process refunds, and manage compliance.
+            Audit live broadcasts, approve creator payouts, process refunds, and monitor compliance.
           </p>
         </div>
 
         <Tabs
           tabs={[
             { id: "FINANCES", label: "Financial Desk & Payouts", count: payouts.filter((p) => p.status === "PENDING").length },
+            { id: "STREAMS", label: "Live Stream Supervision", count: streams.filter((s) => s.status === "LIVE").length },
             { id: "VERIFICATION", label: "Verification Queue", count: verifications.filter((v) => v.status === "PENDING").length },
-            { id: "CREATORS", label: "Creator Mode Applications", count: creatorApps.filter((c) => c.status === "PENDING").length },
-            { id: "REPORTS", label: "Reports Investigation Desk", count: reports.filter((r) => r.status !== "RESOLVED").length },
+            { id: "CREATORS", label: "Creator Applications", count: creatorApps.filter((c) => c.status === "PENDING").length },
             { id: "AUDIT", label: "Moderation Log History", count: logs.length },
           ]}
           activeTab={activeTab}
@@ -113,10 +123,12 @@ export default function AdminDashboardPage() {
 
         <Card variant="glass" className="p-6 space-y-2">
           <span className="text-xs font-semibold text-velora-textMuted uppercase tracking-wider block">
-            Platform Commission Earned
+            Active Live Broadcasts
           </span>
-          <span className="text-3xl font-serif font-bold text-emerald-400">$3,240.00</span>
-          <span className="text-[11px] text-velora-textMuted font-mono">15% - 20% Cut</span>
+          <span className="text-3xl font-serif font-bold text-red-400">
+            {streams.filter((s) => s.status === "LIVE").length}
+          </span>
+          <span className="text-[11px] text-velora-textMuted font-mono">Real-time WebRTC</span>
         </Card>
 
         <Card variant="glass" className="p-6 space-y-2">
@@ -140,10 +152,52 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
+      {/* STREAMS TAB */}
+      {activeTab === "STREAMS" && (
+        <div className="space-y-6">
+          <h2 className="text-xl font-serif font-bold text-velora-textPrimary flex items-center gap-2">
+            <Radio className="w-5 h-5 text-red-400" />
+            Live Stream Supervision & Moderation
+          </h2>
+
+          <div className="space-y-4">
+            {streams.map((s) => (
+              <Card key={s.id} variant="glass" className="p-6 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-bold text-velora-textPrimary">{s.title}</h3>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                        s.status === "LIVE" ? "bg-red-500/20 text-red-400 animate-pulse" : "bg-white/10 text-velora-textMuted"
+                      }`}>
+                        {s.status}
+                      </span>
+                    </div>
+                    <p className="text-xs text-velora-textMuted mt-0.5">
+                      Host: {s.creatorName} • Category: {s.category} • Viewers: {s.currentViewersCount}
+                    </p>
+                  </div>
+
+                  {s.status === "LIVE" && (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      className="text-xs font-bold gap-2"
+                      onClick={() => handleSuspendStream(s.id, s.title)}
+                    >
+                      <Ban className="w-4 h-4" /> Emergency Suspend Stream
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* FINANCES TAB */}
       {activeTab === "FINANCES" && (
         <div className="space-y-8">
-          {/* Creator Payout Approvals Desk */}
           <div className="space-y-4">
             <h2 className="text-xl font-serif font-bold text-velora-textPrimary flex items-center gap-2">
               <ArrowUpRight className="w-5 h-5 text-amber-400" />
@@ -200,74 +254,46 @@ export default function AdminDashboardPage() {
               ))}
             </div>
           </div>
-
-          {/* Refund Review Queue */}
-          <div className="space-y-4 pt-4 border-t border-white/10">
-            <h2 className="text-xl font-serif font-bold text-velora-textPrimary flex items-center gap-2">
-              <RefreshCw className="w-5 h-5 text-purple-300" />
-              Member Refund Review Queue
-            </h2>
-
-            <div className="space-y-3">
-              {refunds.map((r) => (
-                <Card key={r.id} variant="glass" className="p-6 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-base font-bold text-velora-textPrimary">Member: @{r.username}</h3>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-purple-500/20 text-purple-300 font-bold">
-                          {r.status}
-                        </span>
-                      </div>
-                      <p className="text-xs text-velora-textMuted mt-0.5">
-                        Item: {r.productTitle} • Requested: {r.requestedAt}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <span className="text-lg font-serif font-bold text-velora-textPrimary">${r.amount.toFixed(2)}</span>
-                      {r.status === "PENDING" && (
-                        <Button
-                          variant="gold"
-                          size="sm"
-                          className="text-xs font-bold"
-                          onClick={() => handleApproveRefund(r.id)}
-                        >
-                          Approve Refund
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-velora-textMuted glass-panel p-3 rounded-xl">{r.reason}</p>
-                </Card>
-              ))}
-            </div>
-          </div>
         </div>
       )}
 
-      {/* VERIFICATION QUEUE TAB */}
-      {activeTab === "VERIFICATION" && (
+      {/* MODERATION HISTORY LOG TAB */}
+      {activeTab === "AUDIT" && (
         <div className="space-y-6">
           <h2 className="text-xl font-serif font-bold text-velora-textPrimary">
-            Level 1 to Level 4 Verification Queue
+            Moderation Action Audit Log
           </h2>
 
-          <div className="space-y-4">
-            {verifications.map((v) => (
-              <Card key={v.id} variant="glass" className="p-6 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-bold text-velora-textPrimary">@{v.user.username}</h3>
-                      <Badge type="custom" label={v.requestedLevel.replace(/_/g, " ")} />
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+          <Card variant="glass" className="p-6">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left text-velora-textSecondary">
+                <thead className="text-[10px] font-bold uppercase tracking-wider text-velora-textMuted border-b border-white/10 pb-2">
+                  <tr>
+                    <th className="py-2">Timestamp</th>
+                    <th className="py-2">Admin</th>
+                    <th className="py-2">Target</th>
+                    <th className="py-2">Enforced Action</th>
+                    <th className="py-2">Reason</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {logs.map((log) => (
+                    <tr key={log.id}>
+                      <td className="py-3 font-mono text-[11px]">{log.timestamp}</td>
+                      <td className="py-3 font-bold text-velora-gold">@{log.adminUsername}</td>
+                      <td className="py-3 text-velora-textPrimary font-semibold">{log.targetUsername}</td>
+                      <td className="py-3">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300">
+                          {log.action}
+                        </span>
+                      </td>
+                      <td className="py-3">{log.reason}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         </div>
       )}
     </div>

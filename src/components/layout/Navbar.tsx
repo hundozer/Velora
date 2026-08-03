@@ -95,6 +95,18 @@ export const Navbar: React.FC = () => {
           </Link>
 
           <Link
+            href="/live"
+            className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
+              pathname.startsWith("/live")
+                ? "bg-red-500/20 text-red-400 border border-red-500/40"
+                : "text-red-400/90 hover:text-red-400 hover:bg-red-500/10"
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            Live Events
+          </Link>
+
+          <Link
             href="/messages"
             className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
               pathname === "/messages"
