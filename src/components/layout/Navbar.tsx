@@ -31,7 +31,7 @@ import { Globe } from "lucide-react";
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
   const { user, profile, role, switchRole, logout } = useAuth();
-  const { language, setLanguage } = useTranslation();
+  const { language, setLanguage, t } = useTranslation();
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -75,7 +75,7 @@ export const Navbar: React.FC = () => {
             }`}
           >
             <Compass className="w-4 h-4" />
-            Feed
+            {t("nav.feed")}
           </Link>
 
           <Link
@@ -87,7 +87,7 @@ export const Navbar: React.FC = () => {
             }`}
           >
             <Compass className="w-4 h-4" />
-            Discover
+            {t("nav.discover")}
           </Link>
 
           <Link
@@ -99,7 +99,7 @@ export const Navbar: React.FC = () => {
             }`}
           >
             <Sparkles className="w-4 h-4 text-amber-400" />
-            Creators
+            {t("nav.creators")}
           </Link>
 
           <Link
@@ -111,7 +111,7 @@ export const Navbar: React.FC = () => {
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            Live Events
+            {t("nav.live")}
           </Link>
 
           <Link
@@ -123,7 +123,7 @@ export const Navbar: React.FC = () => {
             }`}
           >
             <Users className="w-4 h-4 text-velora-gold" />
-            Communities
+            {t("nav.communities")}
           </Link>
 
           <Link
@@ -135,7 +135,7 @@ export const Navbar: React.FC = () => {
             }`}
           >
             <Calendar className="w-4 h-4 text-amber-400" />
-            Events
+            {t("nav.events")}
           </Link>
 
           <Link
@@ -147,7 +147,7 @@ export const Navbar: React.FC = () => {
             }`}
           >
             <MessageSquare className="w-4 h-4" />
-            Messages
+            {t("nav.messages")}
           </Link>
 
           {role === "CREATOR" && (
@@ -373,10 +373,10 @@ export const Navbar: React.FC = () => {
           ) : (
             <div className="flex items-center gap-3">
               <Link href="/login" className="text-xs uppercase tracking-wider font-semibold text-velora-textSecondary hover:text-velora-textPrimary">
-                Sign In
+                {t("auth.login")}
               </Link>
               <Link href="/register" className="px-5 py-2 text-xs uppercase tracking-wider font-bold rounded-full bg-gold-gradient text-velora-bg shadow-gold-glow">
-                Enter Velora
+                {t("auth.register")}
               </Link>
             </div>
           )}

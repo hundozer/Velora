@@ -1,5 +1,6 @@
 {
   "nav": {
+    "feed": "Flux",
     "discover": "Descoperă",
     "creators": "Creatori",
     "live": "Evenimente Live",
@@ -9,6 +10,13 @@
     "wallet": "Seif",
     "settings": "Setări",
     "membership": "Abonament"
+  },
+  "hero": {
+    "tag": "Piață de Descoperire Socială pentru Adulți",
+    "headline": "Cunoaște oameni care caută aceleași experiențe.",
+    "subhead": "Alătură-te unei comunități private de adulți verificați în căutare de conexiuni, chimie și experiențe de neuitat.",
+    "join_cta": "Intră în Velora",
+    "explore_cta": "Explorează Membrii"
   },
   "auth": {
     "login": "Autentificare",
@@ -20,7 +28,18 @@
     "online_now": "Online Acum",
     "save": "Salvează",
     "cancel": "Anulează",
-    "search": "Caută...",
-    "filter": "Filtre"
+    "search": "Caută persoane din apropiere...",
+    "filter": "Filtre și Preferințe",
+    "enter_world": "Intră în Lume",
+    "send_message": "Trimite Mesaj Privat"
+  },
+  "discovery": {
+    "title": "Piață de Descoperire Socială",
+    "subtitle": "Explorează adulți verificați în căutare de chimie, atracție și experiențe private.",
+    "all": "Toți Membrii",
+    "singles": "Singuri",
+    "couples": "Cupluri",
+    "creators": "Creatori",
+    "lifestyle": "Membri Lifestyle"
   }
 }

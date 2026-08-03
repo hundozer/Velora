@@ -20,7 +20,10 @@ import {
   Crown,
 } from "lucide-react";
 
+import { useTranslation } from "@/context/LanguageContext";
+
 export default function DiscoveryMarketplacePage() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("DISCOVER");
   const [selectedType, setSelectedType] = useState<"ALL" | "SINGLE" | "COUPLE" | "CREATOR" | "LIFESTYLE">("ALL");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
@@ -53,21 +56,21 @@ export default function DiscoveryMarketplacePage() {
           </div>
           <h1 className="text-3xl font-serif font-bold text-velora-textPrimary flex items-center gap-3">
             <Compass className="w-8 h-8 text-velora-gold" />
-            Adult Social Discovery Marketplace
+            {t("discovery.title")}
           </h1>
           <p className="text-xs text-velora-textSecondary mt-1">
-            Explore verified adults looking for chemistry, attraction, casual encounters, and private experiences.
+            {t("discovery.subtitle")}
           </p>
         </div>
 
         {/* Category Tabs */}
         <Tabs
           tabs={[
-            { id: "DISCOVER", label: "Discover", count: MOCK_PROFILES.length },
+            { id: "DISCOVER", label: t("nav.discover"), count: MOCK_PROFILES.length },
             { id: "NEARBY", label: "Nearby", count: MOCK_PROFILES.length },
-            { id: "ONLINE", label: "Online Now", count: MOCK_PROFILES.filter((p) => p.isOnline).length },
-            { id: "VERIFIED", label: "Verified Members", count: MOCK_PROFILES.filter((p) => p.verified).length },
-            { id: "CREATORS", label: "Creators", count: MOCK_PROFILES.filter((p) => p.categories && p.categories.length > 0).length },
+            { id: "ONLINE", label: t("common.online_now"), count: MOCK_PROFILES.filter((p) => p.isOnline).length },
+            { id: "VERIFIED", label: t("common.verified"), count: MOCK_PROFILES.filter((p) => p.verified).length },
+            { id: "CREATORS", label: t("nav.creators"), count: MOCK_PROFILES.filter((p) => p.categories && p.categories.length > 0).length },
           ]}
           activeTab={activeTab}
           onChange={setActiveTab}
@@ -78,11 +81,11 @@ export default function DiscoveryMarketplacePage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0">
           {[
-            { id: "ALL", label: "All Members", icon: Users },
-            { id: "SINGLE", label: "Singles", icon: User },
-            { id: "COUPLE", label: "Couples", icon: Users },
-            { id: "CREATOR", label: "Creators", icon: Crown },
-            { id: "LIFESTYLE", label: "Lifestyle Members", icon: Sparkles },
+            { id: "ALL", label: t("discovery.all"), icon: Users },
+            { id: "SINGLE", label: t("discovery.singles"), icon: User },
+            { id: "COUPLE", label: t("discovery.couples"), icon: Users },
+            { id: "CREATOR", label: t("discovery.creators"), icon: Crown },
+            { id: "LIFESTYLE", label: t("discovery.lifestyle"), icon: Sparkles },
           ].map((type) => {
             const IconComponent = type.icon;
             const isSelected = selectedType === type.id;

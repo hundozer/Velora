@@ -22,7 +22,11 @@ import {
   UserCheck,
 } from "lucide-react";
 
+import { useTranslation } from "@/context/LanguageContext";
+
 export default function LandingPage() {
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-16 pb-16 text-left">
       {/* HERO SECTION: ADULT-ONLY SOCIAL DISCOVERY */}
@@ -43,17 +47,16 @@ export default function LandingPage() {
         <div className="relative z-10 max-w-5xl mx-auto px-4 text-center space-y-8 py-20">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-velora-gold/40 text-velora-gold text-xs font-semibold uppercase tracking-widest backdrop-blur-md shadow-gold-glow">
             <Sparkles className="w-3.5 h-3.5 text-velora-gold animate-pulse" />
-            <span>Adults-Only Social Discovery Marketplace</span>
+            <span>{t("hero.tag")}</span>
           </div>
 
           <div className="space-y-4">
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-serif font-bold tracking-tight text-velora-textPrimary leading-tight">
-              Meet people who are open to <br className="hidden sm:inline" />
-              <span className="text-gold-gradient italic">the same experiences.</span>
+              {t("hero.headline")}
             </h1>
 
             <p className="text-base sm:text-lg text-velora-textSecondary max-w-2xl mx-auto leading-relaxed">
-              Join a private community of verified adults looking for connections, chemistry and unforgettable experiences.
+              {t("hero.subhead")}
             </p>
           </div>
 
@@ -65,7 +68,7 @@ export default function LandingPage() {
                 size="lg"
                 className="w-full sm:w-auto text-sm font-bold uppercase tracking-wider px-8 py-4 shadow-gold-glow flex items-center justify-center gap-2"
               >
-                <span>Join Velora</span>
+                <span>{t("hero.join_cta")}</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
@@ -76,7 +79,7 @@ export default function LandingPage() {
                 size="lg"
                 className="w-full sm:w-auto text-sm font-semibold uppercase tracking-wider px-8 py-4 border-white/20 hover:border-velora-gold/50"
               >
-                Explore Members
+                {t("hero.explore_cta")}
               </Button>
             </Link>
           </div>

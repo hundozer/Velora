@@ -1,5 +1,6 @@
 {
   "nav": {
+    "feed": "Příspěvky",
     "discover": "Objevovat",
     "creators": "Tvůrci",
     "live": "Živé Přenosy",
@@ -10,6 +11,13 @@
     "settings": "Nastavení",
     "membership": "Členství"
   },
+  "hero": {
+    "tag": "Tržiště sociálního objevování pro dospělé",
+    "headline": "Seznamte se s lidmi, kteří hledají stejné zážitky.",
+    "subhead": "Připojte se k soukromé komunitě ověřených dospělých hledajících spojení, chemii a nezapomenutelné zážitky.",
+    "join_cta": "Vstoupit do Velora",
+    "explore_cta": "Procházet Členy"
+  },
   "auth": {
     "login": "Přihlásit se",
     "register": "Vstoupit do Velora",
@@ -17,10 +25,21 @@
   },
   "common": {
     "verified": "Ověřený Člen",
-    "online_now": "Nyní Nápady",
+    "online_now": "Nyní Online",
     "save": "Uložit Změny",
     "cancel": "Zrušit",
-    "search": "Hledat...",
-    "filter": "Filtry"
+    "search": "Hledat lidi v okolí...",
+    "filter": "Filtry a Preferencí",
+    "enter_world": "Vstoupit do Světa",
+    "send_message": "Poslat Soukromou Zprávu"
+  },
+  "discovery": {
+    "title": "Tržiště Sociálního Objevování",
+    "subtitle": "Prozkoumejte ověřené dospělé hledající chemii, přitažlivost a soukromé zážitky.",
+    "all": "Všichni Členové",
+    "singles": "Nezadaní",
+    "couples": "Páry",
+    "creators": "Tvůrci",
+    "lifestyle": "Lifestyle Členové"
   }
 }

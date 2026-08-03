@@ -1,5 +1,6 @@
 {
   "nav": {
+    "feed": "Príspevky",
     "discover": "Objavovať",
     "creators": "Tvorcovia",
     "live": "Živé Prenosy",
@@ -9,6 +10,13 @@
     "wallet": "Trezor",
     "settings": "Nastavenia",
     "membership": "Členstvo"
+  },
+  "hero": {
+    "tag": "Trhovisko sociálneho objavovania pre dospelých",
+    "headline": "Zoznámte sa s ľuďmi, ktorí hľadajú rovnaké zážitky.",
+    "subhead": "Pridajte sa k súkromnej komunite overených dospelých hľadajúcich spojenia, chémiu a nezabudnuteľné zážitky.",
+    "join_cta": "Vstúpiť do Velora",
+    "explore_cta": "Prechádzať Členov"
   },
   "auth": {
     "login": "Prihlásiť sa",
@@ -20,7 +28,18 @@
     "online_now": "Teraz Online",
     "save": "Uložiť Zmeny",
     "cancel": "Zrušiť",
-    "search": "Hľadať...",
-    "filter": "Filtre"
+    "search": "Hľadať ľudí v okolí...",
+    "filter": "Filtre a Preferencie",
+    "enter_world": "Vstúpiť do Sveta",
+    "send_message": "Poslať Súkromnú Správu"
+  },
+  "discovery": {
+    "title": "Trhovisko Sociálneho Objavovania",
+    "subtitle": "Preskúmajte overených dospelých hľadajúcich chémiu, príťažlivosť a súkromné zážitky.",
+    "all": "Všetci Členovia",
+    "singles": "Nezadaní",
+    "couples": "Páry",
+    "creators": "Tvorcovia",
+    "lifestyle": "Lifestyle Členovia"
   }
 }

@@ -1,5 +1,6 @@
 {
   "nav": {
+    "feed": "Hírcsatorna",
     "discover": "Felfedezés",
     "creators": "Alkotók",
     "live": "Élő Események",
@@ -9,6 +10,13 @@
     "wallet": "Széf",
     "settings": "Beállítások",
     "membership": "Tagság"
+  },
+  "hero": {
+    "tag": "Felnőtt Közösségi Felfedező Piactér",
+    "headline": "Találkozz olyan emberekkel, akik ugyanazt a élményt keresik.",
+    "subhead": "Csatlakozz hitelesített felnőttek privát közösségéhez, akik kapcsolatot, kémiát és felejthetetlen élményeket keresnek.",
+    "join_cta": "Csatlakozás a Velorához",
+    "explore_cta": "Tagok Felfedezése"
   },
   "auth": {
     "login": "Bejelentkezés",
@@ -20,7 +28,18 @@
     "online_now": "Most Elérhető",
     "save": "Mentés",
     "cancel": "Mégse",
-    "search": "Keresés...",
-    "filter": "Szűrők"
+    "search": "Közeli tagok keresése...",
+    "filter": "Szűrők és Beállítások",
+    "enter_world": "Belépés",
+    "send_message": "Privát Üzenet Küldése"
+  },
+  "discovery": {
+    "title": "Felnőtt Felfedező Piactér",
+    "subtitle": "Fedezd fel a hitelesített felnőtteket, akik kémiát, vonzalmat és privát élményeket keresnek.",
+    "all": "Összes Tag",
+    "singles": "Egyedülállók",
+    "couples": "Párok",
+    "creators": "Alkotók",
+    "lifestyle": "Lifestyle Tagok"
   }
 }

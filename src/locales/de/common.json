@@ -1,5 +1,6 @@
 {
   "nav": {
+    "feed": "Feed",
     "discover": "Entdecken",
     "creators": "Creators",
     "live": "Live-Events",
@@ -9,6 +10,13 @@
     "wallet": "Tresor",
     "settings": "Einstellungen",
     "membership": "Mitgliedschaft"
+  },
+  "hero": {
+    "tag": "Adults-Only Social Discovery Marketplace",
+    "headline": "Lerne Menschen kennen, die dieselben Erlebnisse suchen.",
+    "subhead": "Trete einer privaten Community verifizierter Erwachsener bei, die nach Kontakten, Chemie und unvergesslichen Erlebnissen suchen.",
+    "join_cta": "Velora Beitreten",
+    "explore_cta": "Mitglieder Entdecken"
   },
   "auth": {
     "login": "Anmelden",
@@ -20,7 +28,18 @@
     "online_now": "Jetzt Online",
     "save": "Speichern",
     "cancel": "Abbrechen",
-    "search": "Suchen...",
-    "filter": "Filter"
+    "search": "Menschen in der Nähe suchen...",
+    "filter": "Filter & Präferenzen",
+    "enter_world": "Welt Betreten",
+    "send_message": "Private Nachricht Senden"
+  },
+  "discovery": {
+    "title": "Adult Social Discovery Marketplace",
+    "subtitle": "Entdecke verifizierte Erwachsene auf der Suche nach Anziehung, Chemie und privaten Erlebnissen.",
+    "all": "Alle Mitglieder",
+    "singles": "Singles",
+    "couples": "Paare",
+    "creators": "Creators",
+    "lifestyle": "Lifestyle-Mitglieder"
   }
 }

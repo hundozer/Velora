@@ -4,16 +4,18 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Compass, MessageSquare, Users, Radio, User } from "lucide-react";
+import { useTranslation } from "@/context/LanguageContext";
 
 export const MobileNavigation: React.FC = () => {
   const pathname = usePathname();
+  const { t } = useTranslation();
 
   const navItems = [
-    { href: "/discovery", label: "Discover", icon: Compass },
-    { href: "/messages", label: "Messages", icon: MessageSquare },
-    { href: "/communities", label: "Communities", icon: Users },
-    { href: "/live", label: "Live", icon: Radio },
-    { href: "/dashboard", label: "Profile", icon: User },
+    { href: "/discovery", label: t("nav.discover"), icon: Compass },
+    { href: "/messages", label: t("nav.messages"), icon: MessageSquare },
+    { href: "/communities", label: t("nav.communities"), icon: Users },
+    { href: "/live", label: t("nav.live"), icon: Radio },
+    { href: "/dashboard", label: t("nav.feed"), icon: User },
   ];
 
   return (

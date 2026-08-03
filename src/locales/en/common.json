@@ -1,26 +1,45 @@
 {
   "nav": {
-    "discover": "Discover People",
-    "creators": "Creators & Salons",
-    "live": "Live Experiences",
-    "communities": "Private Clubs",
-    "events": "Exclusive Events",
-    "messages": "Private Chat",
+    "feed": "Feed",
+    "discover": "Discover",
+    "creators": "Creators",
+    "live": "Live Events",
+    "communities": "Communities",
+    "events": "Events",
+    "messages": "Messages",
     "wallet": "Vault",
-    "settings": "Privacy & Settings",
+    "settings": "Settings",
     "membership": "Inner Circle"
+  },
+  "hero": {
+    "tag": "Adults-Only Social Discovery Marketplace",
+    "headline": "Meet people who are open to the same experiences.",
+    "subhead": "Join a private community of verified adults looking for connections, chemistry and unforgettable experiences.",
+    "join_cta": "Join Velora",
+    "explore_cta": "Explore Members"
   },
   "auth": {
     "login": "Sign In",
-    "register": "Enter Velora",
+    "register": "Join Velora",
     "logout": "Sign Out"
   },
   "common": {
     "verified": "Verified Member",
     "online_now": "Online Now",
-    "save": "Save Identity",
+    "save": "Save Changes",
     "cancel": "Cancel",
     "search": "Discover people nearby...",
-    "filter": "Preferences & Filters"
+    "filter": "Filters & Preferences",
+    "enter_world": "Enter World",
+    "send_message": "Send Private Message"
+  },
+  "discovery": {
+    "title": "Adult Social Discovery Marketplace",
+    "subtitle": "Explore verified adults looking for chemistry, attraction, casual encounters, and private experiences.",
+    "all": "All Members",
+    "singles": "Singles",
+    "couples": "Couples",
+    "creators": "Creators",
+    "lifestyle": "Lifestyle Members"
   }
 }
