@@ -95,7 +95,7 @@ export default function LoginPage() {
           {/* Auth0 Hosted Universal Login Button */}
           <div className="space-y-2 pb-2 border-b border-white/10">
             <a
-              href="/auth/login"
+              href="/api/auth/login"
               className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-velora-bg font-bold text-xs uppercase tracking-wider shadow-gold-glow flex items-center justify-center gap-2 hover:scale-[1.02] transition-all"
             >
               <Lock className="w-4 h-4" />
