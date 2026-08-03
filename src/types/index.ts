@@ -1,4 +1,4 @@
-export type UserRole = "MEMBER" | "CREATOR" | "COUPLE" | "ADMIN";
+export type UserRole = "MEMBER" | "CREATOR" | "COUPLE" | "ADMIN" | "AMBASSADOR";
 
 export type VerificationStatus = "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED";
 
@@ -47,6 +47,10 @@ export type StreamAccessType = "FREE" | "TICKETED_PPV" | "SUBSCRIBER_ONLY" | "PR
 
 export type StreamStatus = "SCHEDULED" | "LIVE" | "ENDED" | "CANCELLED" | "SUSPENDED";
 
+export type CommunityType = "LOCATION_CITY" | "INTEREST_GROUP" | "CREATOR_FAN_CLUB" | "PRIVATE_INVITE_ONLY";
+
+export type EventType = "SOCIAL_MEETUP" | "NIGHTLIFE_VIP" | "CREATOR_APPEARANCE" | "PRIVATE_COMMUNITY_GATHERING";
+
 export type MessageStatus = "SENT" | "DELIVERED" | "READ";
 
 export type PaymentType =
@@ -54,6 +58,7 @@ export type PaymentType =
   | "PREMIUM_ALBUM_UNLOCK"
   | "PRIVATE_VIDEO_UNLOCK"
   | "LIVE_EXPERIENCE_TICKET"
+  | "EVENT_ENTRY_TICKET"
   | "CREATOR_TIP"
   | "WALLET_TOPUP";
 
@@ -88,6 +93,9 @@ export type NotificationType =
   | "PAYOUT_STATUS_UPDATE"
   | "STREAM_SCHEDULED"
   | "STREAM_LIVE_NOW"
+  | "COMMUNITY_POST"
+  | "EVENT_INVITATION"
+  | "REFERRAL_CONVERSION"
   | "REPORT_STATUS_UPDATE";
 
 export type ModerationActionType =
@@ -96,7 +104,8 @@ export type ModerationActionType =
   | "SUSPEND_ACCOUNT_30_DAYS"
   | "BAN_USER_PERMANENT"
   | "REMOVE_CONTENT"
-  | "SUSPEND_LIVE_STREAM";
+  | "SUSPEND_LIVE_STREAM"
+  | "REMOVE_COMMUNITY_POST";
 
 export interface User {
   id: string;
@@ -105,6 +114,7 @@ export interface User {
   role: UserRole;
   verificationStatus: VerificationStatus;
   verificationLevel: VerificationLevel;
+  reputationBadge?: string;
   createdAt: string;
   avatarUrl?: string;
 }
@@ -133,6 +143,9 @@ export interface Profile {
   partnerAge?: number;
   partnerGender?: Gender;
 
+  // Reputation & Ambassador
+  reputationBadge?: string;
+
   // Creator Info if Creator
   categories?: string[];
   monthlySubscriptionPrice?: number;
@@ -140,7 +153,7 @@ export interface Profile {
   subscribersCount?: number;
   totalContentCount?: number;
 
-  // Privacy & Message Permissions Settings
+  // Privacy Settings
   publicProfileVisibility: boolean;
   photoVisibilityDefault: VisibilityLevel;
   locationPrecision: "CITY" | "EXACT" | "DISTANCE_ONLY";
@@ -158,6 +171,74 @@ export interface Profile {
   coverPhotoUrl?: string;
   avatarUrl: string;
   galleryImages: MediaItem[];
+}
+
+export interface CommunityItem {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  coverImageUrl: string;
+  type: CommunityType;
+  location?: string;
+  rules: string[];
+  isPrivate: boolean;
+  membersCount: number;
+  postsCount: number;
+  isJoined?: boolean;
+}
+
+export interface PostComment {
+  id: string;
+  postId: string;
+  authorName: string;
+  authorAvatar: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface CommunityPost {
+  id: string;
+  communityId: string;
+  authorName: string;
+  authorAvatar: string;
+  authorBadge?: string;
+  title?: string;
+  content: string;
+  mediaUrls?: string[];
+  likesCount: number;
+  commentsCount: number;
+  isLiked?: boolean;
+  comments?: PostComment[];
+  createdAt: string;
+}
+
+export interface VeloraEvent {
+  id: string;
+  hostName: string;
+  hostAvatar: string;
+  hostBadge?: string;
+  title: string;
+  description: string;
+  eventType: EventType;
+  location: string;
+  venueName: string;
+  scheduledDate: string;
+  capacity: number;
+  attendeesCount: number;
+  ticketPrice: number;
+  coverImageUrl: string;
+  rules: string[];
+  isAttending?: boolean;
+}
+
+export interface ReferralStats {
+  uniqueCode: string;
+  referralLink: string;
+  clicksCount: number;
+  registrationsCount: number;
+  conversionsCount: number;
+  rewardsEarnedDays: number;
 }
 
 export interface LiveStream {

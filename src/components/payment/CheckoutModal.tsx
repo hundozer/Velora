@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { PaymentService } from "@/lib/payment/PaymentService";
 import { MOCK_WALLET } from "@/lib/mockData";
+import { PaymentType } from "@/types";
 import { Lock, ShieldCheck, CheckCircle2, Wallet, CreditCard, Sparkles, Receipt } from "lucide-react";
 
 interface CheckoutModalProps {
@@ -14,7 +15,7 @@ interface CheckoutModalProps {
   productTitle: string;
   creatorName: string;
   grossAmount: number;
-  type: "CREATOR_SUBSCRIPTION" | "PREMIUM_ALBUM_UNLOCK" | "PRIVATE_VIDEO_UNLOCK";
+  type: PaymentType;
   onSuccessUnlock?: () => void;
 }
 

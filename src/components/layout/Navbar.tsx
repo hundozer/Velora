@@ -20,6 +20,9 @@ import {
   Heart,
   Wallet,
   Bell,
+  Users,
+  Calendar,
+  Share2,
 } from "lucide-react";
 
 export const Navbar: React.FC = () => {
@@ -104,6 +107,30 @@ export const Navbar: React.FC = () => {
           >
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             Live Events
+          </Link>
+
+          <Link
+            href="/communities"
+            className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
+              pathname.startsWith("/communities")
+                ? "bg-white/10 text-velora-gold border border-velora-gold/30"
+                : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
+            }`}
+          >
+            <Users className="w-4 h-4 text-velora-gold" />
+            Communities
+          </Link>
+
+          <Link
+            href="/events"
+            className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
+              pathname.startsWith("/events")
+                ? "bg-white/10 text-velora-gold border border-velora-gold/30"
+                : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
+            }`}
+          >
+            <Calendar className="w-4 h-4 text-amber-400" />
+            Events
           </Link>
 
           <Link

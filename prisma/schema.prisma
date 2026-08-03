@@ -14,6 +14,7 @@ enum UserRole {
   CREATOR
   COUPLE
   ADMIN
+  AMBASSADOR
 }
 
 enum VerificationStatus {
@@ -88,6 +89,20 @@ enum StreamStatus {
   SUSPENDED
 }
 
+enum CommunityType {
+  LOCATION_CITY
+  INTEREST_GROUP
+  CREATOR_FAN_CLUB
+  PRIVATE_INVITE_ONLY
+}
+
+enum EventType {
+  SOCIAL_MEETUP
+  NIGHTLIFE_VIP
+  CREATOR_APPEARANCE
+  PRIVATE_COMMUNITY_GATHERING
+}
+
 enum MessageStatus {
   SENT
   DELIVERED
@@ -121,6 +136,9 @@ enum NotificationType {
   PAYOUT_STATUS_UPDATE
   STREAM_SCHEDULED
   STREAM_LIVE_NOW
+  COMMUNITY_POST
+  EVENT_INVITATION
+  REFERRAL_CONVERSION
   REPORT_STATUS_UPDATE
 }
 
@@ -150,6 +168,7 @@ enum ModerationActionType {
   BAN_USER_PERMANENT
   REMOVE_CONTENT
   SUSPEND_LIVE_STREAM
+  REMOVE_COMMUNITY_POST
 }
 
 enum PaymentType {
@@ -157,6 +176,7 @@ enum PaymentType {
   PREMIUM_ALBUM_UNLOCK
   PRIVATE_VIDEO_UNLOCK
   LIVE_EXPERIENCE_TICKET
+  EVENT_ENTRY_TICKET
   CREATOR_TIP
   WALLET_TOPUP
 }
@@ -190,6 +210,7 @@ model User {
   role               UserRole           @default(MEMBER)
   verificationStatus VerificationStatus @default(UNVERIFIED)
   verificationLevel  VerificationLevel  @default(LEVEL_1_EMAIL)
+  reputationBadge    String             @default("Verified Member")
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
@@ -221,6 +242,12 @@ model User {
   streamTickets        StreamTicket[]            @relation("UserStreamTickets")
   liveTipsSent         LiveTip[]                 @relation("TipsSent")
   chatMessagesSent     LiveChatMessage[]         @relation("UserLiveChatMessages")
+  communityMemberships CommunityMember[]        @relation("UserCommunityMemberships")
+  communityPosts       CommunityPost[]           @relation("UserCommunityPosts")
+  postComments         PostComment[]             @relation("UserPostComments")
+  eventTickets         EventTicket[]             @relation("UserEventTickets")
+  eventsHosted         VeloraEvent[]             @relation("UserHostedEvents")
+  referralLinks        ReferralLink[]            @relation("UserReferralLinks")
 
   @@index([email])
   @@index([username])
@@ -264,12 +291,10 @@ model Profile {
   lookingFor         String[]
   isCoupleProfile    Boolean            @default(false)
 
-  // Couple specific fields
   partnerDisplayName String?
   partnerAge         Int?
   partnerGender      Gender?
 
-  // Privacy Settings
   publicProfileVisibility Boolean       @default(true)
   photoVisibilityDefault  Visibility    @default(PUBLIC)
   locationPrecision       String        @default("CITY")
@@ -349,6 +374,125 @@ model Media {
 
   @@index([profileId])
   @@index([visibility])
+}
+
+model Community {
+  id            String        @id @default(uuid())
+  name          String
+  slug          String        @unique
+  description   String        @db.Text
+  coverImageUrl String
+  type          CommunityType @default(LOCATION_CITY)
+  location      String?
+  rules         String[]
+  isPrivate     Boolean       @default(false)
+  membersCount  Int           @default(0)
+  postsCount    Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  members       CommunityMember[] @relation("CommunityMembers")
+  posts         CommunityPost[]   @relation("CommunityPosts")
+  events        VeloraEvent[]     @relation("CommunityEvents")
+
+  @@index([type])
+  @@index([location])
+}
+
+model CommunityMember {
+  id          String    @id @default(uuid())
+  communityId String
+  community   Community @relation("CommunityMembers", fields: [communityId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation("UserCommunityMemberships", fields: [userId], references: [id], onDelete: Cascade)
+  role        String    @default("MEMBER") // MEMBER, MODERATOR, ADMIN
+  joinedAt    DateTime  @default(now())
+
+  @@unique([communityId, userId])
+}
+
+model CommunityPost {
+  id          String        @id @default(uuid())
+  communityId String
+  community   Community     @relation("CommunityPosts", fields: [communityId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User          @relation("UserCommunityPosts", fields: [authorId], references: [id], onDelete: Cascade)
+  title       String?
+  content     String        @db.Text
+  mediaUrls   String[]
+  likesCount  Int           @default(0)
+  commentsCount Int         @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  comments    PostComment[] @relation("PostComments")
+
+  @@index([communityId])
+  @@index([authorId])
+}
+
+model PostComment {
+  id        String        @id @default(uuid())
+  postId    String
+  post      CommunityPost @relation("PostComments", fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User          @relation("UserPostComments", fields: [authorId], references: [id], onDelete: Cascade)
+  content   String        @db.Text
+  createdAt DateTime      @default(now())
+
+  @@index([postId])
+}
+
+model VeloraEvent {
+  id             String           @id @default(uuid())
+  hostId         String
+  host           User             @relation("UserHostedEvents", fields: [hostId], references: [id], onDelete: Cascade)
+  communityId    String?
+  community      Community?       @relation("CommunityEvents", fields: [communityId], references: [id])
+  title          String
+  description    String           @db.Text
+  eventType      EventType        @default(SOCIAL_MEETUP)
+  location       String
+  venueName      String
+  scheduledDate  DateTime
+  capacity       Int              @default(50)
+  attendeesCount Int              @default(0)
+  ticketPrice    Float            @default(0)
+  coverImageUrl  String
+  rules          String[]
+  status         ContentPublicationStatus @default(PUBLISHED)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  tickets        EventTicket[]    @relation("EventTickets")
+
+  @@index([hostId])
+  @@index([location])
+  @@index([eventType])
+}
+
+model EventTicket {
+  id          String      @id @default(uuid())
+  eventId     String
+  event       VeloraEvent @relation("EventTickets", fields: [eventId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User        @relation("UserEventTickets", fields: [userId], references: [id], onDelete: Cascade)
+  ticketCode  String      @unique
+  pricePaid   Float
+  purchasedAt DateTime    @default(now())
+
+  @@unique([eventId, userId])
+}
+
+model ReferralLink {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation("UserReferralLinks", fields: [userId], references: [id], onDelete: Cascade)
+  code            String   @unique
+  clicksCount     Int      @default(0)
+  conversionsCount Int     @default(0)
+  rewardsEarnedDays Int    @default(0)
+  createdAt       DateTime @default(now())
 }
 
 model CreatorProfile {
