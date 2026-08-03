@@ -6,10 +6,9 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { EmailVerificationService } from "@/lib/auth/emailVerification";
 import { EmailNotificationService } from "@/lib/notifications/emailService";
-import { Sparkles, ShieldCheck, Lock, ArrowRight, User, Users, Crown, Mail, CheckCircle2 } from "lucide-react";
+import { Sparkles, Lock, ArrowRight, User, Users, Crown, Mail, CheckCircle2 } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -49,7 +48,7 @@ export default function RegisterPage() {
     return (
       <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 text-left">
         <div className="max-w-lg w-full space-y-6">
-          <Card variant="goldBorder" className="p-8 space-y-6 text-center bg-gold-card">
+          <Card variant="goldBorder" className="p-8 space-y-6 text-center">
             <div className="w-16 h-16 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center mx-auto shadow-2xl">
               <Mail className="w-9 h-9" />
             </div>
@@ -79,13 +78,13 @@ export default function RegisterPage() {
 
               <div className="p-3 bg-black/40 rounded-xl border border-white/5 space-y-2">
                 <p className="text-[11px] text-velora-textSecondary">
-                  Since live SMTP credentials are not active in this sandbox, click the button below to simulate receiving the email and confirming your address:
+                  Click the button below to confirm your email address:
                 </p>
 
                 {latestEmail ? (
                   <Link href={latestEmail.confirmationLink} className="block pt-1">
                     <Button variant="gold" size="sm" className="w-full text-xs font-bold gap-2 shadow-gold-glow">
-                      <CheckCircle2 className="w-4 h-4" /> ⚡ Click to Confirm Email & Activate Account
+                      <CheckCircle2 className="w-4 h-4" /> Confirm Email & Activate Account
                     </Button>
                   </Link>
                 ) : null}
@@ -129,30 +128,100 @@ export default function RegisterPage() {
           </span>
           <h1 className="text-3xl font-serif font-bold text-velora-textPrimary">Join Velora</h1>
           <p className="text-xs text-velora-textSecondary leading-relaxed">
-            Create your private identity to explore adult connections • Auth0 SSO Ready
+            Create your private identity to explore connections and meet open-minded people.
           </p>
         </div>
 
         <Card variant="goldBorder" className="p-8 space-y-6">
-          <div className="space-y-4 text-center">
-            <a
-              href="/api/auth/login?screen_hint=signup"
-              className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-velora-bg font-bold text-xs uppercase tracking-widest shadow-gold-glow flex items-center justify-center gap-3 hover:scale-[1.02] transition-all"
-            >
-              <Lock className="w-4 h-4" />
-              <span>Register with Auth0</span>
-              <ArrowRight className="w-4 h-4" />
-            </a>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Choose Identity Type */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
+                1. Choose Your Identity
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedRole("MEMBER")}
+                  className={`p-3 rounded-2xl border text-center transition-all ${
+                    selectedRole === "MEMBER"
+                      ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold"
+                      : "glass-panel text-velora-textMuted hover:text-white"
+                  }`}
+                >
+                  <User className="w-4 h-4 mx-auto mb-1" />
+                  <span className="text-xs">Individual</span>
+                </button>
 
-            <div className="p-3 glass-panel rounded-2xl border border-white/10 text-left text-xs space-y-1.5 font-mono">
-              <span className="text-velora-gold font-bold flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5" /> Auth0 Identity Provider
-              </span>
-              <p className="text-[11px] text-velora-textMuted leading-relaxed">
-                Registers your identity securely using Auth0 Universal Login, social logins, and passwordless authentication.
-              </p>
+                <button
+                  type="button"
+                  onClick={() => setSelectedRole("COUPLE")}
+                  className={`p-3 rounded-2xl border text-center transition-all ${
+                    selectedRole === "COUPLE"
+                      ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold"
+                      : "glass-panel text-velora-textMuted hover:text-white"
+                  }`}
+                >
+                  <Users className="w-4 h-4 mx-auto mb-1" />
+                  <span className="text-xs">Couple</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedRole("CREATOR")}
+                  className={`p-3 rounded-2xl border text-center transition-all ${
+                    selectedRole === "CREATOR"
+                      ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold"
+                      : "glass-panel text-velora-textMuted hover:text-white"
+                  }`}
+                >
+                  <Crown className="w-4 h-4 mx-auto mb-1" />
+                  <span className="text-xs">Creator</span>
+                </button>
+              </div>
             </div>
-          </div>
+
+            {/* Display Name */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
+                2. Display Name
+              </label>
+              <input
+                type="text"
+                placeholder="Your display name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-velora-textPrimary text-sm placeholder-velora-textMuted focus:border-velora-gold/50 focus:outline-none focus:ring-1 focus:ring-velora-gold/30 transition-all"
+                required
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
+                3. Email Address
+              </label>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-velora-textPrimary text-sm placeholder-velora-textMuted focus:border-velora-gold/50 focus:outline-none focus:ring-1 focus:ring-velora-gold/30 transition-all"
+                required
+              />
+            </div>
+
+            <Button variant="gold" size="lg" className="w-full text-xs font-bold gap-2 uppercase tracking-widest" type="submit">
+              Create Account <ArrowRight className="w-4 h-4" />
+            </Button>
+          </form>
+
+          <p className="text-center text-[12px] text-velora-textMuted">
+            Already have an account?{" "}
+            <Link href="/login" className="text-velora-gold hover:text-velora-amber font-medium transition-colors">
+              Sign In
+            </Link>
+          </p>
         </Card>
       </div>
     </div>

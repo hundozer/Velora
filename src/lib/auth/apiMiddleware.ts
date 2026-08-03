@@ -3,8 +3,6 @@ import { UserRole, Permission } from "@/types/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { AuthorizationService } from "@/lib/auth/AuthorizationService";
 import { auditLogger } from "@/lib/auth/auditLogger";
-import { JwtValidatorService } from "@/lib/auth/jwtValidator";
-import { UserSynchronizationService } from "@/lib/auth/userSync";
 
 export interface ProtectedApiRequestOptions {
   requireAuth?: boolean;
@@ -22,34 +20,8 @@ export interface ApiSecurityResult {
 }
 
 /**
- * Enterprise Auth0 Bearer Token Validator and Synchronizer
- */
-export function validateAuth0BearerToken(bearerHeader: string | undefined): ApiSecurityResult {
-  const jwtCheck = JwtValidatorService.validateAuth0Token(bearerHeader);
-
-  if (!jwtCheck.isValid || !jwtCheck.payload) {
-    return {
-      authorized: false,
-      statusCode: jwtCheck.statusCode,
-      message: jwtCheck.message,
-    };
-  }
-
-  // Synchronize authenticated Auth0 identity with Velora local user database
-  const dbUser = UserSynchronizationService.syncAuth0User(jwtCheck.payload);
-  const userAccount = UserSynchronizationService.toUserAccountModel(dbUser);
-
-  return {
-    authorized: true,
-    statusCode: 200,
-    message: "Auth0 Bearer Token Verified",
-    user: userAccount,
-  };
-}
-
-/**
- * Enterprise API Protection Guard for API Handlers
- * Evaluates JWT sessions, user status, role permissions, and IDOR ownership checks.
+ * API Protection Guard for API Handlers
+ * Evaluates user status, role permissions, and IDOR ownership checks.
  */
 export async function validateApiRequest(
   currentUser: UserAccountModel | null,
@@ -73,7 +45,7 @@ export async function validateApiRequest(
       status: "DENIED",
       details: { options },
     });
-    return { authorized: false, statusCode: 401, message: "Unauthorized. Authentication token required." };
+    return { authorized: false, statusCode: 401, message: "Unauthorized. Authentication required." };
   }
 
   if (!currentUser) {
