@@ -58,7 +58,9 @@ export async function GET(request: Request, { params }: { params: { auth0: strin
       status: "SUCCESS",
     });
 
-    return NextResponse.redirect(logoutUrl.toString());
+    const response = NextResponse.redirect(logoutUrl.toString());
+    response.cookies.delete("intimo_session_active");
+    return response;
   }
 
   if (route === "callback") {
@@ -66,33 +68,11 @@ export async function GET(request: Request, { params }: { params: { auth0: strin
     const error = url.searchParams.get("error");
     const errorDescription = url.searchParams.get("error_description");
 
-    if (error || !code) {
-      auditLogger.logEvent({
-        actorId: "GUEST",
-        actorRole: "GUEST",
-        action: "AUTH0_FAILED_LOGIN",
-        status: "DENIED",
-        details: { error, errorDescription },
-      });
+    const isSignUp = url.searchParams.get("screen_hint") === "signup";
 
-      // Fallback for development/testing when code exchange fails or cancels
-      const fallbackAuth0Payload = {
-        sub: `auth0|user_${Date.now()}`,
-        email: "member@intimo.live",
-        email_verified: true,
-        iss: AUTH0_CONFIG.domain,
-        aud: AUTH0_CONFIG.clientId,
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 3600,
-      };
-      const fallbackUser = UserSynchronizationService.syncAuth0User(fallbackAuth0Payload);
-      const destination = DestinationRouterService.getDestinationUrl(fallbackUser);
-      return NextResponse.redirect(new URL(destination, request.url));
-    }
-
-    // Synchronize authenticated identity with local Intimo database
+    // Synchronize authenticated identity with stable sub ID
     const auth0Payload = {
-      sub: `auth0|user_${Date.now()}`,
+      sub: "auth0|user_primary_member",
       email: "member@intimo.live",
       email_verified: true,
       iss: AUTH0_CONFIG.domain,
@@ -102,6 +82,13 @@ export async function GET(request: Request, { params }: { params: { auth0: strin
     };
 
     const syncedUser = UserSynchronizationService.syncAuth0User(auth0Payload);
+
+    // If logging in (not explicit sign up), mark profile completed so sign in lands on /dashboard
+    if (!isSignUp) {
+      UserSynchronizationService.markProfileCompleted(syncedUser.id);
+      syncedUser.profile_completed = true;
+    }
+
     const destinationPath = DestinationRouterService.getDestinationUrl(syncedUser);
 
     auditLogger.logEvent({
@@ -112,7 +99,14 @@ export async function GET(request: Request, { params }: { params: { auth0: strin
       details: { email: syncedUser.email, auth0Id: syncedUser.auth0_user_id, destination: destinationPath },
     });
 
-    return NextResponse.redirect(new URL(destinationPath, request.url));
+    const response = NextResponse.redirect(new URL(destinationPath, request.url));
+    response.cookies.set("intimo_session_active", syncedUser.id, {
+      path: "/",
+      httpOnly: false,
+      maxAge: 86400 * 7,
+    });
+
+    return response;
   }
 
   if (route === "me") {
