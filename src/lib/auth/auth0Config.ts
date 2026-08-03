@@ -9,7 +9,6 @@ export interface Auth0EnvironmentConfig {
   clientSecret: string;
   secret: string;
   baseUrl: string;
-  audience: string;
   issuer: string;
   callbackUrl: string;
   logoutUrl: string;
@@ -30,7 +29,6 @@ export const AUTH0_CONFIG: Auth0EnvironmentConfig = {
   clientSecret: process.env.AUTH0_CLIENT_SECRET || "6Otyzf0BIT5lVEDqWiiwate1kAPlXMHV8N4Eq8iBJ3tmF5vBi7VkxydX9brkdd6D",
   secret: process.env.AUTH0_SECRET || "velora_long_session_secret_cookie_key_32bytes!",
   baseUrl: BASE_URL,
-  audience: process.env.AUTH0_AUDIENCE || "https://api.velora.club/v1",
   issuer: DOMAIN.endsWith("/") ? DOMAIN : `${DOMAIN}/`,
   callbackUrl: `${BASE_URL}/api/auth/callback`,
   logoutUrl: `${BASE_URL}/login`,

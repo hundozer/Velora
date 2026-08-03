@@ -7,7 +7,6 @@ import { useAuth } from "@/context/AuthContext";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
 import { EmailVerificationService } from "@/lib/auth/emailVerification";
 import { EmailNotificationService } from "@/lib/notifications/emailService";
 import { Sparkles, ShieldCheck, Lock, ArrowRight, User, Users, Crown, Mail, CheckCircle2 } from "lucide-react";
@@ -16,7 +15,6 @@ export default function RegisterPage() {
   const router = useRouter();
   const { register } = useAuth();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [selectedRole, setSelectedRole] = useState<"MEMBER" | "COUPLE" | "CREATOR">("MEMBER");
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -129,125 +127,31 @@ export default function RegisterPage() {
           <span className="px-3 py-1 rounded-full text-xs font-bold bg-velora-gold/20 text-velora-gold border border-velora-gold/40 uppercase tracking-widest inline-flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5" /> PRIVATE MEMBERS CLUB
           </span>
-          <h1 className="text-3xl font-serif font-bold text-velora-textPrimary">Enter Velora</h1>
+          <h1 className="text-3xl font-serif font-bold text-velora-textPrimary">Join Velora</h1>
           <p className="text-xs text-velora-textSecondary leading-relaxed">
-            Create your private identity to explore adult connections and meet open-minded people.
+            Create your private identity to explore adult connections • Auth0 SSO Ready
           </p>
         </div>
 
         <Card variant="goldBorder" className="p-8 space-y-6">
-          {/* Auth0 Universal Signup Link */}
-          <div className="space-y-2 pb-2 border-b border-white/10 text-center">
+          <div className="space-y-4 text-center">
             <a
               href="/api/auth/login?screen_hint=signup"
-              className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-velora-bg font-bold text-xs uppercase tracking-wider shadow-gold-glow flex items-center justify-center gap-2 hover:scale-[1.02] transition-all"
+              className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-velora-bg font-bold text-xs uppercase tracking-widest shadow-gold-glow flex items-center justify-center gap-3 hover:scale-[1.02] transition-all"
             >
               <Lock className="w-4 h-4" />
-              <span>Register with Auth0 Universal Login</span>
-            </a>
-            <p className="text-[10px] text-velora-textMuted font-mono">
-              Identity & Passwordless Registration powered by Auth0
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Choose Identity Type */}
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
-                1. Choose Your Identity
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedRole("MEMBER")}
-                  className={`p-3 rounded-2xl border text-center transition-all ${
-                    selectedRole === "MEMBER"
-                      ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold"
-                      : "glass-panel text-velora-textMuted hover:text-white"
-                  }`}
-                >
-                  <User className="w-4 h-4 mx-auto mb-1" />
-                  <span className="text-xs">Individual</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setSelectedRole("COUPLE")}
-                  className={`p-3 rounded-2xl border text-center transition-all ${
-                    selectedRole === "COUPLE"
-                      ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold"
-                      : "glass-panel text-velora-textMuted hover:text-white"
-                  }`}
-                >
-                  <Users className="w-4 h-4 mx-auto mb-1" />
-                  <span className="text-xs">Couple</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setSelectedRole("CREATOR")}
-                  className={`p-3 rounded-2xl border text-center transition-all ${
-                    selectedRole === "CREATOR"
-                      ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold"
-                      : "glass-panel text-velora-textMuted hover:text-white"
-                  }`}
-                >
-                  <Crown className="w-4 h-4 mx-auto mb-1" />
-                  <span className="text-xs">Creator</span>
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-1">
-                Display Name / Persona
-              </label>
-              <Input
-                type="text"
-                placeholder="e.g. Elena V."
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-1">
-                Private Email
-              </label>
-              <Input
-                type="email"
-                placeholder="you@private.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-1">
-                Password
-              </label>
-              <Input
-                type="password"
-                placeholder="••••••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <Button variant="gold" type="submit" className="w-full text-xs font-bold uppercase tracking-wider py-3 shadow-gold-glow flex items-center justify-center gap-2">
-              <span>Continue to Onboarding</span>
+              <span>Register with Auth0</span>
               <ArrowRight className="w-4 h-4" />
-            </Button>
-          </form>
+            </a>
 
-          <div className="pt-4 border-t border-white/10 text-center text-xs text-velora-textMuted">
-            Already have a private identity?{" "}
-            <Link href="/login" className="text-velora-gold font-bold hover:underline">
-              Sign In
-            </Link>
+            <div className="p-3 glass-panel rounded-2xl border border-white/10 text-left text-xs space-y-1.5 font-mono">
+              <span className="text-velora-gold font-bold flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5" /> Auth0 Identity Provider
+              </span>
+              <p className="text-[11px] text-velora-textMuted leading-relaxed">
+                Registers your identity securely using Auth0 Universal Login, social logins, and passwordless authentication.
+              </p>
+            </div>
           </div>
         </Card>
       </div>

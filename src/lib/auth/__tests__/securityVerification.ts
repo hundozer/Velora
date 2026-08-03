@@ -93,7 +93,7 @@ export async function runSecurityVerificationSuite(): Promise<{
     email: "auth0.test@velora.club",
     email_verified: true,
     iss: AUTH0_CONFIG.domain,
-    aud: AUTH0_CONFIG.audience,
+    aud: AUTH0_CONFIG.clientId,
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + 3600,
   };
