@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { User, UserRole, Profile, VerificationStatus } from "@/types";
+import { User, UserRole, Profile } from "@/types";
 import { EmailVerificationService } from "@/lib/auth/emailVerification";
 import { EmailNotificationService } from "@/lib/notifications/emailService";
 
@@ -13,6 +13,8 @@ interface AuthContextType {
   confirmAge: () => void;
   switchRole: (newRole: UserRole) => void;
   login: (email: string, role?: UserRole) => { success: boolean; message?: string };
+  loginWithAuth0: (screenHint?: string) => void;
+  logoutWithAuth0: () => void;
   register: (data: Partial<User> & { displayName: string }) => { success: boolean; pendingVerification: boolean; email: string };
   logout: () => void;
 }
@@ -131,7 +133,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = (email: string, selectedRole: UserRole = "MEMBER") => {
-    // Check if email has been verified via EmailVerificationService
     const isVerified = EmailVerificationService.isEmailVerified(email);
 
     if (!isVerified) {
@@ -157,16 +158,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true };
   };
 
+  const loginWithAuth0 = (screenHint?: string) => {
+    if (typeof window !== "undefined") {
+      const targetUrl = screenHint ? `/api/auth/login?screen_hint=${screenHint}` : "/api/auth/login";
+      window.location.href = targetUrl;
+    }
+  };
+
+  const logoutWithAuth0 = () => {
+    setUser(null);
+    setProfile(null);
+    if (typeof window !== "undefined") {
+      window.location.href = "/api/auth/logout";
+    }
+  };
+
   const register = (data: Partial<User> & { displayName: string }) => {
     const userEmail = data.email || "user@velora.club";
     const userId = "usr-" + Date.now();
 
-    // Create pending email verification token and trigger email dispatch
     const pendingToken = EmailVerificationService.createVerificationToken(userId, userEmail);
     const originUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
     EmailNotificationService.sendVerificationEmail(userEmail, pendingToken.token, originUrl);
 
-    // Do NOT set active user session until email token is confirmed!
     setUser(null);
     setProfile(null);
 
@@ -176,8 +190,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email: userEmail,
     };
   };
-
-
 
   const logout = () => {
     setUser(null);
@@ -194,6 +206,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         confirmAge,
         switchRole,
         login,
+        loginWithAuth0,
+        logoutWithAuth0,
         register,
         logout,
       }}

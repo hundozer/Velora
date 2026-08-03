@@ -5,17 +5,18 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { UserRole } from "@/types";
 import {
+  Lock,
   ArrowRight,
   ShieldCheck,
   User,
   Users,
   Crown,
   KeyRound,
-  Lock,
+  Sparkles,
 } from "lucide-react";
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, loginWithAuth0 } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [hoveredDemo, setHoveredDemo] = useState<string | null>(null);
 
@@ -93,12 +94,6 @@ export default function LoginPage() {
             background: "radial-gradient(circle, #D4AF37 0%, transparent 60%)",
           }}
         />
-        <div
-          className="absolute inset-0 opacity-[0.015]"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-          }}
-        />
       </div>
 
       {/* Main Content */}
@@ -125,8 +120,44 @@ export default function LoginPage() {
               Welcome Back
             </h1>
             <p className="text-sm text-velora-textMuted font-light">
-              Private Members Club After Dark
+              Private Members Club After Dark • Auth0 Consumer Authentication
             </p>
+          </div>
+        </div>
+
+        {/* Primary Auth0 Sign In */}
+        <div className="space-y-4">
+          <a
+            href="/api/auth/login"
+            className="group relative block w-full overflow-hidden rounded-2xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
+          >
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-velora-gold via-velora-amber to-velora-gold opacity-100" />
+            <div className="relative m-[2px] rounded-[14px] bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 py-4 px-6 flex items-center justify-center gap-3">
+              <Lock className="w-[18px] h-[18px] text-velora-bg" />
+              <span className="text-velora-bg font-bold text-sm uppercase tracking-[0.15em]">
+                Sign In with Auth0
+              </span>
+              <ArrowRight className="w-4 h-4 text-velora-bg transition-transform group-hover:translate-x-1" />
+            </div>
+          </a>
+
+          <div className="flex items-center justify-center gap-2 text-velora-textMuted">
+            <ShieldCheck className="w-3.5 h-3.5 text-velora-gold/60" />
+            <span className="text-[11px] tracking-wide">
+              Secure Identity • Passwordless • Social Logins
+            </span>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="relative my-8">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-white/[0.06]" />
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-velora-bg px-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-velora-textMuted">
+              Preview Mode: 1-Click Logins
+            </span>
           </div>
         </div>
 

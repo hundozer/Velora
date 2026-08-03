@@ -3,12 +3,16 @@ import { UserRole, Permission } from "@/types/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { AuthorizationService } from "@/lib/auth/AuthorizationService";
 import { auditLogger } from "@/lib/auth/auditLogger";
+import { JwtValidatorService } from "@/lib/auth0/tokenValidator";
+import { UserSynchronizationService } from "@/lib/auth0/userSync";
+import { TrustLevelEngine, TrustLevel } from "@/lib/auth/trustLevels";
 
 export interface ProtectedApiRequestOptions {
   requireAuth?: boolean;
   requiredRoles?: UserRole[];
   requiredPermissions?: Permission[];
   requireVerification?: boolean;
+  requiredTrustLevel?: TrustLevel;
   ownershipCheck?: (req: any, currentUser: UserAccountModel) => Promise<boolean> | boolean;
 }
 
@@ -20,8 +24,33 @@ export interface ApiSecurityResult {
 }
 
 /**
- * API Protection Guard for API Handlers
- * Evaluates user status, role permissions, and IDOR ownership checks.
+ * Validates server-side Auth0 JWT Bearer Token and synchronizes user
+ */
+export function validateAuth0BearerToken(bearerHeader: string | undefined): ApiSecurityResult {
+  const jwtCheck = JwtValidatorService.validateAuth0Token(bearerHeader);
+
+  if (!jwtCheck.isValid || !jwtCheck.payload) {
+    return {
+      authorized: false,
+      statusCode: jwtCheck.statusCode,
+      message: jwtCheck.message,
+    };
+  }
+
+  // Synchronize authenticated Auth0 identity with Velora local user database
+  const dbUser = UserSynchronizationService.syncAuth0User(jwtCheck.payload);
+
+  return {
+    authorized: true,
+    statusCode: 200,
+    message: "Auth0 Bearer Token Verified",
+    user: dbUser,
+  };
+}
+
+/**
+ * Enterprise API Protection Guard for API Handlers
+ * Evaluates JWT sessions, user status, role permissions, trust levels, and IDOR ownership checks.
  */
 export async function validateApiRequest(
   currentUser: UserAccountModel | null,
@@ -33,6 +62,7 @@ export async function validateApiRequest(
     requiredRoles,
     requiredPermissions,
     requireVerification = false,
+    requiredTrustLevel,
     ownershipCheck,
   } = options;
 
@@ -76,7 +106,16 @@ export async function validateApiRequest(
     };
   }
 
-  // 4. Role Hierarchy Check
+  // 4. Trust Level Check
+  if (requiredTrustLevel && !TrustLevelEngine.hasMinTrustLevel(currentUser, requiredTrustLevel)) {
+    return {
+      authorized: false,
+      statusCode: 403,
+      message: `Trust Level ${requiredTrustLevel} required for this action. Current Trust Level: ${currentUser.trustLevel || 1}.`,
+    };
+  }
+
+  // 5. Role Hierarchy Check
   if (requiredRoles && requiredRoles.length > 0 && !requiredRoles.includes(currentUser.role)) {
     auditLogger.logEvent({
       actorId: currentUser.id,
@@ -92,7 +131,7 @@ export async function validateApiRequest(
     };
   }
 
-  // 5. Granular Permission Check
+  // 6. Granular Permission Check
   if (requiredPermissions && requiredPermissions.length > 0) {
     const hasAllPermissions = requiredPermissions.every((perm) => hasPermission(currentUser.role, perm));
     if (!hasAllPermissions) {
@@ -111,7 +150,7 @@ export async function validateApiRequest(
     }
   }
 
-  // 6. IDOR / BOPA Ownership Check
+  // 7. IDOR / BOPA Ownership Check
   if (ownershipCheck) {
     const isOwner = await ownershipCheck(reqPayload, currentUser);
     if (!isOwner && currentUser.role !== "SYSTEM_ADMIN") {

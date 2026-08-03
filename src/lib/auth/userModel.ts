@@ -5,16 +5,18 @@ import {
   CreatorStatus,
   AdminRole,
 } from "@/types/auth";
+import { TrustLevel } from "./trustLevels";
 
 /**
- * 1. User Account (Core Authentication Identity)
+ * 1. User Account (Core Authentication Identity linked to Auth0)
  * Encapsulates credentials, security status, and base system identity.
  */
 export interface UserAccountModel {
   id: string;
-
+  auth0_user_id?: string; // Auth0 Identity Provider Unique Subject (e.g., auth0|65a987bc...)
   authProviderId: string; // Internal Auth Gateway UUID or Federated Provider Subject ID
   email: string;
+  emailVerified?: boolean;
   phone?: string;
   passwordHash?: string;
   role: UserRole;
@@ -23,6 +25,7 @@ export interface UserAccountModel {
   creatorStatus: CreatorStatus;
   twoFactorEnabled: boolean;
   preferredLanguage: string;
+  trustLevel?: TrustLevel;
   lastLoginIp?: string;
   lastLoginAt?: string;
   createdAt: string;
@@ -97,9 +100,10 @@ export function createUserAccount(
 ): UserAccountModel {
   return {
     id: data.id,
-
+    auth0_user_id: data.auth0_user_id || `auth0|${data.id}`,
     authProviderId: data.authProviderId || `auth-${data.id}`,
     email: data.email,
+    emailVerified: data.emailVerified || false,
     phone: data.phone,
     role: data.role || "MEMBER",
     status: data.status || "ACTIVE",
@@ -107,6 +111,7 @@ export function createUserAccount(
     creatorStatus: data.creatorStatus || "NONE",
     twoFactorEnabled: data.twoFactorEnabled || false,
     preferredLanguage: data.preferredLanguage || "en",
+    trustLevel: data.trustLevel || 1,
     createdAt: data.createdAt || new Date().toISOString(),
     updatedAt: data.updatedAt || new Date().toISOString(),
   };
