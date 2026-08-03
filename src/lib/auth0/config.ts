@@ -37,6 +37,7 @@ export const AUTH0_CONFIG: Auth0EnvironmentConfig = {
   allowedOrigins: [
     BASE_URL,
     "https://intimo.live",
+    "https://velora-six-ashen.vercel.app",
     "https://velora.club",
     "https://api.intimo.club",
   ],
