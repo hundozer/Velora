@@ -12,13 +12,16 @@ import { auditLogger } from "@/lib/auth/auditLogger";
 export async function GET(request: Request, { params }: { params: { auth0: string } }) {
   const route = params.auth0;
   const url = new URL(request.url);
+  const currentOrigin = url.origin;
+  const callbackUrl = `${currentOrigin}/api/auth/callback`;
+  const logoutReturnUrl = `${currentOrigin}/login`;
 
   if (route === "login") {
     // Redirect to Auth0 Hosted Universal Login
     const targetUrl = new URL(`${AUTH0_CONFIG.domain}/authorize`);
     targetUrl.searchParams.set("response_type", "code");
     targetUrl.searchParams.set("client_id", AUTH0_CONFIG.clientId);
-    targetUrl.searchParams.set("redirect_uri", AUTH0_CONFIG.callbackUrl);
+    targetUrl.searchParams.set("redirect_uri", callbackUrl);
     targetUrl.searchParams.set("scope", "openid profile email");
 
     const screenHint = url.searchParams.get("screen_hint");
@@ -36,7 +39,7 @@ export async function GET(request: Request, { params }: { params: { auth0: strin
       actorRole: "GUEST",
       action: "AUTH0_LOGIN_INITIATED",
       status: "SUCCESS",
-      details: { screenHint, connection },
+      details: { screenHint, connection, callbackUrl },
     });
 
     return NextResponse.redirect(targetUrl.toString());
@@ -46,7 +49,7 @@ export async function GET(request: Request, { params }: { params: { auth0: strin
     // Redirect to Auth0 Logout endpoint
     const logoutUrl = new URL(`${AUTH0_CONFIG.domain}/v2/logout`);
     logoutUrl.searchParams.set("client_id", AUTH0_CONFIG.clientId);
-    logoutUrl.searchParams.set("returnTo", AUTH0_CONFIG.logoutUrl);
+    logoutUrl.searchParams.set("returnTo", logoutReturnUrl);
 
     auditLogger.logEvent({
       actorId: "USER",
