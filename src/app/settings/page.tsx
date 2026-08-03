@@ -33,7 +33,8 @@ import {
 } from "lucide-react";
 
 export default function SettingsPage() {
-  const { logout } = useAuth();
+  const { user, profile, updateUserProfile, logout } = useAuth();
+  const [nickname, setNickname] = useState(profile?.displayName || user?.username || "");
   const [safety, setSafety] = useState<UserSafetySettings>(MOCK_SAFETY_SETTINGS);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>("en");
   const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>("USD");
@@ -51,6 +52,17 @@ export default function SettingsPage() {
   };
 
   const handleSave = () => {
+    if (user && profile && nickname.trim()) {
+      const updatedUser = {
+        ...user,
+        username: nickname.trim().toLowerCase().replace(/\s+/g, "_"),
+      };
+      const updatedProfile = {
+        ...profile,
+        displayName: nickname.trim(),
+      };
+      updateUserProfile(updatedUser, updatedProfile);
+    }
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
   };
@@ -103,6 +115,32 @@ export default function SettingsPage() {
           <CheckCircle2 className="w-4 h-4" /> Settings updated successfully!
         </div>
       )}
+
+      {/* SECTION 0: PRIVATE IDENTITY & NICKNAME */}
+      <Card variant="glass" className="p-6 space-y-6">
+        <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
+          <UserCheck className="w-4 h-4 text-velora-gold" />
+          Private Identity & Display Nickname
+        </h2>
+
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
+              Club Nickname / Display Name
+            </label>
+            <Input
+              type="text"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder="Enter your nickname (e.g. Zsolt, Monaco Host, Valerie)"
+              className="w-full text-xs"
+            />
+            <p className="text-[10px] text-velora-textMuted mt-1.5">
+              This nickname will represent your verified identity across Intimo feeds, messaging, and community salons.
+            </p>
+          </div>
+        </div>
+      </Card>
 
       {/* SECTION 1: GLOBAL & REGIONAL SETTINGS */}
       <Card variant="glass" className="p-6 space-y-6">

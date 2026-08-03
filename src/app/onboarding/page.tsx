@@ -191,6 +191,22 @@ export default function OnboardingWizardPage() {
               })}
             </div>
 
+            <div className="pt-3 space-y-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">
+                Your Private Nickname / Display Name
+              </label>
+              <Input
+                type="text"
+                placeholder="e.g. Zsolt, Monaco Host, Valerie Night"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="w-full text-xs"
+              />
+              <p className="text-[10px] text-velora-textMuted">
+                This nickname will represent your private identity to verified members on Intimo.
+              </p>
+            </div>
+
             <Button
               variant="gold"
               className="w-full text-xs font-bold uppercase tracking-wider py-3 shadow-gold-glow flex items-center justify-center gap-2"
