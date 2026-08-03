@@ -6,7 +6,7 @@ import { Profile } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { MapPin, Heart, MessageSquare, Sparkles, CheckCircle2 } from "lucide-react";
+import { MapPin, Heart, MessageSquare, Sparkles, ShieldCheck, Flame } from "lucide-react";
 
 interface ProfileCardProps {
   profile: Profile;
@@ -17,32 +17,42 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onQuickMessag
   const [isFavorited, setIsFavorited] = useState(false);
 
   return (
-    <Card variant="glass" className="group overflow-hidden flex flex-col justify-between text-left transition-all duration-300">
+    <Card variant="goldBorder" className="group overflow-hidden flex flex-col justify-between text-left transition-all duration-500 bg-gold-card">
       {/* Cover / Avatar Container */}
-      <div className="relative h-72 w-full bg-velora-card overflow-hidden">
+      <div className="relative h-80 w-full bg-velora-card overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={profile.avatarUrl}
           alt={profile.displayName}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter saturate-110"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-velora-bg via-transparent to-transparent opacity-95" />
+        <div className="absolute inset-0 bg-gradient-to-t from-velora-bg via-velora-bg/30 to-transparent" />
 
         {/* Badges Stack Top Left */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
-          {profile.verified && <Badge type="verified" />}
-          {profile.isCoupleProfile && <Badge type="couple" />}
-          {profile.userId === "user-3" && <Badge type="creator" />}
+          <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-black/80 text-velora-gold border border-velora-gold/40 backdrop-blur-md flex items-center gap-1 font-mono uppercase">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            Verified Adult
+          </span>
+          {profile.isCoupleProfile && (
+            <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40">
+              Couple Profile
+            </span>
+          )}
         </div>
 
-        {/* Online Status & Compatibility Top Right */}
+        {/* Online Status & Match Score Top Right */}
         <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5 z-10">
-          {profile.isOnline && <Badge type="online" />}
+          {profile.isOnline && (
+            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Online
+            </span>
+          )}
 
           {profile.compatibilityScore && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-gold-gradient text-velora-bg shadow-gold-glow">
-              <Sparkles className="w-3 h-3 text-velora-bg fill-velora-bg" />
-              {profile.compatibilityScore}% Match
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-gold-gradient text-velora-bg shadow-gold-glow">
+              <Flame className="w-3 h-3 text-velora-bg fill-velora-bg" />
+              {profile.compatibilityScore}% Chemistry
             </span>
           )}
         </div>
@@ -62,10 +72,9 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onQuickMessag
 
       {/* Card Body Details */}
       <div className="p-5 space-y-4 flex-1 flex flex-col justify-between">
-        {/* Headline / Bio Snippet */}
         <div>
           {profile.headline && (
-            <p className="text-xs font-bold text-velora-textPrimary mb-1 line-clamp-1 font-serif">
+            <p className="text-xs font-serif font-bold text-velora-textPrimary mb-1 line-clamp-1 italic">
               "{profile.headline}"
             </p>
           )}
@@ -74,18 +83,18 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onQuickMessag
           </p>
         </div>
 
-        {/* Interest Tags */}
+        {/* Looking For Tags */}
         <div className="space-y-1.5">
           <span className="text-[10px] uppercase font-bold tracking-wider text-velora-textMuted block">
-            Lifestyle Passions
+            Open To Connections
           </span>
           <div className="flex flex-wrap gap-1">
-            {profile.interests.slice(0, 3).map((interest) => (
+            {profile.lookingFor.slice(0, 3).map((item) => (
               <span
-                key={interest}
-                className="px-2 py-0.5 rounded-full text-[10px] bg-white/5 text-velora-textSecondary border border-white/5"
+                key={item}
+                className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/5 text-velora-textPrimary border border-white/10"
               >
-                {interest}
+                {item}
               </span>
             ))}
           </div>
@@ -94,8 +103,8 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onQuickMessag
         {/* Action Buttons */}
         <div className="pt-3 border-t border-white/10 flex items-center gap-2">
           <Link href={`/profile/${profile.id}`} className="flex-1">
-            <Button variant="gold" size="sm" className="w-full text-xs font-bold uppercase tracking-wider">
-              View Profile
+            <Button variant="gold" size="sm" className="w-full text-xs font-bold uppercase tracking-wider shadow-gold-glow">
+              Enter World
             </Button>
           </Link>
 
@@ -113,7 +122,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onQuickMessag
             <button
               onClick={() => onQuickMessage && onQuickMessage(profile)}
               className="p-2.5 rounded-full glass-panel text-velora-textSecondary hover:text-velora-gold hover:border-velora-gold/40 transition-colors"
-              title="Send Quick Message"
+              title="Send Private Message"
             >
               <MessageSquare className="w-4 h-4" />
             </button>

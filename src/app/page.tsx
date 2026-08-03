@@ -5,252 +5,232 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { MOCK_PROFILES, MOCK_LIVE_STREAMS } from "@/lib/mockData";
 import {
-  ShieldCheck,
-  Lock,
   Sparkles,
-  Users,
+  ShieldCheck,
   Compass,
-  Crown,
-  Heart,
+  Radio,
+  Lock,
   ArrowRight,
+  Heart,
+  Users,
+  Eye,
   CheckCircle2,
-  Sliders,
-  EyeOff,
+  Crown,
+  Flame,
 } from "lucide-react";
 
 export default function LandingPage() {
   return (
-    <div className="relative overflow-hidden">
-      {/* Background Radial Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gold-radial pointer-events-none blur-3xl opacity-60" />
-
-      {/* Hero Section */}
-      <section className="relative pt-20 pb-32 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel-gold mb-8 shadow-gold-glow animate-pulse">
-          <Sparkles className="w-4 h-4 text-velora-gold" />
-          <span className="text-xs font-bold uppercase tracking-widest text-velora-gold">
-            Invitation-Only Adult Social Marketplace
-          </span>
+    <div className="space-y-16 pb-16 text-left">
+      {/* HERO SECTION: PRIVATE MEMBERS CLUB AFTER DARK */}
+      <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-white/10">
+        {/* Background Image Overlay with Cinematic Dark Gradients */}
+        <div className="absolute inset-0 z-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=2000&q=80"
+            alt="Private Members Lounge"
+            className="w-full h-full object-cover opacity-25 scale-105 filter contrast-125 saturate-150"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-velora-bg via-velora-bg/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-velora-bg via-transparent to-velora-bg" />
         </div>
 
-        <h1 className="text-4xl sm:text-6xl md:text-7xl font-serif font-bold tracking-tight text-velora-textPrimary max-w-5xl mx-auto leading-tight">
-          Where Discretion Meets <br />
-          <span className="gold-gradient-text">Uncompromising Luxury</span>
-        </h1>
+        {/* Hero Content */}
+        <div className="relative z-10 max-w-5xl mx-auto px-4 text-center space-y-8 py-20">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-velora-gold/40 text-velora-gold text-xs font-semibold uppercase tracking-widest backdrop-blur-md shadow-gold-glow">
+            <Sparkles className="w-3.5 h-3.5 text-velora-gold animate-pulse" />
+            <span>Private Members Club After Dark</span>
+          </div>
 
-        <p className="mt-8 text-base sm:text-xl text-velora-textSecondary max-w-2xl mx-auto font-light leading-relaxed">
-          Velora is a private, verified adult network combining modern social discovery, private creator economies, and high-discretion dating for individuals and couples.
-        </p>
+          <div className="space-y-4">
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-serif font-bold tracking-tight text-velora-textPrimary leading-tight">
+              Meet people who want <br className="hidden sm:inline" />
+              <span className="text-gold-gradient italic">the same things.</span>
+            </h1>
 
-        <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link href="/register">
-            <Button variant="gold" size="lg" className="w-full sm:w-auto font-bold uppercase tracking-wider gap-2">
-              Apply For Membership
+            <p className="text-base sm:text-lg text-velora-textSecondary max-w-2xl mx-auto leading-relaxed">
+              Your private world of adult connections. Real people. Real chemistry. Real experiences. Join an open-minded community of verified adults.
+            </p>
+          </div>
+
+          {/* Primary & Secondary CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            <Link href="/register" className="w-full sm:w-auto">
+              <Button
+                variant="gold"
+                size="lg"
+                className="w-full sm:w-auto text-sm font-bold uppercase tracking-wider px-8 py-4 shadow-gold-glow flex items-center justify-center gap-2"
+              >
+                <span>Enter Velora</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+
+            <Link href="/discovery" className="w-full sm:w-auto">
+              <Button
+                variant="glass"
+                size="lg"
+                className="w-full sm:w-auto text-sm font-semibold uppercase tracking-wider px-8 py-4 border-white/20 hover:border-velora-gold/50"
+              >
+                Explore Private Club
+              </Button>
+            </Link>
+          </div>
+
+          {/* Seductive Stats Counter Bar */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto pt-10 border-t border-white/10 text-center">
+            <div>
+              <span className="text-2xl font-serif font-bold text-velora-gold block">100%</span>
+              <span className="text-[11px] text-velora-textMuted uppercase font-mono tracking-wider">Verified Adults</span>
+            </div>
+            <div>
+              <span className="text-2xl font-serif font-bold text-velora-textPrimary block">12,400+</span>
+              <span className="text-[11px] text-velora-textMuted uppercase font-mono tracking-wider">Active Members</span>
+            </div>
+            <div>
+              <span className="text-2xl font-serif font-bold text-amber-300 block">450+</span>
+              <span className="text-[11px] text-velora-textMuted uppercase font-mono tracking-wider">Private Salons</span>
+            </div>
+            <div>
+              <span className="text-2xl font-serif font-bold text-rose-400 block">End-to-End</span>
+              <span className="text-[11px] text-velora-textMuted uppercase font-mono tracking-wider">Discreet Privacy</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 2: DISCOVER PEOPLE NEARBY */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-white/10 pb-4">
+          <div>
+            <span className="text-xs font-mono uppercase tracking-widest text-velora-gold">
+              Open-Minded & Confident Connections
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-serif font-bold text-velora-textPrimary mt-1">
+              Discover People Nearby
+            </h2>
+          </div>
+
+          <Link href="/discovery">
+            <Button variant="ghost" size="sm" className="text-xs font-bold text-velora-gold gap-1">
+              <span>View All Members</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
-          <Link href="/discovery">
-            <Button variant="glass" size="lg" className="w-full sm:w-auto font-medium uppercase tracking-wider gap-2">
-              <Compass className="w-4 h-4 text-velora-gold" />
-              Explore Marketplace
-            </Button>
-          </Link>
         </div>
 
-        {/* Core Pillars */}
-        <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-left max-w-5xl mx-auto">
-          <div className="glass-panel p-6 rounded-3xl space-y-2">
-            <div className="w-10 h-10 rounded-2xl bg-velora-gold/10 flex items-center justify-center text-velora-gold mb-3">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-velora-textPrimary font-serif">100% ID Verified</h3>
-            <p className="text-xs text-velora-textMuted leading-relaxed">
-              Biometric & document verification ensures authentic, high-caliber members.
-            </p>
-          </div>
+        {/* Profile Invitation Preview Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {MOCK_PROFILES.map((profile) => (
+            <Card key={profile.id} variant="goldBorder" hoverEffect className="p-0 overflow-hidden text-left group">
+              <div className="h-80 w-full bg-velora-card relative overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={profile.avatarUrl}
+                  alt={profile.displayName}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-velora-bg via-velora-bg/30 to-transparent" />
 
-          <div className="glass-panel p-6 rounded-3xl space-y-2">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-3">
-              <Lock className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-velora-textPrimary font-serif">Bank-Grade Privacy</h3>
-            <p className="text-xs text-velora-textMuted leading-relaxed">
-              Stealth mode, custom visibility controls, and screenshot protection options.
-            </p>
-          </div>
+                <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-black/70 text-velora-gold border border-velora-gold/40 backdrop-blur-md flex items-center gap-1 font-mono">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    Level {profile.verificationLevel?.slice(-1) || "3"} Verified
+                  </span>
+                  {profile.isOnline && (
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Online
+                    </span>
+                  )}
+                </div>
 
-          <div className="glass-panel p-6 rounded-3xl space-y-2">
-            <div className="w-10 h-10 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400 mb-3">
-              <Users className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-velora-textPrimary font-serif">Couples & Singles</h3>
-            <p className="text-xs text-velora-textMuted leading-relaxed">
-              Native support for dual-partner profiles, shared preferences & joint discovery.
-            </p>
-          </div>
+                <div className="absolute bottom-4 left-4 right-4 space-y-1">
+                  <h3 className="text-xl font-serif font-bold text-white flex items-center gap-2">
+                    {profile.displayName}, {profile.age}
+                  </h3>
+                  <p className="text-xs text-velora-textSecondary line-clamp-1 font-medium">{profile.headline}</p>
+                </div>
+              </div>
 
-          <div className="glass-panel p-6 rounded-3xl space-y-2">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-400 mb-3">
-              <Crown className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-velora-textPrimary font-serif">Creator Economy</h3>
-            <p className="text-xs text-velora-textMuted leading-relaxed">
-              Monetize premium albums, subscriber tiers, and scheduled private live streams.
-            </p>
-          </div>
+              <div className="p-5 space-y-4">
+                <div className="flex flex-wrap gap-1.5">
+                  {profile.interests.slice(0, 3).map((tag, i) => (
+                    <span key={i} className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/5 text-velora-textMuted border border-white/10">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="pt-2 flex items-center justify-between border-t border-white/10">
+                  <span className="text-xs text-velora-gold font-bold">{profile.city}, {profile.country}</span>
+                  <Link href={`/profile/${profile.id}`}>
+                    <Button variant="gold" size="sm" className="text-xs font-bold uppercase tracking-wider shadow-gold-glow">
+                      Enter World
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </Card>
+          ))}
         </div>
       </section>
 
-      {/* Role Architecture Showcase */}
-      <section className="py-24 bg-velora-card/60 border-y border-white/10 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-            <h2 className="text-3xl sm:text-5xl font-serif font-bold text-velora-textPrimary">
-              Tailored Experiences for <br />
-              <span className="gold-gradient-text">Every Lifestyle</span>
-            </h2>
-            <p className="text-sm text-velora-textSecondary">
-              Switch seamlessly between distinct user roles designed for total flexibility.
-            </p>
-          </div>
+      {/* SECTION 3: TRUST & SAFETY - OPEN-MINDED DOES NOT MEAN UNSAFE */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <Card variant="glass" className="p-8 sm:p-12 text-left relative overflow-hidden border-velora-gold/30">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            <div className="space-y-4">
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono uppercase tracking-wider">
+                High-Discretion Trust Architecture
+              </span>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Member */}
-            <Card variant="glass" className="p-8 space-y-6 flex flex-col justify-between">
-              <div className="space-y-4">
-                <Badge type="verified" label="Member Mode" />
-                <h3 className="text-2xl font-serif font-bold text-velora-textPrimary">
-                  Private Member
-                </h3>
-                <p className="text-xs text-velora-textSecondary leading-relaxed">
-                  Browse compatible verified adults, send encrypted direct messages, save favorite profiles, and purchase exclusive creator content.
-                </p>
-                <ul className="space-y-2.5 text-xs text-velora-textMuted pt-2">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-velora-gold" />
-                    Advanced location & age filters
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-velora-gold" />
-                    Custom privacy & stealth controls
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-velora-gold" />
-                    Private album request unlocks
-                  </li>
-                </ul>
+              <h2 className="text-3xl sm:text-4xl font-serif font-bold text-velora-textPrimary">
+                "Open-minded does not mean unsafe."
+              </h2>
+
+              <p className="text-xs sm:text-sm text-velora-textSecondary leading-relaxed">
+                Velora enforces 4-Tier Biometric Verification, encrypted messaging, granular location precision controls, and zero tolerance for harassment. Connect with total confidence and peace of mind.
+              </p>
+
+              <div className="grid grid-cols-2 gap-4 pt-2 text-xs text-velora-textPrimary font-semibold">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>Level 3 Biometric ID Check</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>Encrypted Disappearing Media</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>Stealth & Incognito Mode</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>24/7 Human Moderation</span>
+                </div>
               </div>
-              <Link href="/register?role=MEMBER">
-                <Button variant="outline" className="w-full text-xs uppercase tracking-wider">
-                  Join as Member
-                </Button>
-              </Link>
-            </Card>
+            </div>
 
-            {/* Couple */}
-            <Card variant="goldBorder" className="p-8 space-y-6 flex flex-col justify-between">
-              <div className="space-y-4">
-                <Badge type="couple" label="Couple Mode" />
-                <h3 className="text-2xl font-serif font-bold text-velora-textPrimary">
-                  Couple Profile
-                </h3>
-                <p className="text-xs text-velora-textSecondary leading-relaxed">
-                  Crafted specifically for couples looking for like-minded individuals or couples. Displays partner names, ages, and shared preferences.
-                </p>
-                <ul className="space-y-2.5 text-xs text-velora-textMuted pt-2">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-purple-400" />
-                    Dual partner verification
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-purple-400" />
-                    Shared bio & joint media gallery
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-purple-400" />
-                    Filtered discovery for couples
-                  </li>
-                </ul>
-              </div>
-              <Link href="/register?role=COUPLE">
-                <Button variant="gold" className="w-full text-xs uppercase tracking-wider font-bold">
-                  Create Couple Profile
+            <div className="glass-panel-gold p-6 rounded-3xl border border-velora-gold/40 space-y-4 text-center">
+              <ShieldCheck className="w-12 h-12 text-velora-gold mx-auto" />
+              <h3 className="text-lg font-serif font-bold text-velora-textPrimary">
+                Ready to explore private adult connections?
+              </h3>
+              <p className="text-xs text-velora-textMuted leading-relaxed">
+                Create your private identity in less than 2 minutes.
+              </p>
+              <Link href="/register" className="block">
+                <Button variant="gold" size="lg" className="w-full text-xs font-bold uppercase tracking-wider shadow-gold-glow">
+                  Enter Velora Now
                 </Button>
-              </Link>
-            </Card>
-
-            {/* Creator */}
-            <Card variant="glass" className="p-8 space-y-6 flex flex-col justify-between">
-              <div className="space-y-4">
-                <Badge type="creator" label="Creator Mode" />
-                <h3 className="text-2xl font-serif font-bold text-velora-textPrimary">
-                  Creator Studio
-                </h3>
-                <p className="text-xs text-velora-textSecondary leading-relaxed">
-                  Turn your private content and live experiences into a high-earning brand with custom subscription tiers and pay-per-view media unlocks.
-                </p>
-                <ul className="space-y-2.5 text-xs text-velora-textMuted pt-2">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-amber-400" />
-                    Monthly subscription tiers
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-amber-400" />
-                    Scheduled live experience rooms
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-amber-400" />
-                    Real-time revenue analytics
-                  </li>
-                </ul>
-              </div>
-              <Link href="/register?role=CREATOR">
-                <Button variant="outline" className="w-full text-xs uppercase tracking-wider border-amber-500/40 text-amber-300">
-                  Activate Creator Mode
-                </Button>
-              </Link>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Safety & Discretion Commitment */}
-      <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="glass-panel p-10 sm:p-14 rounded-3xl border border-velora-gold/30 shadow-gold-glow flex flex-col lg:flex-row items-center justify-between gap-10">
-          <div className="space-y-4 max-w-2xl">
-            <Badge type="verified" label="Safety First" />
-            <h2 className="text-3xl font-serif font-bold text-velora-textPrimary">
-              Uncompromising Safety & Discreet Protection
-            </h2>
-            <p className="text-xs text-velora-textSecondary leading-relaxed">
-              Velora strictly enforces 18+ age verification, consent standards, automated screenshot prevention, and discreet bank statements. Non-consensual activity or unverified profiles are strictly prohibited.
-            </p>
-            <div className="flex items-center gap-6 pt-2">
-              <Link href="/safety" className="text-xs font-bold uppercase tracking-wider text-velora-gold hover:underline flex items-center gap-1">
-                Read Safety & Moderation Policy
-                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           </div>
-
-          <div className="w-full lg:w-auto flex flex-col gap-3 min-w-[280px]">
-            <div className="p-4 glass-panel rounded-2xl flex items-center gap-3">
-              <EyeOff className="w-6 h-6 text-velora-gold" />
-              <div>
-                <p className="text-xs font-bold text-velora-textPrimary">Anonymous Billing</p>
-                <p className="text-[11px] text-velora-textMuted">Discreet descriptor on statements</p>
-              </div>
-            </div>
-            <div className="p-4 glass-panel rounded-2xl flex items-center gap-3">
-              <ShieldCheck className="w-6 h-6 text-emerald-400" />
-              <div>
-                <p className="text-xs font-bold text-velora-textPrimary">Zero Tolerated Spam</p>
-                <p className="text-[11px] text-velora-textMuted">AI & human moderation queue</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        </Card>
       </section>
     </div>
   );

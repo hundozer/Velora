@@ -1,26 +1,26 @@
 {
   "nav": {
-    "discover": "Discover",
-    "creators": "Creators",
-    "live": "Live Events",
-    "communities": "Communities",
-    "events": "Events",
-    "messages": "Messages",
+    "discover": "Discover People",
+    "creators": "Creators & Salons",
+    "live": "Live Experiences",
+    "communities": "Private Clubs",
+    "events": "Exclusive Events",
+    "messages": "Private Chat",
     "wallet": "Vault",
-    "settings": "Settings",
-    "membership": "Membership"
+    "settings": "Privacy & Settings",
+    "membership": "Inner Circle"
   },
   "auth": {
     "login": "Sign In",
-    "register": "Join Velora",
+    "register": "Enter Velora",
     "logout": "Sign Out"
   },
   "common": {
     "verified": "Verified Member",
     "online_now": "Online Now",
-    "save": "Save Changes",
+    "save": "Save Identity",
     "cancel": "Cancel",
-    "search": "Search...",
-    "filter": "Filters"
+    "search": "Discover people nearby...",
+    "filter": "Preferences & Filters"
   }
 }

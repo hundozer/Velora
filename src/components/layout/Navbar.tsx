@@ -376,7 +376,7 @@ export const Navbar: React.FC = () => {
                 Sign In
               </Link>
               <Link href="/register" className="px-5 py-2 text-xs uppercase tracking-wider font-bold rounded-full bg-gold-gradient text-velora-bg shadow-gold-glow">
-                Apply for Access
+                Enter Velora
               </Link>
             </div>
           )}
