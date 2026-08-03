@@ -8,11 +8,11 @@ import { Input } from "@/components/ui/Input";
 import { LOCATION_DATA } from "@/lib/locationData";
 import { useAuth } from "@/context/AuthContext";
 import { UserSynchronizationService } from "@/lib/auth0/userSync";
+import { User as UserType, UserRole, Profile as ProfileType } from "@/types";
 import { Sparkles, ArrowRight, CheckCircle2, Heart, ShieldCheck, Compass, User, Users, Crown, Camera, Flame } from "lucide-react";
 
 export default function OnboardingWizardPage() {
   const router = useRouter();
-  const { user } = useAuth();
   const [step, setStep] = useState(1);
 
   // Form State
@@ -67,8 +67,74 @@ export default function OnboardingWizardPage() {
     }
   };
 
+  const { user, updateUserProfile } = useAuth();
+  const [displayName, setDisplayName] = useState("Alex Vance");
+
   const handleFinish = () => {
-    router.push("/discovery");
+    const userId = user?.id || `usr-${Date.now()}`;
+    const userEmail = user?.email || "member@intimo.live";
+    const userRole: UserRole = profileType === "CREATOR" ? "CREATOR" : profileType === "COUPLE" ? "COUPLE" : "MEMBER";
+
+    const newUser: UserType = {
+      id: userId,
+      email: userEmail,
+      username: displayName.toLowerCase().replace(/\s+/g, "_") || "intimo_member",
+      role: userRole,
+      memberTier: "PREMIUM",
+      verificationStatus: "VERIFIED",
+      verificationLevel: "LEVEL_3_PROFILE_BIOMETRIC",
+      createdAt: new Date().toISOString().split("T")[0],
+      avatarUrl: avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+    };
+
+    const newProfile: ProfileType = {
+      id: `prof-${Date.now()}`,
+      userId: userId,
+      displayName: displayName || "Intimo Member",
+      dateOfBirth: "1998-05-15",
+      age: 26,
+      gender: gender as any,
+      sexualOrientation: sexualOrientation as any,
+      country: country || "Czech Republic",
+      city: city || "Prague",
+      location: `${city || "Prague"}, ${country || "Czech Republic"}`,
+      languages: ["English"],
+      headline: headline || "Private Intimo Member Profile",
+      bio: headline || "Discreet, open-minded member exploring connections on Intimo.",
+      interests: selectedInterests.length ? selectedInterests : ["Casual Encounters"],
+      lifestyleTags: ["Discreet", "Luxury Lifestyle"],
+      hobbies: selectedSexHobbies,
+      relationshipStatus: "SINGLE",
+      lookingFor: ["Connections"],
+      isCoupleProfile: profileType === "COUPLE",
+      publicProfileVisibility: true,
+      photoVisibilityDefault: "PUBLIC",
+      locationPrecision: "CITY",
+      showOnlineStatus: true,
+      showDistance: true,
+      allowDirectMessages: true,
+      requireVerificationToMessage: false,
+      verified: true,
+      isOnline: true,
+      compatibilityScore: 98,
+      avatarUrl: avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+      coverPhotoUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+      galleryImages: galleryPhotos.map((url, idx) => ({
+        id: `med-${Date.now()}-${idx}`,
+        userId: userId,
+        type: "IMAGE",
+        url: url,
+        visibility: "PUBLIC",
+        createdAt: new Date().toISOString(),
+      })),
+    };
+
+    updateUserProfile(newUser, newProfile);
+    UserSynchronizationService.markProfileCompleted(userId);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("intimo_profile_completed", "true");
+    }
+    router.push("/dashboard");
   };
 
   return (

@@ -16,62 +16,15 @@ interface AuthContextType {
   loginWithAuth0: (screenHint?: string) => void;
   logoutWithAuth0: () => void;
   register: (data: Partial<User> & { displayName: string }) => { success: boolean; pendingVerification: boolean; email: string };
+  updateUserProfile: (newUser: User, newProfile: Profile) => void;
   logout: () => void;
 }
-
-const DEFAULT_USER: User = {
-  id: "usr-demo-1",
-  email: "demouser@intimo.live",
-  username: "elena_vance",
-  role: "MEMBER",
-  memberTier: "PREMIUM",
-  verificationStatus: "VERIFIED",
-  verificationLevel: "LEVEL_3_PROFILE_BIOMETRIC",
-  createdAt: "2026-01-15",
-  avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
-};
-
-const DEFAULT_PROFILE: Profile = {
-  id: "prof-demo-1",
-  userId: "usr-demo-1",
-  displayName: "Elena Vance",
-  dateOfBirth: "2000-04-12",
-  age: 26,
-  gender: "FEMALE",
-  sexualOrientation: "BISEXUAL",
-  country: "Monaco",
-  city: "Monte Carlo",
-  location: "Monaco / London",
-  languages: ["English", "French", "Italian"],
-  headline: "Art Curator & High-Discretion Private Hostess",
-  bio: "Art curator, luxury lifestyle collector & private salon host.",
-  interests: ["Contemporary Art", "Fine Wine", "Private Aviation"],
-  lifestyleTags: ["Luxury Lifestyle", "Gourmet Dining"],
-  hobbies: ["Classical Piano", "Polo"],
-  relationshipStatus: "SINGLE",
-  lookingFor: ["Discreet Connections", "Fine Dining"],
-  isCoupleProfile: false,
-
-  publicProfileVisibility: true,
-  photoVisibilityDefault: "PUBLIC",
-  locationPrecision: "CITY",
-  showOnlineStatus: true,
-  showDistance: true,
-  allowDirectMessages: true,
-  requireVerificationToMessage: false,
-  verified: true,
-  isOnline: true,
-  compatibilityScore: 95,
-  avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
-  coverPhotoUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
-  galleryImages: [],
-};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(DEFAULT_USER);
-  const [profile, setProfile] = useState<Profile | null>(DEFAULT_PROFILE);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<UserRole>("MEMBER");
   const [isAgeVerified, setIsAgeVerified] = useState<boolean>(false);
 
@@ -81,6 +34,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (savedAgeCheck === "true") {
       setIsAgeVerified(true);
     }
+
+    // Restore active session from local storage if present
+    try {
+      const savedUserStr = localStorage.getItem("intimo_active_user");
+      const savedProfileStr = localStorage.getItem("intimo_active_profile");
+      if (savedUserStr && savedProfileStr) {
+        const parsedUser = JSON.parse(savedUserStr);
+        const parsedProfile = JSON.parse(savedProfileStr);
+        setUser(parsedUser);
+        setProfile(parsedProfile);
+        if (parsedUser.role) {
+          setRole(parsedUser.role);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to restore session state:", err);
+    }
   }, []);
 
   const confirmAge = () => {
@@ -88,47 +58,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem("intimo_age_verified", "true");
   };
 
+  const updateUserProfile = (newUser: User, newProfile: Profile) => {
+    setUser(newUser);
+    setProfile(newProfile);
+    if (newUser.role) {
+      setRole(newUser.role);
+    }
+    if (typeof window !== "undefined") {
+      localStorage.setItem("intimo_active_user", JSON.stringify(newUser));
+      localStorage.setItem("intimo_active_profile", JSON.stringify(newProfile));
+    }
+  };
+
   const switchRole = (newRole: UserRole) => {
     setRole(newRole);
-    if (user) {
+    if (user && profile) {
       const updatedUser: User = {
         ...user,
         role: newRole,
-        username:
-          newRole === "COUPLE"
-            ? "julian_and_sophia"
-            : newRole === "CREATOR"
-            ? "aria_thorne_creator"
-            : newRole === "ADMIN"
-            ? "intimo_administrator"
-            : "elena_vance",
       };
-      setUser(updatedUser);
-
-      if (newRole === "COUPLE" && profile) {
-        setProfile({
-          ...profile,
-          displayName: "Julian & Sophia",
-          isCoupleProfile: true,
-          gender: "COUPLE_MF",
-          partnerDisplayName: "Sophia",
-          partnerAge: 28,
-          partnerGender: "FEMALE",
-        });
-      } else if (newRole === "CREATOR" && profile) {
-        setProfile({
-          ...profile,
-          displayName: "Aria Thorne",
-          isCoupleProfile: false,
-          gender: "FEMALE",
-        });
-      } else if (newRole === "ADMIN" && profile) {
-        setProfile({
-          ...profile,
-          displayName: "Admin Operations",
-          isCoupleProfile: false,
-        });
-      }
+      const updatedProfile: Profile = {
+        ...profile,
+        isCoupleProfile: newRole === "COUPLE",
+      };
+      updateUserProfile(updatedUser, updatedProfile);
     }
   };
 
@@ -153,8 +106,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createdAt: new Date().toISOString().split("T")[0],
     };
 
-    setUser(newUser);
-    setRole(selectedRole);
+    const newProfile: Profile = {
+      id: "prof-" + Date.now(),
+      userId: newUser.id,
+      displayName: email.split("@")[0],
+      dateOfBirth: "1998-01-01",
+      age: 28,
+      gender: "FEMALE",
+      sexualOrientation: "BISEXUAL",
+      country: "Monaco",
+      city: "Monte Carlo",
+      location: "Monaco",
+      languages: ["English"],
+      headline: "Intimo Member",
+      bio: "Private member profile.",
+      interests: ["Discreet Encounters", "Fine Dining"],
+      lifestyleTags: ["Luxury Lifestyle"],
+      hobbies: [],
+      relationshipStatus: "SINGLE",
+      lookingFor: ["Connections"],
+      isCoupleProfile: false,
+      publicProfileVisibility: true,
+      photoVisibilityDefault: "PUBLIC",
+      locationPrecision: "CITY",
+      showOnlineStatus: true,
+      showDistance: true,
+      allowDirectMessages: true,
+      requireVerificationToMessage: false,
+      verified: true,
+      isOnline: true,
+      compatibilityScore: 90,
+      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+      coverPhotoUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+      galleryImages: [],
+    };
+
+    updateUserProfile(newUser, newProfile);
     return { success: true };
   };
 
@@ -166,23 +153,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logoutWithAuth0 = () => {
-    setUser(null);
-    setProfile(null);
+    logout();
     if (typeof window !== "undefined") {
       window.location.href = "/api/auth/logout";
     }
   };
 
   const register = (data: Partial<User> & { displayName: string }) => {
-    const userEmail = data.email || "user@velora.club";
+    const userEmail = data.email || "user@intimo.live";
     const userId = "usr-" + Date.now();
 
     const pendingToken = EmailVerificationService.createVerificationToken(userId, userEmail);
     const originUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
     EmailNotificationService.sendVerificationEmail(userEmail, pendingToken.token, originUrl);
 
-    setUser(null);
-    setProfile(null);
+    logout();
 
     return {
       success: true,
@@ -194,6 +179,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     setProfile(null);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("intimo_active_user");
+      localStorage.removeItem("intimo_active_profile");
+    }
   };
 
   return (
@@ -209,6 +198,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loginWithAuth0,
         logoutWithAuth0,
         register,
+        updateUserProfile,
         logout,
       }}
     >
