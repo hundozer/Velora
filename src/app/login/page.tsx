@@ -2,74 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/context/AuthContext";
-import { UserRole } from "@/types";
-import {
-  Lock,
-  ArrowRight,
-  ShieldCheck,
-  User,
-  Users,
-  Crown,
-  KeyRound,
-} from "lucide-react";
+import { Lock, ArrowRight, ShieldCheck, UserPlus } from "lucide-react";
 
 export default function LoginPage() {
-  const { login } = useAuth();
   const [mounted, setMounted] = useState(false);
-  const [hoveredDemo, setHoveredDemo] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const handleQuickDemoLogin = (demoRole: UserRole, demoEmail: string) => {
-    login(demoEmail, demoRole);
-    window.location.href = "/discovery";
-  };
-
-  const demoAccounts = [
-    {
-      id: "member",
-      role: "MEMBER" as UserRole,
-      email: "single.member@intimo.live",
-      label: "Member",
-      name: "Elena Vance",
-      icon: User,
-      accent: "from-amber-400 to-yellow-600",
-      glow: "group-hover:shadow-amber-500/20",
-    },
-    {
-      id: "couple",
-      role: "COUPLE" as UserRole,
-      email: "couple.berlin@intimo.live",
-      label: "Couple",
-      name: "Marcus & Sarah",
-      icon: Users,
-      accent: "from-rose-400 to-pink-600",
-      glow: "group-hover:shadow-rose-500/20",
-    },
-    {
-      id: "creator",
-      role: "CREATOR" as UserRole,
-      email: "creator.valerie@intimo.live",
-      label: "Creator",
-      name: "Valerie Night",
-      icon: Crown,
-      accent: "from-violet-400 to-purple-600",
-      glow: "group-hover:shadow-violet-500/20",
-    },
-    {
-      id: "admin",
-      role: "ADMIN" as UserRole,
-      email: "admin@intimo.live",
-      label: "Admin",
-      name: "System Admin",
-      icon: KeyRound,
-      accent: "from-emerald-400 to-teal-600",
-      glow: "group-hover:shadow-emerald-500/20",
-    },
-  ];
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -95,7 +35,7 @@ export default function LoginPage() {
         />
       </div>
 
-      {/* Main Content */}
+      {/* Main Content Card */}
       <div
         className={`relative z-10 w-full max-w-[440px] mx-auto px-5 py-16 transition-all duration-700 ${
           mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
@@ -124,14 +64,14 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Primary Auth0 Sign In */}
-        <div className="space-y-4">
+        {/* Primary Auth0 Sign In Box */}
+        <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/[0.08] backdrop-blur-xl shadow-2xl space-y-6">
           <a
             href="/api/auth/login"
             className="group relative block w-full overflow-hidden rounded-2xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
           >
             <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-velora-gold via-velora-amber to-velora-gold opacity-100" />
-            <div className="relative m-[2px] rounded-[14px] bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 py-4 px-6 flex items-center justify-center gap-3">
+            <div className="relative m-[2px] rounded-[14px] bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 py-4 px-6 flex items-center justify-center gap-3 shadow-gold-glow">
               <Lock className="w-[18px] h-[18px] text-velora-bg" />
               <span className="text-velora-bg font-bold text-sm uppercase tracking-[0.15em]">
                 Sign In with Auth0
@@ -140,86 +80,28 @@ export default function LoginPage() {
             </div>
           </a>
 
-          <div className="flex items-center justify-center gap-2 text-velora-textMuted">
-            <ShieldCheck className="w-3.5 h-3.5 text-velora-gold/60" />
-            <span className="text-[11px] tracking-wide">
-              Secure Identity • Passwordless • Social Logins
-            </span>
+          <a
+            href="/api/auth/login?screen_hint=signup"
+            className="group relative block w-full overflow-hidden rounded-2xl transition-all duration-300 border border-white/10 hover:border-velora-gold/40 hover:bg-white/[0.04]"
+          >
+            <div className="py-3.5 px-6 flex items-center justify-center gap-2 text-velora-textPrimary font-semibold text-xs uppercase tracking-widest">
+              <UserPlus className="w-4 h-4 text-velora-gold" />
+              <span>Create Intimo Account</span>
+            </div>
+          </a>
+
+          <div className="pt-2 border-t border-white/[0.06] text-center space-y-2">
+            <div className="flex items-center justify-center gap-2 text-velora-textMuted">
+              <ShieldCheck className="w-3.5 h-3.5 text-velora-gold/60" />
+              <span className="text-[11px] tracking-wide">
+                Secure Identity • Passwordless • Social Logins
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="relative my-8">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-white/[0.06]" />
-          </div>
-          <div className="relative flex justify-center">
-            <span className="bg-velora-bg px-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-velora-textMuted">
-              Preview Mode: 1-Click Logins
-            </span>
-          </div>
-        </div>
-
-        {/* Demo Role Accounts */}
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-2.5">
-            {demoAccounts.map((account) => {
-              const Icon = account.icon;
-              return (
-                <button
-                  key={account.id}
-                  type="button"
-                  onClick={() => handleQuickDemoLogin(account.role, account.email)}
-                  onMouseEnter={() => setHoveredDemo(account.id)}
-                  onMouseLeave={() => setHoveredDemo(null)}
-                  className={`group relative p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm
-                    transition-all duration-300 text-left
-                    hover:bg-white/[0.05] hover:border-white/[0.12] hover:shadow-lg ${account.glow}
-                    active:scale-[0.97]`}
-                >
-                  <div
-                    className={`w-9 h-9 rounded-xl bg-gradient-to-br ${account.accent} p-[1px] mb-3
-                      transition-transform duration-300 group-hover:scale-110`}
-                  >
-                    <div className="w-full h-full rounded-[11px] bg-velora-bg/90 flex items-center justify-center">
-                      <Icon className="w-4 h-4 text-white/80" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <span className="block text-[13px] font-semibold text-velora-textPrimary group-hover:text-white transition-colors">
-                      {account.label}
-                    </span>
-                    <span className="block text-[11px] text-velora-textMuted font-normal">
-                      {account.name}
-                    </span>
-                  </div>
-
-                  <div
-                    className={`absolute top-4 right-4 transition-all duration-300 ${
-                      hoveredDemo === account.id ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
-                    }`}
-                  >
-                    <ArrowRight className="w-3.5 h-3.5 text-white/40" />
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="mt-10 text-center space-y-3">
-          <p className="text-[12px] text-velora-textMuted">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/register"
-              className="text-velora-gold hover:text-velora-amber font-medium transition-colors"
-            >
-              Create Account
-            </Link>
-          </p>
-
+        {/* Footer info */}
+        <div className="mt-8 text-center space-y-3">
           <div className="flex items-center justify-center gap-1.5 text-velora-textMuted/50">
             <Lock className="w-3 h-3" />
             <span className="text-[10px] tracking-wide">
