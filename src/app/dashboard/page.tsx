@@ -34,7 +34,7 @@ export default function DashboardPage() {
             </span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-serif font-bold text-velora-textPrimary">
-            Welcome back, <span className="gold-gradient-text">{profile?.displayName || "Elena"}</span>
+            Welcome back, <span className="gold-gradient-text">{profile?.displayName || "Intimo Member"}</span>
           </h1>
           <p className="text-xs text-velora-textSecondary max-w-xl">
             {role === "CREATOR"
