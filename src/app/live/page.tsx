@@ -47,7 +47,7 @@ export default function LiveDiscoveryPage() {
           </div>
           <h1 className="text-3xl font-serif font-bold text-velora-textPrimary flex items-center gap-3">
             <Radio className="w-8 h-8 text-red-500" />
-            Velora Live Experiences & Salons
+            Intimo Live Experiences & Salons
           </h1>
           <p className="text-xs text-velora-textSecondary max-w-2xl leading-relaxed">
             Join exclusive private live sessions, ticketed salon concerts, art gallery previews, and direct creator Q&A rooms.

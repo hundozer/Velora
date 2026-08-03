@@ -33,8 +33,8 @@ export const CREATOR_CATEGORIES = [
 ];
 
 export const MOCK_REFERRAL_STATS: ReferralStats = {
-  uniqueCode: "VELORA-ELENA-99",
-  referralLink: "https://velora.club/ref/VELORA-ELENA-99",
+  uniqueCode: "INTIMO-ELENA-99",
+  referralLink: "https://intimo.live/ref/INTIMO-ELENA-99",
   clicksCount: 142,
   registrationsCount: 18,
   conversionsCount: 6,
@@ -317,7 +317,7 @@ export const MOCK_PROFILES: Profile[] = [
     relationshipStatus: "SINGLE",
     lookingFor: ["Creator Subscribers", "Live Experiences", "VIP Socializing"],
     isCoupleProfile: false,
-    reputationBadge: "Top Velora Creator",
+    reputationBadge: "Top Intimo Creator",
     categories: ["High Fashion", "VIP Lifestyle"],
     monthlySubscriptionPrice: 24.99,
     followersCount: 2400,

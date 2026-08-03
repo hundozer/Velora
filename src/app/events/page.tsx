@@ -83,7 +83,7 @@ export default function EventsMarketplacePage() {
           </div>
           <h1 className="text-3xl font-serif font-bold text-velora-textPrimary flex items-center gap-3">
             <Ticket className="w-8 h-8 text-amber-400" />
-            Velora Event Marketplace & Private Salons
+            Intimo Event Marketplace & Private Salons
           </h1>
           <p className="text-xs text-velora-textSecondary max-w-2xl leading-relaxed">
             Discover curated VIP galas, private yacht soirées, creator appearances, and high-discretion community meetups across Europe.
@@ -202,7 +202,7 @@ export default function EventsMarketplacePage() {
       </div>
 
       {/* Event Creation Modal */}
-      <Modal isOpen={createModalOpen} onClose={() => setCreateModalOpen(false)} title="Host a Private Velora Event">
+      <Modal isOpen={createModalOpen} onClose={() => setCreateModalOpen(false)} title="Host a Private Intimo Event">
         <div className="space-y-4 text-left">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-1">

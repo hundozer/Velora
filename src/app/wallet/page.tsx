@@ -74,7 +74,7 @@ export default function WalletPage() {
           </div>
           <div>
             <h1 className="text-3xl font-serif font-bold text-velora-textPrimary">
-              Velora Private Wallet
+              Intimo Private Wallet
             </h1>
             <p className="text-xs text-velora-textSecondary mt-1">
               Encrypted balance manager for discreet creator subscriptions, media unlocks, and payouts.
@@ -172,7 +172,7 @@ export default function WalletPage() {
       </Card>
 
       {/* Add Funds Modal */}
-      <Modal isOpen={addFundsOpen} onClose={() => setAddFundsOpen(false)} title="Add Funds to Velora Wallet">
+      <Modal isOpen={addFundsOpen} onClose={() => setAddFundsOpen(false)} title="Add Funds to Intimo Wallet">
         {topupSuccess ? (
           <div className="text-center py-6 space-y-3">
             <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />

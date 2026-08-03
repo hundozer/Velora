@@ -9,7 +9,7 @@ export class UserSynchronizationService {
    */
   public static syncAuth0User(auth0Payload: Partial<Auth0TokenPayload>): UserAccountModel {
     const auth0UserId = auth0Payload.sub || `auth0|fallback_${Date.now()}`;
-    const email = auth0Payload.email || `user_${Date.now()}@velora.club`;
+    const email = auth0Payload.email || `user_${Date.now()}@intimo.live`;
     const isEmailVerified = auth0Payload.email_verified ?? false;
 
     // 1. Check if user already exists by auth0_user_id

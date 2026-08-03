@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { EmailVerificationService } from "@/lib/auth/emailVerification";
 import { EmailNotificationService } from "@/lib/notifications/emailService";
-import { Sparkles, Lock, ArrowRight, User, Users, Crown, Mail, CheckCircle2 } from "lucide-react";
+import { Sparkles, ArrowRight, User, Users, Crown, Mail, CheckCircle2 } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -36,7 +36,7 @@ export default function RegisterPage() {
     if (!email) return;
     const pending = EmailVerificationService.resendToken(email);
     if (pending) {
-      const originUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+      const originUrl = typeof window !== "undefined" ? window.location.origin : "https://intimo.live";
       EmailNotificationService.sendVerificationEmail(email, pending.token, originUrl);
       setResendSent(true);
     }
@@ -72,8 +72,9 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-1 text-[11px]">
+                <p><span className="text-velora-textMuted">From:</span> <span className="text-amber-200">Intimo &lt;noreply@intimo.live&gt;</span></p>
                 <p><span className="text-velora-textMuted">To:</span> <span className="text-white font-bold">{email}</span></p>
-                <p><span className="text-velora-textMuted">Subject:</span> <span className="text-amber-200">Action Required: Confirm Your Velora Account Email</span></p>
+                <p><span className="text-velora-textMuted">Subject:</span> <span className="text-amber-200">Action Required: Confirm Your Intimo Account Email</span></p>
               </div>
 
               <div className="p-3 bg-black/40 rounded-xl border border-white/5 space-y-2">
@@ -126,7 +127,7 @@ export default function RegisterPage() {
           <span className="px-3 py-1 rounded-full text-xs font-bold bg-velora-gold/20 text-velora-gold border border-velora-gold/40 uppercase tracking-widest inline-flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5" /> PRIVATE MEMBERS CLUB
           </span>
-          <h1 className="text-3xl font-serif font-bold text-velora-textPrimary">Join Velora</h1>
+          <h1 className="text-3xl font-serif font-bold text-velora-textPrimary">Join Intimo</h1>
           <p className="text-xs text-velora-textSecondary leading-relaxed">
             Create your private identity to explore connections and meet open-minded people.
           </p>
@@ -203,7 +204,7 @@ export default function RegisterPage() {
               </label>
               <input
                 type="email"
-                placeholder="you@example.com"
+                placeholder="you@intimo.live"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-velora-textPrimary text-sm placeholder-velora-textMuted focus:border-velora-gold/50 focus:outline-none focus:ring-1 focus:ring-velora-gold/30 transition-all"

@@ -83,7 +83,7 @@ function VerifyEmailContent() {
 
             <Link href="/login" className="block pt-2">
               <Button variant="gold" size="lg" className="w-full text-xs font-bold uppercase tracking-wider shadow-gold-glow flex items-center justify-center gap-2">
-                <span>Sign In to Velora</span>
+                <span>Sign In to Intimo</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>

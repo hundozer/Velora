@@ -3,19 +3,11 @@
 import React, { useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import { CheckoutModal } from "@/components/payment/CheckoutModal";
 import {
   Crown,
   Sparkles,
   CheckCircle2,
-  Zap,
-  ShieldCheck,
-  EyeOff,
-  Filter,
-  MessageSquare,
-  Star,
-  Flame,
 } from "lucide-react";
 
 export default function MembershipPage() {
@@ -33,7 +25,7 @@ export default function MembershipPage() {
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto space-y-3">
         <span className="px-4 py-1.5 rounded-full text-xs font-bold bg-velora-gold/20 text-velora-gold border border-velora-gold/40 uppercase tracking-widest inline-flex items-center gap-1.5 shadow-gold-glow">
-          <Crown className="w-3.5 h-3.5" /> EXCLUSIVE VELORA MEMBERSHIP
+          <Crown className="w-3.5 h-3.5" /> EXCLUSIVE INTIMO MEMBERSHIP
         </span>
         <h1 className="text-4xl sm:text-5xl font-serif font-bold text-velora-textPrimary">
           Elevate Your Private Connections
@@ -45,11 +37,11 @@ export default function MembershipPage() {
 
       {/* Tiers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* FREE TIER: DISCOVER VELORA */}
+        {/* FREE TIER: DISCOVER INTIMO */}
         <Card variant="glass" className="p-8 space-y-6 flex flex-col justify-between text-left">
           <div className="space-y-4">
             <div className="space-y-1">
-              <h3 className="text-xl font-serif font-bold text-velora-textPrimary">Discover Velora</h3>
+              <h3 className="text-xl font-serif font-bold text-velora-textPrimary">Discover Intimo</h3>
               <p className="text-xs text-velora-textMuted">Standard verified member access</p>
             </div>
             <div className="text-3xl font-serif font-bold text-velora-textPrimary">$0 <span className="text-xs font-sans text-velora-textMuted">/ month</span></div>
@@ -168,7 +160,7 @@ export default function MembershipPage() {
           isOpen={checkoutOpen}
           onClose={() => setCheckoutOpen(false)}
           productTitle={selectedTier.title}
-          creatorName="Velora Platform"
+          creatorName="Intimo Platform"
           grossAmount={selectedTier.price}
           type="MEMBERSHIP_UPGRADE"
         />

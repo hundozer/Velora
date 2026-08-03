@@ -5,7 +5,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { CREATOR_CATEGORIES } from "@/lib/mockData";
-import { Crown, CheckCircle2, ShieldCheck, DollarSign, FileText } from "lucide-react";
+import { Crown, CheckCircle2 } from "lucide-react";
 
 interface CreatorActivationModalProps {
   isOpen: boolean;
@@ -63,7 +63,7 @@ export const CreatorActivationModal: React.FC<CreatorActivationModalProps> = ({
           <div className="flex items-center gap-3 p-4 glass-panel-gold rounded-2xl border border-velora-gold/50">
             <Crown className="w-6 h-6 text-velora-gold shrink-0" />
             <div>
-              <h4 className="text-sm font-bold text-velora-textPrimary">Velora Creator Economy</h4>
+              <h4 className="text-sm font-bold text-velora-textPrimary">Intimo Creator Economy</h4>
               <p className="text-[11px] text-velora-textMuted">
                 Monetize premium photo albums, exclusive video journals, and monthly subscriptions.
               </p>
@@ -164,7 +164,7 @@ export const CreatorActivationModal: React.FC<CreatorActivationModalProps> = ({
           {step === 3 && (
             <div className="space-y-4">
               <div className="p-4 glass-panel rounded-2xl border border-white/10 text-xs text-velora-textMuted space-y-2 max-h-40 overflow-y-auto leading-relaxed">
-                <p className="font-bold text-velora-textPrimary">Velora Creator Terms & Compliance Agreement</p>
+                <p className="font-bold text-velora-textPrimary">Intimo Creator Terms & Compliance Agreement</p>
                 <p>1. All content published must comply with 18+ adult consent laws.</p>
                 <p>2. Non-consensual imagery, unauthorized recordings, or copyright infringement will result in permanent account ban.</p>
                 <p>3. Creators retain 80% net revenue on subscriptions and pay-per-view unlocks.</p>
@@ -178,7 +178,7 @@ export const CreatorActivationModal: React.FC<CreatorActivationModalProps> = ({
                   className="accent-velora-gold w-5 h-5 cursor-pointer"
                 />
                 <span className="text-xs font-bold text-velora-textPrimary">
-                  I agree to Velora Creator Standards and 18+ Verification Rules.
+                  I agree to Intimo Creator Standards and 18+ Verification Rules.
                 </span>
               </label>
 

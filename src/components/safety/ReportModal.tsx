@@ -54,7 +54,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             <div>
               <h4 className="text-sm font-bold text-velora-textPrimary">Report @{targetUsername}</h4>
               <p className="text-[11px] text-velora-textMuted">
-                Velora strictly enforces 18+ verification, consent, and non-harassment rules.
+                Intimo strictly enforces 18+ verification, consent, and non-harassment rules.
               </p>
             </div>
           </div>

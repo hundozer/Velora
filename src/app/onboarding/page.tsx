@@ -73,7 +73,7 @@ export default function OnboardingWizardPage() {
       {/* Step Indicator Bar */}
       <div className="space-y-2 text-center">
         <span className="text-xs font-mono uppercase tracking-widest text-velora-gold">
-          Step {step} of 6 • Enter Velora Adults-Only Community
+          Step {step} of 6 • Enter Intimo Adults-Only Community
         </span>
         <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
           <div
@@ -91,7 +91,7 @@ export default function OnboardingWizardPage() {
               1. Choose Your Profile Type
             </h2>
             <p className="text-xs text-velora-textSecondary leading-relaxed">
-              Select how you would like to participate in the Velora adult social marketplace.
+              Select how you would like to participate in the Intimo adult social marketplace.
             </p>
 
             <div className="grid grid-cols-2 gap-3 pt-2">
@@ -510,7 +510,7 @@ export default function OnboardingWizardPage() {
               Your Adult Identity is Ready
             </h2>
             <p className="text-xs text-velora-textSecondary leading-relaxed max-w-md mx-auto">
-              Welcome to Velora. Start exploring open-minded adults nearby, viewing private profiles, and connecting.
+              Welcome to Intimo. Start exploring open-minded adults nearby, viewing private profiles, and connecting.
             </p>
 
             <Button

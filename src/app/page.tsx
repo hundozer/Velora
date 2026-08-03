@@ -245,7 +245,7 @@ export default function LandingPage() {
               </h2>
 
               <p className="text-xs sm:text-sm text-velora-textSecondary leading-relaxed">
-                Velora enforces Level 3 Biometric Verification, encrypted messaging, granular location precision controls, and zero tolerance for harassment.
+                Intimo enforces Level 3 Biometric Verification, encrypted messaging, granular location precision controls, and zero tolerance for harassment.
               </p>
             </div>
 
@@ -256,7 +256,7 @@ export default function LandingPage() {
               </h3>
               <Link href="/register" className="block">
                 <Button variant="gold" size="lg" className="w-full text-xs font-bold uppercase tracking-wider shadow-gold-glow">
-                  Join Velora Now
+                  Join Intimo Now
                 </Button>
               </Link>
             </div>

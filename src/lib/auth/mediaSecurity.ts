@@ -40,8 +40,8 @@ export class MediaSecurityEngine {
 
     // Dynamic watermark payload for anti-piracy protection
     const watermarkText = currentUser
-      ? `Velora Private • Viewer ${currentUser.id} • ${new Date().toISOString().substring(0, 10)}`
-      : "Velora Private Members Club";
+      ? `Intimo Private • Viewer ${currentUser.id} • ${new Date().toISOString().substring(0, 10)}`
+      : "Intimo Private Members Club";
 
     return {
       allowed: true,

@@ -1,4 +1,3 @@
-import { SecurityAuditLog } from "@/types/auth";
 import { auditLogger } from "@/lib/auth/auditLogger";
 
 export interface PendingEmailVerification {
@@ -13,6 +12,12 @@ export interface PendingEmailVerification {
 // In-Memory & LocalStorage Persisted Verification Store
 const VERIFICATION_STORE = new Map<string, PendingEmailVerification>();
 const VERIFIED_EMAILS = new Set<string>([
+  "demouser@intimo.live",
+  "single.member@intimo.live",
+  "couple.berlin@intimo.live",
+  "creator.valerie@intimo.live",
+  "admin@intimo.live",
+  // Legacy alias support during migration
   "demouser@velora.club",
   "single.member@velora.club",
   "couple.berlin@velora.club",
@@ -27,7 +32,7 @@ export class EmailVerificationService {
    * Generates a cryptographically random verification token and creates pending verification record.
    */
   public static createVerificationToken(userId: string, email: string): PendingEmailVerification {
-    const token = `v-token-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const token = `i-token-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     const now = Date.now();
 
     const record: PendingEmailVerification = {
@@ -85,7 +90,7 @@ export class EmailVerificationService {
       success: true,
       email: record.email,
       userId: record.userId,
-      message: "Email address verified successfully! You can now log into your account.",
+      message: "Email address verified successfully! You can now log into your Intimo account.",
     };
   }
 

@@ -3,7 +3,7 @@
 import React from "react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { ShieldCheck, Lock, CheckCircle2, FileCheck, EyeOff } from "lucide-react";
+import { ShieldCheck, Lock, EyeOff } from "lucide-react";
 
 export default function SafetyPage() {
   return (
@@ -25,7 +25,7 @@ export default function SafetyPage() {
             <h2 className="text-xl font-serif font-bold text-velora-textPrimary">1. Strict 18+ Verification (2257 Compliance)</h2>
           </div>
           <p className="text-xs text-velora-textSecondary leading-relaxed">
-            All users, creators, and media participants on Velora undergo strict age and identity verification prior to uploading content or sending messages. Records are securely stored in accordance with international 18+ compliance regulations.
+            All users, creators, and media participants on Intimo undergo strict age and identity verification prior to uploading content or sending messages. Records are securely stored in accordance with international 18+ compliance regulations.
           </p>
         </Card>
 
@@ -35,7 +35,7 @@ export default function SafetyPage() {
             <h2 className="text-xl font-serif font-bold text-velora-textPrimary">2. Mutual Consent & Non-Disclosure</h2>
           </div>
           <p className="text-xs text-velora-textSecondary leading-relaxed">
-            All interactions on Velora require mutual consent. Sharing private media or messaging details outside the platform without explicit consent is illegal and results in immediate account termination, IP ban, and reporting to legal authorities.
+            All interactions on Intimo require mutual consent. Sharing private media or messaging details outside the platform without explicit consent is illegal and results in immediate account termination, IP ban, and reporting to legal authorities.
           </p>
         </Card>
 

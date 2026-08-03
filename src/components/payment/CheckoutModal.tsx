@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { PaymentService } from "@/lib/payment/PaymentService";
 import { MOCK_WALLET } from "@/lib/mockData";
 import { PaymentType } from "@/types";
-import { Lock, ShieldCheck, CheckCircle2, Wallet, CreditCard, Sparkles, Receipt } from "lucide-react";
+import { Lock, CheckCircle2, Wallet, CreditCard } from "lucide-react";
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -60,7 +60,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleReset} title="Velora Secure Checkout & Access Unlock">
+    <Modal isOpen={isOpen} onClose={handleReset} title="Intimo Secure Checkout & Access Unlock">
       {completedTx ? (
         <div className="text-center space-y-4 py-6 text-left">
           <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
@@ -68,7 +68,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             Payment Completed & Unlocked!
           </h3>
           <p className="text-xs text-velora-textMuted leading-relaxed glass-panel p-4 rounded-2xl">
-            You now have permanent unlocked access to <strong>"{productTitle}"</strong> by {creatorName}. Transaction reference: <strong className="font-mono text-velora-gold">{completedTx.id}</strong>.
+            You now have permanent unlocked access to <strong>&quot;{productTitle}&quot;</strong> by {creatorName}. Transaction reference: <strong className="font-mono text-velora-gold">{completedTx.id}</strong>.
           </p>
 
           <div className="p-4 glass-panel rounded-2xl text-xs text-velora-textSecondary space-y-1 font-mono text-left">
@@ -126,7 +126,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               Select Payment Method
             </label>
 
-            {/* Velora Wallet */}
+            {/* Intimo Wallet */}
             <div
               onClick={() => setPaymentMethod("VELORA_WALLET")}
               className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${
@@ -140,7 +140,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <Wallet className="w-5 h-5" />
                 </div>
                 <div className="text-xs">
-                  <p className="font-bold text-velora-textPrimary">Velora Vault Wallet</p>
+                  <p className="font-bold text-velora-textPrimary">Intimo Vault Wallet</p>
                   <p className="text-velora-textMuted text-[11px]">Available Balance: ${MOCK_WALLET.availableBalance.toFixed(2)}</p>
                 </div>
               </div>

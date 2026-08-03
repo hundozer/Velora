@@ -5,19 +5,19 @@ import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { ShieldCheck, Lock, Sparkles, Heart, Crown, ArrowRight } from "lucide-react";
+import { ShieldCheck, Lock, ArrowRight } from "lucide-react";
 
 export default function AboutPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 text-left">
       <div className="text-center space-y-4">
-        <Badge type="verified" label="Velora Social Philosophy" />
+        <Badge type="verified" label="Intimo Social Philosophy" />
         <h1 className="text-4xl sm:text-5xl font-serif font-bold text-velora-textPrimary">
           The Premier Private <br />
           <span className="gold-gradient-text">Adult Social Club</span>
         </h1>
         <p className="text-sm text-velora-textSecondary max-w-2xl mx-auto leading-relaxed">
-          Velora was built to redefine adult social networking—replacing outdated classifieds with a sophisticated, discreet, and private ecosystem inspired by modern social luxury.
+          Intimo was built to redefine adult social networking—replacing outdated classifieds with a sophisticated, discreet, and private ecosystem inspired by modern social luxury.
         </p>
       </div>
 
@@ -28,7 +28,7 @@ export default function AboutPage() {
             Authenticity & Verification
           </h2>
           <p className="text-xs text-velora-textSecondary leading-relaxed">
-            Every member of Velora completes 100% biometric and legal ID verification. We maintain a zero-tolerance policy for impersonation, underage access, or spam.
+            Every member of Intimo completes 100% biometric and legal ID verification. We maintain a zero-tolerance policy for impersonation, underage access, or spam.
           </p>
         </Card>
 

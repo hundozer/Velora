@@ -60,13 +60,13 @@ export default function CommunitiesPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-velora-gold/20 text-velora-gold border border-velora-gold/40 flex items-center gap-1.5">
-              <Users className="w-3.5 h-3.5" /> VELORA PRIVATE SALONS & GROUPS
+              <Users className="w-3.5 h-3.5" /> INTIMO PRIVATE SALONS & GROUPS
             </span>
             <span className="text-xs text-amber-300 font-mono uppercase tracking-widest">• High-Discretion Social Ecosystem</span>
           </div>
           <h1 className="text-3xl font-serif font-bold text-velora-textPrimary flex items-center gap-3">
             <Globe className="w-8 h-8 text-velora-gold" />
-            Velora Private Communities & City Clubs
+            Intimo Private Communities & City Clubs
           </h1>
           <p className="text-xs text-velora-textSecondary max-w-2xl leading-relaxed">
             Connect with verified members in exclusive city hubs, interest circles, and invite-only private dining groups across Europe.

@@ -12,7 +12,7 @@ export const AgeVerificationModal: React.FC = () => {
   if (isAgeVerified) return null;
 
   return (
-    <Modal isOpen={!isAgeVerified} onClose={() => {}} title="Welcome to Velora" maxWidth="md">
+    <Modal isOpen={!isAgeVerified} onClose={() => {}} title="Welcome to Intimo" maxWidth="md">
       <div className="text-center space-y-6">
         <div className="w-16 h-16 rounded-full bg-gold-gradient p-[1px] mx-auto shadow-gold-glow">
           <div className="w-full h-full bg-velora-bg rounded-full flex items-center justify-center">
@@ -25,7 +25,7 @@ export const AgeVerificationModal: React.FC = () => {
             Age & Discretion Agreement
           </h2>
           <p className="text-xs text-velora-textSecondary mt-2 leading-relaxed">
-            Velora is a private, verified adult social platform for consenting adults aged 18 and older.
+            Intimo is a private, verified adult social platform for consenting adults aged 18 and older.
           </p>
         </div>
 
@@ -47,7 +47,7 @@ export const AgeVerificationModal: React.FC = () => {
             className="w-full font-bold uppercase tracking-wider"
             onClick={confirmAge}
           >
-            I am 18+ • Enter Velora
+            I am 18+ • Enter Intimo
           </Button>
           <a
             href="https://google.com"

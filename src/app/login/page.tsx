@@ -12,11 +12,10 @@ import {
   Users,
   Crown,
   KeyRound,
-  Sparkles,
 } from "lucide-react";
 
 export default function LoginPage() {
-  const { login, loginWithAuth0 } = useAuth();
+  const { login } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [hoveredDemo, setHoveredDemo] = useState<string | null>(null);
 
@@ -33,7 +32,7 @@ export default function LoginPage() {
     {
       id: "member",
       role: "MEMBER" as UserRole,
-      email: "single.member@velora.club",
+      email: "single.member@intimo.live",
       label: "Member",
       name: "Elena Vance",
       icon: User,
@@ -43,7 +42,7 @@ export default function LoginPage() {
     {
       id: "couple",
       role: "COUPLE" as UserRole,
-      email: "couple.berlin@velora.club",
+      email: "couple.berlin@intimo.live",
       label: "Couple",
       name: "Marcus & Sarah",
       icon: Users,
@@ -53,7 +52,7 @@ export default function LoginPage() {
     {
       id: "creator",
       role: "CREATOR" as UserRole,
-      email: "creator.valerie@velora.club",
+      email: "creator.valerie@intimo.live",
       label: "Creator",
       name: "Valerie Night",
       icon: Crown,
@@ -63,7 +62,7 @@ export default function LoginPage() {
     {
       id: "admin",
       role: "ADMIN" as UserRole,
-      email: "admin@velora.club",
+      email: "admin@intimo.live",
       label: "Admin",
       name: "System Admin",
       icon: KeyRound,
@@ -102,14 +101,14 @@ export default function LoginPage() {
           mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
         }`}
       >
-        {/* Velora Brand Identity */}
+        {/* Intimo Brand Identity */}
         <div className="text-center mb-10 space-y-4">
           <div className="relative inline-flex items-center justify-center">
             <div className="absolute w-20 h-20 rounded-full bg-velora-gold/10 animate-pulse" />
             <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-velora-gold via-velora-amber to-velora-goldHover p-[2px] shadow-gold-glow">
               <div className="w-full h-full bg-velora-bg rounded-full flex items-center justify-center">
                 <span className="font-serif font-bold text-[28px] gold-gradient-text select-none">
-                  V
+                  I
                 </span>
               </div>
             </div>
@@ -117,10 +116,10 @@ export default function LoginPage() {
 
           <div className="space-y-1.5">
             <h1 className="text-[32px] font-serif font-bold tracking-tight text-velora-textPrimary leading-none">
-              Welcome Back
+              Welcome to Intimo
             </h1>
             <p className="text-sm text-velora-textMuted font-light">
-              Private Members Club After Dark • Auth0 Consumer Authentication
+              Private Members Club After Dark • Powered by Intimo
             </p>
           </div>
         </div>

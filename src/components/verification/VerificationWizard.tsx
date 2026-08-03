@@ -49,7 +49,7 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleReset} title="Velora Trust & Verification Levels" maxWidth="lg">
+    <Modal isOpen={isOpen} onClose={handleReset} title="Intimo Trust & Verification Levels" maxWidth="lg">
       {submitted ? (
         <div className="text-center space-y-4 py-6 text-left">
           <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />

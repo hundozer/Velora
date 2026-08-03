@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { MOCK_REFERRAL_STATS } from "@/lib/mockData";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import {
   Share2,
   Copy,
@@ -13,7 +12,6 @@ import {
   Award,
   Crown,
   Sparkles,
-  TrendingUp,
   Gift,
   ShieldCheck,
 } from "lucide-react";
@@ -35,7 +33,7 @@ export default function ReferralsPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-velora-gold/20 text-velora-gold border border-velora-gold/40 flex items-center gap-1.5">
-              <Share2 className="w-3.5 h-3.5" /> VELORA VIP GROWTH ENGINE
+              <Share2 className="w-3.5 h-3.5" /> INTIMO VIP GROWTH ENGINE
             </span>
             <span className="text-xs text-amber-300 font-mono uppercase tracking-widest">• Member Referrals & Ambassadors</span>
           </div>
@@ -44,7 +42,7 @@ export default function ReferralsPage() {
             Referral Program & Ambassador Desk
           </h1>
           <p className="text-xs text-velora-textSecondary max-w-2xl leading-relaxed">
-            Invite trusted friends to join Velora's high-discretion community. Earn complementary VIP membership days, profile visibility boosts, and ambassador standing.
+            Invite trusted friends to join Intimo&apos;s high-discretion community. Earn complementary VIP membership days, profile visibility boosts, and ambassador standing.
           </p>
         </div>
       </div>
@@ -126,9 +124,9 @@ export default function ReferralsPage() {
         <div className="flex items-center gap-3">
           <Crown className="w-8 h-8 text-amber-400" />
           <div>
-            <h2 className="text-xl font-serif font-bold text-velora-textPrimary">Velora Ambassador Program</h2>
+            <h2 className="text-xl font-serif font-bold text-velora-textPrimary">Intimo Ambassador Program</h2>
             <p className="text-xs text-velora-textMuted mt-0.5">
-              Host private city gatherings, organize communities, and represent Velora in luxury hubs across Europe.
+              Host private city gatherings, organize communities, and represent Intimo in luxury hubs across Europe.
             </p>
           </div>
         </div>
@@ -157,7 +155,7 @@ export default function ReferralsPage() {
               <ShieldCheck className="w-4 h-4" /> 3. Verified Badge Status
             </h4>
             <p className="text-xs text-velora-textSecondary leading-relaxed">
-              Receive the prestigious <span className="font-bold text-amber-300">Velora Ambassador</span> badge on your profile and event listings.
+              Receive the prestigious <span className="font-bold text-amber-300">Intimo Ambassador</span> badge on your profile and event listings.
             </p>
           </div>
         </div>

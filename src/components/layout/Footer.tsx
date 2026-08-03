@@ -14,15 +14,15 @@ export const Footer: React.FC = () => {
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-gold-gradient p-[1px]">
                 <div className="w-full h-full bg-velora-bg rounded-full flex items-center justify-center">
-                  <span className="font-serif font-bold text-sm text-velora-gold">V</span>
+                  <span className="font-serif font-bold text-sm text-velora-gold">I</span>
                 </div>
               </div>
               <span className="font-serif text-xl font-bold gold-gradient-text uppercase tracking-widest">
-                Velora
+                Intimo
               </span>
             </div>
             <p className="text-xs text-velora-textSecondary leading-relaxed max-w-md">
-              Velora is an exclusive private social marketplace crafted for discerning adults. Built on principles of privacy, consent, safety, and modern social discovery.
+              Intimo is an exclusive private social marketplace crafted for discerning adults. Built on principles of privacy, consent, safety, and modern social discovery.
             </p>
             <div className="flex items-center gap-6 pt-2">
               <div className="flex items-center gap-1.5 text-xs text-velora-gold font-medium">
@@ -48,7 +48,7 @@ export const Footer: React.FC = () => {
             <ul className="space-y-2.5 text-xs text-velora-textSecondary">
               <li>
                 <Link href="/about" className="hover:text-velora-textPrimary transition-colors">
-                  About Velora Club
+                  About Intimo Club
                 </Link>
               </li>
               <li>
@@ -101,7 +101,7 @@ export const Footer: React.FC = () => {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-[11px] text-velora-textMuted gap-4">
-          <p>© {new Date().getFullYear()} Velora International. All rights reserved. Strictly 18+.</p>
+          <p>© {new Date().getFullYear()} Intimo International. All rights reserved. Strictly 18+.</p>
           <p className="tracking-widest uppercase">Elegance • Discretion • Authenticity</p>
         </div>
       </div>

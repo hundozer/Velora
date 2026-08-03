@@ -1,6 +1,7 @@
 export interface SentEmailLog {
   id: string;
   to: string;
+  from: string;
   subject: string;
   confirmationLink: string;
   bodyHtml: string;
@@ -10,11 +11,14 @@ export interface SentEmailLog {
 const OUTBOX: SentEmailLog[] = [];
 
 export class EmailNotificationService {
+  public static readonly DEFAULT_SENDER = "Intimo <noreply@intimo.live>";
+  public static readonly SUPPORT_CONTACT = "contact@intimo.live";
+
   /**
    * Generates and dispatches a transactional email confirmation message.
-   * In local/demo mode, stores in OUTBOX and logs to console.
+   * Sender: Intimo <noreply@intimo.live>
    */
-  public static sendVerificationEmail(email: string, token: string, baseUrl: string = "http://localhost:3000"): SentEmailLog {
+  public static sendVerificationEmail(email: string, token: string, baseUrl: string = "https://intimo.live"): SentEmailLog {
     const confirmationLink = `${baseUrl}/verify-email?token=${encodeURIComponent(token)}`;
 
     const bodyHtml = `
@@ -37,13 +41,13 @@ export class EmailNotificationService {
       <body>
         <div class="container">
           <div class="logo">
-            <span style="font-size: 28px; font-weight: bold; color: #d4af37; font-family: Georgia, serif;">VELORA</span>
+            <span style="font-size: 28px; font-weight: bold; color: #d4af37; font-family: Georgia, serif;">INTIMO</span>
             <div style="font-size: 10px; letter-spacing: 3px; color: #a1a1aa; text-transform: uppercase;">Private Members Club After Dark</div>
           </div>
 
           <div class="title">Confirm Your Email Address</div>
           <div class="subtitle">
-            Welcome to Velora. To activate your account and access private discovery, please verify your email address.
+            Welcome to Intimo. To activate your account and access private discovery, please verify your email address.
           </div>
 
           <div class="button-container">
@@ -55,8 +59,9 @@ export class EmailNotificationService {
           </div>
 
           <div class="footer">
-            If you did not create a Velora account, you can safely ignore this email.<br>
-            © 2026 Velora Private Members Club. All rights reserved.
+            If you did not create an Intimo account, you can safely ignore this email.<br>
+            Contact Support: ${EmailNotificationService.SUPPORT_CONTACT}<br>
+            © 2026 Intimo Private Members Club. All rights reserved.
           </div>
         </div>
       </body>
@@ -66,14 +71,15 @@ export class EmailNotificationService {
     const logEntry: SentEmailLog = {
       id: `mail-${Date.now()}`,
       to: email,
-      subject: "Action Required: Confirm Your Velora Account Email",
+      from: EmailNotificationService.DEFAULT_SENDER,
+      subject: "Action Required: Confirm Your Intimo Account Email",
       confirmationLink,
       bodyHtml,
       sentAt: new Date().toISOString(),
     };
 
     OUTBOX.unshift(logEntry);
-    console.log(`[TRANSACTIONAL EMAIL SENT] To: ${email} | Confirmation Link: ${confirmationLink}`);
+    console.log(`[TRANSACTIONAL EMAIL SENT] From: ${EmailNotificationService.DEFAULT_SENDER} | To: ${email} | Confirmation Link: ${confirmationLink}`);
 
     return logEntry;
   }

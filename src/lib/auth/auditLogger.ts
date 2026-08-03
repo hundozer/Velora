@@ -26,7 +26,7 @@ class AuditLoggerService {
       resourceId: data.resourceId,
       resourceType: data.resourceType,
       ipAddress: data.ipAddress || "127.0.0.1",
-      userAgent: data.userAgent || "Velora-Security-Engine/1.0",
+      userAgent: data.userAgent || "Intimo-Security-Engine/1.0",
       timestamp: new Date().toISOString(),
       status: data.status,
       details: data.details,

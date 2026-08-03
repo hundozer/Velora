@@ -1,5 +1,21 @@
 import type { Config } from "tailwindcss";
 
+const intimoColors = {
+  bg: "#0A0B0E",
+  card: "#12151E",
+  cardHover: "#181C2A",
+  border: "rgba(255, 255, 255, 0.08)",
+  borderGold: "rgba(212, 175, 55, 0.25)",
+  gold: "#D4AF37",
+  goldHover: "#C59B27",
+  amber: "#E5B869",
+  roseGold: "#E0A96D",
+  crimson: "#9E2A2B",
+  textPrimary: "#F9FAFB",
+  textSecondary: "#9CA3AF",
+  textMuted: "#6B7280",
+};
+
 const config: Config = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -9,21 +25,8 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        velora: {
-          bg: "#0A0B0E",
-          card: "#12151E",
-          cardHover: "#181C2A",
-          border: "rgba(255, 255, 255, 0.08)",
-          borderGold: "rgba(212, 175, 55, 0.25)",
-          gold: "#D4AF37",
-          goldHover: "#C59B27",
-          amber: "#E5B869",
-          roseGold: "#E0A96D",
-          crimson: "#9E2A2B",
-          textPrimary: "#F9FAFB",
-          textSecondary: "#9CA3AF",
-          textMuted: "#6B7280",
-        },
+        intimo: intimoColors,
+        velora: intimoColors, // Alias for backward compatibility
       },
       fontFamily: {
         sans: ["var(--font-inter)", "sans-serif"],

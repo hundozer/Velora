@@ -21,7 +21,7 @@ interface AuthContextType {
 
 const DEFAULT_USER: User = {
   id: "usr-demo-1",
-  email: "demouser@velora.club",
+  email: "demouser@intimo.live",
   username: "elena_vance",
   role: "MEMBER",
   memberTier: "PREMIUM",
@@ -77,7 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // Check local storage for persistent age verification
-    const savedAgeCheck = localStorage.getItem("velora_age_verified");
+    const savedAgeCheck = localStorage.getItem("intimo_age_verified") || localStorage.getItem("velora_age_verified");
     if (savedAgeCheck === "true") {
       setIsAgeVerified(true);
     }
@@ -85,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const confirmAge = () => {
     setIsAgeVerified(true);
-    localStorage.setItem("velora_age_verified", "true");
+    localStorage.setItem("intimo_age_verified", "true");
   };
 
   const switchRole = (newRole: UserRole) => {
@@ -100,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             : newRole === "CREATOR"
             ? "aria_thorne_creator"
             : newRole === "ADMIN"
-            ? "velora_administrator"
+            ? "intimo_administrator"
             : "elena_vance",
       };
       setUser(updatedUser);

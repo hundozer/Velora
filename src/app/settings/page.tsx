@@ -211,7 +211,7 @@ export default function SettingsPage() {
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl border border-velora-gold/30">
             <div>
-              <h4 className="text-xs font-bold text-velora-gold">Log Out of Velora Account</h4>
+              <h4 className="text-xs font-bold text-velora-gold">Log Out of Intimo Account</h4>
               <p className="text-[11px] text-velora-textMuted mt-0.5">
                 Sign out of your active session on this device.
               </p>
@@ -228,7 +228,7 @@ export default function SettingsPage() {
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl border border-red-500/30">
             <div>
-              <h4 className="text-xs font-bold text-red-400">Permanently Delete Velora Account (GDPR Right to be Forgotten)</h4>
+              <h4 className="text-xs font-bold text-red-400">Permanently Delete Intimo Account (GDPR Right to be Forgotten)</h4>
               <p className="text-[11px] text-velora-textMuted mt-0.5">
                 Permanently purge all profile data, messages, wallet records, and media vaults.
               </p>

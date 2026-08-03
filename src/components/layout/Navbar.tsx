@@ -36,12 +36,12 @@ export const Navbar: React.FC = () => {
         <Link href="/" className="flex items-center gap-3 group shrink-0">
           <div className="w-10 h-10 rounded-full bg-gold-gradient p-[1px] shadow-gold-glow flex items-center justify-center">
             <div className="w-full h-full bg-velora-bg rounded-full flex items-center justify-center group-hover:bg-velora-bg/80 transition-colors">
-              <span className="font-serif font-bold text-lg text-velora-gold">V</span>
+              <span className="font-serif font-bold text-lg text-velora-gold">I</span>
             </div>
           </div>
           <div>
             <span className="font-serif text-2xl font-bold tracking-widest gold-gradient-text uppercase">
-              Velora
+              Intimo
             </span>
             <span className="block text-[10px] tracking-[0.25em] text-velora-textMuted uppercase font-sans">
               Private Social Club
@@ -126,7 +126,7 @@ export const Navbar: React.FC = () => {
             </Link>
           </nav>
         ) : (
-          /* UNAUTHENTICATED GUEST NAVIGATION (Clean & Spacious) */
+          /* UNAUTHENTICATED GUEST NAVIGATION */
           <nav className="hidden md:flex items-center gap-4">
             <Link
               href="/discovery"
@@ -295,7 +295,7 @@ export const Navbar: React.FC = () => {
                 href="/register"
                 className="px-6 py-2.5 rounded-full bg-gold-gradient text-velora-bg font-serif font-bold text-xs uppercase tracking-wider shadow-gold-glow hover:scale-105 transition-all"
               >
-                Join Velora
+                Join Intimo
               </Link>
             </div>
           )}

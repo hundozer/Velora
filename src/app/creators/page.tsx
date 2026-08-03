@@ -44,7 +44,7 @@ export default function CreatorMarketplacePage() {
           </div>
           <h1 className="text-3xl font-serif font-bold text-velora-textPrimary flex items-center gap-3">
             <Sparkles className="w-8 h-8 text-amber-400" />
-            Velora Creator Marketplace & Salons
+            Intimo Creator Marketplace & Salons
           </h1>
           <p className="text-xs text-velora-textSecondary max-w-2xl leading-relaxed">
             Subscribe to verified creators, unlock private photo journals, 4K video performances, and join ticketed live experiences.

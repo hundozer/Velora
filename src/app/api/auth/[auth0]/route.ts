@@ -74,7 +74,7 @@ export async function GET(request: Request, { params }: { params: { auth0: strin
       // Fallback for development/testing when code exchange fails or cancels
       const fallbackAuth0Payload = {
         sub: `auth0|user_${Date.now()}`,
-        email: "member@velora.club",
+        email: "member@intimo.live",
         email_verified: true,
         iss: AUTH0_CONFIG.domain,
         aud: AUTH0_CONFIG.clientId,
@@ -88,7 +88,7 @@ export async function GET(request: Request, { params }: { params: { auth0: strin
     // Synchronize authenticated identity with local Velora database
     const auth0Payload = {
       sub: `auth0|user_${Date.now()}`,
-      email: "member@velora.club",
+      email: "member@intimo.live",
       email_verified: true,
       iss: AUTH0_CONFIG.domain,
       aud: AUTH0_CONFIG.clientId,
