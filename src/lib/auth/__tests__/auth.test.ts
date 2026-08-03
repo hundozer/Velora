@@ -17,7 +17,7 @@ export function runAuth0SecurityVerificationSuite() {
       sub: "auth0|test_user_1001",
       email: "test.user@velora.club",
       email_verified: true,
-      iss: "https://simpleafiedeu.eu.auth0.com/",
+      iss: "https://intimo.eu.auth0.com/",
       aud: "2wfjGUy76NmH8rdoxXxqg8CrbchkutTl",
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + 3600,
@@ -58,7 +58,7 @@ export function runAuth0SecurityVerificationSuite() {
       Buffer.from(JSON.stringify({
         sub: "auth0|expired",
         exp: Math.floor(Date.now() / 1000) - 3600,
-        iss: "https://simpleafiedeu.eu.auth0.com/",
+        iss: "https://intimo.eu.auth0.com/",
       })).toString("base64url") +
       ".signature";
 

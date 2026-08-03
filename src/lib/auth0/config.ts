@@ -22,7 +22,7 @@ export interface Auth0EnvironmentConfig {
 }
 
 const BASE_URL = process.env.AUTH0_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-const DOMAIN = process.env.AUTH0_ISSUER_BASE_URL || "https://simpleafiedeu.eu.auth0.com";
+const DOMAIN = process.env.AUTH0_ISSUER_BASE_URL || "https://intimo.eu.auth0.com";
 
 export const AUTH0_CONFIG: Auth0EnvironmentConfig = {
   domain: DOMAIN,
@@ -31,14 +31,14 @@ export const AUTH0_CONFIG: Auth0EnvironmentConfig = {
   secret: process.env.AUTH0_SECRET || "velora_long_session_secret_cookie_key_32bytes!",
   baseUrl: BASE_URL,
   issuer: DOMAIN.endsWith("/") ? DOMAIN : `${DOMAIN}/`,
-  audience: process.env.AUTH0_AUDIENCE || "https://api.velora.club",
+  audience: process.env.AUTH0_AUDIENCE || "https://api.intimo.club",
   callbackUrl: `${BASE_URL}/api/auth/callback`,
   logoutUrl: `${BASE_URL}/login`,
   allowedOrigins: [
     BASE_URL,
     "https://intimo.live",
     "https://velora.club",
-    "https://api.velora.club",
+    "https://api.intimo.club",
   ],
   socialConnections: {
     google: "google-oauth2",
