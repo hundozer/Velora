@@ -92,6 +92,20 @@ export default function LoginPage() {
 
         {/* Login Form Card */}
         <Card variant="goldBorder" className="p-8 space-y-6 bg-gold-card">
+          {/* Auth0 Hosted Universal Login Button */}
+          <div className="space-y-2 pb-2 border-b border-white/10">
+            <a
+              href="/auth/login"
+              className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-velora-bg font-bold text-xs uppercase tracking-wider shadow-gold-glow flex items-center justify-center gap-2 hover:scale-[1.02] transition-all"
+            >
+              <Lock className="w-4 h-4" />
+              <span>Continue with Auth0 Universal Login</span>
+            </a>
+            <p className="text-[10px] text-center text-velora-textMuted font-mono">
+              Secure enterprise SSO • Passwordless & Social Login
+            </p>
+          </div>
+
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             {error && (
               <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/40 text-xs text-amber-300 space-y-3">
