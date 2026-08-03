@@ -1,0 +1,258 @@
+"use client";
+
+import React, { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { UserRole } from "@/types";
+import { Badge } from "@/components/ui/Badge";
+import {
+  Compass,
+  MessageSquare,
+  Sparkles,
+  ShieldCheck,
+  UserCheck,
+  ChevronDown,
+  LogOut,
+  Sliders,
+  Settings,
+  Heart,
+  Wallet,
+} from "lucide-react";
+
+export const Navbar: React.FC = () => {
+  const pathname = usePathname();
+  const { user, profile, role, switchRole, logout } = useAuth();
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+
+  const rolesList: { role: UserRole; label: string; icon: React.ReactNode }[] = [
+    { role: "MEMBER", label: "Member Mode", icon: <UserCheck className="w-4 h-4 text-blue-400" /> },
+    { role: "COUPLE", label: "Couple Mode", icon: <UserCheck className="w-4 h-4 text-purple-400" /> },
+    { role: "CREATOR", label: "Creator Mode", icon: <Sparkles className="w-4 h-4 text-amber-400" /> },
+    { role: "ADMIN", label: "Admin Mode", icon: <ShieldCheck className="w-4 h-4 text-red-400" /> },
+  ];
+
+  return (
+    <header className="sticky top-0 z-40 w-full glass-panel border-b border-white/10 bg-velora-bg/85 backdrop-blur-xl">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        {/* Brand Logo */}
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="w-10 h-10 rounded-full bg-gold-gradient p-[1px] shadow-gold-glow flex items-center justify-center">
+            <div className="w-full h-full bg-velora-bg rounded-full flex items-center justify-center group-hover:bg-velora-bg/80 transition-colors">
+              <span className="font-serif font-bold text-lg text-velora-gold">V</span>
+            </div>
+          </div>
+          <div>
+            <span className="font-serif text-2xl font-bold tracking-widest gold-gradient-text uppercase">
+              Velora
+            </span>
+            <span className="block text-[10px] tracking-[0.25em] text-velora-textMuted uppercase font-sans">
+              Private Social Club
+            </span>
+          </div>
+        </Link>
+
+        {/* Main Navigation Links */}
+        <nav className="hidden md:flex items-center gap-1">
+          <Link
+            href="/dashboard"
+            className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
+              pathname === "/dashboard"
+                ? "bg-white/10 text-velora-gold border border-velora-gold/30"
+                : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
+            }`}
+          >
+            <Compass className="w-4 h-4" />
+            Feed
+          </Link>
+
+          <Link
+            href="/discovery"
+            className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
+              pathname === "/discovery"
+                ? "bg-white/10 text-velora-gold border border-velora-gold/30"
+                : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
+            }`}
+          >
+            <Compass className="w-4 h-4" />
+            Discover
+          </Link>
+
+          <Link
+            href="/messages"
+            className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
+              pathname === "/messages"
+                ? "bg-white/10 text-velora-gold border border-velora-gold/30"
+                : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
+            }`}
+          >
+            <MessageSquare className="w-4 h-4" />
+            Messages
+          </Link>
+
+          {role === "CREATOR" && (
+            <Link
+              href="/creator-studio"
+              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
+                pathname === "/creator-studio"
+                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                  : "text-amber-300/80 hover:text-amber-300 hover:bg-amber-500/10"
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              Creator Studio
+            </Link>
+          )}
+
+          {role === "ADMIN" && (
+            <Link
+              href="/admin"
+              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
+                pathname === "/admin"
+                  ? "bg-red-500/20 text-red-300 border border-red-500/40"
+                  : "text-red-300/80 hover:text-red-300 hover:bg-red-500/10"
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              Admin Portal
+            </Link>
+          )}
+        </nav>
+
+        {/* Right Section: Role Quick Switcher & User Profile */}
+        <div className="flex items-center gap-3">
+          {/* Quick Role Switcher Pill for reviewer testing */}
+          <div className="relative">
+            <button
+              onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-velora-gold hover:bg-white/10 transition-colors"
+              title="Quickly preview experience as different roles"
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Role:</span>
+              <span className="uppercase text-[11px] font-bold tracking-wider">{role}</span>
+              <ChevronDown className="w-3 h-3 text-velora-textMuted" />
+            </button>
+
+            {isRoleDropdownOpen && (
+              <div
+                className="absolute right-0 mt-2 w-48 glass-panel-gold rounded-2xl p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2"
+                onClick={() => setIsRoleDropdownOpen(false)}
+              >
+                <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-velora-textMuted border-b border-white/10 mb-1">
+                  Preview Experience
+                </div>
+                {rolesList.map((r) => (
+                  <button
+                    key={r.role}
+                    onClick={() => switchRole(r.role)}
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-left transition-colors ${
+                      role === r.role
+                        ? "bg-white/15 text-velora-gold font-bold"
+                        : "text-velora-textSecondary hover:bg-white/5 hover:text-velora-textPrimary"
+                    }`}
+                  >
+                    {r.icon}
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* User Account / Login State */}
+          {user ? (
+            <div className="relative">
+              <button
+                onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                className="flex items-center gap-2.5 p-1 rounded-full hover:bg-white/5 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full border-2 border-velora-gold/50 overflow-hidden bg-velora-card">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={profile?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80"}
+                    alt="User Avatar"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </button>
+
+              {isUserDropdownOpen && (
+                <div
+                  className="absolute right-0 mt-2 w-56 glass-panel-gold rounded-2xl p-2 shadow-2xl z-50"
+                  onClick={() => setIsUserDropdownOpen(false)}
+                >
+                  <div className="px-4 py-3 border-b border-white/10 mb-1">
+                    <p className="text-sm font-bold text-velora-textPrimary">{profile?.displayName || user.username}</p>
+                    <p className="text-xs text-velora-textMuted truncate">{user.email}</p>
+                    <div className="mt-2">
+                      <Badge type={role === "CREATOR" ? "creator" : role === "COUPLE" ? "couple" : role === "ADMIN" ? "admin" : "verified"} />
+                    </div>
+                  </div>
+
+                  <Link
+                    href={`/profile/${profile?.id || "prof-1"}`}
+                    className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl"
+                  >
+                    <UserCheck className="w-4 h-4 text-velora-gold" />
+                    My Profile
+                  </Link>
+
+                  <Link
+                    href="/onboarding"
+                    className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl"
+                  >
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                    Profile Setup Wizard
+                  </Link>
+
+                  <Link
+                    href="/favorites"
+                    className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl"
+                  >
+                    <Heart className="w-4 h-4 text-rose-400" />
+                    Saved Favorites
+                  </Link>
+
+                  <Link
+                    href="/wallet"
+                    className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl"
+                  >
+                    <Wallet className="w-4 h-4 text-emerald-400" />
+                    Wallet & Credits
+                  </Link>
+
+                  <Link
+                    href="/settings"
+                    className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl"
+                  >
+                    <Settings className="w-4 h-4 text-velora-textMuted" />
+                    Account Settings
+                  </Link>
+
+                  <button
+                    onClick={logout}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-red-400 hover:bg-red-500/10 rounded-xl mt-1 border-t border-white/5"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Link href="/login" className="text-xs uppercase tracking-wider font-semibold text-velora-textSecondary hover:text-velora-textPrimary">
+                Sign In
+              </Link>
+              <Link href="/register" className="px-5 py-2 text-xs uppercase tracking-wider font-bold rounded-full bg-gold-gradient text-velora-bg shadow-gold-glow">
+                Apply for Access
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+};

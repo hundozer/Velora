@@ -1,0 +1,358 @@
+// Prisma schema for Velora - Premium Adult Social Marketplace
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  MEMBER
+  CREATOR
+  COUPLE
+  ADMIN
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  NON_BINARY
+  TRANSGENDER
+  COUPLE_MF // Male + Female
+  COUPLE_FF // Female + Female
+  COUPLE_MM // Male + Male
+  OTHER
+}
+
+enum SexualOrientation {
+  HETEROSEXUAL
+  BISEXUAL
+  HOMOSEXUAL
+  PANSEXUAL
+  FLUID
+  QUEER
+}
+
+enum RelationshipStatus {
+  SINGLE
+  ATTACHED
+  OPEN_RELATIONSHIP
+  COUPLE
+  SWINGER
+  POLYAMOROUS
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE_MEMBERS
+  FAVORITES_ONLY
+  SUBSCRIBERS_ONLY
+  PAID_PER_VIEW
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  ALBUM
+  LIVE_STREAM
+}
+
+enum ReportReason {
+  UNDERAGE_SUSPICION
+  NON_CONSENTUAL_CONTENT
+  HARASSMENT
+  FAKE_PROFILE
+  IMPERSONATION
+  SPAM_SOLICITATION
+  OFFSITE_PAYMENT
+}
+
+enum ReportStatus {
+  PENDING
+  UNDER_REVIEW
+  RESOLVED_ACTION_TAKEN
+  DISMISSED
+}
+
+enum PaymentType {
+  CREATOR_SUBSCRIPTION
+  PREMIUM_ALBUM_UNLOCK
+  PRIVATE_VIDEO_UNLOCK
+  LIVE_EXPERIENCE_TICKET
+  CREATOR_TIP
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  REFUNDED
+  FAILED
+}
+
+model User {
+  id                 String             @id @default(uuid())
+  email              String             @unique
+  passwordHash       String
+  username           String             @unique
+  role               UserRole           @default(MEMBER)
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  profile              Profile?
+  creatorProfile       CreatorProfile?
+  sentMessages         Message[]                 @relation("SentMessages")
+  participants         ConversationParticipant[]
+  verifications        VerificationRequest[]     @relation("UserVerifications")
+  reviewedVerifications VerificationRequest[]    @relation("AdminReviewedVerifications")
+  reportsFiled         UserReport[]              @relation("ReportsFiled")
+  reportsReceived      UserReport[]              @relation("ReportsReceived")
+  subscriptions        Subscription[]            @relation("UserSubscriptions")
+  purchases            PaymentTransaction[]      @relation("BuyerTransactions")
+  earnings             PaymentTransaction[]      @relation("SellerTransactions")
+  favorites            UserFavorite[]            @relation("UserFavorites")
+  favoritedBy          UserFavorite[]            @relation("TargetFavorites")
+  blockedUsers         UserBlock[]               @relation("BlockerUsers")
+  blockedBy            UserBlock[]               @relation("BlockedUsers")
+
+  @@index([email])
+  @@index([username])
+  @@index([role])
+  @@index([verificationStatus])
+}
+
+model Profile {
+  id                 String             @id @default(uuid())
+  userId             String             @unique
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName        String
+  age                Int
+  gender             Gender
+  sexualOrientation  SexualOrientation
+  location           String
+  latitude           Float?
+  longitude          Float?
+  bio                String?            @db.Text
+  interests          String[]
+  relationshipStatus RelationshipStatus
+  lookingFor         String[]
+  isCoupleProfile    Boolean            @default(false)
+
+  // Couple specific fields
+  partnerDisplayName String?
+  partnerAge         Int?
+  partnerGender      Gender?
+
+  // Privacy Settings
+  showOnlineStatus   Boolean            @default(true)
+  showDistance       Boolean            @default(true)
+  allowDirectMessages Boolean           @default(true)
+  requireVerificationToMessage Boolean  @default(false)
+
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  preferences        Preferences?
+  media              Media[]
+
+  @@index([location])
+  @@index([age])
+  @@index([gender])
+  @@index([relationshipStatus])
+}
+
+model Preferences {
+  id                    String      @id @default(uuid())
+  profileId             String      @unique
+  profile               Profile     @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  minAge                Int         @default(18)
+  maxAge                Int         @default(99)
+  maxDistanceKm         Int         @default(100)
+  preferredGenders      Gender[]
+  preferredOrientations SexualOrientation[]
+  verifiedOnly          Boolean     @default(false)
+  creatorsOnly          Boolean     @default(false)
+  photosAvailableOnly   Boolean     @default(true)
+  onlineOnly            Boolean     @default(false)
+
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+}
+
+model Media {
+  id           String     @id @default(uuid())
+  profileId    String
+  profile      Profile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  url          String
+  previewUrl   String?
+  type         MediaType  @default(IMAGE)
+  visibility   Visibility @default(PUBLIC)
+  price        Float?     @default(0)
+  title        String?
+  description  String?
+  isProfilePhoto Boolean  @default(false)
+  isCoverPhoto Boolean    @default(false)
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([profileId])
+  @@index([visibility])
+}
+
+model CreatorProfile {
+  id                 String         @id @default(uuid())
+  userId             String         @unique
+  user               User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  monthlyPrice       Float          @default(19.99)
+  bio                String?        @db.Text
+  welcomeMessage     String?
+  followersCount     Int            @default(0)
+  subscribersCount   Int            @default(0)
+  totalEarnings      Float          @default(0)
+  payoutMethod       String?
+  payoutDetails      String?
+  isLiveNow          Boolean        @default(false)
+  nextScheduledLive  DateTime?
+
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  subscriptions      Subscription[] @relation("CreatorSubscriptions")
+}
+
+model Subscription {
+  id               String         @id @default(uuid())
+  subscriberId     String
+  subscriber       User           @relation("UserSubscriptions", fields: [subscriberId], references: [id], onDelete: Cascade)
+  creatorProfileId String
+  creatorProfile   CreatorProfile @relation("CreatorSubscriptions", fields: [creatorProfileId], references: [id], onDelete: Cascade)
+  price            Float
+  status           String         @default("ACTIVE") // ACTIVE, CANCELLED, EXPIRED
+  renewsAt         DateTime
+  createdAt        DateTime       @default(now())
+
+  @@index([subscriberId])
+  @@index([creatorProfileId])
+}
+
+model Conversation {
+  id           String                    @id @default(uuid())
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unreadCount    Int          @default(0)
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  content        String       @db.Text
+  mediaUrl       String?
+  isLocked       Boolean      @default(false)
+  unlockPrice    Float?
+  isUnlocked     Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+  @@index([senderId])
+}
+
+model VerificationRequest {
+  id                String             @id @default(uuid())
+  userId            String
+  user              User               @relation("UserVerifications", fields: [userId], references: [id], onDelete: Cascade)
+  idDocumentUrl     String
+  selfieWithNoteUrl String
+  status            VerificationStatus @default(PENDING)
+  rejectionNotes    String?
+  reviewedById      String?
+  reviewedBy        User?              @relation("AdminReviewedVerifications", fields: [reviewedById], references: [id])
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([status])
+  @@index([userId])
+}
+
+model UserReport {
+  id             String       @id @default(uuid())
+  reporterId     String
+  reporter       User         @relation("ReportsFiled", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedUserId String
+  reportedUser   User         @relation("ReportsReceived", fields: [reportedUserId], references: [id], onDelete: Cascade)
+  reason         ReportReason
+  details        String       @db.Text
+  status         ReportStatus @default(PENDING)
+  adminNotes     String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([status])
+  @@index([reportedUserId])
+}
+
+model UserFavorite {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation("UserFavorites", fields: [userId], references: [id], onDelete: Cascade)
+  targetUserId String
+  targetUser   User     @relation("TargetFavorites", fields: [targetUserId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, targetUserId])
+}
+
+model UserBlock {
+  id            String   @id @default(uuid())
+  blockerId     String
+  blocker       User     @relation("BlockerUsers", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedUserId String
+  blockedUser   User     @relation("BlockedUsers", fields: [blockedUserId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+
+  @@unique([blockerId, blockedUserId])
+}
+
+model PaymentTransaction {
+  id          String        @id @default(uuid())
+  buyerId     String
+  buyer       User          @relation("BuyerTransactions", fields: [buyerId], references: [id], onDelete: Cascade)
+  sellerId    String?
+  seller      User?         @relation("SellerTransactions", fields: [sellerId], references: [id])
+  amount      Float
+  currency    String        @default("USD")
+  type        PaymentType
+  status      PaymentStatus @default(PENDING)
+  metadata    String?       // JSON stringified details
+  createdAt   DateTime      @default(now())
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([type])
+}
