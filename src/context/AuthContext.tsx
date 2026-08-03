@@ -47,53 +47,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (parsedUser.role) {
           setRole(parsedUser.role);
         }
-      } else if (typeof document !== "undefined" && document.cookie.includes("intimo_session_active=")) {
-        const primaryUser: User = {
-          id: "usr_primary_member",
-          email: "member@intimo.live",
-          username: "intimo_member",
-          role: "MEMBER",
-          memberTier: "PREMIUM",
-          verificationStatus: "VERIFIED",
-          verificationLevel: "LEVEL_3_PROFILE_BIOMETRIC",
-          createdAt: new Date().toISOString().split("T")[0],
-        };
-        const primaryProfile: Profile = {
-          id: "prof_primary_member",
-          userId: "usr_primary_member",
-          displayName: "Intimo Member",
-          dateOfBirth: "1998-05-15",
-          age: 26,
-          gender: "FEMALE",
-          sexualOrientation: "BISEXUAL",
-          country: "Monaco",
-          city: "Monte Carlo",
-          location: "Monaco / London",
-          languages: ["English"],
-          headline: "Intimo Private Member",
-          bio: "Verified Intimo Private Member",
-          interests: ["Private Connections"],
-          lifestyleTags: ["Discreet", "Luxury Lifestyle"],
-          hobbies: [],
-          relationshipStatus: "SINGLE",
-          lookingFor: ["Connections"],
-          isCoupleProfile: false,
-          publicProfileVisibility: true,
-          photoVisibilityDefault: "PUBLIC",
-          locationPrecision: "CITY",
-          showOnlineStatus: true,
-          showDistance: true,
-          allowDirectMessages: true,
-          requireVerificationToMessage: false,
-          verified: true,
-          isOnline: true,
-          compatibilityScore: 95,
-          avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
-          coverPhotoUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
-          galleryImages: [],
-        };
-        setUser(primaryUser);
-        setProfile(primaryProfile);
+      } else if (typeof document !== "undefined" && document.cookie.includes("intimo_user_data=")) {
+        const match = document.cookie.match(/intimo_user_data=([^;]+)/);
+        if (match) {
+          const cookieUserData = JSON.parse(decodeURIComponent(match[1]));
+          const cookieUser: User = {
+            id: cookieUserData.id,
+            email: cookieUserData.email,
+            username: cookieUserData.username,
+            role: "MEMBER",
+            memberTier: "PREMIUM",
+            verificationStatus: "VERIFIED",
+            verificationLevel: "LEVEL_3_PROFILE_BIOMETRIC",
+            createdAt: new Date().toISOString().split("T")[0],
+            avatarUrl: cookieUserData.avatarUrl,
+          };
+          const cookieProfile: Profile = {
+            id: `prof_${cookieUserData.id}`,
+            userId: cookieUserData.id,
+            displayName: cookieUserData.username || cookieUserData.email.split("@")[0],
+            dateOfBirth: "1998-05-15",
+            age: 26,
+            gender: "FEMALE",
+            sexualOrientation: "BISEXUAL",
+            country: "Monaco",
+            city: "Monte Carlo",
+            location: "Monaco",
+            languages: ["English"],
+            headline: "Intimo Member",
+            bio: "Verified Intimo Member",
+            interests: ["Private Connections"],
+            lifestyleTags: ["Discreet", "Luxury Lifestyle"],
+            hobbies: [],
+            relationshipStatus: "SINGLE",
+            lookingFor: ["Connections"],
+            isCoupleProfile: false,
+            publicProfileVisibility: true,
+            photoVisibilityDefault: "PUBLIC",
+            locationPrecision: "CITY",
+            showOnlineStatus: true,
+            showDistance: true,
+            allowDirectMessages: true,
+            requireVerificationToMessage: false,
+            verified: true,
+            isOnline: true,
+            compatibilityScore: 95,
+            avatarUrl: cookieUserData.avatarUrl,
+            coverPhotoUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+            galleryImages: [],
+          };
+          setUser(cookieUser);
+          setProfile(cookieProfile);
+        }
       }
     } catch (err) {
       console.error("Failed to restore session state:", err);
