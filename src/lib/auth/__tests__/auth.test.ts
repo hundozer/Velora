@@ -18,7 +18,7 @@ export function runAuth0SecurityVerificationSuite() {
       email: "test.user@velora.club",
       email_verified: true,
       iss: "https://simpleafiedeu.eu.auth0.com/",
-      aud: "OphH13r0npmCJaGByn9fTIRHiuAQu8uK",
+      aud: "2wfjGUy76NmH8rdoxXxqg8CrbchkutTl",
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + 3600,
     };
