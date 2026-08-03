@@ -22,6 +22,14 @@ import {
 export default function DashboardPage() {
   const { profile, role } = useAuth();
 
+  const displayProfiles = React.useMemo(() => {
+    if (profile) {
+      const exists = MOCK_PROFILES.some((p) => p.id === profile.id || p.displayName === profile.displayName);
+      return exists ? MOCK_PROFILES : [profile, ...MOCK_PROFILES];
+    }
+    return MOCK_PROFILES;
+  }, [profile]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
       {/* Welcome Banner */}
@@ -86,7 +94,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {MOCK_PROFILES.map((p) => (
+          {displayProfiles.map((p) => (
             <Card key={p.id} variant="glass" className="group overflow-hidden flex flex-col justify-between">
               {/* Profile Image & Badges */}
               <div className="relative h-64 w-full bg-velora-card overflow-hidden">

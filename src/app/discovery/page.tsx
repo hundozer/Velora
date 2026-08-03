@@ -29,8 +29,11 @@ import {
   ArrowRight,
 } from "lucide-react";
 
+import { useAuth } from "@/context/AuthContext";
+
 export default function DiscoveryMarketplacePage() {
   const { t } = useTranslation();
+  const { profile: currentUserProfile } = useAuth();
   const [viewMode, setViewMode] = useState<"GRID" | "LIST" | "MAP">("GRID");
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
@@ -55,8 +58,16 @@ export default function DiscoveryMarketplacePage() {
     sortBy: "NEWEST",
   });
 
+  const allProfiles = React.useMemo(() => {
+    if (currentUserProfile) {
+      const exists = MOCK_PROFILES.some((p) => p.id === currentUserProfile.id || p.displayName === currentUserProfile.displayName);
+      return exists ? MOCK_PROFILES : [currentUserProfile, ...MOCK_PROFILES];
+    }
+    return MOCK_PROFILES;
+  }, [currentUserProfile]);
+
   // Filter profiles based on all filter parameters
-  const filteredProfiles = MOCK_PROFILES.filter((p) => {
+  const filteredProfiles = allProfiles.filter((p) => {
     // Search Query (Username, Display Name, City, Country, Headline)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
