@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { ProfileCard } from "@/components/discovery/ProfileCard";
 import { SearchBar } from "@/components/discovery/SearchBar";
-import { FilterSidebar } from "@/components/discovery/FilterSidebar";
+import { FilterSidebar, FilterState } from "@/components/discovery/FilterSidebar";
 import { MapView } from "@/components/discovery/MapView";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -35,16 +35,61 @@ export default function DiscoveryMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
-  // Filter profiles based on search query
+  // Sidebar Filter State
+  const [sidebarFilters, setSidebarFilters] = useState<FilterState>({
+    country: "ALL",
+    city: "",
+    gender: "ALL",
+    sexualOrientation: "ALL",
+    distanceKm: 50,
+    profileType: "ALL",
+    minAge: 18,
+    maxAge: 45,
+    sortBy: "NEWEST",
+  });
+
+  // Filter profiles based on search query, gender, sexuality, country, city & sidebar criteria
   const filteredProfiles = MOCK_PROFILES.filter((p) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      p.displayName.toLowerCase().includes(q) ||
-      p.city?.toLowerCase().includes(q) ||
-      p.country?.toLowerCase().includes(q) ||
-      p.headline?.toLowerCase().includes(q)
-    );
+    // Search Query (Username, Display Name, City, Country, Headline)
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchesSearch =
+        p.displayName.toLowerCase().includes(q) ||
+        p.city?.toLowerCase().includes(q) ||
+        p.country?.toLowerCase().includes(q) ||
+        p.headline?.toLowerCase().includes(q);
+      if (!matchesSearch) return false;
+    }
+
+    // Country Filter
+    if (sidebarFilters.country !== "ALL" && p.country !== sidebarFilters.country) {
+      return false;
+    }
+
+    // City Filter
+    if (sidebarFilters.city.trim() && !p.city?.toLowerCase().includes(sidebarFilters.city.toLowerCase())) {
+      return false;
+    }
+
+    // Gender Filter
+    if (sidebarFilters.gender !== "ALL" && p.gender !== sidebarFilters.gender) {
+      return false;
+    }
+
+    // Sexual Orientation Filter
+    if (sidebarFilters.sexualOrientation !== "ALL" && p.sexualOrientation !== sidebarFilters.sexualOrientation) {
+      return false;
+    }
+
+    // Profile Type Filter
+    if (sidebarFilters.profileType === "COUPLE" && !p.isCoupleProfile) return false;
+    if (sidebarFilters.profileType === "CREATOR" && (!p.categories || p.categories.length === 0)) return false;
+    if (sidebarFilters.profileType === "SINGLE" && (p.isCoupleProfile || (p.categories && p.categories.length > 0))) return false;
+
+    // Age Filter
+    if (p.age < sidebarFilters.minAge || p.age > sidebarFilters.maxAge) return false;
+
+    return true;
   });
 
   return (
@@ -56,7 +101,7 @@ export default function DiscoveryMarketplacePage() {
             <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-velora-gold/20 text-velora-gold border border-velora-gold/40 font-mono uppercase tracking-widest">
               Adult Social Discovery Engine
             </span>
-            <span className="text-xs text-velora-gold font-mono uppercase tracking-widest">• 3-Column Desktop Architecture</span>
+            <span className="text-xs text-velora-gold font-mono uppercase tracking-widest">• Gender, Sexuality & Location Search</span>
           </div>
           <h1 className="text-3xl font-serif font-bold text-velora-textPrimary flex items-center gap-3">
             <Compass className="w-8 h-8 text-velora-gold" />
@@ -118,12 +163,21 @@ export default function DiscoveryMarketplacePage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* LEFT COLUMN: Persistent Filter Sidebar (Desktop w-80 / 3 cols) */}
         <div className="hidden lg:block lg:col-span-3 space-y-6">
-          <FilterSidebar matchingCount={filteredProfiles.length} />
+          <FilterSidebar
+            matchingCount={filteredProfiles.length}
+            onFilterChange={(newFilters) => setSidebarFilters(newFilters)}
+          />
         </div>
 
         {/* CENTER COLUMN: Profile Results (Grid / List / Map) (Desktop 6 cols / lg:col-span-6) */}
         <div className="lg:col-span-6 space-y-6">
-          {viewMode === "MAP" ? (
+          {filteredProfiles.length === 0 ? (
+            <Card variant="glass" className="p-12 text-center space-y-4">
+              <Sparkles className="w-12 h-12 text-velora-gold mx-auto" />
+              <h3 className="text-lg font-serif font-bold text-velora-textPrimary">No Profiles Match Selection</h3>
+              <p className="text-xs text-velora-textMuted">Try broadening your gender, sexuality, or location filters.</p>
+            </Card>
+          ) : viewMode === "MAP" ? (
             <MapView profiles={filteredProfiles} />
           ) : viewMode === "LIST" ? (
             /* LIST VIEW */
@@ -140,7 +194,9 @@ export default function DiscoveryMarketplacePage() {
                         <h3 className="text-base font-serif font-bold text-white">{p.displayName}, {p.age}</h3>
                         <ShieldCheck className="w-4 h-4 text-emerald-400" />
                       </div>
-                      <p className="text-xs text-velora-gold font-medium">{p.city}, {p.country} ({p.distanceKm} km)</p>
+                      <p className="text-xs text-velora-gold font-medium">
+                        {p.gender} • {p.sexualOrientation} • {p.city}, {p.country}
+                      </p>
                       <p className="text-xs text-velora-textMuted line-clamp-1 italic">"{p.headline}"</p>
                     </div>
                   </div>
@@ -236,7 +292,10 @@ export default function DiscoveryMarketplacePage() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <FilterSidebar matchingCount={filteredProfiles.length} />
+            <FilterSidebar
+              matchingCount={filteredProfiles.length}
+              onFilterChange={(newFilters) => setSidebarFilters(newFilters)}
+            />
           </div>
         </div>
       )}

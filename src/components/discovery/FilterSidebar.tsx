@@ -19,7 +19,7 @@ import {
   Users,
   Crown,
   Sparkles,
-  Camera,
+  Heart,
   Globe,
   ArrowUpDown,
 } from "lucide-react";
@@ -28,15 +28,31 @@ import { useTranslation } from "@/context/LanguageContext";
 export interface SavedSearchPreset {
   id: string;
   name: string;
+  country: string;
+  city: string;
+  gender: string;
+  sexualOrientation: string;
   distanceKm: number;
   profileType: string;
   verifiedOnly: boolean;
   alertsEnabled: boolean;
 }
 
+export interface FilterState {
+  country: string;
+  city: string;
+  gender: string;
+  sexualOrientation: string;
+  distanceKm: number;
+  profileType: string;
+  minAge: number;
+  maxAge: number;
+  sortBy: string;
+}
+
 interface FilterSidebarProps {
   matchingCount: number;
-  onFilterChange?: (filters: any) => void;
+  onFilterChange: (filters: FilterState) => void;
 }
 
 export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onFilterChange }) => {
@@ -45,31 +61,32 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
   // Expanded Accordion States
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     location: true,
+    demographics: true,
     type: true,
     age: true,
-    lookingFor: true,
     sorting: true,
   });
 
   // Filter States
+  const [country, setCountry] = useState<string>("ALL");
+  const [city, setCity] = useState<string>("");
+  const [gender, setGender] = useState<string>("ALL");
+  const [sexualOrientation, setSexualOrientation] = useState<string>("ALL");
   const [distanceKm, setDistanceKm] = useState<number>(50);
   const [profileType, setProfileType] = useState<string>("ALL");
-  const [gender, setGender] = useState<string>("ALL");
-  const [orientation, setOrientation] = useState<string>("ALL");
   const [minAge, setMinAge] = useState<number>(18);
   const [maxAge, setMaxAge] = useState<number>(45);
-  const [onlineStatus, setOnlineStatus] = useState<string>("ALL");
-  const [selectedMedia, setSelectedMedia] = useState<string[]>(["PHOTO"]);
-  const [selectedLookingFor, setSelectedLookingFor] = useState<string[]>(["Casual Encounters"]);
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["en"]);
   const [sortBy, setSortBy] = useState<string>("NEWEST");
 
   // Saved Searches Presets
   const [savedPresets, setSavedPresets] = useState<SavedSearchPreset[]>([
     {
       id: "preset-1",
-      name: "Prague Verified Members",
+      name: "Prague Straight & Bisexual Members",
+      country: "Czech Republic",
+      city: "Prague",
+      gender: "ALL",
+      sexualOrientation: "ALL",
       distanceKm: 25,
       profileType: "ALL",
       verifiedOnly: true,
@@ -77,7 +94,11 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
     },
     {
       id: "preset-2",
-      name: "Berlin Open Couples",
+      name: "Berlin Bisexual Couples",
+      country: "Germany",
+      city: "Berlin",
+      gender: "COUPLE_MF",
+      sexualOrientation: "BISEXUAL",
       distanceKm: 50,
       profileType: "COUPLE",
       verifiedOnly: true,
@@ -87,23 +108,46 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
   const [newPresetName, setNewPresetName] = useState("");
   const [isSavingPreset, setIsSavingPreset] = useState(false);
 
+  const notifyChange = (updated: Partial<FilterState>) => {
+    const nextState: FilterState = {
+      country: updated.country !== undefined ? updated.country : country,
+      city: updated.city !== undefined ? updated.city : city,
+      gender: updated.gender !== undefined ? updated.gender : gender,
+      sexualOrientation: updated.sexualOrientation !== undefined ? updated.sexualOrientation : sexualOrientation,
+      distanceKm: updated.distanceKm !== undefined ? updated.distanceKm : distanceKm,
+      profileType: updated.profileType !== undefined ? updated.profileType : profileType,
+      minAge: updated.minAge !== undefined ? updated.minAge : minAge,
+      maxAge: updated.maxAge !== undefined ? updated.maxAge : maxAge,
+      sortBy: updated.sortBy !== undefined ? updated.sortBy : sortBy,
+    };
+    onFilterChange(nextState);
+  };
+
   const toggleSection = (section: string) => {
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
   const handleReset = () => {
+    setCountry("ALL");
+    setCity("");
+    setGender("ALL");
+    setSexualOrientation("ALL");
     setDistanceKm(50);
     setProfileType("ALL");
-    setGender("ALL");
-    setOrientation("ALL");
     setMinAge(18);
     setMaxAge(45);
-    setOnlineStatus("ALL");
-    setSelectedMedia(["PHOTO"]);
-    setSelectedLookingFor([]);
-    setSelectedInterests([]);
-    setSelectedLanguages(["en"]);
     setSortBy("NEWEST");
+    onFilterChange({
+      country: "ALL",
+      city: "",
+      gender: "ALL",
+      sexualOrientation: "ALL",
+      distanceKm: 50,
+      profileType: "ALL",
+      minAge: 18,
+      maxAge: 45,
+      sortBy: "NEWEST",
+    });
   };
 
   const handleSavePreset = () => {
@@ -111,6 +155,10 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
     const newPreset: SavedSearchPreset = {
       id: "preset-" + Date.now(),
       name: newPresetName.trim(),
+      country,
+      city,
+      gender,
+      sexualOrientation,
       distanceKm,
       profileType,
       verifiedOnly: true,
@@ -122,8 +170,20 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
   };
 
   const applyPreset = (preset: SavedSearchPreset) => {
+    setCountry(preset.country);
+    setCity(preset.city);
+    setGender(preset.gender);
+    setSexualOrientation(preset.sexualOrientation);
     setDistanceKm(preset.distanceKm);
     setProfileType(preset.profileType);
+    notifyChange({
+      country: preset.country,
+      city: preset.city,
+      gender: preset.gender,
+      sexualOrientation: preset.sexualOrientation,
+      distanceKm: preset.distanceKm,
+      profileType: preset.profileType,
+    });
   };
 
   return (
@@ -207,38 +267,136 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
         </div>
       </div>
 
-      {/* ACCORDION 1: LOCATION & DISTANCE SLIDER */}
+      {/* ACCORDION 1: LOCATION (COUNTRY & CITY) */}
       <div className="border-t border-white/10 pt-4 space-y-3">
         <button
           onClick={() => toggleSection("location")}
           className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-wider text-velora-textPrimary"
         >
           <span className="flex items-center gap-1.5">
-            <MapPin className="w-4 h-4 text-velora-gold" /> Location & Radius
+            <MapPin className="w-4 h-4 text-velora-gold" /> Location (Country & City)
           </span>
           {openSections.location ? <ChevronUp className="w-4 h-4 text-velora-textMuted" /> : <ChevronDown className="w-4 h-4 text-velora-textMuted" />}
         </button>
 
         {openSections.location && (
           <div className="space-y-3 pt-1">
-            <div className="flex items-center justify-between text-xs font-mono text-velora-textSecondary">
-              <span>Distance Radius</span>
-              <span className="text-velora-gold font-bold">{distanceKm === 100 ? "Anywhere" : `Within ${distanceKm} km`}</span>
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1">Country</label>
+              <select
+                value={country}
+                onChange={(e) => {
+                  setCountry(e.target.value);
+                  notifyChange({ country: e.target.value });
+                }}
+                className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
+              >
+                <option value="ALL">All Countries</option>
+                <option value="Czech Republic">Czech Republic</option>
+                <option value="Germany">Germany</option>
+                <option value="United Kingdom">United Kingdom</option>
+                <option value="Monaco">Monaco</option>
+                <option value="Austria">Austria</option>
+                <option value="France">France</option>
+                <option value="Hungary">Hungary</option>
+                <option value="Slovakia">Slovakia</option>
+                <option value="Romania">Romania</option>
+              </select>
             </div>
-            <input
-              type="range"
-              min="10"
-              max="100"
-              step="5"
-              value={distanceKm}
-              onChange={(e) => setDistanceKm(Number(e.target.value))}
-              className="w-full accent-velora-gold bg-white/10 h-1.5 rounded-lg cursor-pointer"
-            />
+
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1">City Filter</label>
+              <Input
+                value={city}
+                onChange={(e) => {
+                  setCity(e.target.value);
+                  notifyChange({ city: e.target.value });
+                }}
+                placeholder="e.g. Prague, Berlin, Munich..."
+                className="text-xs py-2"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs font-mono text-velora-textSecondary">
+                <span>Distance Radius</span>
+                <span className="text-velora-gold font-bold">{distanceKm === 100 ? "Anywhere" : `Within ${distanceKm} km`}</span>
+              </div>
+              <input
+                type="range"
+                min="10"
+                max="100"
+                step="5"
+                value={distanceKm}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setDistanceKm(val);
+                  notifyChange({ distanceKm: val });
+                }}
+                className="w-full accent-velora-gold bg-white/10 h-1.5 rounded-lg cursor-pointer"
+              />
+            </div>
           </div>
         )}
       </div>
 
-      {/* ACCORDION 2: PROFILE TYPE */}
+      {/* ACCORDION 2: GENDER & SEXUAL ORIENTATION */}
+      <div className="border-t border-white/10 pt-4 space-y-3">
+        <button
+          onClick={() => toggleSection("demographics")}
+          className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-wider text-velora-textPrimary"
+        >
+          <span className="flex items-center gap-1.5">
+            <Heart className="w-4 h-4 text-velora-gold" /> Gender & Sexuality
+          </span>
+          {openSections.demographics ? <ChevronUp className="w-4 h-4 text-velora-textMuted" /> : <ChevronDown className="w-4 h-4 text-velora-textMuted" />}
+        </button>
+
+        {openSections.demographics && (
+          <div className="space-y-3 pt-1">
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1">Gender</label>
+              <select
+                value={gender}
+                onChange={(e) => {
+                  setGender(e.target.value);
+                  notifyChange({ gender: e.target.value });
+                }}
+                className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
+              >
+                <option value="ALL">All Genders</option>
+                <option value="FEMALE">Female</option>
+                <option value="MALE">Male</option>
+                <option value="COUPLE_MF">Couple (M & F)</option>
+                <option value="NON_BINARY">Non-Binary</option>
+                <option value="TRANSGENDER">Transgender</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1">Sexual Orientation</label>
+              <select
+                value={sexualOrientation}
+                onChange={(e) => {
+                  setSexualOrientation(e.target.value);
+                  notifyChange({ sexualOrientation: e.target.value });
+                }}
+                className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
+              >
+                <option value="ALL">All Sexualities</option>
+                <option value="BISEXUAL">Bisexual</option>
+                <option value="HETEROSEXUAL">Heterosexual (Straight)</option>
+                <option value="HOMOSEXUAL">Homosexual (Gay/Lesbian)</option>
+                <option value="PANSEXUAL">Pansexual</option>
+                <option value="FLUID">Fluid / Open</option>
+              </select>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ACCORDION 3: PROFILE TYPE */}
       <div className="border-t border-white/10 pt-4 space-y-3">
         <button
           onClick={() => toggleSection("type")}
@@ -260,7 +418,10 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
             ].map((item) => (
               <button
                 key={item.id}
-                onClick={() => setProfileType(item.id)}
+                onClick={() => {
+                  setProfileType(item.id);
+                  notifyChange({ profileType: item.id });
+                }}
                 className={`py-2 px-3 rounded-xl border text-[11px] font-bold text-center transition-all ${
                   profileType === item.id
                     ? "bg-gold-gradient text-velora-bg border-velora-gold shadow-gold-glow"
@@ -274,7 +435,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
         )}
       </div>
 
-      {/* ACCORDION 3: AGE RANGE SLIDER */}
+      {/* ACCORDION 4: AGE RANGE */}
       <div className="border-t border-white/10 pt-4 space-y-3">
         <button
           onClick={() => toggleSection("age")}
@@ -294,7 +455,11 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
                 min="18"
                 max="99"
                 value={minAge}
-                onChange={(e) => setMinAge(Number(e.target.value))}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setMinAge(val);
+                  notifyChange({ minAge: val });
+                }}
                 className="text-xs py-1"
                 placeholder="Min"
               />
@@ -303,7 +468,11 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
                 min="18"
                 max="99"
                 value={maxAge}
-                onChange={(e) => setMaxAge(Number(e.target.value))}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setMaxAge(val);
+                  notifyChange({ maxAge: val });
+                }}
                 className="text-xs py-1"
                 placeholder="Max"
               />
@@ -312,7 +481,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
         )}
       </div>
 
-      {/* ACCORDION 4: SORTING OPTIONS */}
+      {/* ACCORDION 5: SORTING OPTIONS */}
       <div className="border-t border-white/10 pt-4 space-y-3">
         <button
           onClick={() => toggleSection("sorting")}
@@ -327,7 +496,10 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
         {openSections.sorting && (
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+            onChange={(e) => {
+              setSortBy(e.target.value);
+              notifyChange({ sortBy: e.target.value });
+            }}
             className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
           >
             <option value="NEWEST">Newest Members</option>

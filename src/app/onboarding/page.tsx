@@ -14,6 +14,9 @@ export default function OnboardingWizardPage() {
   // Form State
   const [profileType, setProfileType] = useState<"SINGLE" | "COUPLE" | "CREATOR" | "LIFESTYLE">("SINGLE");
   const [selectedInterests, setSelectedInterests] = useState<string[]>(["Casual Encounters", "Chemistry & Dating"]);
+  const [gender, setGender] = useState("FEMALE");
+  const [sexualOrientation, setSexualOrientation] = useState("BISEXUAL");
+  const [country, setCountry] = useState("Czech Republic");
   const [city, setCity] = useState("Prague");
   const [headline, setHeadline] = useState("Outgoing, adventurous and looking for real chemistry");
   const [avatarUrl, setAvatarUrl] = useState("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80");
@@ -141,28 +144,74 @@ export default function OnboardingWizardPage() {
                 className="w-2/3 text-xs font-bold uppercase tracking-wider py-3 shadow-gold-glow flex items-center justify-center gap-2"
                 onClick={() => setStep(3)}
               >
-                <span>Next: Preferences</span>
+                <span>Next: Demographics & Location</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
           </div>
         )}
 
-        {/* STEP 3: SET DISCOVERY PREFERENCES */}
+        {/* STEP 3: DEMOGRAPHICS (GENDER, SEXUALITY) & LOCATION */}
         {step === 3 && (
           <div className="space-y-5">
             <h2 className="text-2xl font-serif font-bold text-velora-textPrimary">
-              3. Set Discovery Preferences
+              3. Gender, Sexual Orientation & Location
             </h2>
             <p className="text-xs text-velora-textSecondary leading-relaxed">
-              Set your location and headline to help nearby members find you.
+              Provide your identity details to ensure transparent discovery matches.
             </p>
 
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-1">
-                City / Location
-              </label>
-              <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Prague" />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-1">
+                  Gender
+                </label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
+                >
+                  <option value="FEMALE">Female</option>
+                  <option value="MALE">Male</option>
+                  <option value="COUPLE_MF">Couple (M & F)</option>
+                  <option value="NON_BINARY">Non-Binary</option>
+                  <option value="TRANSGENDER">Transgender</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-1">
+                  Sexual Orientation
+                </label>
+                <select
+                  value={sexualOrientation}
+                  onChange={(e) => setSexualOrientation(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
+                >
+                  <option value="BISEXUAL">Bisexual</option>
+                  <option value="HETEROSEXUAL">Heterosexual (Straight)</option>
+                  <option value="HOMOSEXUAL">Homosexual (Gay/Lesbian)</option>
+                  <option value="PANSEXUAL">Pansexual</option>
+                  <option value="FLUID">Fluid / Open</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-1">
+                  Country
+                </label>
+                <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="e.g. Czech Republic" />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-1">
+                  City
+                </label>
+                <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Prague" />
+              </div>
             </div>
 
             <div>
