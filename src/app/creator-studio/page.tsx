@@ -48,6 +48,16 @@ export default function CreatorStudioPage() {
   const [visibility, setVisibility] = useState<VisibilityLevel>("PAID_PER_VIEW");
   const [createdSuccess, setCreatedSuccess] = useState(false);
 
+  const contentFileInputRef = React.useRef<HTMLInputElement>(null);
+  const [uploadedPreviews, setUploadedPreviews] = useState<string[]>([]);
+
+  const handleMediaFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const urls = Array.from(e.target.files).map((f) => URL.createObjectURL(f));
+      setUploadedPreviews((prev) => [...prev, ...urls]);
+    }
+  };
+
   // Payout Modal State
   const [payoutModalOpen, setPayoutModalOpen] = useState(false);
   const [payoutAmount, setPayoutAmount] = useState("850.00");
@@ -57,21 +67,24 @@ export default function CreatorStudioPage() {
   const handleCreateContent = () => {
     if (!title.trim()) return;
 
+    const defaultImg = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80";
+    const finalPreviews = uploadedPreviews.length > 0 ? uploadedPreviews : [defaultImg];
+
     if (contentType === "ALBUM") {
       const newAlbum: ContentAlbum = {
         id: "alb-" + Date.now(),
         creatorId: "prof-1",
         creatorName: "Elena Vance",
         creatorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
-        title,
-        description,
+        title: title.trim(),
+        description: description.trim() || "Exclusive private album",
         category,
-        previewImages: ["https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"],
-        lockedImages: ["https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80"],
-        price: parseFloat(price) || 0,
+        previewImages: finalPreviews,
+        lockedImages: finalPreviews,
+        price: parseFloat(price) || 20,
         visibility,
         publicationStatus: "PUBLISHED",
-        totalPhotosCount: 12,
+        totalPhotosCount: finalPreviews.length,
         createdAt: "Just now",
       };
       setAlbums([newAlbum, ...albums]);
@@ -81,13 +94,13 @@ export default function CreatorStudioPage() {
         creatorId: "prof-1",
         creatorName: "Elena Vance",
         creatorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
-        title,
-        description,
+        title: title.trim(),
+        description: description.trim() || "Exclusive video release",
         category,
-        previewThumbnail: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
+        previewThumbnail: finalPreviews[0] || defaultImg,
         videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-classical-violinist-performing-41584-large.mp4",
         durationSeconds: 180,
-        price: parseFloat(price) || 0,
+        price: parseFloat(price) || 25,
         visibility,
         publicationStatus: "PUBLISHED",
         createdAt: "Just now",
@@ -97,10 +110,11 @@ export default function CreatorStudioPage() {
 
     setCreatedSuccess(true);
     setTimeout(() => {
-      setCreatedSuccess(false);
       setUploadModalOpen(false);
+      setCreatedSuccess(false);
       setTitle("");
       setDescription("");
+      setUploadedPreviews([]);
     }, 1500);
   };
 
@@ -389,6 +403,38 @@ export default function CreatorStudioPage() {
                 <Video className="w-4 h-4 mr-1" /> Premium Video
               </Button>
             </div>
+
+            {/* Hidden Native File Input */}
+            <input
+              type="file"
+              ref={contentFileInputRef}
+              accept={contentType === "ALBUM" ? "image/*" : "video/*,image/*"}
+              multiple
+              className="hidden"
+              onChange={handleMediaFileSelect}
+            />
+
+            {/* Dropzone File Selector */}
+            <div
+              onClick={() => contentFileInputRef.current?.click()}
+              className="p-5 border-2 border-dashed border-white/20 rounded-2xl text-center cursor-pointer hover:border-velora-gold/50 transition-colors bg-white/5"
+            >
+              <Upload className="w-6 h-6 text-velora-gold mx-auto mb-1.5" />
+              <p className="text-xs font-bold text-velora-textPrimary">Click to upload media files from your device</p>
+              <p className="text-[10px] text-velora-textMuted mt-0.5">Supports JPG, PNG, WEBP, MP4, MOV (Max 500MB)</p>
+            </div>
+
+            {/* Selected File Thumbnail Previews */}
+            {uploadedPreviews.length > 0 && (
+              <div className="grid grid-cols-4 gap-2 pt-1">
+                {uploadedPreviews.map((url, i) => (
+                  <div key={i} className="h-16 rounded-xl overflow-hidden bg-velora-card border border-white/10 relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt={`Upload ${i}`} className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div>
               <label className="block text-xs font-semibold uppercase text-velora-textSecondary mb-1">

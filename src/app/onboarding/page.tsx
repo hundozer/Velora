@@ -29,6 +29,24 @@ export default function OnboardingWizardPage() {
   const [selectedPositions, setSelectedPositions] = useState<string[]>(["Doggy", "Cowgirl"]);
 
   const [avatarUrl, setAvatarUrl] = useState("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80");
+  const [galleryPhotos, setGalleryPhotos] = useState<string[]>([]);
+  const avatarInputRef = React.useRef<HTMLInputElement>(null);
+  const galleryInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleAvatarFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const previewUrl = URL.createObjectURL(file);
+      setAvatarUrl(previewUrl);
+    }
+  };
+
+  const handleGalleryFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newUrls = Array.from(e.target.files).map((file) => URL.createObjectURL(file));
+      setGalleryPhotos((prev) => [...prev, ...newUrls]);
+    }
+  };
 
   const toggleInterest = (item: string) => {
     if (selectedInterests.includes(item)) {
@@ -393,20 +411,79 @@ export default function OnboardingWizardPage() {
         {step === 5 && (
           <div className="space-y-5">
             <h2 className="text-2xl font-serif font-bold text-velora-textPrimary">
-              5. Add Profile Photo
+              5. Add Profile & Gallery Photos
             </h2>
             <p className="text-xs text-velora-textSecondary leading-relaxed">
-              Upload a clear photo to present your persona to the community.
+              Upload clear photos from your device to present your persona to the community.
             </p>
 
+            {/* Hidden Native File Inputs */}
+            <input
+              type="file"
+              ref={avatarInputRef}
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarFileSelect}
+            />
+            <input
+              type="file"
+              ref={galleryInputRef}
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleGalleryFileSelect}
+            />
+
+            {/* Avatar Photo Selector */}
             <div className="flex flex-col items-center space-y-4 pt-2">
-              <div className="w-32 h-32 rounded-3xl border-2 border-velora-gold overflow-hidden bg-velora-card relative">
+              <div className="w-32 h-32 rounded-3xl border-2 border-velora-gold overflow-hidden bg-velora-card relative shadow-2xl">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={avatarUrl} alt="Avatar Preview" className="w-full h-full object-cover" />
               </div>
-              <Button variant="glass" size="sm" className="text-xs gap-1.5 border-white/20">
-                <Camera className="w-4 h-4 text-velora-gold" /> Upload New Photo
+              <Button
+                variant="glass"
+                size="sm"
+                className="text-xs gap-1.5 border-velora-gold/40 text-velora-gold hover:bg-velora-gold/10"
+                onClick={() => avatarInputRef.current?.click()}
+              >
+                <Camera className="w-4 h-4 text-velora-gold" /> Select Main Avatar Photo
               </Button>
+            </div>
+
+            {/* Public Gallery Photos Uploader */}
+            <div className="border-t border-white/10 pt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">
+                  Public Gallery Photos ({galleryPhotos.length})
+                </label>
+                <Button
+                  variant="gold"
+                  size="sm"
+                  className="text-[11px] font-bold py-1 px-3"
+                  onClick={() => galleryInputRef.current?.click()}
+                >
+                  + Add Photos
+                </Button>
+              </div>
+
+              {galleryPhotos.length > 0 ? (
+                <div className="grid grid-cols-4 gap-2">
+                  {galleryPhotos.map((url, idx) => (
+                    <div key={idx} className="h-20 rounded-xl overflow-hidden bg-velora-card border border-white/10 relative group">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={url} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="p-6 rounded-2xl border-2 border-dashed border-white/15 text-center cursor-pointer hover:border-velora-gold/40 transition-colors"
+                >
+                  <Camera className="w-6 h-6 text-velora-textMuted mx-auto mb-1" />
+                  <p className="text-xs text-velora-textMuted">Click here to select photos from your device</p>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3 pt-4">
