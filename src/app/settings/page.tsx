@@ -10,7 +10,8 @@ import { VerificationWizard } from "@/components/verification/VerificationWizard
 import { MOCK_SAFETY_SETTINGS } from "@/lib/mockData";
 import { SUPPORTED_LANGUAGES } from "@/lib/i18n";
 import { SUPPORTED_CURRENCIES } from "@/lib/currency/CurrencyService";
-import { UserSafetySettings, MessagePermissionRules, LanguageCode, CurrencyCode } from "@/types";
+import { UserSafetySettings, LanguageCode, CurrencyCode } from "@/types";
+import { useAuth } from "@/context/AuthContext";
 import {
   Settings,
   Shield,
@@ -27,10 +28,12 @@ import {
   DollarSign,
   Download,
   Trash2,
+  LogOut,
   AlertTriangle,
 } from "lucide-react";
 
 export default function SettingsPage() {
+  const { logout } = useAuth();
   const [safety, setSafety] = useState<UserSafetySettings>(MOCK_SAFETY_SETTINGS);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>("en");
   const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>("USD");
@@ -203,6 +206,23 @@ export default function SettingsPage() {
               onClick={handleExportGdprData}
             >
               <Download className="w-4 h-4" /> Download Data Archive
+            </Button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl border border-velora-gold/30">
+            <div>
+              <h4 className="text-xs font-bold text-velora-gold">Log Out of Velora Account</h4>
+              <p className="text-[11px] text-velora-textMuted mt-0.5">
+                Sign out of your active session on this device.
+              </p>
+            </div>
+            <Button
+              variant="gold"
+              size="sm"
+              className="text-xs font-bold shrink-0 gap-2 shadow-gold-glow"
+              onClick={() => logout()}
+            >
+              <LogOut className="w-4 h-4" /> Log Out
             </Button>
           </div>
 

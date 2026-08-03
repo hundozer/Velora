@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ReportModal } from "@/components/safety/ReportModal";
 import { MOCK_PROFILES, MOCK_CREATOR_ALBUMS } from "@/lib/mockData";
+import { useAuth } from "@/context/AuthContext";
 import {
   MapPin,
   Heart,
@@ -22,10 +23,12 @@ import {
   Calendar,
   Eye,
   Crown,
+  LogOut,
 } from "lucide-react";
 
 export default function SingleProfilePage() {
   const params = useParams();
+  const { logout } = useAuth();
   const profileId = (params?.id as string) || "prof-1";
 
   const profile = MOCK_PROFILES.find((p) => p.id === profileId) || MOCK_PROFILES[0];
@@ -72,6 +75,7 @@ export default function SingleProfilePage() {
                 className={`p-3 rounded-full glass-panel transition-all ${
                   isFavorited ? "text-rose-400 border-rose-500/40 bg-rose-500/10" : "text-velora-textSecondary hover:text-velora-gold"
                 }`}
+                title="Favorite Profile"
               >
                 <Heart className={`w-5 h-5 ${isFavorited ? "fill-rose-400" : ""}`} />
               </button>
@@ -81,6 +85,16 @@ export default function SingleProfilePage() {
                   <MessageSquare className="w-4 h-4" /> Send Private Message
                 </Button>
               </Link>
+
+              <Button
+                variant="glass"
+                size="lg"
+                className="text-xs font-bold uppercase tracking-wider gap-2 border-white/20 hover:border-red-500/50 hover:text-red-400"
+                onClick={() => logout()}
+                title="Sign Out of Account"
+              >
+                <LogOut className="w-4 h-4" /> Log Out
+              </Button>
             </div>
           </div>
 
