@@ -4,51 +4,36 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { UserRole } from "@/types";
-import { Badge } from "@/components/ui/Badge";
+import { useTranslation, LANGUAGES, SupportedLanguage } from "@/context/LanguageContext";
 import { NotificationDrawer } from "@/components/notifications/NotificationDrawer";
+import { Badge } from "@/components/ui/Badge";
 import {
   Compass,
-  MessageSquare,
   Sparkles,
-  ShieldCheck,
-  UserCheck,
-  ChevronDown,
-  LogOut,
-  Sliders,
-  Settings,
-  Heart,
-  Wallet,
-  Bell,
   Users,
   Calendar,
-  Share2,
+  MessageSquare,
+  Bell,
+  ChevronDown,
+  User,
+  Settings,
+  LogOut,
+  Wallet,
 } from "lucide-react";
-
-import { useTranslation, LANGUAGES, SupportedLanguage } from "@/context/LanguageContext";
-import { Globe } from "lucide-react";
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
-  const { user, profile, role, switchRole, logout } = useAuth();
+  const { user, profile, role, logout } = useAuth();
   const { language, setLanguage, t } = useTranslation();
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
-  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-
-  const rolesList: { role: UserRole; label: string; icon: React.ReactNode }[] = [
-    { role: "MEMBER", label: "Member Mode", icon: <UserCheck className="w-4 h-4 text-blue-400" /> },
-    { role: "COUPLE", label: "Couple Mode", icon: <UserCheck className="w-4 h-4 text-purple-400" /> },
-    { role: "CREATOR", label: "Creator Mode", icon: <Sparkles className="w-4 h-4 text-amber-400" /> },
-    { role: "ADMIN", label: "Admin Mode", icon: <ShieldCheck className="w-4 h-4 text-red-400" /> },
-  ];
 
   return (
     <header className="sticky top-0 z-40 w-full glass-panel border-b border-white/10 bg-velora-bg/85 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-3 group">
+        <Link href="/" className="flex items-center gap-3 group shrink-0">
           <div className="w-10 h-10 rounded-full bg-gold-gradient p-[1px] shadow-gold-glow flex items-center justify-center">
             <div className="w-full h-full bg-velora-bg rounded-full flex items-center justify-center group-hover:bg-velora-bg/80 transition-colors">
               <span className="font-serif font-bold text-lg text-velora-gold">V</span>
@@ -64,112 +49,114 @@ export const Navbar: React.FC = () => {
           </div>
         </Link>
 
-        {/* Main Navigation Links */}
-        <nav className="hidden md:flex items-center gap-1">
-          <Link
-            href="/dashboard"
-            className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-              pathname === "/dashboard"
-                ? "bg-white/10 text-velora-gold border border-velora-gold/30"
-                : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
-            }`}
-          >
-            <Compass className="w-4 h-4" />
-            {t("nav.feed")}
-          </Link>
-
-          <Link
-            href="/discovery"
-            className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-              pathname === "/discovery"
-                ? "bg-white/10 text-velora-gold border border-velora-gold/30"
-                : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
-            }`}
-          >
-            <Compass className="w-4 h-4" />
-            {t("nav.discover")}
-          </Link>
-
-          <Link
-            href="/creators"
-            className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-              pathname === "/creators"
-                ? "bg-white/10 text-velora-gold border border-velora-gold/30"
-                : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
-            }`}
-          >
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            {t("nav.creators")}
-          </Link>
-
-          <Link
-            href="/communities"
-            className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-              pathname.startsWith("/communities")
-                ? "bg-white/10 text-velora-gold border border-velora-gold/30"
-                : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
-            }`}
-          >
-            <Users className="w-4 h-4 text-velora-gold" />
-            {t("nav.communities")}
-          </Link>
-
-          <Link
-            href="/events"
-            className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-              pathname.startsWith("/events")
-                ? "bg-white/10 text-velora-gold border border-velora-gold/30"
-                : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
-            }`}
-          >
-            <Calendar className="w-4 h-4 text-amber-400" />
-            {t("nav.events")}
-          </Link>
-
-          <Link
-            href="/messages"
-            className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-              pathname === "/messages"
-                ? "bg-white/10 text-velora-gold border border-velora-gold/30"
-                : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
-            }`}
-          >
-            <MessageSquare className="w-4 h-4" />
-            {t("nav.messages")}
-          </Link>
-
-          {role === "CREATOR" && (
+        {/* Navigation Links: Dual-State (Authenticated vs Unauthenticated) */}
+        {user ? (
+          /* AUTHENTICATED MEMBER NAVIGATION */
+          <nav className="hidden lg:flex items-center gap-1">
             <Link
-              href="/creator-studio"
+              href="/dashboard"
               className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-                pathname === "/creator-studio"
-                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                  : "text-amber-300/80 hover:text-amber-300 hover:bg-amber-500/10"
+                pathname === "/dashboard"
+                  ? "bg-white/10 text-velora-gold border border-velora-gold/30"
+                  : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
               }`}
             >
-              <Sparkles className="w-4 h-4" />
-              Creator Studio
+              <Compass className="w-4 h-4" />
+              {t("nav.feed")}
             </Link>
-          )}
 
-          {role === "ADMIN" && (
             <Link
-              href="/admin"
+              href="/discovery"
               className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-                pathname === "/admin"
-                  ? "bg-red-500/20 text-red-300 border border-red-500/40"
-                  : "text-red-300/80 hover:text-red-300 hover:bg-red-500/10"
+                pathname === "/discovery"
+                  ? "bg-white/10 text-velora-gold border border-velora-gold/30"
+                  : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
               }`}
             >
-              <ShieldCheck className="w-4 h-4" />
-              Admin Portal
+              <Compass className="w-4 h-4" />
+              {t("nav.discover")}
             </Link>
-          )}
-        </nav>
 
-        {/* Right Section: Notifications, Role Switcher & Profile */}
-        <div className="flex items-center gap-3 relative">
-          {/* Notifications Trigger */}
+            <Link
+              href="/creators"
+              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
+                pathname === "/creators"
+                  ? "bg-white/10 text-velora-gold border border-velora-gold/30"
+                  : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
+              }`}
+            >
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              {t("nav.creators")}
+            </Link>
+
+            <Link
+              href="/communities"
+              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
+                pathname.startsWith("/communities")
+                  ? "bg-white/10 text-velora-gold border border-velora-gold/30"
+                  : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
+              }`}
+            >
+              <Users className="w-4 h-4 text-velora-gold" />
+              {t("nav.communities")}
+            </Link>
+
+            <Link
+              href="/events"
+              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
+                pathname.startsWith("/events")
+                  ? "bg-white/10 text-velora-gold border border-velora-gold/30"
+                  : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
+              }`}
+            >
+              <Calendar className="w-4 h-4 text-amber-400" />
+              {t("nav.events")}
+            </Link>
+
+            <Link
+              href="/messages"
+              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
+                pathname === "/messages"
+                  ? "bg-white/10 text-velora-gold border border-velora-gold/30"
+                  : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
+              }`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              {t("nav.messages")}
+            </Link>
+          </nav>
+        ) : (
+          /* UNAUTHENTICATED GUEST NAVIGATION (Clean & Spacious) */
+          <nav className="hidden md:flex items-center gap-4">
+            <Link
+              href="/discovery"
+              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
+                pathname === "/discovery"
+                  ? "text-velora-gold font-bold"
+                  : "text-velora-textSecondary hover:text-velora-textPrimary"
+              }`}
+            >
+              <Compass className="w-4 h-4 text-velora-gold" />
+              {t("nav.discover")}
+            </Link>
+
+            <Link
+              href="/creators"
+              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
+                pathname === "/creators"
+                  ? "text-velora-gold font-bold"
+                  : "text-velora-textSecondary hover:text-velora-textPrimary"
+              }`}
+            >
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              {t("nav.creators")}
+            </Link>
+          </nav>
+        )}
+
+        {/* Right Section: Language Selector & Auth / Avatar Controls */}
+        <div className="flex items-center gap-4 shrink-0">
+          {/* Notifications Trigger for Logged In User */}
           {user && (
             <div className="relative">
               <button
@@ -231,9 +218,7 @@ export const Navbar: React.FC = () => {
             )}
           </div>
 
-
-
-          {/* User Account / Login State */}
+          {/* USER ACCOUNT DROPDOWN VS PUBLIC GUEST SIGN-IN / REGISTER CTAS */}
           {user ? (
             <div className="relative">
               <button
@@ -267,39 +252,15 @@ export const Navbar: React.FC = () => {
                     href={`/profile/${profile?.id || "prof-1"}`}
                     className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl"
                   >
-                    <UserCheck className="w-4 h-4 text-velora-gold" />
+                    <User className="w-4 h-4 text-velora-gold" />
                     My Profile
-                  </Link>
-
-                  <Link
-                    href="/onboarding"
-                    className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl"
-                  >
-                    <Sparkles className="w-4 h-4 text-amber-400" />
-                    Profile Setup Wizard
-                  </Link>
-
-                  <Link
-                    href="/favorites"
-                    className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl"
-                  >
-                    <Heart className="w-4 h-4 text-rose-400" />
-                    Saved Favorites
-                  </Link>
-
-                  <Link
-                    href="/notifications"
-                    className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl"
-                  >
-                    <Bell className="w-4 h-4 text-blue-400" />
-                    Notifications Center
                   </Link>
 
                   <Link
                     href="/wallet"
                     className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl"
                   >
-                    <Wallet className="w-4 h-4 text-emerald-400" />
+                    <Wallet className="w-4 h-4 text-amber-400" />
                     Wallet & Credits
                   </Link>
 
@@ -322,12 +283,19 @@ export const Navbar: React.FC = () => {
               )}
             </div>
           ) : (
+            /* CLEAN & HIGH-CONVERTING GUEST CTAS */
             <div className="flex items-center gap-3">
-              <Link href="/login" className="text-xs uppercase tracking-wider font-semibold text-velora-textSecondary hover:text-velora-textPrimary">
+              <Link
+                href="/login"
+                className="px-4 py-2 rounded-full border border-velora-gold/40 text-velora-gold font-bold text-xs uppercase tracking-wider hover:bg-velora-gold/10 transition-all"
+              >
                 {t("auth.login")}
               </Link>
-              <Link href="/register" className="px-5 py-2 text-xs uppercase tracking-wider font-bold rounded-full bg-gold-gradient text-velora-bg shadow-gold-glow">
-                {t("auth.register")}
+              <Link
+                href="/register"
+                className="px-6 py-2.5 rounded-full bg-gold-gradient text-velora-bg font-serif font-bold text-xs uppercase tracking-wider shadow-gold-glow hover:scale-105 transition-all"
+              >
+                Join Velora
               </Link>
             </div>
           )}
