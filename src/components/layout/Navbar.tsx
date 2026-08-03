@@ -285,18 +285,18 @@ export const Navbar: React.FC = () => {
           ) : (
             /* CLEAN & HIGH-CONVERTING GUEST CTAS */
             <div className="flex items-center gap-3">
-              <Link
-                href="/login"
+              <a
+                href="/api/auth/login"
                 className="px-4 py-2 rounded-full border border-velora-gold/40 text-velora-gold font-bold text-xs uppercase tracking-wider hover:bg-velora-gold/10 transition-all"
               >
                 {t("auth.login")}
-              </Link>
-              <Link
-                href="/register"
+              </a>
+              <a
+                href="/api/auth/login?screen_hint=signup"
                 className="px-6 py-2.5 rounded-full bg-gold-gradient text-velora-bg font-serif font-bold text-xs uppercase tracking-wider shadow-gold-glow hover:scale-105 transition-all"
               >
                 Join Intimo
-              </Link>
+              </a>
             </div>
           )}
         </div>

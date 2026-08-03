@@ -6,10 +6,13 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { LOCATION_DATA } from "@/lib/locationData";
+import { useAuth } from "@/context/AuthContext";
+import { UserSynchronizationService } from "@/lib/auth0/userSync";
 import { Sparkles, ArrowRight, CheckCircle2, Heart, ShieldCheck, Compass, User, Users, Crown, Camera, Flame } from "lucide-react";
 
 export default function OnboardingWizardPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
 
   // Form State

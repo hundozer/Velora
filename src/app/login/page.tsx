@@ -1,15 +1,22 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 import { Lock, ArrowRight, ShieldCheck, UserPlus } from "lucide-react";
 
 export default function LoginPage() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    // If user is already authenticated with completed profile, redirect straight to dashboard
+    if (user && user.verificationStatus !== "UNVERIFIED") {
+      router.push("/dashboard");
+    }
+  }, [user, router]);
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">

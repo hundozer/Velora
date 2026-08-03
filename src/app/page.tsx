@@ -62,7 +62,7 @@ export default function LandingPage() {
 
           {/* Primary & Secondary CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link href="/register" className="w-full sm:w-auto">
+            <a href="/api/auth/login?screen_hint=signup" className="w-full sm:w-auto">
               <Button
                 variant="gold"
                 size="lg"
@@ -71,7 +71,7 @@ export default function LandingPage() {
                 <span>{t("hero.join_cta")}</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
-            </Link>
+            </a>
 
             <Link href="/discovery" className="w-full sm:w-auto">
               <Button
@@ -254,11 +254,11 @@ export default function LandingPage() {
               <h3 className="text-lg font-serif font-bold text-velora-textPrimary">
                 Ready to explore private adult connections?
               </h3>
-              <Link href="/register" className="block">
+              <a href="/api/auth/login?screen_hint=signup" className="block">
                 <Button variant="gold" size="lg" className="w-full text-xs font-bold uppercase tracking-wider shadow-gold-glow">
                   Join Intimo Now
                 </Button>
-              </Link>
+              </a>
             </div>
           </div>
         </Card>

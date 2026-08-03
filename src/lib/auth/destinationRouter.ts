@@ -3,7 +3,7 @@ import { UserAccountModel } from "@/lib/auth/userModel";
 export class DestinationRouterService {
   /**
    * Resolves the target redirect URL post-authentication based on Intimo application user state.
-   * Required for non-enterprise Auth0 tenants where resultUrl customization in email templates is unavailable.
+   * Ensures new registrants complete /onboarding, creators visit /creator-studio, and active members land on /dashboard.
    */
   public static getDestinationUrl(user: UserAccountModel): string {
     // 1. Check if user profile onboarding is incomplete
@@ -11,7 +11,7 @@ export class DestinationRouterService {
       return "/onboarding";
     }
 
-    // 2. Check if user is a creator undergoing creator studio onboarding/approval
+    // 2. If user is a creator undergoing creator studio onboarding/approval
     if (user.role === "CREATOR" && user.creatorStatus !== "APPROVED") {
       return "/creator-studio";
     }
