@@ -141,6 +141,82 @@ export default function SingleProfilePage() {
               ))}
             </div>
           </Card>
+
+          {/* Intimate Preferences & Sex Hobbies */}
+          {(profile.sexHobbies || profile.erogenousZones || profile.favouriteSexPlaces || profile.favouriteSexPositions || profile.pubicHairGrooming) && (
+            <Card variant="goldBorder" className="p-8 space-y-5 text-left bg-gold-card">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-300 font-mono flex items-center gap-2">
+                <Flame className="w-4 h-4 text-amber-400" /> Intimate Preferences & Kinks
+              </h3>
+
+              <div className="grid grid-cols-3 gap-3 p-3 rounded-2xl bg-white/5 border border-white/10 text-center text-xs font-mono">
+                <div>
+                  <span className="block text-[10px] text-velora-textMuted uppercase">Grooming</span>
+                  <span className="font-bold text-amber-300">{profile.pubicHairGrooming || "Unspecified"}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] text-velora-textMuted uppercase">Piercing</span>
+                  <span className="font-bold text-amber-300">{profile.piercing || "Unspecified"}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] text-velora-textMuted uppercase">Tattoo</span>
+                  <span className="font-bold text-amber-300">{profile.tattoo || "Unspecified"}</span>
+                </div>
+              </div>
+
+              {profile.sexHobbies && profile.sexHobbies.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-bold text-velora-textMuted uppercase block">Sex Hobbies & Fetishes</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.sexHobbies.map((hobby) => (
+                      <span key={hobby} className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-400/20 text-amber-300 border border-amber-400/40">
+                        {hobby}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {profile.erogenousZones && profile.erogenousZones.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-bold text-velora-textMuted uppercase block">Erogenous Zones</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.erogenousZones.map((zone) => (
+                      <span key={zone} className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-velora-textPrimary border border-white/10">
+                        {zone}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {profile.favouriteSexPlaces && profile.favouriteSexPlaces.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-bold text-velora-textMuted uppercase block">Favourite Sex Places</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.favouriteSexPlaces.map((place) => (
+                      <span key={place} className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-velora-textPrimary border border-white/10">
+                        {place}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {profile.favouriteSexPositions && profile.favouriteSexPositions.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-bold text-velora-textMuted uppercase block">Favourite Sex Positions</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.favouriteSexPositions.map((pos) => (
+                      <span key={pos} className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-velora-textPrimary border border-white/10">
+                        {pos}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Card>
+          )}
         </div>
 
         {/* Right Col: Private Vault Preview */}

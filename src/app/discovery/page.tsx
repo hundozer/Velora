@@ -45,10 +45,17 @@ export default function DiscoveryMarketplacePage() {
     profileType: "ALL",
     minAge: 18,
     maxAge: 45,
+    pubicHairGrooming: "ALL",
+    piercing: "ALL",
+    tattoo: "ALL",
+    erogenousZones: [],
+    favouriteSexPlaces: [],
+    favouriteSexPositions: [],
+    sexHobbies: [],
     sortBy: "NEWEST",
   });
 
-  // Filter profiles based on search query, gender, sexuality, country, city & sidebar criteria
+  // Filter profiles based on all filter parameters
   const filteredProfiles = MOCK_PROFILES.filter((p) => {
     // Search Query (Username, Display Name, City, Country, Headline)
     if (searchQuery.trim()) {
@@ -62,24 +69,16 @@ export default function DiscoveryMarketplacePage() {
     }
 
     // Country Filter
-    if (sidebarFilters.country !== "ALL" && p.country !== sidebarFilters.country) {
-      return false;
-    }
+    if (sidebarFilters.country !== "ALL" && p.country !== sidebarFilters.country) return false;
 
     // City Filter
-    if (sidebarFilters.city.trim() && !p.city?.toLowerCase().includes(sidebarFilters.city.toLowerCase())) {
-      return false;
-    }
+    if (sidebarFilters.city.trim() && !p.city?.toLowerCase().includes(sidebarFilters.city.toLowerCase())) return false;
 
     // Gender Filter
-    if (sidebarFilters.gender !== "ALL" && p.gender !== sidebarFilters.gender) {
-      return false;
-    }
+    if (sidebarFilters.gender !== "ALL" && p.gender !== sidebarFilters.gender) return false;
 
     // Sexual Orientation Filter
-    if (sidebarFilters.sexualOrientation !== "ALL" && p.sexualOrientation !== sidebarFilters.sexualOrientation) {
-      return false;
-    }
+    if (sidebarFilters.sexualOrientation !== "ALL" && p.sexualOrientation !== sidebarFilters.sexualOrientation) return false;
 
     // Profile Type Filter
     if (sidebarFilters.profileType === "COUPLE" && !p.isCoupleProfile) return false;
@@ -88,6 +87,43 @@ export default function DiscoveryMarketplacePage() {
 
     // Age Filter
     if (p.age < sidebarFilters.minAge || p.age > sidebarFilters.maxAge) return false;
+
+    // Pubic Hair Grooming Filter
+    if (sidebarFilters.pubicHairGrooming !== "ALL" && p.pubicHairGrooming && p.pubicHairGrooming !== sidebarFilters.pubicHairGrooming) return false;
+
+    // Piercing Filter
+    if (sidebarFilters.piercing !== "ALL" && p.piercing && p.piercing !== sidebarFilters.piercing) return false;
+
+    // Tattoo Filter
+    if (sidebarFilters.tattoo !== "ALL" && p.tattoo && p.tattoo !== sidebarFilters.tattoo) return false;
+
+    // Sex Hobbies Filter
+    if (sidebarFilters.sexHobbies.length > 0) {
+      if (!p.sexHobbies || !sidebarFilters.sexHobbies.some((hobby) => p.sexHobbies?.includes(hobby))) {
+        return false;
+      }
+    }
+
+    // Erogenous Zones Filter
+    if (sidebarFilters.erogenousZones.length > 0) {
+      if (!p.erogenousZones || !sidebarFilters.erogenousZones.some((zone) => p.erogenousZones?.includes(zone))) {
+        return false;
+      }
+    }
+
+    // Favourite Places Filter
+    if (sidebarFilters.favouriteSexPlaces.length > 0) {
+      if (!p.favouriteSexPlaces || !sidebarFilters.favouriteSexPlaces.some((place) => p.favouriteSexPlaces?.includes(place))) {
+        return false;
+      }
+    }
+
+    // Favourite Positions Filter
+    if (sidebarFilters.favouriteSexPositions.length > 0) {
+      if (!p.favouriteSexPositions || !sidebarFilters.favouriteSexPositions.some((pos) => p.favouriteSexPositions?.includes(pos))) {
+        return false;
+      }
+    }
 
     return true;
   });
@@ -101,7 +137,7 @@ export default function DiscoveryMarketplacePage() {
             <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-velora-gold/20 text-velora-gold border border-velora-gold/40 font-mono uppercase tracking-widest">
               Adult Social Discovery Engine
             </span>
-            <span className="text-xs text-velora-gold font-mono uppercase tracking-widest">• Gender, Sexuality & Location Search</span>
+            <span className="text-xs text-velora-gold font-mono uppercase tracking-widest">• Intimate Preferences & Kinks Filter</span>
           </div>
           <h1 className="text-3xl font-serif font-bold text-velora-textPrimary flex items-center gap-3">
             <Compass className="w-8 h-8 text-velora-gold" />
@@ -175,7 +211,7 @@ export default function DiscoveryMarketplacePage() {
             <Card variant="glass" className="p-12 text-center space-y-4">
               <Sparkles className="w-12 h-12 text-velora-gold mx-auto" />
               <h3 className="text-lg font-serif font-bold text-velora-textPrimary">No Profiles Match Selection</h3>
-              <p className="text-xs text-velora-textMuted">Try broadening your gender, sexuality, or location filters.</p>
+              <p className="text-xs text-velora-textMuted">Try broadening your intimate preferences, grooming, or location filters.</p>
             </Card>
           ) : viewMode === "MAP" ? (
             <MapView profiles={filteredProfiles} />
@@ -198,6 +234,15 @@ export default function DiscoveryMarketplacePage() {
                         {p.gender} • {p.sexualOrientation} • {p.city}, {p.country}
                       </p>
                       <p className="text-xs text-velora-textMuted line-clamp-1 italic">"{p.headline}"</p>
+                      {p.sexHobbies && p.sexHobbies.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {p.sexHobbies.slice(0, 3).map((h) => (
+                            <span key={h} className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                              {h}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
 

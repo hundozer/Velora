@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Sparkles, ArrowRight, CheckCircle2, Heart, ShieldCheck, Compass, User, Users, Crown, Camera } from "lucide-react";
+import { Sparkles, ArrowRight, CheckCircle2, Heart, ShieldCheck, Compass, User, Users, Crown, Camera, Flame } from "lucide-react";
 
 export default function OnboardingWizardPage() {
   const router = useRouter();
@@ -19,6 +19,14 @@ export default function OnboardingWizardPage() {
   const [country, setCountry] = useState("Czech Republic");
   const [city, setCity] = useState("Prague");
   const [headline, setHeadline] = useState("Outgoing, adventurous and looking for real chemistry");
+
+  // Optional Intimate Preferences & Sex Hobbies
+  const [pubicHairGrooming, setPubicHairGrooming] = useState<string>("Trimmed");
+  const [piercing, setPiercing] = useState<string>("Yes");
+  const [tattoo, setTattoo] = useState<string>("Multiple");
+  const [selectedSexHobbies, setSelectedSexHobbies] = useState<string[]>(["Sensual Massage", "Oral Pleasure"]);
+  const [selectedPositions, setSelectedPositions] = useState<string[]>(["Doggy", "Cowgirl"]);
+
   const [avatarUrl, setAvatarUrl] = useState("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80");
 
   const toggleInterest = (item: string) => {
@@ -26,6 +34,14 @@ export default function OnboardingWizardPage() {
       setSelectedInterests(selectedInterests.filter((i) => i !== item));
     } else {
       setSelectedInterests([...selectedInterests, item]);
+    }
+  };
+
+  const toggleHobby = (item: string) => {
+    if (selectedSexHobbies.includes(item)) {
+      setSelectedSexHobbies(selectedSexHobbies.filter((i) => i !== item));
+    } else {
+      setSelectedSexHobbies([...selectedSexHobbies, item]);
     }
   };
 
@@ -38,11 +54,11 @@ export default function OnboardingWizardPage() {
       {/* Step Indicator Bar */}
       <div className="space-y-2 text-center">
         <span className="text-xs font-mono uppercase tracking-widest text-velora-gold">
-          Step {step} of 5 • Enter Velora Adults-Only Community
+          Step {step} of 6 • Enter Velora Adults-Only Community
         </span>
         <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
           <div
-            style={{ width: `${(step / 5) * 100}%` }}
+            style={{ width: `${(step / 6) * 100}%` }}
             className="h-full bg-gold-gradient transition-all duration-500 shadow-gold-glow"
           />
         </div>
@@ -151,7 +167,7 @@ export default function OnboardingWizardPage() {
           </div>
         )}
 
-        {/* STEP 3: DEMOGRAPHICS (GENDER, SEXUALITY) & LOCATION */}
+        {/* STEP 3: DEMOGRAPHICS & LOCATION */}
         {step === 3 && (
           <div className="space-y-5">
             <h2 className="text-2xl font-serif font-bold text-velora-textPrimary">
@@ -230,6 +246,114 @@ export default function OnboardingWizardPage() {
                 className="w-2/3 text-xs font-bold uppercase tracking-wider py-3 shadow-gold-glow flex items-center justify-center gap-2"
                 onClick={() => setStep(4)}
               >
+                <span>Next: Intimate Preferences (Optional)</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4: OPTIONAL INTIMATE PREFERENCES & SEX HOBBIES */}
+        {step === 4 && (
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-serif font-bold text-velora-textPrimary flex items-center gap-2">
+                <Flame className="w-6 h-6 text-velora-gold" /> 4. Intimate Preferences & Sex Hobbies
+              </h2>
+              <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase">
+                Optional
+              </span>
+            </div>
+            <p className="text-xs text-velora-textSecondary leading-relaxed">
+              You can optionally fill out your grooming, piercings, tattoos, and sex hobbies to find compatible members.
+            </p>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1">Pubic Hair</label>
+                <select
+                  value={pubicHairGrooming}
+                  onChange={(e) => setPubicHairGrooming(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-xs text-velora-textPrimary"
+                >
+                  <option value="Natural">Natural</option>
+                  <option value="Trimmed">Trimmed</option>
+                  <option value="Shaved">Shaved</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1">Piercing</label>
+                <select
+                  value={piercing}
+                  onChange={(e) => setPiercing(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-xs text-velora-textPrimary"
+                >
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                  <option value="Multiple">Multiple</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1">Tattoo</label>
+                <select
+                  value={tattoo}
+                  onChange={(e) => setTattoo(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-xs text-velora-textPrimary"
+                >
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                  <option value="Multiple">Multiple</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
+                Sex Hobbies & Fetishes (Select all that apply)
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  "Oral Pleasure",
+                  "Sensual Massage",
+                  "BDSM",
+                  "Roleplay",
+                  "Fetish",
+                  "Exhibitionism",
+                  "Swapping",
+                  "Adult Toys",
+                  "Shibari",
+                  "Voyeurism",
+                ].map((item) => {
+                  const isSelected = selectedSexHobbies.includes(item);
+                  return (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => toggleHobby(item)}
+                      className={`px-3 py-1.5 rounded-full text-xs border transition-all ${
+                        isSelected
+                          ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold shadow-gold-glow"
+                          : "glass-panel text-velora-textMuted hover:text-white"
+                      }`}
+                    >
+                      {item} {isSelected ? "✓" : ""}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button variant="ghost" className="w-1/3 text-xs" onClick={() => setStep(3)}>
+                Back
+              </Button>
+              <Button
+                variant="gold"
+                className="w-2/3 text-xs font-bold uppercase tracking-wider py-3 shadow-gold-glow flex items-center justify-center gap-2"
+                onClick={() => setStep(5)}
+              >
                 <span>Next: Add Photos</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
@@ -237,11 +361,11 @@ export default function OnboardingWizardPage() {
           </div>
         )}
 
-        {/* STEP 4: ADD PHOTOS */}
-        {step === 4 && (
+        {/* STEP 5: ADD PHOTOS */}
+        {step === 5 && (
           <div className="space-y-5">
             <h2 className="text-2xl font-serif font-bold text-velora-textPrimary">
-              4. Add Profile Photo
+              5. Add Profile Photo
             </h2>
             <p className="text-xs text-velora-textSecondary leading-relaxed">
               Upload a clear photo to present your persona to the community.
@@ -258,13 +382,13 @@ export default function OnboardingWizardPage() {
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button variant="ghost" className="w-1/3 text-xs" onClick={() => setStep(3)}>
+              <Button variant="ghost" className="w-1/3 text-xs" onClick={() => setStep(4)}>
                 Back
               </Button>
               <Button
                 variant="gold"
                 className="w-2/3 text-xs font-bold uppercase tracking-wider py-3 shadow-gold-glow flex items-center justify-center gap-2"
-                onClick={() => setStep(5)}
+                onClick={() => setStep(6)}
               >
                 <span>Next: Start Exploring</span>
                 <ArrowRight className="w-4 h-4" />
@@ -273,8 +397,8 @@ export default function OnboardingWizardPage() {
           </div>
         )}
 
-        {/* STEP 5: START EXPLORING */}
-        {step === 5 && (
+        {/* STEP 6: START EXPLORING */}
+        {step === 6 && (
           <div className="space-y-6 text-center">
             <ShieldCheck className="w-12 h-12 text-velora-gold mx-auto" />
             <h2 className="text-2xl font-serif font-bold text-velora-textPrimary">

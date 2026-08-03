@@ -21,6 +21,8 @@ import {
   Sparkles,
   Heart,
   Globe,
+  Flame,
+  Zap,
   ArrowUpDown,
 } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
@@ -34,6 +36,9 @@ export interface SavedSearchPreset {
   sexualOrientation: string;
   distanceKm: number;
   profileType: string;
+  pubicHairGrooming: string;
+  piercing: string;
+  tattoo: string;
   verifiedOnly: boolean;
   alertsEnabled: boolean;
 }
@@ -47,6 +52,13 @@ export interface FilterState {
   profileType: string;
   minAge: number;
   maxAge: number;
+  pubicHairGrooming: string;
+  piercing: string;
+  tattoo: string;
+  erogenousZones: string[];
+  favouriteSexPlaces: string[];
+  favouriteSexPositions: string[];
+  sexHobbies: string[];
   sortBy: string;
 }
 
@@ -63,6 +75,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
     location: true,
     demographics: true,
     type: true,
+    intimate: true,
     age: true,
     sorting: true,
   });
@@ -76,6 +89,16 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
   const [profileType, setProfileType] = useState<string>("ALL");
   const [minAge, setMinAge] = useState<number>(18);
   const [maxAge, setMaxAge] = useState<number>(45);
+
+  // Intimate Preferences & Sex Hobbies Filter States
+  const [pubicHairGrooming, setPubicHairGrooming] = useState<string>("ALL");
+  const [piercing, setPiercing] = useState<string>("ALL");
+  const [tattoo, setTattoo] = useState<string>("ALL");
+  const [selectedErogenousZones, setSelectedErogenousZones] = useState<string[]>([]);
+  const [selectedPlaces, setSelectedPlaces] = useState<string[]>([]);
+  const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
+  const [selectedSexHobbies, setSelectedSexHobbies] = useState<string[]>([]);
+
   const [sortBy, setSortBy] = useState<string>("NEWEST");
 
   // Saved Searches Presets
@@ -89,20 +112,11 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
       sexualOrientation: "ALL",
       distanceKm: 25,
       profileType: "ALL",
+      pubicHairGrooming: "ALL",
+      piercing: "ALL",
+      tattoo: "ALL",
       verifiedOnly: true,
       alertsEnabled: true,
-    },
-    {
-      id: "preset-2",
-      name: "Berlin Bisexual Couples",
-      country: "Germany",
-      city: "Berlin",
-      gender: "COUPLE_MF",
-      sexualOrientation: "BISEXUAL",
-      distanceKm: 50,
-      profileType: "COUPLE",
-      verifiedOnly: true,
-      alertsEnabled: false,
     },
   ]);
   const [newPresetName, setNewPresetName] = useState("");
@@ -118,6 +132,13 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
       profileType: updated.profileType !== undefined ? updated.profileType : profileType,
       minAge: updated.minAge !== undefined ? updated.minAge : minAge,
       maxAge: updated.maxAge !== undefined ? updated.maxAge : maxAge,
+      pubicHairGrooming: updated.pubicHairGrooming !== undefined ? updated.pubicHairGrooming : pubicHairGrooming,
+      piercing: updated.piercing !== undefined ? updated.piercing : piercing,
+      tattoo: updated.tattoo !== undefined ? updated.tattoo : tattoo,
+      erogenousZones: updated.erogenousZones !== undefined ? updated.erogenousZones : selectedErogenousZones,
+      favouriteSexPlaces: updated.favouriteSexPlaces !== undefined ? updated.favouriteSexPlaces : selectedPlaces,
+      favouriteSexPositions: updated.favouriteSexPositions !== undefined ? updated.favouriteSexPositions : selectedPositions,
+      sexHobbies: updated.sexHobbies !== undefined ? updated.sexHobbies : selectedSexHobbies,
       sortBy: updated.sortBy !== undefined ? updated.sortBy : sortBy,
     };
     onFilterChange(nextState);
@@ -125,6 +146,12 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
 
   const toggleSection = (section: string) => {
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const toggleMultiSelect = (item: string, current: string[], setter: (val: string[]) => void, key: keyof FilterState) => {
+    const next = current.includes(item) ? current.filter((i) => i !== item) : [...current, item];
+    setter(next);
+    notifyChange({ [key]: next });
   };
 
   const handleReset = () => {
@@ -136,7 +163,15 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
     setProfileType("ALL");
     setMinAge(18);
     setMaxAge(45);
+    setPubicHairGrooming("ALL");
+    setPiercing("ALL");
+    setTattoo("ALL");
+    setSelectedErogenousZones([]);
+    setSelectedPlaces([]);
+    setSelectedPositions([]);
+    setSelectedSexHobbies([]);
     setSortBy("NEWEST");
+
     onFilterChange({
       country: "ALL",
       city: "",
@@ -146,6 +181,13 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
       profileType: "ALL",
       minAge: 18,
       maxAge: 45,
+      pubicHairGrooming: "ALL",
+      piercing: "ALL",
+      tattoo: "ALL",
+      erogenousZones: [],
+      favouriteSexPlaces: [],
+      favouriteSexPositions: [],
+      sexHobbies: [],
       sortBy: "NEWEST",
     });
   };
@@ -161,6 +203,9 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
       sexualOrientation,
       distanceKm,
       profileType,
+      pubicHairGrooming,
+      piercing,
+      tattoo,
       verifiedOnly: true,
       alertsEnabled: true,
     };
@@ -176,6 +221,9 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
     setSexualOrientation(preset.sexualOrientation);
     setDistanceKm(preset.distanceKm);
     setProfileType(preset.profileType);
+    setPubicHairGrooming(preset.pubicHairGrooming);
+    setPiercing(preset.piercing);
+    setTattoo(preset.tattoo);
     notifyChange({
       country: preset.country,
       city: preset.city,
@@ -183,6 +231,9 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
       sexualOrientation: preset.sexualOrientation,
       distanceKm: preset.distanceKm,
       profileType: preset.profileType,
+      pubicHairGrooming: preset.pubicHairGrooming,
+      piercing: preset.piercing,
+      tattoo: preset.tattoo,
     });
   };
 
@@ -396,7 +447,211 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
         )}
       </div>
 
-      {/* ACCORDION 3: PROFILE TYPE */}
+      {/* ACCORDION 3: INTIMATE PREFERENCES & SEX HOBBIES (REFERENCE DESIGN) */}
+      <div className="border-t border-white/10 pt-4 space-y-3">
+        <button
+          onClick={() => toggleSection("intimate")}
+          className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-wider text-velora-textPrimary"
+        >
+          <span className="flex items-center gap-1.5">
+            <Flame className="w-4 h-4 text-velora-gold" /> Intimate Preferences & Sex Hobbies
+          </span>
+          {openSections.intimate ? <ChevronUp className="w-4 h-4 text-velora-textMuted" /> : <ChevronDown className="w-4 h-4 text-velora-textMuted" />}
+        </button>
+
+        {openSections.intimate && (
+          <div className="space-y-4 pt-1">
+            {/* Pubic Hair Grooming */}
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1.5">Pubic hair grooming</label>
+              <div className="flex gap-2">
+                {["ALL", "Natural", "Trimmed", "Shaved"].map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => {
+                      setPubicHairGrooming(item);
+                      notifyChange({ pubicHairGrooming: item });
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                      pubicHairGrooming === item
+                        ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold shadow-gold-glow"
+                        : "glass-panel text-velora-textMuted hover:text-white"
+                    }`}
+                  >
+                    {item === "ALL" ? "All" : item}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Piercing Dropdown */}
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1">Piercing</label>
+              <select
+                value={piercing}
+                onChange={(e) => {
+                  setPiercing(e.target.value);
+                  notifyChange({ piercing: e.target.value });
+                }}
+                className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
+              >
+                <option value="ALL">All</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+                <option value="Multiple">Multiple</option>
+              </select>
+            </div>
+
+            {/* Tattoo Dropdown */}
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1">Tattoo</label>
+              <select
+                value={tattoo}
+                onChange={(e) => {
+                  setTattoo(e.target.value);
+                  notifyChange({ tattoo: e.target.value });
+                }}
+                className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
+              >
+                <option value="ALL">All</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+                <option value="Multiple">Multiple</option>
+              </select>
+            </div>
+
+            {/* Sex Hobbies Pills */}
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1.5">Sex Hobbies & Fetishes</label>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  "Oral Pleasure",
+                  "Sensual Massage",
+                  "BDSM",
+                  "Roleplay",
+                  "Fetish",
+                  "Exhibitionism",
+                  "Swapping",
+                  "Adult Toys",
+                  "Shibari",
+                  "Voyeurism",
+                  "Bondage",
+                ].map((item) => {
+                  const isSelected = selectedSexHobbies.includes(item);
+                  return (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => toggleMultiSelect(item, selectedSexHobbies, setSelectedSexHobbies, "sexHobbies")}
+                      className={`px-2.5 py-1 rounded-full text-[11px] border transition-all ${
+                        isSelected
+                          ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold shadow-gold-glow"
+                          : "glass-panel text-velora-textMuted hover:text-white"
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Erogenous Zones Pills */}
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1.5">Erogenous zones</label>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  "Mouth and lips",
+                  "Ears",
+                  "Neck",
+                  "Breasts and nipples",
+                  "Belly",
+                  "Lower back",
+                  "Thighs",
+                  "Genitals",
+                  "Hands and fingers",
+                  "Buttocks",
+                ].map((item) => {
+                  const isSelected = selectedErogenousZones.includes(item);
+                  return (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => toggleMultiSelect(item, selectedErogenousZones, setSelectedErogenousZones, "erogenousZones")}
+                      className={`px-2.5 py-1 rounded-full text-[11px] border transition-all ${
+                        isSelected
+                          ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold shadow-gold-glow"
+                          : "glass-panel text-velora-textMuted hover:text-white"
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Favourite Sex Places Pills */}
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1.5">Favourite sex places</label>
+              <div className="flex flex-wrap gap-1.5">
+                {["Bed", "Car", "Office", "Nature", "Public"].map((item) => {
+                  const isSelected = selectedPlaces.includes(item);
+                  return (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => toggleMultiSelect(item, selectedPlaces, setSelectedPlaces, "favouriteSexPlaces")}
+                      className={`px-2.5 py-1 rounded-full text-[11px] border transition-all ${
+                        isSelected
+                          ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold shadow-gold-glow"
+                          : "glass-panel text-velora-textMuted hover:text-white"
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Favourite Sex Positions Pills */}
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1.5">Favourite sex positions</label>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  "Missionary",
+                  "Cowgirl",
+                  "Doggy",
+                  "69",
+                  "Legs on shoulders",
+                  "From the side",
+                  "Reverse cowgirl",
+                ].map((item) => {
+                  const isSelected = selectedPositions.includes(item);
+                  return (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => toggleMultiSelect(item, selectedPositions, setSelectedPositions, "favouriteSexPositions")}
+                      className={`px-2.5 py-1 rounded-full text-[11px] border transition-all ${
+                        isSelected
+                          ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold shadow-gold-glow"
+                          : "glass-panel text-velora-textMuted hover:text-white"
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ACCORDION 4: PROFILE TYPE */}
       <div className="border-t border-white/10 pt-4 space-y-3">
         <button
           onClick={() => toggleSection("type")}
@@ -435,7 +690,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
         )}
       </div>
 
-      {/* ACCORDION 4: AGE RANGE */}
+      {/* ACCORDION 5: AGE RANGE */}
       <div className="border-t border-white/10 pt-4 space-y-3">
         <button
           onClick={() => toggleSection("age")}
@@ -481,7 +736,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
         )}
       </div>
 
-      {/* ACCORDION 5: SORTING OPTIONS */}
+      {/* ACCORDION 6: SORTING OPTIONS */}
       <div className="border-t border-white/10 pt-4 space-y-3">
         <button
           onClick={() => toggleSection("sorting")}

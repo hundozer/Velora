@@ -153,6 +153,15 @@ export interface Profile {
   partnerAge?: number;
   partnerGender?: Gender;
 
+  // Optional Intimate Preferences & Sex Hobbies
+  pubicHairGrooming?: "Natural" | "Trimmed" | "Shaved";
+  piercing?: "All" | "Yes" | "No" | "Multiple";
+  tattoo?: "All" | "Yes" | "No" | "Multiple";
+  erogenousZones?: string[];
+  favouriteSexPlaces?: string[];
+  favouriteSexPositions?: string[];
+  sexHobbies?: string[];
+
   // Reputation & Ambassador
   reputationBadge?: string;
 
