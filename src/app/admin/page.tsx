@@ -5,8 +5,13 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Tabs } from "@/components/ui/Tabs";
-import { MOCK_VERIFICATION_REQUESTS, MOCK_REPORTS } from "@/lib/mockData";
-import { VerificationRequest, ReportItem } from "@/types";
+import { VerificationWizard } from "@/components/verification/VerificationWizard";
+import {
+  MOCK_VERIFICATION_REQUESTS,
+  MOCK_REPORTS,
+  MOCK_MODERATION_LOGS,
+} from "@/lib/mockData";
+import { VerificationRequest, ReportItem, ModerationLog } from "@/types";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -18,13 +23,16 @@ import {
   AlertTriangle,
   Users,
   Lock,
+  Ban,
+  Clock,
+  Trash2,
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState("VERIFICATION");
   const [verifications, setVerifications] = useState<VerificationRequest[]>(MOCK_VERIFICATION_REQUESTS);
   const [reports, setReports] = useState<ReportItem[]>(MOCK_REPORTS);
-  const [previewDocUrl, setPreviewDocUrl] = useState<string | null>(null);
+  const [logs, setLogs] = useState<ModerationLog[]>(MOCK_MODERATION_LOGS);
 
   const handleApproveVerification = (id: string) => {
     setVerifications(verifications.map((v) => (v.id === id ? { ...v, status: "VERIFIED" } : v)));
@@ -34,8 +42,18 @@ export default function AdminDashboardPage() {
     setVerifications(verifications.map((v) => (v.id === id ? { ...v, status: "REJECTED" } : v)));
   };
 
-  const handleResolveReport = (id: string) => {
-    setReports(reports.map((r) => (r.id === id ? { ...r, status: "RESOLVED" } : r)));
+  const handleApplySanction = (reportId: string, actionType: string, username: string) => {
+    setReports(reports.map((r) => (r.id === reportId ? { ...r, status: "RESOLVED" } : r)));
+
+    const newLog: ModerationLog = {
+      id: "log-" + Date.now(),
+      adminUsername: "admin_compliance",
+      targetUsername: username,
+      action: actionType as any,
+      reason: "Action enforced following compliance audit.",
+      timestamp: "Just now",
+    };
+    setLogs([newLog, ...logs]);
   };
 
   return (
@@ -51,15 +69,15 @@ export default function AdminDashboardPage() {
             Compliance, Verification & Moderation Desk
           </h1>
           <p className="text-xs text-velora-textSecondary mt-1">
-            Review 18+ legal biometric verification submissions, reported member flags, and audit security logs.
+            Review 4-level verification requests, investigate reported member flags, enforce account suspensions, and audit system logs.
           </p>
         </div>
 
         <Tabs
           tabs={[
-            { id: "VERIFICATION", label: "ID Verification Queue", count: verifications.filter((v) => v.status === "PENDING").length },
-            { id: "REPORTS", label: "Moderation Reports", count: reports.filter((r) => r.status === "PENDING").length },
-            { id: "AUDIT", label: "System Metrics" },
+            { id: "VERIFICATION", label: "Verification Queue (Level 1-4)", count: verifications.filter((v) => v.status === "PENDING").length },
+            { id: "REPORTS", label: "Reports Investigation Desk", count: reports.filter((r) => r.status !== "RESOLVED").length },
+            { id: "AUDIT", label: "Moderation Log History", count: logs.length },
           ]}
           activeTab={activeTab}
           onChange={setActiveTab}
@@ -75,7 +93,7 @@ export default function AdminDashboardPage() {
           <span className="text-3xl font-serif font-bold text-velora-gold">
             {verifications.filter((v) => v.status === "PENDING").length}
           </span>
-          <span className="text-[11px] text-velora-textMuted">Avg response time: 14 mins</span>
+          <span className="text-[11px] text-velora-textMuted">Avg response time: 12 mins</span>
         </Card>
 
         <Card variant="glass" className="p-6 space-y-2">
@@ -83,7 +101,7 @@ export default function AdminDashboardPage() {
             Active Moderation Flags
           </span>
           <span className="text-3xl font-serif font-bold text-red-400">
-            {reports.filter((r) => r.status === "PENDING").length}
+            {reports.filter((r) => r.status !== "RESOLVED").length}
           </span>
           <span className="text-[11px] text-velora-textMuted">Zero-tolerance policy</span>
         </Card>
@@ -93,15 +111,15 @@ export default function AdminDashboardPage() {
             Verified Adult Ratio
           </span>
           <span className="text-3xl font-serif font-bold text-emerald-400">98.6%</span>
-          <span className="text-[11px] text-velora-textMuted">100% biometric requirement</span>
+          <span className="text-[11px] text-velora-textMuted">Biometric requirement</span>
         </Card>
 
         <Card variant="glass" className="p-6 space-y-2">
           <span className="text-xs font-semibold text-velora-textMuted uppercase tracking-wider block">
-            Compliance Records (2257)
+            Enforced Sanctions
           </span>
-          <span className="text-3xl font-serif font-bold text-purple-300">Compliant</span>
-          <span className="text-[11px] text-velora-textMuted">Encrypted vault storage</span>
+          <span className="text-3xl font-serif font-bold text-purple-300">{logs.length}</span>
+          <span className="text-[11px] text-velora-textMuted">Audit trail active</span>
         </Card>
       </div>
 
@@ -109,7 +127,7 @@ export default function AdminDashboardPage() {
       {activeTab === "VERIFICATION" && (
         <div className="space-y-6">
           <h2 className="text-xl font-serif font-bold text-velora-textPrimary">
-            Pending 18+ ID Verification Queue
+            Level 1 to Level 4 Verification Queue
           </h2>
 
           <div className="space-y-4">
@@ -119,7 +137,7 @@ export default function AdminDashboardPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="text-lg font-bold text-velora-textPrimary">@{v.user.username}</h3>
-                      <Badge type={v.user.role === "CREATOR" ? "creator" : "verified"} label={v.user.role} />
+                      <Badge type="custom" label={v.requestedLevel.replace(/_/g, " ")} />
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                         v.status === "PENDING"
                           ? "bg-amber-500/20 text-amber-300"
@@ -143,7 +161,7 @@ export default function AdminDashboardPage() {
                         className="text-xs gap-1"
                         onClick={() => handleRejectVerification(v.id)}
                       >
-                        <X className="w-3.5 h-3.5" /> Reject Document
+                        <X className="w-3.5 h-3.5" /> Reject Request
                       </Button>
                       <Button
                         variant="gold"
@@ -157,33 +175,30 @@ export default function AdminDashboardPage() {
                   )}
                 </div>
 
-                {/* Encrypted Document Inspection Thumbnails */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 glass-panel rounded-2xl space-y-2">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-velora-textMuted block">
-                      1. Passport / Government ID Document
-                    </span>
-                    <div className="h-40 w-full bg-velora-card rounded-xl overflow-hidden relative group">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={v.idDocumentUrl} alt="ID Document" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="text-xs text-velora-gold font-bold">Encrypted Document Preview</span>
+                  {v.idDocumentUrl && (
+                    <div className="p-4 glass-panel rounded-2xl space-y-2">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-velora-textMuted block">
+                        Government ID Document
+                      </span>
+                      <div className="h-40 w-full bg-velora-card rounded-xl overflow-hidden relative group">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={v.idDocumentUrl} alt="ID" className="w-full h-full object-cover" />
                       </div>
                     </div>
-                  </div>
+                  )}
 
-                  <div className="p-4 glass-panel rounded-2xl space-y-2">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-velora-textMuted block">
-                      2. Biometric Selfie with Date Note
-                    </span>
-                    <div className="h-40 w-full bg-velora-card rounded-xl overflow-hidden relative group">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={v.selfieWithNoteUrl} alt="Selfie Note" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="text-xs text-velora-gold font-bold">Biometric Match Verified</span>
+                  {v.selfieWithNoteUrl && (
+                    <div className="p-4 glass-panel rounded-2xl space-y-2">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-velora-textMuted block">
+                        Biometric Selfie Date Note
+                      </span>
+                      <div className="h-40 w-full bg-velora-card rounded-xl overflow-hidden relative group">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={v.selfieWithNoteUrl} alt="Selfie" className="w-full h-full object-cover" />
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </Card>
             ))}
@@ -191,11 +206,11 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* MODERATION REPORTS TAB */}
+      {/* REPORTS INVESTIGATION TAB */}
       {activeTab === "REPORTS" && (
         <div className="space-y-6">
           <h2 className="text-xl font-serif font-bold text-velora-textPrimary">
-            Active Member Moderation Reports
+            Reports Investigation & Sanction Desk
           </h2>
 
           <div className="space-y-4">
@@ -217,15 +232,33 @@ export default function AdminDashboardPage() {
                     </p>
                   </div>
 
-                  {r.status === "PENDING" && (
-                    <Button
-                      variant="gold"
-                      size="sm"
-                      className="text-xs font-bold"
-                      onClick={() => handleResolveReport(r.id)}
-                    >
-                      Resolve & Enforce Sanction
-                    </Button>
+                  {r.status !== "RESOLVED" && (
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="glass"
+                        size="sm"
+                        className="text-[11px]"
+                        onClick={() => handleApplySanction(r.id, "WARN_USER", r.reportedUsername)}
+                      >
+                        Warn User
+                      </Button>
+                      <Button
+                        variant="glass"
+                        size="sm"
+                        className="text-[11px] border-amber-500/40 text-amber-300"
+                        onClick={() => handleApplySanction(r.id, "SUSPEND_ACCOUNT_7_DAYS", r.reportedUsername)}
+                      >
+                        Suspend 7d
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        className="text-[11px] font-bold"
+                        onClick={() => handleApplySanction(r.id, "BAN_USER_PERMANENT", r.reportedUsername)}
+                      >
+                        Permanent Ban
+                      </Button>
+                    </div>
                   )}
                 </div>
 
@@ -235,6 +268,46 @@ export default function AdminDashboardPage() {
               </Card>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* MODERATION HISTORY LOG TAB */}
+      {activeTab === "AUDIT" && (
+        <div className="space-y-6">
+          <h2 className="text-xl font-serif font-bold text-velora-textPrimary">
+            Moderation Action Audit Log
+          </h2>
+
+          <Card variant="glass" className="p-6">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left text-velora-textSecondary">
+                <thead className="text-[10px] font-bold uppercase tracking-wider text-velora-textMuted border-b border-white/10 pb-2">
+                  <tr>
+                    <th className="py-2">Timestamp</th>
+                    <th className="py-2">Admin</th>
+                    <th className="py-2">Target User</th>
+                    <th className="py-2">Enforced Action</th>
+                    <th className="py-2">Reason</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {logs.map((log) => (
+                    <tr key={log.id}>
+                      <td className="py-3 font-mono text-[11px]">{log.timestamp}</td>
+                      <td className="py-3 font-bold text-velora-gold">@{log.adminUsername}</td>
+                      <td className="py-3 text-velora-textPrimary font-semibold">@{log.targetUsername}</td>
+                      <td className="py-3">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300">
+                          {log.action}
+                        </span>
+                      </td>
+                      <td className="py-3">{log.reason}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         </div>
       )}
     </div>

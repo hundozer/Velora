@@ -2,6 +2,12 @@ export type UserRole = "MEMBER" | "CREATOR" | "COUPLE" | "ADMIN";
 
 export type VerificationStatus = "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED";
 
+export type VerificationLevel =
+  | "LEVEL_1_EMAIL"
+  | "LEVEL_2_PHONE"
+  | "LEVEL_3_PROFILE_BIOMETRIC"
+  | "LEVEL_4_CREATOR";
+
 export type Gender =
   | "MALE"
   | "FEMALE"
@@ -35,13 +41,35 @@ export type VisibilityLevel =
   | "SUBSCRIBERS_ONLY"
   | "PAID_PER_VIEW";
 
+export type MessageStatus = "SENT" | "DELIVERED" | "READ";
+
+export type AttachmentType =
+  | "STANDARD_IMAGE"
+  | "DISAPPEARING_IMAGE"
+  | "PRIVATE_PHOTO_REQUEST"
+  | "AUDIO_VOICE";
+
+export type MessagePermissionRules =
+  | "EVERYONE"
+  | "VERIFIED_ONLY"
+  | "FAVORITES_ONLY"
+  | "NOBODY";
+
 export type NotificationType =
   | "PROFILE_VIEW"
   | "FAVORITED"
   | "NEW_MESSAGE"
   | "VERIFICATION_APPROVED"
   | "VERIFICATION_REJECTED"
-  | "CONTENT_UNLOCKED";
+  | "CONTENT_UNLOCKED"
+  | "REPORT_STATUS_UPDATE";
+
+export type ModerationActionType =
+  | "WARN_USER"
+  | "SUSPEND_ACCOUNT_7_DAYS"
+  | "SUSPEND_ACCOUNT_30_DAYS"
+  | "BAN_USER_PERMANENT"
+  | "REMOVE_CONTENT";
 
 export interface User {
   id: string;
@@ -49,6 +77,7 @@ export interface User {
   username: string;
   role: UserRole;
   verificationStatus: VerificationStatus;
+  verificationLevel: VerificationLevel;
   createdAt: string;
   avatarUrl?: string;
 }
@@ -76,8 +105,8 @@ export interface Profile {
   partnerDisplayName?: string;
   partnerAge?: number;
   partnerGender?: Gender;
-  
-  // Privacy Settings
+
+  // Privacy & Message Permissions Settings
   publicProfileVisibility: boolean;
   photoVisibilityDefault: VisibilityLevel;
   locationPrecision: "CITY" | "EXACT" | "DISTANCE_ONLY";
@@ -85,9 +114,10 @@ export interface Profile {
   showDistance: boolean;
   allowDirectMessages: boolean;
   requireVerificationToMessage: boolean;
-  
+
   // Metrics & Visuals
   verified: boolean;
+  verificationLevel?: VerificationLevel;
   isOnline: boolean;
   distanceKm?: number;
   compatibilityScore?: number;
@@ -123,26 +153,16 @@ export interface Preferences {
   onlineOnly: boolean;
 }
 
-export interface NotificationItem {
-  id: string;
-  userId: string;
-  type: NotificationType;
-  title: string;
-  message: string;
-  actorName?: string;
-  actorAvatar?: string;
-  targetLink?: string;
-  isRead: boolean;
-  createdAt: string;
-}
-
-export interface CreatorStats {
-  monthlySubscriptionPrice: number;
-  subscribersCount: number;
-  followersCount: number;
-  totalEarnings: number;
-  isLiveNow: boolean;
-  nextScheduledLive?: string;
+export interface UserSafetySettings {
+  whoCanMessageMe: MessagePermissionRules;
+  allowPhotoMessages: boolean;
+  allowRequestsFromUnknown: boolean;
+  enableMessageFiltering: boolean;
+  profileVisibilitySetting: "EVERYONE" | "MEMBERS_ONLY" | "VERIFIED_ONLY";
+  hideLastActive: boolean;
+  appearInSearch: boolean;
+  dailyMessageLimit: number;
+  messagesSentToday: number;
 }
 
 export interface Message {
@@ -153,6 +173,11 @@ export interface Message {
   senderAvatar: string;
   content: string;
   mediaUrl?: string;
+  attachmentType?: AttachmentType;
+  isDisappearing?: boolean;
+  disappearTimerSec?: number;
+  isOpened?: boolean;
+  status: MessageStatus;
   isLocked?: boolean;
   unlockPrice?: number;
   isUnlocked?: boolean;
@@ -165,6 +190,7 @@ export interface Conversation {
   lastMessage: Message;
   unreadCount: number;
   updatedAt: string;
+  isTyping?: boolean;
 }
 
 export interface VerificationRequest {
@@ -175,8 +201,10 @@ export interface VerificationRequest {
     email: string;
     role: UserRole;
   };
-  idDocumentUrl: string;
-  selfieWithNoteUrl: string;
+  requestedLevel: VerificationLevel;
+  idDocumentUrl?: string;
+  selfieWithNoteUrl?: string;
+  phoneVerificationCode?: string;
   submittedAt: string;
   status: VerificationStatus;
   rejectionReason?: string;
@@ -189,6 +217,29 @@ export interface ReportItem {
   reportedUserRole: UserRole;
   reason: string;
   details: string;
-  status: "PENDING" | "RESOLVED" | "DISMISSED";
+  evidenceUrl?: string;
+  status: "PENDING" | "INVESTIGATING" | "RESOLVED" | "DISMISSED";
   submittedAt: string;
+}
+
+export interface ModerationLog {
+  id: string;
+  adminUsername: string;
+  targetUsername: string;
+  action: ModerationActionType;
+  reason: string;
+  timestamp: string;
+}
+
+export interface NotificationItem {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  actorName?: string;
+  actorAvatar?: string;
+  targetLink?: string;
+  isRead: boolean;
+  createdAt: string;
 }

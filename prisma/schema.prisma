@@ -23,6 +23,13 @@ enum VerificationStatus {
   REJECTED
 }
 
+enum VerificationLevel {
+  LEVEL_1_EMAIL
+  LEVEL_2_PHONE
+  LEVEL_3_PROFILE_BIOMETRIC
+  LEVEL_4_CREATOR
+}
+
 enum Gender {
   MALE
   FEMALE
@@ -67,6 +74,26 @@ enum MediaType {
   LIVE_STREAM
 }
 
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+enum AttachmentType {
+  STANDARD_IMAGE
+  DISAPPEARING_IMAGE
+  PRIVATE_PHOTO_REQUEST
+  AUDIO_VOICE
+}
+
+enum MessagePermissionRules {
+  EVERYONE
+  VERIFIED_ONLY
+  FAVORITES_ONLY
+  NOBODY
+}
+
 enum NotificationType {
   PROFILE_VIEW
   FAVORITED
@@ -74,23 +101,34 @@ enum NotificationType {
   VERIFICATION_APPROVED
   VERIFICATION_REJECTED
   CONTENT_UNLOCKED
+  REPORT_STATUS_UPDATE
 }
 
 enum ReportReason {
+  FAKE_PROFILE
+  HARASSMENT
+  SPAM_SOLICITATION
+  INAPPROPRIATE_CONTENT
+  SCAM_BEHAVIOUR
   UNDERAGE_SUSPICION
   NON_CONSENTUAL_CONTENT
-  HARASSMENT
-  FAKE_PROFILE
-  IMPERSONATION
-  SPAM_SOLICITATION
   OFFSITE_PAYMENT
+  OTHER
 }
 
 enum ReportStatus {
   PENDING
-  UNDER_REVIEW
+  INVESTIGATING
   RESOLVED_ACTION_TAKEN
   DISMISSED
+}
+
+enum ModerationActionType {
+  WARN_USER
+  SUSPEND_ACCOUNT_7_DAYS
+  SUSPEND_ACCOUNT_30_DAYS
+  BAN_USER_PERMANENT
+  REMOVE_CONTENT
 }
 
 enum PaymentType {
@@ -115,6 +153,7 @@ model User {
   username           String             @unique
   role               UserRole           @default(MEMBER)
   verificationStatus VerificationStatus @default(UNVERIFIED)
+  verificationLevel  VerificationLevel  @default(LEVEL_1_EMAIL)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
@@ -126,6 +165,8 @@ model User {
   reviewedVerifications VerificationRequest[]    @relation("AdminReviewedVerifications")
   reportsFiled         UserReport[]              @relation("ReportsFiled")
   reportsReceived      UserReport[]              @relation("ReportsReceived")
+  moderationActions    ModerationActionLog[]     @relation("AdminActionsPerformed")
+  userSanctions        ModerationActionLog[]     @relation("UserSanctionsReceived")
   subscriptions        Subscription[]            @relation("UserSubscriptions")
   purchases            PaymentTransaction[]      @relation("BuyerTransactions")
   earnings             PaymentTransaction[]      @relation("SellerTransactions")
@@ -134,11 +175,13 @@ model User {
   blockedUsers         UserBlock[]               @relation("BlockerUsers")
   blockedBy            UserBlock[]               @relation("BlockedUsers")
   notifications        Notification[]            @relation("UserNotifications")
+  safetySettings       UserSafetySettings?
 
   @@index([email])
   @@index([username])
   @@index([role])
   @@index([verificationStatus])
+  @@index([verificationLevel])
 }
 
 model Profile {
@@ -202,7 +245,7 @@ model Preferences {
   maxDistanceKm         Int         @default(100)
   preferredGenders      Gender[]
   preferredOrientations SexualOrientation[]
-  preferredProfileTypes String[]    // INDIVIDUAL, COUPLE, CREATOR
+  preferredProfileTypes String[]
   preferredLookingFor   String[]
   verifiedOnly          Boolean     @default(false)
   creatorsOnly          Boolean     @default(false)
@@ -211,6 +254,23 @@ model Preferences {
 
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
+}
+
+model UserSafetySettings {
+  id                          String                 @id @default(uuid())
+  userId                      String                 @unique
+  user                        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  whoCanMessageMe             MessagePermissionRules @default(EVERYONE)
+  allowPhotoMessages          Boolean                @default(true)
+  allowRequestsFromUnknown    Boolean                @default(true)
+  enableMessageFiltering     Boolean                @default(true)
+  profileVisibilitySetting    String                 @default("MEMBERS_ONLY")
+  hideLastActive              Boolean                @default(false)
+  appearInSearch              Boolean                @default(true)
+  dailyMessageLimit           Int                    @default(50)
+  messagesSentToday           Int                    @default(0)
+
+  updatedAt                   DateTime               @updatedAt
 }
 
 model Media {
@@ -272,17 +332,17 @@ model Subscription {
 }
 
 model Notification {
-  id         String           @id @default(uuid())
-  userId     String
-  user       User             @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
-  type       NotificationType
-  title      String
-  message    String
-  actorName  String?
+  id          String           @id @default(uuid())
+  userId      String
+  user        User             @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  title       String
+  message     String
+  actorName   String?
   actorAvatar String?
-  targetLink String?
-  isRead     Boolean          @default(false)
-  createdAt  DateTime         @default(now())
+  targetLink  String?
+  isRead      Boolean          @default(false)
+  createdAt   DateTime         @default(now())
 
   @@index([userId])
   @@index([isRead])
@@ -309,34 +369,42 @@ model ConversationParticipant {
 }
 
 model Message {
-  id             String       @id @default(uuid())
+  id             String         @id @default(uuid())
   conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversation   Conversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   senderId       String
-  sender         User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  content        String       @db.Text
+  sender         User           @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  content        String         @db.Text
   mediaUrl       String?
-  isLocked       Boolean      @default(false)
+  attachmentType AttachmentType @default(STANDARD_IMAGE)
+  isDisappearing Boolean        @default(false)
+  disappearTimerSec Int?
+  isOpened       Boolean        @default(false)
+  status         MessageStatus  @default(SENT)
+  isLocked       Boolean        @default(false)
   unlockPrice    Float?
-  isUnlocked     Boolean      @default(false)
-  createdAt      DateTime     @default(now())
+  isUnlocked     Boolean        @default(false)
+  createdAt      DateTime       @default(now())
 
   @@index([conversationId])
   @@index([senderId])
+  @@index([status])
 }
 
 model VerificationRequest {
-  id                String             @id @default(uuid())
+  id                String            @id @default(uuid())
   userId            String
-  user              User               @relation("UserVerifications", fields: [userId], references: [id], onDelete: Cascade)
-  idDocumentUrl     String
-  selfieWithNoteUrl String
+  user              User              @relation("UserVerifications", fields: [userId], references: [id], onDelete: Cascade)
+  requestedLevel    VerificationLevel @default(LEVEL_3_PROFILE_BIOMETRIC)
+  idDocumentUrl     String?
+  selfieWithNoteUrl String?
+  phoneVerificationCode String?
   status            VerificationStatus @default(PENDING)
   rejectionNotes    String?
   reviewedById      String?
-  reviewedBy        User?              @relation("AdminReviewedVerifications", fields: [reviewedById], references: [id])
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  reviewedBy        User?             @relation("AdminReviewedVerifications", fields: [reviewedById], references: [id])
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   @@index([status])
   @@index([userId])
@@ -350,6 +418,7 @@ model UserReport {
   reportedUser   User         @relation("ReportsReceived", fields: [reportedUserId], references: [id], onDelete: Cascade)
   reason         ReportReason
   details        String       @db.Text
+  evidenceUrl    String?
   status         ReportStatus @default(PENDING)
   adminNotes     String?
   createdAt      DateTime     @default(now())
@@ -357,6 +426,20 @@ model UserReport {
 
   @@index([status])
   @@index([reportedUserId])
+}
+
+model ModerationActionLog {
+  id           String               @id @default(uuid())
+  adminId      String
+  admin        User                 @relation("AdminActionsPerformed", fields: [adminId], references: [id], onDelete: Cascade)
+  targetUserId String
+  targetUser   User                 @relation("UserSanctionsReceived", fields: [targetUserId], references: [id], onDelete: Cascade)
+  action       ModerationActionType
+  reason       String
+  notes        String?
+  createdAt    DateTime             @default(now())
+
+  @@index([targetUserId])
 }
 
 model UserFavorite {

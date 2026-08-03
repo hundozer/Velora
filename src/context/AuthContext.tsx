@@ -21,6 +21,7 @@ const DEFAULT_USER: User = {
   username: "elena_vance",
   role: "MEMBER",
   verificationStatus: "VERIFIED",
+  verificationLevel: "LEVEL_3_PROFILE_BIOMETRIC",
   createdAt: "2026-01-15",
   avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
 };
@@ -133,6 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       username: email.split("@")[0],
       role: selectedRole,
       verificationStatus: "VERIFIED",
+      verificationLevel: "LEVEL_3_PROFILE_BIOMETRIC",
       createdAt: new Date().toISOString().split("T")[0],
     };
     setUser(newUser);
@@ -146,6 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       username: data.username || "new_velora_member",
       role: data.role || "MEMBER",
       verificationStatus: "PENDING",
+      verificationLevel: "LEVEL_1_EMAIL",
       createdAt: new Date().toISOString().split("T")[0],
     };
     const newProfile: Profile = {

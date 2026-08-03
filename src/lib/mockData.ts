@@ -1,4 +1,12 @@
-import { Profile, Conversation, VerificationRequest, ReportItem, NotificationItem } from "@/types";
+import {
+  Profile,
+  Conversation,
+  VerificationRequest,
+  ReportItem,
+  NotificationItem,
+  ModerationLog,
+  UserSafetySettings,
+} from "@/types";
 
 export const MOCK_PROFILES: Profile[] = [
   {
@@ -31,6 +39,7 @@ export const MOCK_PROFILES: Profile[] = [
     requireVerificationToMessage: false,
 
     verified: true,
+    verificationLevel: "LEVEL_3_PROFILE_BIOMETRIC",
     isOnline: true,
     distanceKm: 4,
     compatibilityScore: 95,
@@ -96,6 +105,7 @@ export const MOCK_PROFILES: Profile[] = [
     requireVerificationToMessage: true,
 
     verified: true,
+    verificationLevel: "LEVEL_3_PROFILE_BIOMETRIC",
     isOnline: false,
     distanceKm: 12,
     compatibilityScore: 88,
@@ -149,6 +159,7 @@ export const MOCK_PROFILES: Profile[] = [
     requireVerificationToMessage: false,
 
     verified: true,
+    verificationLevel: "LEVEL_4_CREATOR",
     isOnline: true,
     compatibilityScore: 92,
     avatarUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80",
@@ -162,62 +173,130 @@ export const MOCK_PROFILES: Profile[] = [
         sortOrder: 1,
         isProfilePhoto: true,
       },
-      {
-        id: "m-7",
-        url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80",
-        type: "IMAGE",
-        visibility: "PAID_PER_VIEW",
-        price: 49.99,
-        title: "Exclusive Private Violin Session Video",
-        sortOrder: 2,
-      },
     ],
   },
+];
+
+export const MOCK_SAFETY_SETTINGS: UserSafetySettings = {
+  whoCanMessageMe: "EVERYONE",
+  allowPhotoMessages: true,
+  allowRequestsFromUnknown: true,
+  enableMessageFiltering: true,
+  profileVisibilitySetting: "MEMBERS_ONLY",
+  hideLastActive: false,
+  appearInSearch: true,
+  dailyMessageLimit: 50,
+  messagesSentToday: 4,
+};
+
+export const MOCK_CONVERSATIONS: Conversation[] = [
   {
-    id: "prof-4",
-    userId: "user-4",
-    displayName: "Alexander Sterling",
-    dateOfBirth: "1991-11-05",
-    age: 35,
-    gender: "MALE",
-    sexualOrientation: "HETEROSEXUAL",
-    country: "United Kingdom",
-    city: "London",
-    location: "London / Mayfair",
-    languages: ["English"],
-    headline: "Tech Founder & Fine Watch Collector",
-    bio: "Venture capitalist, tech founder, and avid watch collector. Seeking a charming companion for black-tie galas and private weekend escapes.",
-    interests: ["Horology", "Venture Capital", "Polo", "Fine Dining"],
-    lifestyleTags: ["Venture Capital", "Black Tie Galas", "Supercars"],
-    hobbies: ["Watch Auctions", "Polo Tournaments", "Private Dining"],
-    relationshipStatus: "SINGLE",
-    lookingFor: ["Dating", "Social Events", "Travel Partner"],
-    isCoupleProfile: false,
+    id: "conv-1",
+    participant: MOCK_PROFILES[0],
+    lastMessage: {
+      id: "msg-1",
+      conversationId: "conv-1",
+      senderId: "prof-1",
+      senderName: "Elena Vance",
+      senderAvatar: MOCK_PROFILES[0].avatarUrl,
+      content: "I'll be visiting London next Thursday. Shall we meet at the Connaught Bar?",
+      status: "READ",
+      createdAt: "10:42 AM",
+    },
+    unreadCount: 1,
+    updatedAt: "10:42 AM",
+    isTyping: true,
+  },
+  {
+    id: "conv-2",
+    participant: MOCK_PROFILES[1],
+    lastMessage: {
+      id: "msg-2",
+      conversationId: "conv-2",
+      senderId: "user-current",
+      senderName: "You",
+      senderAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=800&q=80",
+      content: "Thank you for the invitation! We would love to join your private tasting.",
+      status: "DELIVERED",
+      createdAt: "Yesterday",
+    },
+    unreadCount: 0,
+    updatedAt: "Yesterday",
+    isTyping: false,
+  },
+];
 
-    publicProfileVisibility: true,
-    photoVisibilityDefault: "PUBLIC",
-    locationPrecision: "CITY",
-    showOnlineStatus: true,
-    showDistance: true,
-    allowDirectMessages: true,
-    requireVerificationToMessage: true,
+export const MOCK_VERIFICATION_REQUESTS: VerificationRequest[] = [
+  {
+    id: "verif-101",
+    user: {
+      id: "usr-88",
+      username: "seraphina_v",
+      email: "seraphina@velora.club",
+      role: "CREATOR",
+    },
+    requestedLevel: "LEVEL_4_CREATOR",
+    idDocumentUrl: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80",
+    selfieWithNoteUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80",
+    submittedAt: "2026-08-02 14:30",
+    status: "PENDING",
+  },
+  {
+    id: "verif-102",
+    user: {
+      id: "usr-89",
+      username: "marcus_monaco",
+      email: "marcus@luxury.mc",
+      role: "MEMBER",
+    },
+    requestedLevel: "LEVEL_3_PROFILE_BIOMETRIC",
+    idDocumentUrl: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80",
+    selfieWithNoteUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=600&q=80",
+    submittedAt: "2026-08-03 06:15",
+    status: "PENDING",
+  },
+];
 
-    verified: true,
-    isOnline: false,
-    distanceKm: 8,
-    compatibilityScore: 84,
-    avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80",
-    coverPhotoUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
-    galleryImages: [
-      {
-        id: "m-8",
-        url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80",
-        type: "IMAGE",
-        visibility: "PUBLIC",
-        sortOrder: 1,
-        isProfilePhoto: true,
-      },
-    ],
+export const MOCK_REPORTS: ReportItem[] = [
+  {
+    id: "rep-1",
+    reporterUsername: "elena_vance",
+    reportedUsername: "fake_user_99",
+    reportedUserRole: "MEMBER",
+    reason: "UNDERAGE_SUSPICION",
+    details: "User posted media that raises age verification concerns. Requesting immediate verification audit.",
+    evidenceUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80",
+    status: "INVESTIGATING",
+    submittedAt: "2026-08-02 18:00",
+  },
+  {
+    id: "rep-2",
+    reporterUsername: "julian_sophia",
+    reportedUsername: "spammer_bot",
+    reportedUserRole: "MEMBER",
+    reason: "SPAM_SOLICITATION",
+    details: "Sent automated link redirecting to third-party website.",
+    status: "PENDING",
+    submittedAt: "2026-08-03 01:20",
+  },
+];
+
+export const MOCK_MODERATION_LOGS: ModerationLog[] = [
+  {
+    id: "log-1",
+    adminUsername: "admin_compliance",
+    targetUsername: "suspicious_account_12",
+    action: "SUSPEND_ACCOUNT_7_DAYS",
+    reason: "Offsite payment solicitation & repeated spam links.",
+    timestamp: "2026-08-02 22:15",
+  },
+  {
+    id: "log-2",
+    adminUsername: "admin_compliance",
+    targetUsername: "bot_user_99",
+    action: "BAN_USER_PERMANENT",
+    reason: "Failed biometric 18+ adult verification & impersonation.",
+    timestamp: "2026-08-03 04:10",
   },
 ];
 
@@ -237,107 +316,22 @@ export const MOCK_NOTIFICATIONS: NotificationItem[] = [
   {
     id: "notif-2",
     userId: "usr-demo-1",
-    type: "FAVORITED",
-    title: "Saved to Favorites",
-    message: "Alexander Sterling saved you to their favorites list.",
-    actorName: "Alexander Sterling",
-    actorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80",
-    targetLink: "/profile/prof-4",
+    type: "NEW_MESSAGE",
+    title: "New Encrypted Message",
+    message: "Elena Vance sent you a private message.",
+    actorName: "Elena Vance",
+    actorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+    targetLink: "/messages",
     isRead: false,
-    createdAt: "1 hour ago",
+    createdAt: "15 mins ago",
   },
   {
     id: "notif-3",
     userId: "usr-demo-1",
     type: "VERIFICATION_APPROVED",
-    title: "100% ID Verified",
-    message: "Your biometric adult verification request was approved by compliance team.",
+    title: "Level 3 Adult Verification Approved",
+    message: "Your biometric adult verification request was approved. You now hold Level 3 Verified status.",
     isRead: true,
     createdAt: "Yesterday",
-  },
-];
-
-export const MOCK_CONVERSATIONS: Conversation[] = [
-  {
-    id: "conv-1",
-    participant: MOCK_PROFILES[0],
-    lastMessage: {
-      id: "msg-1",
-      conversationId: "conv-1",
-      senderId: "prof-1",
-      senderName: "Elena Vance",
-      senderAvatar: MOCK_PROFILES[0].avatarUrl,
-      content: "I'll be visiting London next Thursday. Shall we meet at the Connaught Bar?",
-      createdAt: "10:42 AM",
-    },
-    unreadCount: 1,
-    updatedAt: "10:42 AM",
-  },
-  {
-    id: "conv-2",
-    participant: MOCK_PROFILES[1],
-    lastMessage: {
-      id: "msg-2",
-      conversationId: "conv-2",
-      senderId: "user-current",
-      senderName: "You",
-      senderAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=800&q=80",
-      content: "Thank you for the invitation! We would love to join your private tasting.",
-      createdAt: "Yesterday",
-    },
-    unreadCount: 0,
-    updatedAt: "Yesterday",
-  },
-];
-
-export const MOCK_VERIFICATION_REQUESTS: VerificationRequest[] = [
-  {
-    id: "verif-101",
-    user: {
-      id: "usr-88",
-      username: "seraphina_v",
-      email: "seraphina@velora.club",
-      role: "CREATOR",
-    },
-    idDocumentUrl: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80",
-    selfieWithNoteUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80",
-    submittedAt: "2026-08-02 14:30",
-    status: "PENDING",
-  },
-  {
-    id: "verif-102",
-    user: {
-      id: "usr-89",
-      username: "marcus_monaco",
-      email: "marcus@luxury.mc",
-      role: "MEMBER",
-    },
-    idDocumentUrl: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80",
-    selfieWithNoteUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=600&q=80",
-    submittedAt: "2026-08-03 06:15",
-    status: "PENDING",
-  },
-];
-
-export const MOCK_REPORTS: ReportItem[] = [
-  {
-    id: "rep-1",
-    reporterUsername: "elena_vance",
-    reportedUsername: "fake_user_99",
-    reportedUserRole: "MEMBER",
-    reason: "UNDERAGE_SUSPICION",
-    details: "User posted media that raises age verification concerns. Requesting immediate verification audit.",
-    status: "PENDING",
-    submittedAt: "2026-08-02 18:00",
-  },
-  {
-    id: "rep-2",
-    reporterUsername: "julian_sophia",
-    reportedUsername: "spammer_bot",
-    reportedUserRole: "MEMBER",
-    reason: "SPAM_SOLICITATION",
-    details: "Sent automated link redirecting to third-party website.",
-    status: "PENDING",
-    submittedAt: "2026-08-03 01:20",
   },
 ];
