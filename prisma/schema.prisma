@@ -17,6 +17,12 @@ enum UserRole {
   AMBASSADOR
 }
 
+enum MemberTier {
+  FREE
+  PREMIUM
+  VIP
+}
+
 enum VerificationStatus {
   UNVERIFIED
   PENDING
@@ -179,6 +185,7 @@ enum PaymentType {
   EVENT_ENTRY_TICKET
   CREATOR_TIP
   WALLET_TOPUP
+  MEMBERSHIP_UPGRADE
 }
 
 enum PaymentStatus {
@@ -208,9 +215,12 @@ model User {
   passwordHash       String
   username           String             @unique
   role               UserRole           @default(MEMBER)
+  memberTier         MemberTier         @default(FREE)
   verificationStatus VerificationStatus @default(UNVERIFIED)
   verificationLevel  VerificationLevel  @default(LEVEL_1_EMAIL)
   reputationBadge    String             @default("Verified Member")
+  preferredLanguage  String             @default("en")
+  preferredCurrency  String             @default("USD")
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
@@ -248,12 +258,26 @@ model User {
   eventTickets         EventTicket[]             @relation("UserEventTickets")
   eventsHosted         VeloraEvent[]             @relation("UserHostedEvents")
   referralLinks        ReferralLink[]            @relation("UserReferralLinks")
+  auditLogs            AuditLog[]                @relation("UserAuditLogs")
 
   @@index([email])
   @@index([username])
   @@index([role])
+  @@index([memberTier])
   @@index([verificationStatus])
   @@index([verificationLevel])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation("UserAuditLogs", fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Wallet {
@@ -350,6 +374,9 @@ model UserSafetySettings {
   appearInSearch              Boolean                @default(true)
   dailyMessageLimit           Int                    @default(50)
   messagesSentToday           Int                    @default(0)
+  enablePushMessages          Boolean                @default(true)
+  enablePushLivestreams       Boolean                @default(true)
+  enablePushEvents            Boolean                @default(true)
 
   updatedAt                   DateTime               @updatedAt
 }
@@ -405,7 +432,7 @@ model CommunityMember {
   community   Community @relation("CommunityMembers", fields: [communityId], references: [id], onDelete: Cascade)
   userId      String
   user        User      @relation("UserCommunityMemberships", fields: [userId], references: [id], onDelete: Cascade)
-  role        String    @default("MEMBER") // MEMBER, MODERATOR, ADMIN
+  role        String    @default("MEMBER")
   joinedAt    DateTime  @default(now())
 
   @@unique([communityId, userId])

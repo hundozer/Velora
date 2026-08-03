@@ -1,5 +1,11 @@
 export type UserRole = "MEMBER" | "CREATOR" | "COUPLE" | "ADMIN" | "AMBASSADOR";
 
+export type MemberTier = "FREE" | "PREMIUM" | "VIP";
+
+export type LanguageCode = "en" | "cs" | "de" | "es" | "fr" | "pl" | "hu";
+
+export type CurrencyCode = "USD" | "EUR" | "GBP" | "CZK" | "PLN" | "HUF";
+
 export type VerificationStatus = "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED";
 
 export type VerificationLevel =
@@ -60,7 +66,8 @@ export type PaymentType =
   | "LIVE_EXPERIENCE_TICKET"
   | "EVENT_ENTRY_TICKET"
   | "CREATOR_TIP"
-  | "WALLET_TOPUP";
+  | "WALLET_TOPUP"
+  | "MEMBERSHIP_UPGRADE";
 
 export type PaymentStatus = "PENDING" | "COMPLETED" | "REFUNDED" | "FAILED";
 
@@ -112,9 +119,12 @@ export interface User {
   email: string;
   username: string;
   role: UserRole;
+  memberTier: MemberTier;
   verificationStatus: VerificationStatus;
   verificationLevel: VerificationLevel;
   reputationBadge?: string;
+  preferredLanguage?: LanguageCode;
+  preferredCurrency?: CurrencyCode;
   createdAt: string;
   avatarUrl?: string;
 }
@@ -168,6 +178,8 @@ export interface Profile {
   isOnline: boolean;
   distanceKm?: number;
   compatibilityScore?: number;
+  rankingScore?: number;
+  rankingExplanation?: string;
   coverPhotoUrl?: string;
   avatarUrl: string;
   galleryImages: MediaItem[];
@@ -239,6 +251,17 @@ export interface ReferralStats {
   registrationsCount: number;
   conversionsCount: number;
   rewardsEarnedDays: number;
+}
+
+export interface AnalyticsReport {
+  totalUsers: number;
+  activeUsersMonthly: number;
+  retentionRate: number;
+  totalMarketplaceSearches: number;
+  totalMessagesExchanged: number;
+  totalRevenueVolume: number;
+  activeCommunitiesCount: number;
+  publishedEventsCount: number;
 }
 
 export interface LiveStream {
@@ -415,6 +438,9 @@ export interface UserSafetySettings {
   appearInSearch: boolean;
   dailyMessageLimit: number;
   messagesSentToday: number;
+  enablePushMessages?: boolean;
+  enablePushLivestreams?: boolean;
+  enablePushEvents?: boolean;
 }
 
 export interface Message {

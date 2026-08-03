@@ -26,12 +26,13 @@ import {
   ArrowUpDown,
   Flame,
 } from "lucide-react";
+import { TransparentRankingEngine } from "@/lib/ranking/TransparentRankingEngine";
 
 export default function DiscoveryMarketplacePage() {
   const [activeTab, setActiveTab] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [showFiltersDrawer, setShowFiltersDrawer] = useState(false);
-  const [sortBy, setSortBy] = useState<"ACTIVE" | "COMPATIBILITY" | "DISTANCE">("COMPATIBILITY");
+  const [sortBy, setSortBy] = useState<"ACTIVE" | "COMPATIBILITY" | "DISTANCE" | "TRANSPARENT_RANK">("TRANSPARENT_RANK");
 
   // Advanced Phase 2 Filter Engine State
   const [filters, setFilters] = useState({

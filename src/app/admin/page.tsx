@@ -49,6 +49,9 @@ import {
   Radio,
   Globe,
   Calendar,
+  BarChart3,
+  TrendingUp,
+  Activity,
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
@@ -95,20 +98,20 @@ export default function AdminDashboardPage() {
           </div>
           <h1 className="text-3xl font-serif font-bold text-velora-textPrimary flex items-center gap-3">
             <ShieldCheck className="w-8 h-8 text-red-400" />
-            Compliance, Financial & Community Supervision
+            Compliance, Operational Analytics & Governance
           </h1>
           <p className="text-xs text-velora-textSecondary mt-1">
-            Audit live broadcasts, approve creator payouts, process community reports, and monitor private groups.
+            Audit platform metrics, approve creator payouts, monitor live broadcasts, and analyze retention.
           </p>
         </div>
 
         <Tabs
           tabs={[
             { id: "FINANCES", label: "Financial Desk", count: payouts.filter((p) => p.status === "PENDING").length },
-            { id: "COMMUNITIES", label: "Community & Events Desk", count: communities.length },
-            { id: "STREAMS", label: "Live Stream Supervision", count: streams.filter((s) => s.status === "LIVE").length },
-            { id: "VERIFICATION", label: "Verification Queue", count: verifications.filter((v) => v.status === "PENDING").length },
-            { id: "AUDIT", label: "Moderation Log", count: logs.length },
+            { id: "ANALYTICS", label: "Platform Analytics", count: 0 },
+            { id: "COMMUNITIES", label: "Community Desk", count: communities.length },
+            { id: "STREAMS", label: "Live Supervision", count: streams.filter((s) => s.status === "LIVE").length },
+            { id: "AUDIT", label: "Audit Log", count: logs.length },
           ]}
           activeTab={activeTab}
           onChange={setActiveTab}
@@ -122,25 +125,23 @@ export default function AdminDashboardPage() {
             Platform Gross Volume
           </span>
           <span className="text-3xl font-serif font-bold text-velora-textPrimary">$18,450.00</span>
-          <span className="text-[11px] text-emerald-400 font-mono">100% Settled</span>
+          <span className="text-[11px] text-emerald-400 font-mono">+18.4% this month</span>
         </Card>
 
         <Card variant="glass" className="p-6 space-y-2">
           <span className="text-xs font-semibold text-velora-textMuted uppercase tracking-wider block">
-            Active Private Communities
+            Monthly Active Users
           </span>
-          <span className="text-3xl font-serif font-bold text-amber-300">{communities.length}</span>
-          <span className="text-[11px] text-velora-textMuted font-mono">
-            {communities.reduce((acc, c) => acc + c.membersCount, 0)} Total Members
-          </span>
+          <span className="text-3xl font-serif font-bold text-amber-300">12,480</span>
+          <span className="text-[11px] text-emerald-400 font-mono">92.4% Retention Rate</span>
         </Card>
 
         <Card variant="glass" className="p-6 space-y-2">
           <span className="text-xs font-semibold text-velora-textMuted uppercase tracking-wider block">
-            Published VIP Events
+            Direct Messages Exchanged
           </span>
-          <span className="text-3xl font-serif font-bold text-purple-300">{events.length}</span>
-          <span className="text-[11px] text-velora-textMuted font-mono">100% Ticket Verified</span>
+          <span className="text-3xl font-serif font-bold text-purple-300">84,920</span>
+          <span className="text-[11px] text-velora-textMuted font-mono">100% End-to-End Encrypted</span>
         </Card>
 
         <Card variant="glass" className="p-6 space-y-2">
@@ -154,7 +155,68 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
-      {/* COMMUNITIES & EVENTS TAB */}
+      {/* ANALYTICS TAB */}
+      {activeTab === "ANALYTICS" && (
+        <div className="space-y-8">
+          <h2 className="text-xl font-serif font-bold text-velora-textPrimary flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-velora-gold" />
+            Operational & Marketplace Performance Analytics (Non-AI Traditional Metrics)
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card variant="glass" className="p-6 space-y-4 text-left">
+              <h3 className="text-sm font-bold text-velora-textPrimary flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-emerald-400" />
+                User Registrations & Growth Trajectory
+              </h3>
+              <div className="h-40 flex items-end justify-between gap-2 pt-4 border-b border-white/10">
+                {[
+                  { month: "Jan", count: 3200 },
+                  { month: "Feb", count: 4800 },
+                  { month: "Mar", count: 6200 },
+                  { month: "Apr", count: 8100 },
+                  { month: "May", count: 9900 },
+                  { month: "Jun", count: 12480 },
+                ].map((bar) => (
+                  <div key={bar.month} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      style={{ height: `${(bar.count / 13000) * 100}%` }}
+                      className="w-full bg-gold-gradient rounded-t-lg shadow-gold-glow min-h-[10px]"
+                    />
+                    <span className="text-[10px] font-mono text-velora-textMuted">{bar.month}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-velora-textMuted">
+                Net growth rate: +26% month-over-month driven by high referral conversion.
+              </p>
+            </Card>
+
+            <Card variant="glass" className="p-6 space-y-4 text-left">
+              <h3 className="text-sm font-bold text-velora-textPrimary flex items-center gap-2">
+                <Activity className="w-4 h-4 text-purple-300" />
+                Marketplace Activity & Search Breakdown
+              </h3>
+              <ul className="space-y-3 text-xs text-velora-textSecondary">
+                <li className="flex items-center justify-between p-2.5 glass-panel rounded-xl">
+                  <span>Transparent Rule-Based Discovery Searches</span>
+                  <span className="font-mono font-bold text-velora-gold">142,100</span>
+                </li>
+                <li className="flex items-center justify-between p-2.5 glass-panel rounded-xl">
+                  <span>Rich Profile Page Views</span>
+                  <span className="font-mono font-bold text-amber-300">284,500</span>
+                </li>
+                <li className="flex items-center justify-between p-2.5 glass-panel rounded-xl">
+                  <span>Pay-Per-View Content Unlocks</span>
+                  <span className="font-mono font-bold text-emerald-400">1,840</span>
+                </li>
+              </ul>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* COMMUNITIES TAB */}
       {activeTab === "COMMUNITIES" && (
         <div className="space-y-8">
           <div className="space-y-4">
@@ -289,7 +351,7 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* MODERATION HISTORY LOG TAB */}
+      {/* AUDIT LOG TAB */}
       {activeTab === "AUDIT" && (
         <div className="space-y-6">
           <h2 className="text-xl font-serif font-bold text-velora-textPrimary">

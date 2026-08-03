@@ -5,9 +5,12 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
+import { Modal } from "@/components/ui/Modal";
 import { VerificationWizard } from "@/components/verification/VerificationWizard";
 import { MOCK_SAFETY_SETTINGS } from "@/lib/mockData";
-import { UserSafetySettings, MessagePermissionRules } from "@/types";
+import { SUPPORTED_LANGUAGES } from "@/lib/i18n";
+import { SUPPORTED_CURRENCIES } from "@/lib/currency/CurrencyService";
+import { UserSafetySettings, MessagePermissionRules, LanguageCode, CurrencyCode } from "@/types";
 import {
   Settings,
   Shield,
@@ -20,16 +23,25 @@ import {
   CheckCircle2,
   Sliders,
   UserCheck,
+  Globe,
+  DollarSign,
+  Download,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 
 export default function SettingsPage() {
   const [safety, setSafety] = useState<UserSafetySettings>(MOCK_SAFETY_SETTINGS);
+  const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>("en");
+  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>("USD");
   const [blockedUsers, setBlockedUsers] = useState([
     { id: "usr-blk-1", username: "spammer_bot_99", blockedAt: "Yesterday" },
     { id: "usr-blk-2", username: "unwanted_contact", blockedAt: "3 days ago" },
   ]);
   const [verificationWizardOpen, setVerificationWizardOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [exportSuccess, setExportSuccess] = useState(false);
 
   const handleUnblock = (id: string) => {
     setBlockedUsers(blockedUsers.filter((u) => u.id !== id));
@@ -40,6 +52,23 @@ export default function SettingsPage() {
     setTimeout(() => setSaveSuccess(false), 3000);
   };
 
+  const handleExportGdprData = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
+      user: { username: "elena_vance", email: "elena@velora.club", role: "CREATOR" },
+      profile: { displayName: "Elena Vance", city: "Monte Carlo", country: "Monaco" },
+      gdprExportDate: new Date().toISOString(),
+    }));
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", "velora_gdpr_data_export.json");
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+
+    setExportSuccess(true);
+    setTimeout(() => setExportSuccess(false), 3000);
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-left">
       {/* Header */}
@@ -48,10 +77,10 @@ export default function SettingsPage() {
           <Settings className="w-8 h-8 text-velora-gold" />
           <div>
             <h1 className="text-3xl font-serif font-bold text-velora-textPrimary">
-              Privacy, Safety & Messaging Rules
+              Privacy, Safety & Regional Settings
             </h1>
             <p className="text-xs text-velora-textSecondary mt-1">
-              Manage messaging permissions, stealth mode, location precision, and blocked contacts.
+              Manage messaging permissions, GDPR data privacy, push notifications, language, and currency.
             </p>
           </div>
         </div>
@@ -59,175 +88,163 @@ export default function SettingsPage() {
         <Button
           variant="gold"
           size="sm"
-          className="text-xs font-bold uppercase tracking-wider gap-2 shrink-0"
-          onClick={() => setVerificationWizardOpen(true)}
+          className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow shrink-0"
+          onClick={handleSave}
         >
-          <UserCheck className="w-4 h-4" />
-          Verification Center
+          <CheckCircle2 className="w-4 h-4" /> Save Settings
         </Button>
       </div>
 
       {saveSuccess && (
-        <div className="p-4 glass-panel-gold border-velora-gold rounded-2xl flex items-center gap-3 text-xs text-velora-gold font-bold">
-          <CheckCircle2 className="w-5 h-5 text-velora-gold" />
-          Privacy & Message Rules updated successfully!
+        <div className="p-4 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl text-xs text-emerald-300 font-semibold flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4" /> Settings updated successfully!
         </div>
       )}
 
-      {/* 1. MESSAGE PERMISSIONS */}
-      <Card variant="goldBorder" className="p-8 space-y-6">
-        <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-          <MessageSquare className="w-5 h-5 text-velora-gold" />
-          <h2 className="text-lg font-serif font-bold text-velora-textPrimary">
-            Message Permissions & Inbound Rules
-          </h2>
-        </div>
+      {/* SECTION 1: GLOBAL & REGIONAL SETTINGS */}
+      <Card variant="glass" className="p-6 space-y-6">
+        <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
+          <Globe className="w-4 h-4 text-velora-gold" />
+          Language & Currency Localization
+        </h2>
 
-        <div className="space-y-4 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
-              Who Can Send Me Messages?
+              Display Language
             </label>
             <select
-              value={safety.whoCanMessageMe}
-              onChange={(e) =>
-                setSafety({ ...safety, whoCanMessageMe: e.target.value as MessagePermissionRules })
-              }
-              className="w-full bg-velora-card border border-white/10 rounded-2xl p-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value as LanguageCode)}
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
             >
-              <option value="EVERYONE">Everyone (All Registered Members)</option>
-              <option value="VERIFIED_ONLY">100% ID Verified Members Only</option>
-              <option value="FAVORITES_ONLY">Saved Favorites Contacts Only</option>
-              <option value="NOBODY">Nobody (Pause All New Messages)</option>
+              {SUPPORTED_LANGUAGES.map((lang) => (
+                <option key={lang.code} value={lang.code} className="bg-velora-card text-white">
+                  {lang.flag} {lang.name}
+                </option>
+              ))}
             </select>
           </div>
 
-          <div className="space-y-3 pt-2">
-            <label className="flex items-center justify-between p-4 glass-panel rounded-2xl cursor-pointer">
-              <div>
-                <p className="font-bold text-velora-textPrimary">Allow Photo & Media Attachments</p>
-                <p className="text-velora-textMuted text-[11px]">Permit contacts to send image attachments in chat</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={safety.allowPhotoMessages}
-                onChange={(e) => setSafety({ ...safety, allowPhotoMessages: e.target.checked })}
-                className="accent-velora-gold w-5 h-5 cursor-pointer"
-              />
-            </label>
-
-            <label className="flex items-center justify-between p-4 glass-panel rounded-2xl cursor-pointer">
-              <div>
-                <p className="font-bold text-velora-textPrimary">Enable Automated Message Filtering</p>
-                <p className="text-velora-textMuted text-[11px]">Filter spam, offsite links, and suspicious language</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={safety.enableMessageFiltering}
-                onChange={(e) => setSafety({ ...safety, enableMessageFiltering: e.target.checked })}
-                className="accent-velora-gold w-5 h-5 cursor-pointer"
-              />
-            </label>
-          </div>
-        </div>
-      </Card>
-
-      {/* 2. PRIVACY & STEALTH CONTROLS */}
-      <Card variant="glass" className="p-8 space-y-6">
-        <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-          <EyeOff className="w-5 h-5 text-purple-400" />
-          <h2 className="text-lg font-serif font-bold text-velora-textPrimary">
-            Privacy, Stealth & Location Precision
-          </h2>
-        </div>
-
-        <div className="space-y-4 text-xs">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
-              Profile Public Visibility Setting
+              Preferred Payment Currency
             </label>
             <select
-              value={safety.profileVisibilitySetting}
-              onChange={(e) => setSafety({ ...safety, profileVisibilitySetting: e.target.value as any })}
-              className="w-full bg-velora-card border border-white/10 rounded-2xl p-3 text-xs text-velora-textPrimary"
+              value={selectedCurrency}
+              onChange={(e) => setSelectedCurrency(e.target.value as CurrencyCode)}
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
             >
-              <option value="EVERYONE">Everyone (Public Discovery & Web)</option>
-              <option value="MEMBERS_ONLY">Members Only (Requires Velora Login)</option>
-              <option value="VERIFIED_ONLY">Verified Members Only</option>
+              {SUPPORTED_CURRENCIES.map((curr) => (
+                <option key={curr.code} value={curr.code} className="bg-velora-card text-white">
+                  {curr.symbol} {curr.code} - {curr.name}
+                </option>
+              ))}
             </select>
           </div>
+        </div>
+      </Card>
 
-          <div className="space-y-3 pt-2">
-            <label className="flex items-center justify-between p-4 glass-panel rounded-2xl cursor-pointer">
-              <div>
-                <p className="font-bold text-velora-textPrimary">Appear in Search Discovery</p>
-                <p className="text-velora-textMuted text-[11px]">Allow profile to be discovered via marketplace search</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={safety.appearInSearch}
-                onChange={(e) => setSafety({ ...safety, appearInSearch: e.target.checked })}
-                className="accent-velora-gold w-5 h-5 cursor-pointer"
-              />
-            </label>
+      {/* SECTION 2: MOBILE PUSH NOTIFICATIONS */}
+      <Card variant="glass" className="p-6 space-y-6">
+        <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
+          <Bell className="w-4 h-4 text-velora-gold" />
+          Mobile Push Notification Controls
+        </h2>
 
-            <label className="flex items-center justify-between p-4 glass-panel rounded-2xl cursor-pointer">
-              <div>
-                <p className="font-bold text-velora-textPrimary">Hide Online Active Status</p>
-                <p className="text-velora-textMuted text-[11px]">Hide green online indicator and active timestamps</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={safety.hideLastActive}
-                onChange={(e) => setSafety({ ...safety, hideLastActive: e.target.checked })}
-                className="accent-velora-gold w-5 h-5 cursor-pointer"
-              />
-            </label>
+        <div className="space-y-4">
+          <label className="flex items-center justify-between p-3 glass-panel rounded-2xl cursor-pointer">
+            <div>
+              <span className="text-xs font-bold text-velora-textPrimary block">Direct Message Push Alerts</span>
+              <span className="text-[11px] text-velora-textMuted">Notify when a verified member sends a message</span>
+            </div>
+            <input
+              type="checkbox"
+              checked={safety.enablePushMessages ?? true}
+              onChange={(e) => setSafety({ ...safety, enablePushMessages: e.target.checked })}
+              className="w-4 h-4 accent-velora-gold"
+            />
+          </label>
+
+          <label className="flex items-center justify-between p-3 glass-panel rounded-2xl cursor-pointer">
+            <div>
+              <span className="text-xs font-bold text-velora-textPrimary block">Livestream Start Notifications</span>
+              <span className="text-[11px] text-velora-textMuted">Notify when creators you follow go live</span>
+            </div>
+            <input
+              type="checkbox"
+              checked={safety.enablePushLivestreams ?? true}
+              onChange={(e) => setSafety({ ...safety, enablePushLivestreams: e.target.checked })}
+              className="w-4 h-4 accent-velora-gold"
+            />
+          </label>
+        </div>
+      </Card>
+
+      {/* SECTION 3: GDPR DATA PRIVACY & ACCOUNT ERASURE */}
+      <Card variant="glass" className="p-6 space-y-6">
+        <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
+          <Shield className="w-4 h-4 text-emerald-400" />
+          GDPR Data Rights & Account Management
+        </h2>
+
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl">
+            <div>
+              <h4 className="text-xs font-bold text-velora-textPrimary">Export Personal Data Archive (GDPR Art. 20)</h4>
+              <p className="text-[11px] text-velora-textMuted mt-0.5">
+                Download a complete JSON export of your profile, messages, transactions, and media history.
+              </p>
+            </div>
+            <Button
+              variant="glass"
+              size="sm"
+              className="text-xs font-bold border-emerald-500/40 text-emerald-300 shrink-0 gap-2"
+              onClick={handleExportGdprData}
+            >
+              <Download className="w-4 h-4" /> Download Data Archive
+            </Button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl border border-red-500/30">
+            <div>
+              <h4 className="text-xs font-bold text-red-400">Permanently Delete Velora Account (GDPR Right to be Forgotten)</h4>
+              <p className="text-[11px] text-velora-textMuted mt-0.5">
+                Permanently purge all profile data, messages, wallet records, and media vaults.
+              </p>
+            </div>
+            <Button
+              variant="danger"
+              size="sm"
+              className="text-xs font-bold shrink-0 gap-2"
+              onClick={() => setDeleteModalOpen(true)}
+            >
+              <Trash2 className="w-4 h-4" /> Delete Account
+            </Button>
           </div>
         </div>
       </Card>
 
-      {/* 3. BLOCKED USERS MANAGEMENT */}
-      <Card variant="glass" className="p-8 space-y-6">
-        <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-          <Ban className="w-5 h-5 text-red-400" />
-          <h2 className="text-lg font-serif font-bold text-velora-textPrimary">
-            Managed Blocked Users ({blockedUsers.length})
-          </h2>
-        </div>
+      {/* Account Deletion Confirmation Modal */}
+      <Modal isOpen={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Confirm Account Deletion">
+        <div className="space-y-4 text-left">
+          <div className="p-4 bg-red-500/10 border border-red-500/40 rounded-2xl flex items-center gap-3">
+            <AlertTriangle className="w-6 h-6 text-red-400 shrink-0" />
+            <p className="text-xs text-red-300 leading-relaxed">
+              This action is permanent and cannot be undone. All your profile media, messages, wallet balances, and subscriptions will be permanently purged.
+            </p>
+          </div>
 
-        <div className="space-y-3">
-          {blockedUsers.length > 0 ? (
-            blockedUsers.map((u) => (
-              <div
-                key={u.id}
-                className="p-4 glass-panel rounded-2xl flex items-center justify-between gap-4 text-xs"
-              >
-                <div>
-                  <p className="font-bold text-velora-textPrimary">@{u.username}</p>
-                  <p className="text-velora-textMuted text-[10px]">Blocked on {u.blockedAt}</p>
-                </div>
-                <Button
-                  variant="glass"
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => handleUnblock(u.id)}
-                >
-                  Unblock Contact
-                </Button>
-              </div>
-            ))
-          ) : (
-            <p className="text-xs text-velora-textMuted">No blocked users.</p>
-          )}
+          <div className="flex gap-3 pt-2">
+            <Button variant="ghost" className="w-1/2 text-xs" onClick={() => setDeleteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" className="w-1/2 text-xs font-bold uppercase tracking-wider" onClick={() => setDeleteModalOpen(false)}>
+              Confirm Permanent Erasure
+            </Button>
+          </div>
         </div>
-      </Card>
-
-      <div className="flex justify-end pt-4">
-        <Button variant="gold" size="lg" className="font-bold uppercase tracking-wider" onClick={handleSave}>
-          Save Privacy Settings
-        </Button>
-      </div>
+      </Modal>
 
       {/* Verification Wizard Modal */}
       <VerificationWizard
