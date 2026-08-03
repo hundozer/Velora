@@ -12,6 +12,7 @@ import {
  */
 export interface UserAccountModel {
   id: string;
+  auth0_user_id?: string; // Auth0 Identity Provider Unique Subject (e.g., auth0|65a987bc...)
   authProviderId: string; // Internal Auth Gateway UUID or Federated Provider Subject ID
   email: string;
   phone?: string;
@@ -96,6 +97,7 @@ export function createUserAccount(
 ): UserAccountModel {
   return {
     id: data.id,
+    auth0_user_id: data.auth0_user_id || `auth0|${data.id}`,
     authProviderId: data.authProviderId || `auth-${data.id}`,
     email: data.email,
     phone: data.phone,

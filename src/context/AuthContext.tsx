@@ -177,6 +177,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   };
 
+  const loginWithAuth0 = () => {
+    if (typeof window !== "undefined") {
+      window.location.href = "/api/auth/login";
+    }
+  };
+
+  const logoutWithAuth0 = () => {
+    setUser(null);
+    setProfile(null);
+    if (typeof window !== "undefined") {
+      window.location.href = "/api/auth/logout";
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setProfile(null);

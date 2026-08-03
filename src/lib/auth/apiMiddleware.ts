@@ -3,6 +3,8 @@ import { UserRole, Permission } from "@/types/auth";
 import { hasPermission } from "@/lib/auth/permissions";
 import { AuthorizationService } from "@/lib/auth/AuthorizationService";
 import { auditLogger } from "@/lib/auth/auditLogger";
+import { JwtValidatorService } from "@/lib/auth/jwtValidator";
+import { UserSynchronizationService } from "@/lib/auth/userSync";
 
 export interface ProtectedApiRequestOptions {
   requireAuth?: boolean;
@@ -17,6 +19,32 @@ export interface ApiSecurityResult {
   statusCode: number;
   message: string;
   user?: UserAccountModel;
+}
+
+/**
+ * Enterprise Auth0 Bearer Token Validator and Synchronizer
+ */
+export function validateAuth0BearerToken(bearerHeader: string | undefined): ApiSecurityResult {
+  const jwtCheck = JwtValidatorService.validateAuth0Token(bearerHeader);
+
+  if (!jwtCheck.isValid || !jwtCheck.payload) {
+    return {
+      authorized: false,
+      statusCode: jwtCheck.statusCode,
+      message: jwtCheck.message,
+    };
+  }
+
+  // Synchronize authenticated Auth0 identity with Velora local user database
+  const dbUser = UserSynchronizationService.syncAuth0User(jwtCheck.payload);
+  const userAccount = UserSynchronizationService.toUserAccountModel(dbUser);
+
+  return {
+    authorized: true,
+    statusCode: 200,
+    message: "Auth0 Bearer Token Verified",
+    user: userAccount,
+  };
 }
 
 /**
