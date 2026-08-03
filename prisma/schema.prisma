@@ -109,6 +109,8 @@ enum NotificationType {
   CONTENT_UNLOCKED
   NEW_FOLLOWER
   NEW_SUBSCRIBER
+  PAYMENT_RECEIVED
+  PAYOUT_STATUS_UPDATE
   REPORT_STATUS_UPDATE
 }
 
@@ -145,6 +147,7 @@ enum PaymentType {
   PRIVATE_VIDEO_UNLOCK
   LIVE_EXPERIENCE_TICKET
   CREATOR_TIP
+  WALLET_TOPUP
 }
 
 enum PaymentStatus {
@@ -152,6 +155,20 @@ enum PaymentStatus {
   COMPLETED
   REFUNDED
   FAILED
+}
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  PROCESSING
+  COMPLETED
+  REJECTED
+}
+
+enum RefundStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model User {
@@ -167,6 +184,7 @@ model User {
 
   profile              Profile?
   creatorProfile       CreatorProfile?
+  wallet               Wallet?
   sentMessages         Message[]                 @relation("SentMessages")
   participants         ConversationParticipant[]
   verifications        VerificationRequest[]     @relation("UserVerifications")
@@ -187,12 +205,25 @@ model User {
   notifications        Notification[]            @relation("UserNotifications")
   safetySettings       UserSafetySettings?
   contentPurchases     ContentPurchase[]         @relation("UserContentPurchases")
+  payoutRequests       PayoutRequest[]           @relation("UserPayoutRequests")
+  refundRequests       RefundRequest[]           @relation("UserRefundRequests")
 
   @@index([email])
   @@index([username])
   @@index([role])
   @@index([verificationStatus])
   @@index([verificationLevel])
+}
+
+model Wallet {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  availableBalance Float    @default(0)
+  pendingBalance   Float    @default(0)
+  currency         String   @default("USD")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model Profile {
@@ -317,6 +348,8 @@ model CreatorProfile {
   followersCount     Int            @default(0)
   subscribersCount   Int            @default(0)
   totalEarnings      Float          @default(0)
+  pendingEarnings    Float          @default(0)
+  availablePayout    Float          @default(0)
   payoutMethod       String?
   payoutDetails      String?
   isLiveNow          Boolean        @default(false)
@@ -330,6 +363,7 @@ model CreatorProfile {
   albums             ContentAlbum[]   @relation("CreatorAlbums")
   videos             ContentVideo[]   @relation("CreatorVideos")
   contentPurchases   ContentPurchase[] @relation("CreatorContentSales")
+  payoutRequests     PayoutRequest[]  @relation("CreatorPayoutRequests")
 
   @@index([userId])
 }
@@ -404,6 +438,42 @@ model ContentPurchase {
 
   @@index([buyerId])
   @@index([creatorId])
+}
+
+model PayoutRequest {
+  id               String         @id @default(uuid())
+  userId           String
+  user             User           @relation("UserPayoutRequests", fields: [userId], references: [id], onDelete: Cascade)
+  creatorProfileId String
+  creatorProfile   CreatorProfile @relation("CreatorPayoutRequests", fields: [creatorProfileId], references: [id], onDelete: Cascade)
+  amount           Float
+  currency         String         @default("USD")
+  payoutMethod     String
+  payoutDetails    String
+  status           PayoutStatus   @default(PENDING)
+  rejectionReason  String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model RefundRequest {
+  id            String        @id @default(uuid())
+  userId        String
+  user          User          @relation("UserRefundRequests", fields: [userId], references: [id], onDelete: Cascade)
+  transactionId String
+  transaction   PaymentTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  amount        Float
+  reason        String        @db.Text
+  status        RefundStatus  @default(PENDING)
+  adminNotes    String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([status])
 }
 
 model CreatorApplication {
@@ -574,17 +644,23 @@ model UserBlock {
 }
 
 model PaymentTransaction {
-  id          String        @id @default(uuid())
-  buyerId     String
-  buyer       User          @relation("BuyerTransactions", fields: [buyerId], references: [id], onDelete: Cascade)
-  sellerId    String?
-  seller      User?         @relation("SellerTransactions", fields: [sellerId], references: [id])
-  amount      Float
-  currency    String        @default("USD")
-  type        PaymentType
-  status      PaymentStatus @default(PENDING)
-  metadata    String?
-  createdAt   DateTime      @default(now())
+  id              String        @id @default(uuid())
+  buyerId         String
+  buyer           User          @relation("BuyerTransactions", fields: [buyerId], references: [id], onDelete: Cascade)
+  sellerId        String?
+  seller          User?         @relation("SellerTransactions", fields: [sellerId], references: [id])
+  grossAmount     Float
+  platformCut     Float         @default(0)
+  creatorEarnings Float         @default(0)
+  taxAmount       Float         @default(0)
+  currency        String        @default("USD")
+  type            PaymentType
+  status          PaymentStatus @default(PENDING)
+  provider        String        @default("STRIPE_CONNECT") // STRIPE_CONNECT, ADYEN, VELORA_WALLET
+  metadata        String?
+  createdAt       DateTime      @default(now())
+
+  refundRequests  RefundRequest[]
 
   @@index([buyerId])
   @@index([sellerId])

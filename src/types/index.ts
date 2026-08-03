@@ -45,6 +45,20 @@ export type ContentPublicationStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 
 export type MessageStatus = "SENT" | "DELIVERED" | "READ";
 
+export type PaymentType =
+  | "CREATOR_SUBSCRIPTION"
+  | "PREMIUM_ALBUM_UNLOCK"
+  | "PRIVATE_VIDEO_UNLOCK"
+  | "LIVE_EXPERIENCE_TICKET"
+  | "CREATOR_TIP"
+  | "WALLET_TOPUP";
+
+export type PaymentStatus = "PENDING" | "COMPLETED" | "REFUNDED" | "FAILED";
+
+export type PayoutStatus = "PENDING" | "APPROVED" | "PROCESSING" | "COMPLETED" | "REJECTED";
+
+export type RefundStatus = "PENDING" | "APPROVED" | "REJECTED";
+
 export type AttachmentType =
   | "STANDARD_IMAGE"
   | "DISAPPEARING_IMAGE"
@@ -66,6 +80,8 @@ export type NotificationType =
   | "CONTENT_UNLOCKED"
   | "NEW_FOLLOWER"
   | "NEW_SUBSCRIBER"
+  | "PAYMENT_RECEIVED"
+  | "PAYOUT_STATUS_UPDATE"
   | "REPORT_STATUS_UPDATE";
 
 export type ModerationActionType =
@@ -148,6 +164,52 @@ export interface MediaItem {
   sortOrder?: number;
   isProfilePhoto?: boolean;
   isCoverPhoto?: boolean;
+}
+
+export interface WalletInfo {
+  id: string;
+  userId: string;
+  availableBalance: number;
+  pendingBalance: number;
+  currency: string;
+}
+
+export interface PaymentTransaction {
+  id: string;
+  buyerUsername: string;
+  sellerUsername?: string;
+  productTitle: string;
+  grossAmount: number;
+  platformCut: number;
+  creatorEarnings: number;
+  taxAmount: number;
+  currency: string;
+  type: PaymentType;
+  status: PaymentStatus;
+  provider: "STRIPE_CONNECT" | "ADYEN" | "VELORA_WALLET";
+  createdAt: string;
+}
+
+export interface PayoutRequest {
+  id: string;
+  username: string;
+  amount: number;
+  currency: string;
+  payoutMethod: string;
+  payoutDetails: string;
+  status: PayoutStatus;
+  requestedAt: string;
+  rejectionReason?: string;
+}
+
+export interface RefundItem {
+  id: string;
+  username: string;
+  productTitle: string;
+  amount: number;
+  reason: string;
+  status: RefundStatus;
+  requestedAt: string;
 }
 
 export interface ContentAlbum {

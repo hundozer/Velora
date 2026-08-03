@@ -9,6 +9,10 @@ import {
   ContentAlbum,
   ContentVideo,
   CreatorApplication,
+  PaymentTransaction,
+  PayoutRequest,
+  RefundItem,
+  WalletInfo,
 } from "@/types";
 
 export const CREATOR_CATEGORIES = [
@@ -20,6 +24,96 @@ export const CREATOR_CATEGORIES = [
   "Gourmet & Wine",
   "Luxury Fitness",
   "Couples Lifestyle",
+];
+
+export const MOCK_WALLET: WalletInfo = {
+  id: "w-demo-1",
+  userId: "usr-demo-1",
+  availableBalance: 420.50,
+  pendingBalance: 150.00,
+  currency: "USD",
+};
+
+export const MOCK_TRANSACTIONS: PaymentTransaction[] = [
+  {
+    id: "tx-101",
+    buyerUsername: "elena_vance",
+    sellerUsername: "aria_thorne",
+    productTitle: "Violin Solo Performance - Private Salon Concert",
+    grossAmount: 35.00,
+    platformCut: 5.25,
+    creatorEarnings: 28.00,
+    taxAmount: 1.75,
+    currency: "USD",
+    type: "PRIVATE_VIDEO_UNLOCK",
+    status: "COMPLETED",
+    provider: "VELORA_WALLET",
+    createdAt: "10:30 AM",
+  },
+  {
+    id: "tx-102",
+    buyerUsername: "julian_sophia",
+    sellerUsername: "elena_vance",
+    productTitle: "Monthly Creator Channel Subscription",
+    grossAmount: 24.99,
+    platformCut: 3.75,
+    creatorEarnings: 19.99,
+    taxAmount: 1.25,
+    currency: "USD",
+    type: "CREATOR_SUBSCRIPTION",
+    status: "COMPLETED",
+    provider: "STRIPE_CONNECT",
+    createdAt: "Yesterday",
+  },
+  {
+    id: "tx-103",
+    buyerUsername: "elena_vance",
+    productTitle: "Wallet Top-up (Credit Card)",
+    grossAmount: 100.00,
+    platformCut: 0.00,
+    creatorEarnings: 0.00,
+    taxAmount: 0.00,
+    currency: "USD",
+    type: "WALLET_TOPUP",
+    status: "COMPLETED",
+    provider: "STRIPE_CONNECT",
+    createdAt: "3 days ago",
+  },
+];
+
+export const MOCK_PAYOUT_REQUESTS: PayoutRequest[] = [
+  {
+    id: "po-1",
+    username: "aria_thorne",
+    amount: 1450.00,
+    currency: "USD",
+    payoutMethod: "SEPA Direct Bank Transfer",
+    payoutDetails: "CH93 0000 0000 0000 0000 0",
+    status: "PENDING",
+    requestedAt: "2026-08-02 18:30",
+  },
+  {
+    id: "po-2",
+    username: "elena_vance",
+    amount: 850.00,
+    currency: "USD",
+    payoutMethod: "Wire Transfer",
+    payoutDetails: "SWIFT MONCMC22",
+    status: "APPROVED",
+    requestedAt: "2026-08-01 10:15",
+  },
+];
+
+export const MOCK_REFUND_REQUESTS: RefundItem[] = [
+  {
+    id: "ref-1",
+    username: "disappointed_member",
+    productTitle: "Private Photo Unlock",
+    amount: 25.00,
+    reason: "Media file preview did not load due to connection timeout.",
+    status: "PENDING",
+    requestedAt: "2026-08-03 02:10",
+  },
 ];
 
 export const MOCK_PROFILES: Profile[] = [
@@ -231,26 +325,6 @@ export const MOCK_CREATOR_ALBUMS: ContentAlbum[] = [
     totalPhotosCount: 18,
     createdAt: "2 days ago",
   },
-  {
-    id: "alb-2",
-    creatorId: "prof-3",
-    creatorName: "Aria Thorne",
-    creatorAvatar: MOCK_PROFILES[2].avatarUrl,
-    title: "Geneva Conservatory Private Backstage Journal",
-    description: "High-resolution photos from my private violin rehearsal and gown fitting.",
-    category: "Classical Music",
-    previewImages: [
-      "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
-    ],
-    lockedImages: [
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80",
-    ],
-    price: 15.0,
-    visibility: "SUBSCRIBERS_ONLY",
-    publicationStatus: "PUBLISHED",
-    totalPhotosCount: 24,
-    createdAt: "5 days ago",
-  },
 ];
 
 export const MOCK_CREATOR_VIDEOS: ContentVideo[] = [
@@ -368,13 +442,10 @@ export const MOCK_NOTIFICATIONS: NotificationItem[] = [
   {
     id: "notif-1",
     userId: "usr-demo-1",
-    type: "NEW_SUBSCRIBER",
-    title: "New Premium Subscriber!",
-    message: "Julian & Sophia subscribed to your Creator Channel ($24.99/mo).",
-    actorName: "Julian & Sophia",
-    actorAvatar: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=800&q=80",
-    targetLink: "/creator-studio",
+    type: "PAYMENT_RECEIVED",
+    title: "Payment Received",
+    message: "You earned $28.00 from a Private Video Unlock purchase.",
     isRead: false,
-    createdAt: "5 mins ago",
+    createdAt: "10 mins ago",
   },
 ];
