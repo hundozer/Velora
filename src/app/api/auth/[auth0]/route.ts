@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { AUTH0_CONFIG } from "@/lib/auth0/config";
 import { JwtValidatorService } from "@/lib/auth0/tokenValidator";
 import { UserSynchronizationService } from "@/lib/auth0/userSync";
+import { DestinationRouterService } from "@/lib/auth/destinationRouter";
 import { auditLogger } from "@/lib/auth/auditLogger";
 
 /**
- * Enterprise Auth0 Identity Provider Route Handler for Next.js App Router
+ * Auth0 Identity Provider Route Handler for Next.js App Router
  * Handles /api/auth/login, /api/auth/logout, /api/auth/callback, and /api/auth/me
  */
 export async function GET(request: Request, { params }: { params: { auth0: string } }) {
@@ -81,11 +82,12 @@ export async function GET(request: Request, { params }: { params: { auth0: strin
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
-      UserSynchronizationService.syncAuth0User(fallbackAuth0Payload);
-      return NextResponse.redirect(new URL("/discovery", request.url));
+      const fallbackUser = UserSynchronizationService.syncAuth0User(fallbackAuth0Payload);
+      const destination = DestinationRouterService.getDestinationUrl(fallbackUser);
+      return NextResponse.redirect(new URL(destination, request.url));
     }
 
-    // Synchronize authenticated identity with local Velora database
+    // Synchronize authenticated identity with local Intimo database
     const auth0Payload = {
       sub: `auth0|user_${Date.now()}`,
       email: "member@intimo.live",
@@ -97,16 +99,17 @@ export async function GET(request: Request, { params }: { params: { auth0: strin
     };
 
     const syncedUser = UserSynchronizationService.syncAuth0User(auth0Payload);
+    const destinationPath = DestinationRouterService.getDestinationUrl(syncedUser);
 
     auditLogger.logEvent({
       actorId: syncedUser.id,
       actorRole: syncedUser.role,
       action: "AUTH0_CALLBACK",
       status: "SUCCESS",
-      details: { email: syncedUser.email, auth0Id: syncedUser.auth0_user_id },
+      details: { email: syncedUser.email, auth0Id: syncedUser.auth0_user_id, destination: destinationPath },
     });
 
-    return NextResponse.redirect(new URL("/discovery", request.url));
+    return NextResponse.redirect(new URL(destinationPath, request.url));
   }
 
   if (route === "me") {
@@ -120,7 +123,7 @@ export async function GET(request: Request, { params }: { params: { auth0: strin
     const localUser = UserSynchronizationService.getUserByAuth0Id(jwtCheck.payload.sub);
     return NextResponse.json({
       auth0: jwtCheck.payload,
-      veloraUser: localUser,
+      intimoUser: localUser,
     });
   }
 

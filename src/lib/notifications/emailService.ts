@@ -1,86 +1,134 @@
+import { ResendClient } from "./resendClient";
+import { IntimoEmailTemplates } from "./emailTemplates";
+
 export interface SentEmailLog {
   id: string;
   to: string;
   from: string;
   subject: string;
-  confirmationLink: string;
+  confirmationLink?: string;
   bodyHtml: string;
   sentAt: string;
+  provider: string;
 }
 
 const OUTBOX: SentEmailLog[] = [];
 
 export class EmailNotificationService {
-  public static readonly DEFAULT_SENDER = "Intimo <noreply@intimo.live>";
-  public static readonly SUPPORT_CONTACT = "contact@intimo.live";
+  public static readonly DEFAULT_SENDER = ResendClient.DEFAULT_SENDER;
+  public static readonly SUPPORT_CONTACT = ResendClient.DEFAULT_REPLY_TO;
 
   /**
-   * Generates and dispatches a transactional email confirmation message.
-   * Sender: Intimo <noreply@intimo.live>
+   * 1. Send Welcome Email
+   */
+  public static async sendWelcomeEmail(email: string, onboardingUrl: string = "https://intimo.live/onboarding"): Promise<SentEmailLog> {
+    const subject = "Welcome to Intimo • Complete Your Profile";
+    const bodyHtml = IntimoEmailTemplates.renderWelcome(email, onboardingUrl);
+
+    const resendRes = await ResendClient.sendEmail({
+      to: email,
+      subject,
+      html: bodyHtml,
+    });
+
+    const logEntry: SentEmailLog = {
+      id: resendRes.id,
+      to: email,
+      from: this.DEFAULT_SENDER,
+      subject,
+      confirmationLink: onboardingUrl,
+      bodyHtml,
+      sentAt: resendRes.timestamp,
+      provider: resendRes.provider,
+    };
+
+    OUTBOX.unshift(logEntry);
+    return logEntry;
+  }
+
+  /**
+   * 2. Send Email Verification Email
    */
   public static sendVerificationEmail(email: string, token: string, baseUrl: string = "https://intimo.live"): SentEmailLog {
     const confirmationLink = `${baseUrl}/verify-email?token=${encodeURIComponent(token)}`;
+    const subject = "Action Required: Confirm Your Intimo Account Email";
+    const bodyHtml = IntimoEmailTemplates.renderEmailVerification(confirmationLink);
 
-    const bodyHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <style>
-          body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #0b0c10; color: #e5e5e7; margin: 0; padding: 40px 20px; }
-          .container { max-width: 560px; margin: 0 auto; background: #13151b; border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 24px; padding: 40px; }
-          .logo { text-align: center; margin-bottom: 24px; }
-          .title { font-family: Georgia, serif; font-size: 26px; font-weight: bold; color: #f3e5ab; text-align: center; margin-bottom: 12px; }
-          .subtitle { font-size: 13px; color: #a1a1aa; text-align: center; margin-bottom: 32px; line-height: 1.6; }
-          .button-container { text-align: center; margin: 36px 0; }
-          .btn { display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f3e5ab 100%); color: #0b0c10; font-weight: bold; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; padding: 16px 36px; border-radius: 9999px; text-decoration: none; box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4); }
-          .link-box { background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 12px; font-size: 11px; word-break: break-all; color: #d4af37; text-align: center; margin-top: 24px; }
-          .footer { margin-top: 36px; font-size: 11px; color: #71717a; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 20px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="logo">
-            <span style="font-size: 28px; font-weight: bold; color: #d4af37; font-family: Georgia, serif;">INTIMO</span>
-            <div style="font-size: 10px; letter-spacing: 3px; color: #a1a1aa; text-transform: uppercase;">Private Members Club After Dark</div>
-          </div>
-
-          <div class="title">Confirm Your Email Address</div>
-          <div class="subtitle">
-            Welcome to Intimo. To activate your account and access private discovery, please verify your email address.
-          </div>
-
-          <div class="button-container">
-            <a href="${confirmationLink}" class="btn" target="_blank">Confirm Email Address & Activate Account</a>
-          </div>
-
-          <div class="link-box">
-            ${confirmationLink}
-          </div>
-
-          <div class="footer">
-            If you did not create an Intimo account, you can safely ignore this email.<br>
-            Contact Support: ${EmailNotificationService.SUPPORT_CONTACT}<br>
-            © 2026 Intimo Private Members Club. All rights reserved.
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+    // Fire async Resend dispatch without blocking synchronous caller if used synchronously
+    ResendClient.sendEmail({
+      to: email,
+      subject,
+      html: bodyHtml,
+    }).catch(err => console.error("[RESEND DISPATCH ERROR]", err));
 
     const logEntry: SentEmailLog = {
       id: `mail-${Date.now()}`,
       to: email,
-      from: EmailNotificationService.DEFAULT_SENDER,
-      subject: "Action Required: Confirm Your Intimo Account Email",
+      from: this.DEFAULT_SENDER,
+      subject,
       confirmationLink,
       bodyHtml,
       sentAt: new Date().toISOString(),
+      provider: process.env.RESEND_API_KEY ? "RESEND_API" : "SIMULATED_OUTBOX",
     };
 
     OUTBOX.unshift(logEntry);
-    console.log(`[TRANSACTIONAL EMAIL SENT] From: ${EmailNotificationService.DEFAULT_SENDER} | To: ${email} | Confirmation Link: ${confirmationLink}`);
+    console.log(`[TRANSACTIONAL EMAIL DISPATCHED] To: ${email} | Link: ${confirmationLink}`);
+    return logEntry;
+  }
 
+  /**
+   * 3. Send Password Reset Email
+   */
+  public static async sendPasswordResetEmail(email: string, resetLink: string): Promise<SentEmailLog> {
+    const subject = "Action Required: Reset Your Intimo Password";
+    const bodyHtml = IntimoEmailTemplates.renderPasswordReset(resetLink);
+
+    const resendRes = await ResendClient.sendEmail({
+      to: email,
+      subject,
+      html: bodyHtml,
+    });
+
+    const logEntry: SentEmailLog = {
+      id: resendRes.id,
+      to: email,
+      from: this.DEFAULT_SENDER,
+      subject,
+      confirmationLink: resetLink,
+      bodyHtml,
+      sentAt: resendRes.timestamp,
+      provider: resendRes.provider,
+    };
+
+    OUTBOX.unshift(logEntry);
+    return logEntry;
+  }
+
+  /**
+   * 4. Send Security Notification Email
+   */
+  public static async sendSecurityNotificationEmail(email: string, actionTitle: string, details: string): Promise<SentEmailLog> {
+    const subject = `Security Alert: ${actionTitle}`;
+    const bodyHtml = IntimoEmailTemplates.renderSecurityNotification(actionTitle, details);
+
+    const resendRes = await ResendClient.sendEmail({
+      to: email,
+      subject,
+      html: bodyHtml,
+    });
+
+    const logEntry: SentEmailLog = {
+      id: resendRes.id,
+      to: email,
+      from: this.DEFAULT_SENDER,
+      subject,
+      bodyHtml,
+      sentAt: resendRes.timestamp,
+      provider: resendRes.provider,
+    };
+
+    OUTBOX.unshift(logEntry);
     return logEntry;
   }
 

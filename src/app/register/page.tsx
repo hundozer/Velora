@@ -82,7 +82,7 @@ export default function RegisterPage() {
                   Click the button below to confirm your email address:
                 </p>
 
-                {latestEmail ? (
+                {latestEmail && latestEmail.confirmationLink ? (
                   <Link href={latestEmail.confirmationLink} className="block pt-1">
                     <Button variant="gold" size="sm" className="w-full text-xs font-bold gap-2 shadow-gold-glow">
                       <CheckCircle2 className="w-4 h-4" /> Confirm Email & Activate Account

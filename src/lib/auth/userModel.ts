@@ -9,26 +9,33 @@ import { TrustLevel } from "./trustLevels";
 
 /**
  * 1. User Account (Core Authentication Identity linked to Auth0)
- * Encapsulates credentials, security status, and base system identity.
+ * Encapsulates credentials, security status, database fields, and system identity.
  */
 export interface UserAccountModel {
   id: string;
-  auth0_user_id?: string; // Auth0 Identity Provider Unique Subject (e.g., auth0|65a987bc...)
-  authProviderId: string; // Internal Auth Gateway UUID or Federated Provider Subject ID
+  auth0_user_id?: string; // Auth0 Identity Provider Subject ID (e.g. auth0|65a987...)
+  authProviderId: string; // Internal Auth Gateway UUID
   email: string;
-  emailVerified?: boolean;
-  phone?: string;
+  email_verified: boolean;
+  emailVerified?: boolean; // CamelCase alias for backward compatibility
+  phone_number?: string;
+  phone?: string; // Alias for backward compatibility
   passwordHash?: string;
-  role: UserRole;
-  status: AccountStatus;
+  account_status: AccountStatus;
+  status: AccountStatus; // Alias for backward compatibility
   verificationStatus: VerificationStatus;
   creatorStatus: CreatorStatus;
+  role: UserRole;
   twoFactorEnabled: boolean;
-  preferredLanguage: string;
+  preferred_language: string;
+  preferredLanguage?: string; // Alias for backward compatibility
+  profile_completed: boolean; // Indicates if user has completed mandatory onboarding
   trustLevel?: TrustLevel;
   lastLoginIp?: string;
+  last_login?: string;
   lastLoginAt?: string;
-  createdAt: string;
+  created_at: string;
+  createdAt?: string; // Alias for backward compatibility
   updatedAt: string;
 }
 
@@ -98,21 +105,35 @@ export interface AdminIdentityModel {
 export function createUserAccount(
   data: Partial<UserAccountModel> & { id: string; email: string }
 ): UserAccountModel {
+  const now = new Date().toISOString();
+  const isVerified = data.email_verified ?? data.emailVerified ?? false;
+  const statusVal = data.account_status || data.status || "ACTIVE";
+  const lang = data.preferred_language || data.preferredLanguage || "en";
+  const createdAtVal = data.created_at || data.createdAt || now;
+
   return {
     id: data.id,
     auth0_user_id: data.auth0_user_id || `auth0|${data.id}`,
     authProviderId: data.authProviderId || `auth-${data.id}`,
-    email: data.email,
-    emailVerified: data.emailVerified || false,
-    phone: data.phone,
+    email: data.email.toLowerCase(),
+    email_verified: isVerified,
+    emailVerified: isVerified,
+    phone_number: data.phone_number || data.phone,
+    phone: data.phone_number || data.phone,
     role: data.role || "MEMBER",
-    status: data.status || "ACTIVE",
-    verificationStatus: data.verificationStatus || "UNVERIFIED",
+    account_status: statusVal,
+    status: statusVal,
+    verificationStatus: data.verificationStatus || (isVerified ? "EMAIL_VERIFIED" : "UNVERIFIED"),
     creatorStatus: data.creatorStatus || "NONE",
     twoFactorEnabled: data.twoFactorEnabled || false,
-    preferredLanguage: data.preferredLanguage || "en",
-    trustLevel: data.trustLevel || 1,
-    createdAt: data.createdAt || new Date().toISOString(),
-    updatedAt: data.updatedAt || new Date().toISOString(),
+    preferred_language: lang,
+    preferredLanguage: lang,
+    profile_completed: data.profile_completed ?? false,
+    trustLevel: data.trustLevel || (isVerified ? 2 : 1),
+    created_at: createdAtVal,
+    createdAt: createdAtVal,
+    updatedAt: data.updatedAt || now,
+    last_login: data.last_login || data.lastLoginAt || now,
+    lastLoginAt: data.last_login || data.lastLoginAt || now,
   };
 }
