@@ -298,31 +298,19 @@ export default function DiscoveryMarketplacePage() {
             </div>
           </Card>
 
-          {/* Active Live Broadcasts Widget */}
-          <Card variant="glass" className="p-5 space-y-4 text-left border-red-500/30">
+          {/* Live Broadcasts Coming Soon Teaser Widget */}
+          <Card variant="glass" className="p-5 space-y-3 text-left border-amber-500/30">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-red-400 flex items-center gap-1.5 font-mono">
-                <Radio className="w-4 h-4 text-red-400" /> Live Broadcasts Now
+              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5 font-mono">
+                <Radio className="w-4 h-4 text-amber-400 animate-pulse" /> Live Salons & Broadcasts
               </h3>
+              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase">
+                Coming Soon
+              </span>
             </div>
-
-            {MOCK_LIVE_STREAMS.map((stream) => (
-              <div key={stream.id} className="space-y-2">
-                <div className="h-28 rounded-2xl bg-velora-card relative overflow-hidden group">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={stream.thumbnailUrl} alt={stream.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold bg-red-500 text-white animate-pulse">
-                    LIVE
-                  </div>
-                </div>
-                <h4 className="text-xs font-bold text-velora-textPrimary line-clamp-1">{stream.title}</h4>
-                <Link href={`/live/${stream.id}`} className="block">
-                  <Button variant="gold" size="sm" className="w-full text-[10px] font-bold uppercase tracking-wider shadow-gold-glow py-1">
-                    Watch Stream
-                  </Button>
-                </Link>
-              </div>
-            ))}
+            <p className="text-xs text-velora-textSecondary leading-relaxed">
+              Encrypted WebRTC live broadcast rooms for creators and verified members are currently in development for Phase 2.
+            </p>
           </Card>
         </div>
       </div>

@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, MessageSquare, Users, Radio, User } from "lucide-react";
+import { Compass, MessageSquare, Users, Sparkles, User } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 
 export const MobileNavigation: React.FC = () => {
@@ -14,7 +14,7 @@ export const MobileNavigation: React.FC = () => {
     { href: "/discovery", label: t("nav.discover"), icon: Compass },
     { href: "/messages", label: t("nav.messages"), icon: MessageSquare },
     { href: "/communities", label: t("nav.communities"), icon: Users },
-    { href: "/live", label: t("nav.live"), icon: Radio },
+    { href: "/creators", label: t("nav.creators"), icon: Sparkles },
     { href: "/dashboard", label: t("nav.feed"), icon: User },
   ];
 

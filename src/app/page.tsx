@@ -193,7 +193,7 @@ export default function LandingPage() {
             <Crown className="w-8 h-8 text-amber-400" />
             <h3 className="text-2xl font-serif font-bold text-velora-textPrimary">Exclusive Creators & Salons</h3>
             <p className="text-xs text-velora-textSecondary leading-relaxed">
-              Subscribe to verified creators, view 4K digital art journals, and join exclusive ticketed live WebRTC performances.
+              Subscribe to verified creators, view 4K digital art journals, and unlock private photo and video vaults.
             </p>
             <Link href="/creators">
               <Button variant="glass" size="sm" className="text-xs font-bold uppercase tracking-wider border-amber-500/40 text-amber-300">
@@ -202,6 +202,33 @@ export default function LandingPage() {
             </Link>
           </Card>
         </div>
+      </section>
+
+      {/* LIVE STREAMING & PRIVATE BROADCAST SALONS - COMING SOON BANNER */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <Card variant="goldBorder" className="p-8 sm:p-10 text-left bg-gradient-to-r from-velora-bg via-velora-card to-velora-bg border-amber-500/40 relative overflow-hidden">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="space-y-3 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold font-mono uppercase tracking-widest">
+                <Radio className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                <span>Feature Spotlight • Coming Soon</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-serif font-bold text-velora-textPrimary">
+                Live Broadcasts & Private Video Salons
+              </h2>
+              <p className="text-xs text-velora-textSecondary leading-relaxed">
+                We are currently building ultra-private, encrypted WebRTC live broadcast rooms where creators and verified members can host live interactive experiences.
+              </p>
+            </div>
+
+            <div className="shrink-0 p-4 rounded-2xl glass-panel text-center border border-amber-500/30">
+              <span className="text-xs font-mono font-bold text-velora-gold uppercase tracking-wider block mb-1">
+                Phase 2 Launch
+              </span>
+              <span className="text-[10px] text-velora-textMuted font-mono">WebRTC Encrypted Rooms</span>
+            </div>
+          </div>
+        </Card>
       </section>
 
       {/* TRUST BANNER: OPEN-MINDED DOES NOT MEAN UNSAFE */}
