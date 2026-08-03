@@ -25,9 +25,14 @@ import {
   Share2,
 } from "lucide-react";
 
+import { useTranslation, LANGUAGES, SupportedLanguage } from "@/context/LanguageContext";
+import { Globe } from "lucide-react";
+
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
   const { user, profile, role, switchRole, logout } = useAuth();
+  const { language, setLanguage } = useTranslation();
+  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -196,6 +201,47 @@ export const Navbar: React.FC = () => {
               />
             </div>
           )}
+
+          {/* Global Language Selector Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-velora-textPrimary hover:bg-white/10 transition-colors"
+              title="Change platform language"
+            >
+              <span>{LANGUAGES.find((l) => l.code === language)?.flag || "🇬🇧"}</span>
+              <span className="uppercase text-[11px] font-bold">{language}</span>
+              <ChevronDown className="w-3 h-3 text-velora-textMuted" />
+            </button>
+
+            {isLangDropdownOpen && (
+              <div
+                className="absolute right-0 mt-2 w-44 glass-panel-gold rounded-2xl p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2"
+                onClick={() => setIsLangDropdownOpen(false)}
+              >
+                <div className="px-3 py-1 text-[10px] uppercase font-bold text-velora-textMuted border-b border-white/10 mb-1">
+                  Language / Jazyk
+                </div>
+                {LANGUAGES.map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => setLanguage(lang.code)}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-xl transition-all ${
+                      language === lang.code
+                        ? "bg-gold-gradient text-velora-bg font-bold"
+                        : "text-velora-textPrimary hover:bg-white/10"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span>{lang.flag}</span>
+                      <span>{lang.nativeName}</span>
+                    </span>
+                    <span className="text-[10px] font-mono uppercase opacity-60">{lang.code}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Quick Role Switcher Pill for reviewer testing */}
           <div className="relative">

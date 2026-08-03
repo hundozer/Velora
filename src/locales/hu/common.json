@@ -1,0 +1,26 @@
+{
+  "nav": {
+    "discover": "Felfedezés",
+    "creators": "Alkotók",
+    "live": "Élő Események",
+    "communities": "Közösségek",
+    "events": "Események",
+    "messages": "Üzenetek",
+    "wallet": "Széf",
+    "settings": "Beállítások",
+    "membership": "Tagság"
+  },
+  "auth": {
+    "login": "Bejelentkezés",
+    "register": "Csatlakozás",
+    "logout": "Kijelentkezés"
+  },
+  "common": {
+    "verified": "Hitelesített Tag",
+    "online_now": "Most Elérhető",
+    "save": "Mentés",
+    "cancel": "Mégse",
+    "search": "Keresés...",
+    "filter": "Szűrők"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "nav": {
+    "discover": "Objevovat",
+    "creators": "Tvůrci",
+    "live": "Živé Přenosy",
+    "communities": "Komunity",
+    "events": "Události",
+    "messages": "Zprávy",
+    "wallet": "Trezor",
+    "settings": "Nastavení",
+    "membership": "Členství"
+  },
+  "auth": {
+    "login": "Přihlásit se",
+    "register": "Vstoupit do Velora",
+    "logout": "Odhlásit se"
+  },
+  "common": {
+    "verified": "Ověřený Člen",
+    "online_now": "Nyní Nápady",
+    "save": "Uložit Změny",
+    "cancel": "Zrušit",
+    "search": "Hledat...",
+    "filter": "Filtry"
+  }
+}

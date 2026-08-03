@@ -1,0 +1,26 @@
+{
+  "nav": {
+    "discover": "Discover",
+    "creators": "Creators",
+    "live": "Live Events",
+    "communities": "Communities",
+    "events": "Events",
+    "messages": "Messages",
+    "wallet": "Vault",
+    "settings": "Settings",
+    "membership": "Membership"
+  },
+  "auth": {
+    "login": "Sign In",
+    "register": "Join Velora",
+    "logout": "Sign Out"
+  },
+  "common": {
+    "verified": "Verified Member",
+    "online_now": "Online Now",
+    "save": "Save Changes",
+    "cancel": "Cancel",
+    "search": "Search...",
+    "filter": "Filters"
+  }
+}

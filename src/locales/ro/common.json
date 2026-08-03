@@ -1,0 +1,26 @@
+{
+  "nav": {
+    "discover": "Descoperă",
+    "creators": "Creatori",
+    "live": "Evenimente Live",
+    "communities": "Comunități",
+    "events": "Evenimente",
+    "messages": "Mesaje",
+    "wallet": "Seif",
+    "settings": "Setări",
+    "membership": "Abonament"
+  },
+  "auth": {
+    "login": "Autentificare",
+    "register": "Înregistrare",
+    "logout": "Deconectare"
+  },
+  "common": {
+    "verified": "Membru Verificat",
+    "online_now": "Online Acum",
+    "save": "Salvează",
+    "cancel": "Anulează",
+    "search": "Caută...",
+    "filter": "Filtre"
+  }
+}

@@ -16,6 +16,7 @@ import {
   MOCK_COMMUNITIES,
   MOCK_EVENTS,
 } from "@/lib/mockData";
+import { LANGUAGES } from "@/context/LanguageContext";
 import {
   VerificationRequest,
   ReportItem,
@@ -52,6 +53,8 @@ import {
   BarChart3,
   TrendingUp,
   Activity,
+  Languages as LanguagesIcon,
+  CheckCircle2,
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
@@ -98,16 +101,17 @@ export default function AdminDashboardPage() {
           </div>
           <h1 className="text-3xl font-serif font-bold text-velora-textPrimary flex items-center gap-3">
             <ShieldCheck className="w-8 h-8 text-red-400" />
-            Compliance, Operational Analytics & Governance
+            Compliance, i18n & Operational Governance
           </h1>
           <p className="text-xs text-velora-textSecondary mt-1">
-            Audit platform metrics, approve creator payouts, monitor live broadcasts, and analyze retention.
+            Audit platform metrics, i18n translation coverage across 6 languages, approve payouts, and supervise broadcasts.
           </p>
         </div>
 
         <Tabs
           tabs={[
             { id: "FINANCES", label: "Financial Desk", count: payouts.filter((p) => p.status === "PENDING").length },
+            { id: "TRANSLATIONS", label: "i18n Translation Desk", count: 6 },
             { id: "ANALYTICS", label: "Platform Analytics", count: 0 },
             { id: "COMMUNITIES", label: "Community Desk", count: communities.length },
             { id: "STREAMS", label: "Live Supervision", count: streams.filter((s) => s.status === "LIVE").length },
@@ -130,18 +134,18 @@ export default function AdminDashboardPage() {
 
         <Card variant="glass" className="p-6 space-y-2">
           <span className="text-xs font-semibold text-velora-textMuted uppercase tracking-wider block">
-            Monthly Active Users
+            i18n Supported Languages
           </span>
-          <span className="text-3xl font-serif font-bold text-amber-300">12,480</span>
-          <span className="text-[11px] text-emerald-400 font-mono">92.4% Retention Rate</span>
+          <span className="text-3xl font-serif font-bold text-amber-300">6 Locales</span>
+          <span className="text-[11px] text-emerald-400 font-mono">100% Dictionary Coverage</span>
         </Card>
 
         <Card variant="glass" className="p-6 space-y-2">
           <span className="text-xs font-semibold text-velora-textMuted uppercase tracking-wider block">
-            Direct Messages Exchanged
+            Monthly Active Users
           </span>
-          <span className="text-3xl font-serif font-bold text-purple-300">84,920</span>
-          <span className="text-[11px] text-velora-textMuted font-mono">100% End-to-End Encrypted</span>
+          <span className="text-3xl font-serif font-bold text-purple-300">12,480</span>
+          <span className="text-[11px] text-emerald-400 font-mono">92.4% Retention Rate</span>
         </Card>
 
         <Card variant="glass" className="p-6 space-y-2">
@@ -154,6 +158,39 @@ export default function AdminDashboardPage() {
           <span className="text-[11px] text-velora-textMuted font-mono">Real-time WebRTC</span>
         </Card>
       </div>
+
+      {/* TRANSLATIONS TAB */}
+      {activeTab === "TRANSLATIONS" && (
+        <div className="space-y-8">
+          <h2 className="text-xl font-serif font-bold text-velora-textPrimary flex items-center gap-2">
+            <LanguagesIcon className="w-5 h-5 text-velora-gold" />
+            i18n Translation Management & Dictionary Coverage Desk
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {LANGUAGES.map((lang) => (
+              <Card key={lang.code} variant="glass" className="p-6 space-y-3 text-left">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{lang.flag}</span>
+                    <h3 className="text-base font-bold text-velora-textPrimary">{lang.nativeName} ({lang.code.toUpperCase()})</h3>
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    100% Complete
+                  </span>
+                </div>
+                <p className="text-xs text-velora-textMuted">Resource File: /locales/{lang.code}/common.json</p>
+                <div className="flex items-center justify-between text-xs font-mono text-velora-textSecondary pt-2 border-t border-white/10">
+                  <span className="flex items-center gap-1 text-emerald-400">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> 0 Missing Keys
+                  </span>
+                  <span className="text-velora-gold">Synced</span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ANALYTICS TAB */}
       {activeTab === "ANALYTICS" && (

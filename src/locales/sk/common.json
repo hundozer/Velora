@@ -1,0 +1,26 @@
+{
+  "nav": {
+    "discover": "Objavovať",
+    "creators": "Tvorcovia",
+    "live": "Živé Prenosy",
+    "communities": "Komunity",
+    "events": "Udalosti",
+    "messages": "Správy",
+    "wallet": "Trezor",
+    "settings": "Nastavenia",
+    "membership": "Členstvo"
+  },
+  "auth": {
+    "login": "Prihlásiť sa",
+    "register": "Vstúpiť do Velora",
+    "logout": "Odhlásiť sa"
+  },
+  "common": {
+    "verified": "Overený Člen",
+    "online_now": "Teraz Online",
+    "save": "Uložiť Zmeny",
+    "cancel": "Zrušiť",
+    "search": "Hľadať...",
+    "filter": "Filtre"
+  }
+}

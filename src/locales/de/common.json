@@ -1,0 +1,26 @@
+{
+  "nav": {
+    "discover": "Entdecken",
+    "creators": "Creators",
+    "live": "Live-Events",
+    "communities": "Communities",
+    "events": "Veranstaltungen",
+    "messages": "Nachrichten",
+    "wallet": "Tresor",
+    "settings": "Einstellungen",
+    "membership": "Mitgliedschaft"
+  },
+  "auth": {
+    "login": "Anmelden",
+    "register": "Mitglied Werden",
+    "logout": "Abmelden"
+  },
+  "common": {
+    "verified": "Verifiziertes Mitglied",
+    "online_now": "Jetzt Online",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "search": "Suchen...",
+    "filter": "Filter"
+  }
+}
