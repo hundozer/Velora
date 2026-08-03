@@ -5,13 +5,13 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Tabs } from "@/components/ui/Tabs";
-import { VerificationWizard } from "@/components/verification/VerificationWizard";
 import {
   MOCK_VERIFICATION_REQUESTS,
   MOCK_REPORTS,
   MOCK_MODERATION_LOGS,
+  MOCK_CREATOR_APPLICATIONS,
 } from "@/lib/mockData";
-import { VerificationRequest, ReportItem, ModerationLog } from "@/types";
+import { VerificationRequest, ReportItem, ModerationLog, CreatorApplication } from "@/types";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -26,12 +26,14 @@ import {
   Ban,
   Clock,
   Trash2,
+  Crown,
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState("VERIFICATION");
   const [verifications, setVerifications] = useState<VerificationRequest[]>(MOCK_VERIFICATION_REQUESTS);
   const [reports, setReports] = useState<ReportItem[]>(MOCK_REPORTS);
+  const [creatorApps, setCreatorApps] = useState<CreatorApplication[]>(MOCK_CREATOR_APPLICATIONS);
   const [logs, setLogs] = useState<ModerationLog[]>(MOCK_MODERATION_LOGS);
 
   const handleApproveVerification = (id: string) => {
@@ -40,6 +42,14 @@ export default function AdminDashboardPage() {
 
   const handleRejectVerification = (id: string) => {
     setVerifications(verifications.map((v) => (v.id === id ? { ...v, status: "REJECTED" } : v)));
+  };
+
+  const handleApproveCreator = (id: string) => {
+    setCreatorApps(creatorApps.map((c) => (c.id === id ? { ...c, status: "VERIFIED" } : c)));
+  };
+
+  const handleRejectCreator = (id: string) => {
+    setCreatorApps(creatorApps.map((c) => (c.id === id ? { ...c, status: "REJECTED" } : c)));
   };
 
   const handleApplySanction = (reportId: string, actionType: string, username: string) => {
@@ -69,13 +79,14 @@ export default function AdminDashboardPage() {
             Compliance, Verification & Moderation Desk
           </h1>
           <p className="text-xs text-velora-textSecondary mt-1">
-            Review 4-level verification requests, investigate reported member flags, enforce account suspensions, and audit system logs.
+            Review 4-level verification requests, approve creator mode applications, investigate flags, and audit logs.
           </p>
         </div>
 
         <Tabs
           tabs={[
-            { id: "VERIFICATION", label: "Verification Queue (Level 1-4)", count: verifications.filter((v) => v.status === "PENDING").length },
+            { id: "VERIFICATION", label: "Verification Queue", count: verifications.filter((v) => v.status === "PENDING").length },
+            { id: "CREATORS", label: "Creator Mode Applications", count: creatorApps.filter((c) => c.status === "PENDING").length },
             { id: "REPORTS", label: "Reports Investigation Desk", count: reports.filter((r) => r.status !== "RESOLVED").length },
             { id: "AUDIT", label: "Moderation Log History", count: logs.length },
           ]}
@@ -98,20 +109,22 @@ export default function AdminDashboardPage() {
 
         <Card variant="glass" className="p-6 space-y-2">
           <span className="text-xs font-semibold text-velora-textMuted uppercase tracking-wider block">
+            Creator Mode Applications
+          </span>
+          <span className="text-3xl font-serif font-bold text-amber-400">
+            {creatorApps.filter((c) => c.status === "PENDING").length}
+          </span>
+          <span className="text-[11px] text-velora-textMuted">Creator agreement required</span>
+        </Card>
+
+        <Card variant="glass" className="p-6 space-y-2">
+          <span className="text-xs font-semibold text-velora-textMuted uppercase tracking-wider block">
             Active Moderation Flags
           </span>
           <span className="text-3xl font-serif font-bold text-red-400">
             {reports.filter((r) => r.status !== "RESOLVED").length}
           </span>
           <span className="text-[11px] text-velora-textMuted">Zero-tolerance policy</span>
-        </Card>
-
-        <Card variant="glass" className="p-6 space-y-2">
-          <span className="text-xs font-semibold text-velora-textMuted uppercase tracking-wider block">
-            Verified Adult Ratio
-          </span>
-          <span className="text-3xl font-serif font-bold text-emerald-400">98.6%</span>
-          <span className="text-[11px] text-velora-textMuted">Biometric requirement</span>
         </Card>
 
         <Card variant="glass" className="p-6 space-y-2">
@@ -199,6 +212,76 @@ export default function AdminDashboardPage() {
                       </div>
                     </div>
                   )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* CREATOR APPLICATIONS TAB */}
+      {activeTab === "CREATORS" && (
+        <div className="space-y-6">
+          <h2 className="text-xl font-serif font-bold text-velora-textPrimary flex items-center gap-2">
+            <Crown className="w-6 h-6 text-amber-400" />
+            Creator Mode Applications Review Queue
+          </h2>
+
+          <div className="space-y-4">
+            {creatorApps.map((c) => (
+              <Card key={c.id} variant="goldBorder" className="p-6 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-bold text-velora-textPrimary">@{c.user.username}</h3>
+                      <Badge type="custom" label="Creator Mode Request" className="bg-amber-500/20 text-amber-300 border-amber-500/40" />
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                        c.status === "PENDING"
+                          ? "bg-amber-500/20 text-amber-300"
+                          : c.status === "VERIFIED"
+                          ? "bg-emerald-500/20 text-emerald-300"
+                          : "bg-red-500/20 text-red-300"
+                      }`}>
+                        {c.status}
+                      </span>
+                    </div>
+                    <p className="text-xs text-velora-textMuted mt-0.5">
+                      Submitted: {c.submittedAt} • Email: {c.user.email} • Proposed Tier: ${c.proposedMonthlyPrice}/mo
+                    </p>
+                  </div>
+
+                  {c.status === "PENDING" && (
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        className="text-xs gap-1"
+                        onClick={() => handleRejectCreator(c.id)}
+                      >
+                        <X className="w-3.5 h-3.5" /> Reject Creator Mode
+                      </Button>
+                      <Button
+                        variant="gold"
+                        size="sm"
+                        className="text-xs font-bold gap-1"
+                        onClick={() => handleApproveCreator(c.id)}
+                      >
+                        <Check className="w-3.5 h-3.5" /> Approve Creator Account
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <p className="text-velora-textMuted">
+                    <strong className="text-velora-textPrimary">Categories:</strong> {(c.categories || []).join(", ")}
+                  </p>
+                  <p className="text-velora-textMuted">
+                    <strong className="text-velora-textPrimary">Payout Method:</strong> {c.payoutMethod} ({c.payoutDetails})
+                  </p>
+                  <p className="text-velora-textSecondary glass-panel p-4 rounded-2xl leading-relaxed">
+                    "{c.bio}"
+                  </p>
                 </div>
               </Card>
             ))}

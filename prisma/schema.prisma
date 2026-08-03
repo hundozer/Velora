@@ -74,6 +74,12 @@ enum MediaType {
   LIVE_STREAM
 }
 
+enum ContentPublicationStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 enum MessageStatus {
   SENT
   DELIVERED
@@ -101,6 +107,8 @@ enum NotificationType {
   VERIFICATION_APPROVED
   VERIFICATION_REJECTED
   CONTENT_UNLOCKED
+  NEW_FOLLOWER
+  NEW_SUBSCRIBER
   REPORT_STATUS_UPDATE
 }
 
@@ -163,6 +171,7 @@ model User {
   participants         ConversationParticipant[]
   verifications        VerificationRequest[]     @relation("UserVerifications")
   reviewedVerifications VerificationRequest[]    @relation("AdminReviewedVerifications")
+  creatorApplications  CreatorApplication[]      @relation("UserCreatorApplications")
   reportsFiled         UserReport[]              @relation("ReportsFiled")
   reportsReceived      UserReport[]              @relation("ReportsReceived")
   moderationActions    ModerationActionLog[]     @relation("AdminActionsPerformed")
@@ -172,10 +181,12 @@ model User {
   earnings             PaymentTransaction[]      @relation("SellerTransactions")
   favorites            UserFavorite[]            @relation("UserFavorites")
   favoritedBy          UserFavorite[]            @relation("TargetFavorites")
+  following            UserFollow[]              @relation("UserFollowing")
   blockedUsers         UserBlock[]               @relation("BlockerUsers")
   blockedBy            UserBlock[]               @relation("BlockedUsers")
   notifications        Notification[]            @relation("UserNotifications")
   safetySettings       UserSafetySettings?
+  contentPurchases     ContentPurchase[]         @relation("UserContentPurchases")
 
   @@index([email])
   @@index([username])
@@ -216,7 +227,7 @@ model Profile {
   // Privacy Settings
   publicProfileVisibility Boolean       @default(true)
   photoVisibilityDefault  Visibility    @default(PUBLIC)
-  locationPrecision       String        @default("CITY") // CITY, EXACT, DISTANCE_ONLY
+  locationPrecision       String        @default("CITY")
   showOnlineStatus        Boolean       @default(true)
   showDistance            Boolean       @default(true)
   allowDirectMessages     Boolean       @default(true)
@@ -300,6 +311,7 @@ model CreatorProfile {
   userId             String         @unique
   user               User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   monthlyPrice       Float          @default(19.99)
+  categories         String[]
   bio                String?        @db.Text
   welcomeMessage     String?
   followersCount     Int            @default(0)
@@ -313,7 +325,104 @@ model CreatorProfile {
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
 
-  subscriptions      Subscription[] @relation("CreatorSubscriptions")
+  subscriptions      Subscription[]   @relation("CreatorSubscriptions")
+  followers          UserFollow[]     @relation("CreatorFollowers")
+  albums             ContentAlbum[]   @relation("CreatorAlbums")
+  videos             ContentVideo[]   @relation("CreatorVideos")
+  contentPurchases   ContentPurchase[] @relation("CreatorContentSales")
+
+  @@index([userId])
+}
+
+model ContentAlbum {
+  id                String                   @id @default(uuid())
+  creatorId         String
+  creator           CreatorProfile           @relation("CreatorAlbums", fields: [creatorId], references: [id], onDelete: Cascade)
+  title             String
+  description       String?                  @db.Text
+  category          String
+  previewImages     String[]
+  lockedImages      String[]
+  price             Float                    @default(0)
+  visibility        Visibility               @default(SUBSCRIBERS_ONLY)
+  publicationStatus ContentPublicationStatus @default(PUBLISHED)
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+
+  purchases         ContentPurchase[]        @relation("AlbumPurchases")
+
+  @@index([creatorId])
+  @@index([visibility])
+}
+
+model ContentVideo {
+  id                String                   @id @default(uuid())
+  creatorId         String
+  creator           CreatorProfile           @relation("CreatorVideos", fields: [creatorId], references: [id], onDelete: Cascade)
+  title             String
+  description       String?                  @db.Text
+  category          String
+  previewThumbnail  String
+  videoUrl          String
+  durationSeconds   Int                      @default(120)
+  price             Float                    @default(0)
+  visibility        Visibility               @default(PAID_PER_VIEW)
+  publicationStatus ContentPublicationStatus @default(PUBLISHED)
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+
+  purchases         ContentPurchase[]        @relation("VideoPurchases")
+
+  @@index([creatorId])
+  @@index([visibility])
+}
+
+model UserFollow {
+  id               String         @id @default(uuid())
+  followerId       String
+  follower         User           @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  creatorProfileId String
+  creatorProfile   CreatorProfile @relation("CreatorFollowers", fields: [creatorProfileId], references: [id], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
+
+  @@unique([followerId, creatorProfileId])
+}
+
+model ContentPurchase {
+  id            String        @id @default(uuid())
+  buyerId       String
+  buyer         User          @relation("UserContentPurchases", fields: [buyerId], references: [id], onDelete: Cascade)
+  creatorId     String
+  creator       CreatorProfile @relation("CreatorContentSales", fields: [creatorId], references: [id], onDelete: Cascade)
+  albumId       String?
+  album         ContentAlbum? @relation("AlbumPurchases", fields: [albumId], references: [id])
+  videoId       String?
+  video         ContentVideo? @relation("VideoPurchases", fields: [videoId], references: [id])
+  price         Float
+  status        PaymentStatus @default(COMPLETED)
+  createdAt     DateTime      @default(now())
+
+  @@index([buyerId])
+  @@index([creatorId])
+}
+
+model CreatorApplication {
+  id                 String             @id @default(uuid())
+  userId             String
+  user               User               @relation("UserCreatorApplications", fields: [userId], references: [id], onDelete: Cascade)
+  categories         String[]
+  proposedMonthlyPrice Float            @default(19.99)
+  bio                String             @db.Text
+  payoutMethod       String
+  payoutDetails      String
+  agreedToTerms      Boolean            @default(true)
+  status             VerificationStatus @default(PENDING)
+  rejectionReason    String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([status])
 }
 
 model Subscription {

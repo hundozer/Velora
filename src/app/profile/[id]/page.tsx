@@ -94,12 +94,19 @@ export default function RichProfileViewPage() {
             </div>
           </div>
 
-          {/* Action Buttons: Message, Favorite, Report, Block */}
+          {/* Action Buttons: Message, Follow, Subscribe, Favorite, Report, Block */}
           <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+            {targetProfile.verificationLevel === "LEVEL_4_CREATOR" && (
+              <Button variant="gold" size="lg" className="w-full sm:w-auto text-xs uppercase font-bold tracking-wider gap-2 shadow-gold-glow">
+                <Crown className="w-4 h-4" />
+                Subscribe ${targetProfile.monthlySubscriptionPrice || 24.99} / mo
+              </Button>
+            )}
+
             <Link href="/messages" className="flex-1 md:flex-none">
-              <Button variant="gold" size="lg" className="w-full text-xs uppercase font-bold tracking-wider gap-2">
+              <Button variant="glass" size="lg" className="w-full text-xs uppercase font-bold tracking-wider gap-2">
                 <MessageSquare className="w-4 h-4" />
-                Send Message
+                Message
               </Button>
             </Link>
 

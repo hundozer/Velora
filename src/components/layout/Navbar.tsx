@@ -83,6 +83,18 @@ export const Navbar: React.FC = () => {
           </Link>
 
           <Link
+            href="/creators"
+            className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
+              pathname === "/creators"
+                ? "bg-white/10 text-velora-gold border border-velora-gold/30"
+                : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            Creators
+          </Link>
+
+          <Link
             href="/messages"
             className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
               pathname === "/messages"

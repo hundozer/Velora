@@ -41,6 +41,8 @@ export type VisibilityLevel =
   | "SUBSCRIBERS_ONLY"
   | "PAID_PER_VIEW";
 
+export type ContentPublicationStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
+
 export type MessageStatus = "SENT" | "DELIVERED" | "READ";
 
 export type AttachmentType =
@@ -62,6 +64,8 @@ export type NotificationType =
   | "VERIFICATION_APPROVED"
   | "VERIFICATION_REJECTED"
   | "CONTENT_UNLOCKED"
+  | "NEW_FOLLOWER"
+  | "NEW_SUBSCRIBER"
   | "REPORT_STATUS_UPDATE";
 
 export type ModerationActionType =
@@ -106,6 +110,13 @@ export interface Profile {
   partnerAge?: number;
   partnerGender?: Gender;
 
+  // Creator Info if Creator
+  categories?: string[];
+  monthlySubscriptionPrice?: number;
+  followersCount?: number;
+  subscribersCount?: number;
+  totalContentCount?: number;
+
   // Privacy & Message Permissions Settings
   publicProfileVisibility: boolean;
   photoVisibilityDefault: VisibilityLevel;
@@ -137,6 +148,56 @@ export interface MediaItem {
   sortOrder?: number;
   isProfilePhoto?: boolean;
   isCoverPhoto?: boolean;
+}
+
+export interface ContentAlbum {
+  id: string;
+  creatorId: string;
+  creatorName: string;
+  creatorAvatar: string;
+  title: string;
+  description: string;
+  category: string;
+  previewImages: string[];
+  lockedImages: string[];
+  price: number;
+  visibility: VisibilityLevel;
+  publicationStatus: ContentPublicationStatus;
+  totalPhotosCount: number;
+  createdAt: string;
+}
+
+export interface ContentVideo {
+  id: string;
+  creatorId: string;
+  creatorName: string;
+  creatorAvatar: string;
+  title: string;
+  description: string;
+  category: string;
+  previewThumbnail: string;
+  videoUrl: string;
+  durationSeconds: number;
+  price: number;
+  visibility: VisibilityLevel;
+  publicationStatus: ContentPublicationStatus;
+  createdAt: string;
+}
+
+export interface CreatorApplication {
+  id: string;
+  user: {
+    id: string;
+    username: string;
+    email: string;
+  };
+  categories: string[];
+  proposedMonthlyPrice: number;
+  bio: string;
+  payoutMethod: string;
+  payoutDetails: string;
+  status: VerificationStatus;
+  submittedAt: string;
 }
 
 export interface Preferences {

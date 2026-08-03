@@ -6,7 +6,21 @@ import {
   NotificationItem,
   ModerationLog,
   UserSafetySettings,
+  ContentAlbum,
+  ContentVideo,
+  CreatorApplication,
 } from "@/types";
+
+export const CREATOR_CATEGORIES = [
+  "Contemporary Art",
+  "Classical Music",
+  "VIP Lifestyle",
+  "High Fashion",
+  "Private Aviation",
+  "Gourmet & Wine",
+  "Luxury Fitness",
+  "Couples Lifestyle",
+];
 
 export const MOCK_PROFILES: Profile[] = [
   {
@@ -30,6 +44,12 @@ export const MOCK_PROFILES: Profile[] = [
     lookingFor: ["Dating", "Casual Connection", "Social Events", "Travel Partner"],
     isCoupleProfile: false,
 
+    categories: ["Contemporary Art", "VIP Lifestyle"],
+    monthlySubscriptionPrice: 24.99,
+    followersCount: 1420,
+    subscribersCount: 185,
+    totalContentCount: 24,
+
     publicProfileVisibility: true,
     photoVisibilityDefault: "PUBLIC",
     locationPrecision: "CITY",
@@ -39,7 +59,7 @@ export const MOCK_PROFILES: Profile[] = [
     requireVerificationToMessage: false,
 
     verified: true,
-    verificationLevel: "LEVEL_3_PROFILE_BIOMETRIC",
+    verificationLevel: "LEVEL_4_CREATOR",
     isOnline: true,
     distanceKm: 4,
     compatibilityScore: 95,
@@ -96,6 +116,12 @@ export const MOCK_PROFILES: Profile[] = [
     partnerAge: 29,
     partnerGender: "FEMALE",
 
+    categories: ["Couples Lifestyle", "Gourmet & Wine"],
+    monthlySubscriptionPrice: 34.99,
+    followersCount: 890,
+    subscribersCount: 94,
+    totalContentCount: 16,
+
     publicProfileVisibility: true,
     photoVisibilityDefault: "PUBLIC",
     locationPrecision: "CITY",
@@ -150,6 +176,12 @@ export const MOCK_PROFILES: Profile[] = [
     lookingFor: ["Creator Followers", "Online Interaction", "Friendship"],
     isCoupleProfile: false,
 
+    categories: ["Classical Music", "High Fashion"],
+    monthlySubscriptionPrice: 19.99,
+    followersCount: 3820,
+    subscribersCount: 450,
+    totalContentCount: 42,
+
     publicProfileVisibility: true,
     photoVisibilityDefault: "PUBLIC",
     locationPrecision: "CITY",
@@ -174,6 +206,87 @@ export const MOCK_PROFILES: Profile[] = [
         isProfilePhoto: true,
       },
     ],
+  },
+];
+
+export const MOCK_CREATOR_ALBUMS: ContentAlbum[] = [
+  {
+    id: "alb-1",
+    creatorId: "prof-1",
+    creatorName: "Elena Vance",
+    creatorAvatar: MOCK_PROFILES[0].avatarUrl,
+    title: "Monaco Art Fair Private Gala Suite",
+    description: "Exclusive photos from behind the velvet ropes at the Monte Carlo Private Lounge Gala.",
+    category: "Contemporary Art",
+    previewImages: [
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+    ],
+    lockedImages: [
+      "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80",
+    ],
+    price: 25.0,
+    visibility: "PAID_PER_VIEW",
+    publicationStatus: "PUBLISHED",
+    totalPhotosCount: 18,
+    createdAt: "2 days ago",
+  },
+  {
+    id: "alb-2",
+    creatorId: "prof-3",
+    creatorName: "Aria Thorne",
+    creatorAvatar: MOCK_PROFILES[2].avatarUrl,
+    title: "Geneva Conservatory Private Backstage Journal",
+    description: "High-resolution photos from my private violin rehearsal and gown fitting.",
+    category: "Classical Music",
+    previewImages: [
+      "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
+    ],
+    lockedImages: [
+      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80",
+    ],
+    price: 15.0,
+    visibility: "SUBSCRIBERS_ONLY",
+    publicationStatus: "PUBLISHED",
+    totalPhotosCount: 24,
+    createdAt: "5 days ago",
+  },
+];
+
+export const MOCK_CREATOR_VIDEOS: ContentVideo[] = [
+  {
+    id: "vid-1",
+    creatorId: "prof-3",
+    creatorName: "Aria Thorne",
+    creatorAvatar: MOCK_PROFILES[2].avatarUrl,
+    title: "Violin Solo Performance - Private Salon Concert",
+    description: "4K 60fps recording of Bach Partita performed in a private Alpine residence.",
+    category: "Classical Music",
+    previewThumbnail: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-classical-violinist-performing-41584-large.mp4",
+    durationSeconds: 420,
+    price: 35.0,
+    visibility: "PAID_PER_VIEW",
+    publicationStatus: "PUBLISHED",
+    createdAt: "1 week ago",
+  },
+];
+
+export const MOCK_CREATOR_APPLICATIONS: CreatorApplication[] = [
+  {
+    id: "capp-1",
+    user: {
+      id: "user-88",
+      username: "seraphina_v",
+      email: "seraphina@velora.club",
+    },
+    categories: ["High Fashion", "VIP Lifestyle"],
+    proposedMonthlyPrice: 29.99,
+    bio: "High fashion model and luxury host based in Paris. Creating weekly couture lookbooks & private dinner diaries.",
+    payoutMethod: "SEPA Direct Bank Transfer",
+    payoutDetails: "IBAN CH93 0000 0000 0000 0000 0",
+    status: "PENDING",
+    submittedAt: "2026-08-02 16:45",
   },
 ];
 
@@ -207,23 +320,6 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     updatedAt: "10:42 AM",
     isTyping: true,
   },
-  {
-    id: "conv-2",
-    participant: MOCK_PROFILES[1],
-    lastMessage: {
-      id: "msg-2",
-      conversationId: "conv-2",
-      senderId: "user-current",
-      senderName: "You",
-      senderAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=800&q=80",
-      content: "Thank you for the invitation! We would love to join your private tasting.",
-      status: "DELIVERED",
-      createdAt: "Yesterday",
-    },
-    unreadCount: 0,
-    updatedAt: "Yesterday",
-    isTyping: false,
-  },
 ];
 
 export const MOCK_VERIFICATION_REQUESTS: VerificationRequest[] = [
@@ -241,20 +337,6 @@ export const MOCK_VERIFICATION_REQUESTS: VerificationRequest[] = [
     submittedAt: "2026-08-02 14:30",
     status: "PENDING",
   },
-  {
-    id: "verif-102",
-    user: {
-      id: "usr-89",
-      username: "marcus_monaco",
-      email: "marcus@luxury.mc",
-      role: "MEMBER",
-    },
-    requestedLevel: "LEVEL_3_PROFILE_BIOMETRIC",
-    idDocumentUrl: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80",
-    selfieWithNoteUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=600&q=80",
-    submittedAt: "2026-08-03 06:15",
-    status: "PENDING",
-  },
 ];
 
 export const MOCK_REPORTS: ReportItem[] = [
@@ -269,16 +351,6 @@ export const MOCK_REPORTS: ReportItem[] = [
     status: "INVESTIGATING",
     submittedAt: "2026-08-02 18:00",
   },
-  {
-    id: "rep-2",
-    reporterUsername: "julian_sophia",
-    reportedUsername: "spammer_bot",
-    reportedUserRole: "MEMBER",
-    reason: "SPAM_SOLICITATION",
-    details: "Sent automated link redirecting to third-party website.",
-    status: "PENDING",
-    submittedAt: "2026-08-03 01:20",
-  },
 ];
 
 export const MOCK_MODERATION_LOGS: ModerationLog[] = [
@@ -290,48 +362,19 @@ export const MOCK_MODERATION_LOGS: ModerationLog[] = [
     reason: "Offsite payment solicitation & repeated spam links.",
     timestamp: "2026-08-02 22:15",
   },
-  {
-    id: "log-2",
-    adminUsername: "admin_compliance",
-    targetUsername: "bot_user_99",
-    action: "BAN_USER_PERMANENT",
-    reason: "Failed biometric 18+ adult verification & impersonation.",
-    timestamp: "2026-08-03 04:10",
-  },
 ];
 
 export const MOCK_NOTIFICATIONS: NotificationItem[] = [
   {
     id: "notif-1",
     userId: "usr-demo-1",
-    type: "PROFILE_VIEW",
-    title: "Profile Impression",
-    message: "Julian & Sophia viewed your profile.",
+    type: "NEW_SUBSCRIBER",
+    title: "New Premium Subscriber!",
+    message: "Julian & Sophia subscribed to your Creator Channel ($24.99/mo).",
     actorName: "Julian & Sophia",
     actorAvatar: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=800&q=80",
-    targetLink: "/profile/prof-2",
+    targetLink: "/creator-studio",
     isRead: false,
-    createdAt: "10 mins ago",
-  },
-  {
-    id: "notif-2",
-    userId: "usr-demo-1",
-    type: "NEW_MESSAGE",
-    title: "New Encrypted Message",
-    message: "Elena Vance sent you a private message.",
-    actorName: "Elena Vance",
-    actorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
-    targetLink: "/messages",
-    isRead: false,
-    createdAt: "15 mins ago",
-  },
-  {
-    id: "notif-3",
-    userId: "usr-demo-1",
-    type: "VERIFICATION_APPROVED",
-    title: "Level 3 Adult Verification Approved",
-    message: "Your biometric adult verification request was approved. You now hold Level 3 Verified status.",
-    isRead: true,
-    createdAt: "Yesterday",
+    createdAt: "5 mins ago",
   },
 ];
