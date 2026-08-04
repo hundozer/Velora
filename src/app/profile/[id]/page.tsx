@@ -32,7 +32,70 @@ import {
   Plus,
   Play,
   X,
+  Coins,
+  ThumbsUp,
+  Tag,
+  Filter,
 } from "lucide-react";
+
+const AMATERI_TOPICS = [
+  "VIP Lifestyle",
+  "Erotic Art",
+  "Couples Sex",
+  "BDSM",
+  "Footfetish",
+  "Group Sex",
+  "Oral Sex",
+  "Fetish",
+  "Masturbation",
+  "Outdoor Sex",
+  "Sex in Public",
+  "MILFs",
+  "Piercing",
+  "Sex in Car",
+  "Big Asses",
+  "Clothes",
+  "Dildos & Other Toys",
+  "Natural Body Hair",
+  "Soft Erotica",
+  "Deepthroat",
+];
+
+interface UserVideoItem {
+  id: string;
+  title: string;
+  description: string;
+  duration: string;
+  thumbnail: string;
+  monetization: "FREE" | "CREDITS";
+  creditsPrice?: number;
+  category: string;
+  commentPermission: "ANYONE" | "ALBUM_HOLDERS" | "VERIFIED" | "NOBODY";
+  votingPermission: "ANYONE" | "DISABLED";
+  topics: string[];
+  views: number;
+  comments: number;
+  likes: number;
+  status: "On web" | "In profile only" | "Pending correction" | "Disabled";
+  createdAt: string;
+}
+
+interface UserPhotoAlbumItem {
+  id: string;
+  title: string;
+  description: string;
+  coverUrl: string;
+  photoCount: number;
+  monetization: "FREE" | "CREDITS";
+  creditsPrice?: number;
+  category: string;
+  topics: string[];
+  views: number;
+  comments: number;
+  likes: number;
+  status: "On web" | "In profile only" | "Disabled";
+  createdAt: string;
+}
 
 export default function SingleProfilePage() {
   const params = useParams();
@@ -54,17 +117,81 @@ export default function SingleProfilePage() {
   // Interactive Media Vault Menu State (My Photos, My Videos, My Dating Ads)
   const [mediaTab, setMediaTab] = useState<"PHOTOS" | "VIDEOS" | "ADS">("PHOTOS");
 
-  const [userPhotos, setUserPhotos] = useState<string[]>([
-    profile.avatarUrl,
-    profile.coverPhotoUrl || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+  // Rich Photo Albums
+  const [userPhotoAlbums, setUserPhotoAlbums] = useState<UserPhotoAlbumItem[]>([
+    {
+      id: "alb-1",
+      title: "Monaco Luxury Villa Portfolio",
+      description: "Private photography session at our coastal suite.",
+      coverUrl: profile.avatarUrl,
+      photoCount: 14,
+      monetization: "FREE",
+      category: "Man",
+      topics: ["Erotic Art", "Details", "Soft Erotica"],
+      views: 2910,
+      comments: 13,
+      likes: 129,
+      status: "On web",
+      createdAt: "Dec 31, 2025",
+    },
+    {
+      id: "alb-2",
+      title: "French Riviera Yachting & Sunbathing",
+      description: "Discreet afternoon photos along the Mediterranean coast.",
+      coverUrl: profile.coverPhotoUrl || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+      photoCount: 22,
+      monetization: "CREDITS",
+      creditsPrice: 10,
+      category: "Couple",
+      topics: ["Outdoor Sex", "Sex in Public", "VIP Lifestyle"],
+      views: 4180,
+      comments: 29,
+      likes: 310,
+      status: "On web",
+      createdAt: "Oct 15, 2025",
+    },
   ]);
 
-  const [userVideos, setUserVideos] = useState<{ id: string; title: string; duration: string; thumbnail: string }[]>([
-    { id: "v1", title: "Private Lifestyle Teaser", duration: "0:45", thumbnail: profile.avatarUrl },
-    { id: "v2", title: "Monaco Riviera Highlights", duration: "1:20", thumbnail: profile.coverPhotoUrl || profile.avatarUrl },
+  // Rich Videos List
+  const [userVideos, setUserVideos] = useState<UserVideoItem[]>([
+    {
+      id: "v1",
+      title: "Private Riviera Yacht Teaser",
+      description: "Exclusive lifestyle footage along the Monte Carlo coastline.",
+      duration: "1:20",
+      thumbnail: profile.coverPhotoUrl || profile.avatarUrl,
+      monetization: "FREE",
+      category: "Couple",
+      commentPermission: "ANYONE",
+      votingPermission: "ANYONE",
+      topics: ["VIP Lifestyle", "Outdoor Sex", "Soft Erotica"],
+      views: 1290,
+      comments: 18,
+      likes: 142,
+      status: "On web",
+      createdAt: "Dec 31, 2025",
+    },
+    {
+      id: "v2",
+      title: "Late Night Lounge & Champagne Vault",
+      description: "Private moments from our Monaco salon evening.",
+      duration: "2:45",
+      thumbnail: profile.avatarUrl,
+      monetization: "CREDITS",
+      creditsPrice: 5,
+      category: "Woman",
+      commentPermission: "VERIFIED",
+      votingPermission: "ANYONE",
+      topics: ["VIP Lifestyle", "Fetish", "Details"],
+      views: 2410,
+      comments: 34,
+      likes: 289,
+      status: "On web",
+      createdAt: "Oct 28, 2025",
+    },
   ]);
 
+  // Dating Ads List
   const [userDatingAds, setUserDatingAds] = useState<{ id: string; title: string; category: string; description: string; date: string }[]>([
     {
       id: "ad-1",
@@ -87,10 +214,80 @@ export default function SingleProfilePage() {
   const photoUploadRef = React.useRef<HTMLInputElement>(null);
   const videoUploadRef = React.useRef<HTMLInputElement>(null);
 
+  // Amateri-Style Category Publisher Modal State
+  const [publisherModalOpen, setPublisherModalOpen] = useState(false);
+  const [publisherType, setPublisherType] = useState<"VIDEO" | "ALBUM">("VIDEO");
+  const [pubMonetization, setPubMonetization] = useState<"FREE" | "CREDITS">("FREE");
+  const [pubCreditsPrice, setPubCreditsPrice] = useState<number>(5);
+  const [pubTitle, setPubTitle] = useState("");
+  const [pubDescription, setPubDescription] = useState("");
+  const [pubCategory, setPubCategory] = useState("Man");
+  const [pubCommentSetting, setPubCommentSetting] = useState<"ANYONE" | "VERIFIED" | "NOBODY">("ANYONE");
+  const [pubVotingSetting, setPubVotingSetting] = useState<"ANYONE" | "DISABLED">("ANYONE");
+  const [pubSelectedTopics, setPubSelectedTopics] = useState<string[]>(["VIP Lifestyle", "Soft Erotica"]);
+
+  // Dating Ad Modal State
   const [newAdModalOpen, setNewAdModalOpen] = useState(false);
   const [newAdTitle, setNewAdTitle] = useState("");
   const [newAdCategory, setNewAdCategory] = useState("VIP Lifestyle");
   const [newAdDescription, setNewAdDescription] = useState("");
+
+  const toggleTopic = (topic: string) => {
+    if (pubSelectedTopics.includes(topic)) {
+      setPubSelectedTopics(pubSelectedTopics.filter((t) => t !== topic));
+    } else {
+      setPubSelectedTopics([...pubSelectedTopics, topic]);
+    }
+  };
+
+  const handlePublishMedia = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pubTitle.trim()) return;
+
+    if (publisherType === "VIDEO") {
+      const newVideo: UserVideoItem = {
+        id: `vid-${Date.now()}`,
+        title: pubTitle,
+        description: pubDescription || "Verified member video upload.",
+        duration: "1:30",
+        thumbnail: profile.avatarUrl,
+        monetization: pubMonetization,
+        creditsPrice: pubMonetization === "CREDITS" ? pubCreditsPrice : undefined,
+        category: pubCategory,
+        commentPermission: pubCommentSetting,
+        votingPermission: pubVotingSetting,
+        topics: pubSelectedTopics.length > 0 ? pubSelectedTopics : ["VIP Lifestyle"],
+        views: 1,
+        comments: 0,
+        likes: 0,
+        status: "On web",
+        createdAt: "Just now",
+      };
+      setUserVideos([newVideo, ...userVideos]);
+    } else {
+      const newAlbum: UserPhotoAlbumItem = {
+        id: `alb-${Date.now()}`,
+        title: pubTitle,
+        description: pubDescription || "Verified member photo album.",
+        coverUrl: profile.avatarUrl,
+        photoCount: 12,
+        monetization: pubMonetization,
+        creditsPrice: pubMonetization === "CREDITS" ? pubCreditsPrice : undefined,
+        category: pubCategory,
+        topics: pubSelectedTopics.length > 0 ? pubSelectedTopics : ["VIP Lifestyle"],
+        views: 1,
+        comments: 0,
+        likes: 0,
+        status: "On web",
+        createdAt: "Just now",
+      };
+      setUserPhotoAlbums([newAlbum, ...userPhotoAlbums]);
+    }
+
+    setPubTitle("");
+    setPubDescription("");
+    setPublisherModalOpen(false);
+  };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -98,7 +295,22 @@ export default function SingleProfilePage() {
         const reader = new FileReader();
         reader.onload = () => {
           if (reader.result) {
-            setUserPhotos((prev) => [reader.result as string, ...prev]);
+            const newAlbum: UserPhotoAlbumItem = {
+              id: `alb-${Date.now()}`,
+              title: file.name.replace(/\.[^/.]+$/, "") || "New Photo Album",
+              description: "Uploaded photo collection",
+              coverUrl: reader.result as string,
+              photoCount: 1,
+              monetization: "FREE",
+              category: "Man",
+              topics: ["VIP Lifestyle"],
+              views: 1,
+              comments: 0,
+              likes: 0,
+              status: "On web",
+              createdAt: "Just now",
+            };
+            setUserPhotoAlbums((prev) => [newAlbum, ...prev]);
           }
         };
         reader.readAsDataURL(file);
@@ -112,15 +324,24 @@ export default function SingleProfilePage() {
       const reader = new FileReader();
       reader.onload = () => {
         if (reader.result) {
-          setUserVideos((prev) => [
-            {
-              id: `vid-${Date.now()}`,
-              title: file.name.replace(/\.[^/.]+$/, ""),
-              duration: "0:30",
-              thumbnail: profile.avatarUrl,
-            },
-            ...prev,
-          ]);
+          const newVideo: UserVideoItem = {
+            id: `vid-${Date.now()}`,
+            title: file.name.replace(/\.[^/.]+$/, ""),
+            description: "Uploaded video clip",
+            duration: "0:30",
+            thumbnail: profile.avatarUrl,
+            monetization: "FREE",
+            category: "Man",
+            commentPermission: "ANYONE",
+            votingPermission: "ANYONE",
+            topics: ["VIP Lifestyle"],
+            views: 1,
+            comments: 0,
+            likes: 0,
+            status: "On web",
+            createdAt: "Just now",
+          };
+          setUserVideos((prev) => [newVideo, ...prev]);
         }
       };
       reader.readAsDataURL(file);
@@ -405,7 +626,7 @@ export default function SingleProfilePage() {
           )}
         </div>
 
-        {/* Right Col: Member Vault & Content Showcase (My Photos, My Videos, My Dating Ads) */}
+        {/* Right Col: MY MEDIA & DATING SETTINGS */}
         <div className="space-y-6">
           <Card variant="goldBorder" className="p-6 space-y-5 text-left bg-gold-card">
             {/* Hidden Inputs for Media Uploads */}
@@ -413,12 +634,12 @@ export default function SingleProfilePage() {
             <input type="file" ref={videoUploadRef} accept="video/*" className="hidden" onChange={handleVideoUpload} />
 
             {/* Header Title & Count */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-velora-gold flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-velora-gold" /> Member Vault & Media Showcase
+                <Sparkles className="w-4 h-4 text-velora-gold" /> MY MEDIA & DATING SETTINGS
               </h3>
               <span className="text-[10px] text-velora-textMuted font-mono">
-                {mediaTab === "PHOTOS" ? `${userPhotos.length} Photos` : mediaTab === "VIDEOS" ? `${userVideos.length} Videos` : `${userDatingAds.length} Active Ads`}
+                {mediaTab === "PHOTOS" ? `${userPhotoAlbums.length} Albums` : mediaTab === "VIDEOS" ? `${userVideos.length} Videos` : `${userDatingAds.length} Active Ads`}
               </span>
             </div>
 
@@ -465,20 +686,72 @@ export default function SingleProfilePage() {
                   <Button
                     variant="glass"
                     size="sm"
-                    onClick={() => photoUploadRef.current?.click()}
+                    onClick={() => {
+                      setPublisherType("ALBUM");
+                      setPublisherModalOpen(true);
+                    }}
                     className="w-full text-xs font-bold uppercase tracking-wider gap-1.5 border-amber-500/30 text-amber-300 hover:bg-amber-400/10"
                   >
-                    <Plus className="w-4 h-4 text-velora-gold" /> Upload New Photo
+                    <Plus className="w-4 h-4 text-velora-gold" /> + Create Photo Album & Categories
                   </Button>
                 )}
 
-                <div className="grid grid-cols-2 gap-2">
-                  {userPhotos.map((photoUrl, idx) => (
-                    <div key={idx} className="h-28 rounded-2xl bg-velora-card relative overflow-hidden group border border-white/10 shadow-md">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={photoUrl} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
-                        <span className="text-[10px] text-white font-mono">Photo #{idx + 1}</span>
+                {/* BIG Photo Album Thumbnails */}
+                <div className="space-y-4">
+                  {userPhotoAlbums.map((alb) => (
+                    <div key={alb.id} className="rounded-3xl bg-velora-card overflow-hidden border border-white/10 shadow-xl group hover:border-amber-400/40 transition-all">
+                      {/* Big Album Thumbnail */}
+                      <div className="h-44 sm:h-52 w-full bg-black relative overflow-hidden">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={alb.coverUrl} alt={alb.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-velora-bg via-black/30 to-transparent" />
+
+                        {/* Top Badges */}
+                        <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase backdrop-blur-md ${
+                            alb.status === "On web" ? "bg-emerald-500/30 text-emerald-300 border border-emerald-500/40" : "bg-red-500/30 text-red-300 border border-red-500/40"
+                          }`}>
+                            {alb.status}
+                          </span>
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-black/60 text-white border border-white/20 backdrop-blur-md">
+                            Category: {alb.category}
+                          </span>
+                        </div>
+
+                        <div className="absolute top-3 right-3">
+                          {alb.monetization === "CREDITS" ? (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-amber-400/30 text-amber-300 border border-amber-400/40 backdrop-blur-md flex items-center gap-1">
+                              <Coins className="w-3 h-3 text-amber-300" /> {alb.creditsPrice || 10} Credits
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 backdrop-blur-md">
+                              Free Album
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="absolute bottom-3 left-3 right-3 text-left">
+                          <h4 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors">{alb.title}</h4>
+                          <p className="text-[11px] text-velora-textMuted line-clamp-1">{alb.description}</p>
+                        </div>
+                      </div>
+
+                      {/* Album Footer Metrics & Topics */}
+                      <div className="p-3.5 space-y-2.5 text-xs bg-white/5">
+                        <div className="flex items-center justify-between text-[11px] text-velora-textMuted font-mono">
+                          <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-velora-gold" /> {alb.views} Views</span>
+                          <span className="flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5 text-blue-400" /> {alb.comments} Comments</span>
+                          <span className="flex items-center gap-1"><ThumbsUp className="w-3.5 h-3.5 text-emerald-400" /> {alb.likes} Likes</span>
+                        </div>
+
+                        {/* Searchable Topics */}
+                        <div className="flex flex-wrap gap-1 pt-1 border-t border-white/5">
+                          {alb.topics.map((topic) => (
+                            <span key={topic} className="px-2 py-0.5 rounded-full text-[10px] bg-white/5 text-amber-300 border border-amber-400/20">
+                              #{topic}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -493,30 +766,85 @@ export default function SingleProfilePage() {
                   <Button
                     variant="glass"
                     size="sm"
-                    onClick={() => videoUploadRef.current?.click()}
+                    onClick={() => {
+                      setPublisherType("VIDEO");
+                      setPublisherModalOpen(true);
+                    }}
                     className="w-full text-xs font-bold uppercase tracking-wider gap-1.5 border-amber-500/30 text-amber-300 hover:bg-amber-400/10"
                   >
-                    <Plus className="w-4 h-4 text-velora-gold" /> Upload Video Clip
+                    <Plus className="w-4 h-4 text-velora-gold" /> + Post Video Clip & Categories
                   </Button>
                 )}
 
-                <div className="space-y-2">
+                {/* BIG Video Thumbnails */}
+                <div className="space-y-4">
                   {userVideos.map((vid) => (
-                    <div key={vid.id} className="p-2.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between gap-3 group hover:border-amber-400/40 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-velora-card relative overflow-hidden shrink-0 border border-white/10">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={vid.thumbnail} alt={vid.title} className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                            <Play className="w-4 h-4 text-amber-300 fill-amber-300" />
+                    <div key={vid.id} className="rounded-3xl bg-velora-card overflow-hidden border border-white/10 shadow-xl group hover:border-amber-400/40 transition-all">
+                      {/* Big Video Cover Thumbnail */}
+                      <div className="h-44 sm:h-52 w-full bg-black relative overflow-hidden">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={vid.thumbnail} alt={vid.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-velora-bg via-black/40 to-transparent" />
+
+                        {/* Play Icon Center Button */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-14 h-14 rounded-full bg-amber-400/90 text-black flex items-center justify-center shadow-gold-glow group-hover:scale-110 transition-transform">
+                            <Play className="w-6 h-6 fill-black ml-1" />
                           </div>
                         </div>
-                        <div>
-                          <p className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">{vid.title}</p>
-                          <p className="text-[10px] text-velora-textMuted font-mono">Duration: {vid.duration}</p>
+
+                        {/* Top Badges */}
+                        <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase backdrop-blur-md ${
+                            vid.status === "On web" ? "bg-emerald-500/30 text-emerald-300 border border-emerald-500/40" : "bg-red-500/30 text-red-300 border border-red-500/40"
+                          }`}>
+                            {vid.status}
+                          </span>
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-black/60 text-white border border-white/20 backdrop-blur-md">
+                            Category: {vid.category}
+                          </span>
+                        </div>
+
+                        <div className="absolute top-3 right-3">
+                          {vid.monetization === "CREDITS" ? (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-amber-400/30 text-amber-300 border border-amber-400/40 backdrop-blur-md flex items-center gap-1">
+                              <Coins className="w-3 h-3 text-amber-300" /> {vid.creditsPrice || 5} Credits
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 backdrop-blur-md">
+                              Free Video
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="absolute bottom-3 left-3 right-3 text-left">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors">{vid.title}</h4>
+                            <span className="text-[10px] text-amber-300 font-mono font-bold bg-black/60 px-2 py-0.5 rounded-md border border-white/10">
+                              {vid.duration}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-velora-textMuted line-clamp-1 mt-0.5">{vid.description}</p>
                         </div>
                       </div>
-                      <Badge type="verified" />
+
+                      {/* Video Footer Metrics & Searchable Topics */}
+                      <div className="p-3.5 space-y-2.5 text-xs bg-white/5">
+                        <div className="flex items-center justify-between text-[11px] text-velora-textMuted font-mono">
+                          <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-velora-gold" /> {vid.views} Views</span>
+                          <span className="flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5 text-blue-400" /> {vid.comments} Comments</span>
+                          <span className="flex items-center gap-1"><ThumbsUp className="w-3.5 h-3.5 text-emerald-400" /> {vid.likes} Likes</span>
+                        </div>
+
+                        {/* Searchable Topics */}
+                        <div className="flex flex-wrap gap-1 pt-1 border-t border-white/5">
+                          {vid.topics.map((topic) => (
+                            <span key={topic} className="px-2 py-0.5 rounded-full text-[10px] bg-white/5 text-amber-300 border border-amber-400/20">
+                              #{topic}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -556,6 +884,240 @@ export default function SingleProfilePage() {
           </Card>
         </div>
       </div>
+
+      {/* Amateri-Style Category & Media Publisher Modal */}
+      {publisherModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-lg overflow-y-auto">
+          <Card variant="goldBorder" className="w-full max-w-2xl p-6 sm:p-8 space-y-6 text-left bg-velora-card relative shadow-2xl my-8">
+            <button
+              onClick={() => setPublisherModalOpen(false)}
+              className="absolute top-4 right-4 text-velora-textMuted hover:text-white p-1 rounded-full hover:bg-white/10"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            <div className="space-y-2 border-b border-white/10 pb-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-6 h-6 text-velora-gold" />
+                <h2 className="text-xl font-serif font-bold text-white">
+                  Publish New {publisherType === "VIDEO" ? "Video Clip" : "Photo Album"}
+                </h2>
+              </div>
+              <p className="text-xs text-velora-textMuted">
+                Configure monetization, target audience category, comment settings, and searchable topics (Amateri-Style Manager).
+              </p>
+            </div>
+
+            <form onSubmit={handlePublishMedia} className="space-y-6">
+              {/* Type Selector (Free vs For Credits) */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-velora-textSecondary">
+                  Monetization Model & Access
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPubMonetization("FREE")}
+                    className={`p-3.5 rounded-2xl border text-left flex items-center gap-3 transition-all ${
+                      pubMonetization === "FREE" ? "border-emerald-500 bg-emerald-500/10 text-white" : "border-white/10 bg-white/5 text-velora-textMuted hover:text-white"
+                    }`}
+                  >
+                    <div className="w-4 h-4 rounded-full border-2 border-emerald-400 flex items-center justify-center">
+                      {pubMonetization === "FREE" && <div className="w-2 h-2 rounded-full bg-emerald-400" />}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold">{publisherType === "VIDEO" ? "Video - Free" : "Album - Free"}</p>
+                      <p className="text-[10px] opacity-75">Public for all verified members</p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPubMonetization("CREDITS")}
+                    className={`p-3.5 rounded-2xl border text-left flex items-center gap-3 transition-all ${
+                      pubMonetization === "CREDITS" ? "border-amber-400 bg-amber-400/10 text-white" : "border-white/10 bg-white/5 text-velora-textMuted hover:text-white"
+                    }`}
+                  >
+                    <div className="w-4 h-4 rounded-full border-2 border-amber-400 flex items-center justify-center">
+                      {pubMonetization === "CREDITS" && <div className="w-2 h-2 rounded-full bg-amber-400" />}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold flex items-center gap-1">
+                        {publisherType === "VIDEO" ? "Video - For Credits" : "Album - For Credits"} <Coins className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+                      </p>
+                      <p className="text-[10px] opacity-75">Requires credit unlock</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {pubMonetization === "CREDITS" && (
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-velora-textSecondary">Unlock Credit Price (Coins)</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={pubCreditsPrice}
+                    onChange={(e) => setPubCreditsPrice(Number(e.target.value))}
+                    className="w-full text-xs font-mono"
+                  />
+                </div>
+              )}
+
+              {/* Title & Description */}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-velora-textSecondary mb-1">Title</label>
+                  <Input
+                    type="text"
+                    value={pubTitle}
+                    onChange={(e) => setPubTitle(e.target.value)}
+                    placeholder="e.g. Monaco Yachting & Private Evening"
+                    className="w-full text-xs"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-velora-textSecondary mb-1">Description</label>
+                  <textarea
+                    value={pubDescription}
+                    onChange={(e) => setPubDescription(e.target.value)}
+                    rows={3}
+                    placeholder="Detailed description..."
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white focus:outline-none focus:border-velora-gold resize-none"
+                  />
+                  <div className="mt-1.5 p-2 rounded-xl bg-amber-400/10 border border-amber-400/20 flex items-center gap-2 text-[11px] text-amber-300">
+                    <Sparkles className="w-4 h-4 shrink-0 text-amber-400" />
+                    <span><strong>Attract up to +25% more visitors:</strong> Interesting title and detailed description increase discoverability across membership search.</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Category Selector */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-velora-textSecondary mb-1.5">
+                  Category (Select who appears in content)
+                </label>
+                <select
+                  value={pubCategory}
+                  onChange={(e) => setPubCategory(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-white focus:outline-none focus:border-velora-gold font-medium"
+                >
+                  <option value="Man" className="bg-velora-card">Man</option>
+                  <option value="Woman" className="bg-velora-card">Woman</option>
+                  <option value="Couple" className="bg-velora-card">Couple</option>
+                  <option value="Trans" className="bg-velora-card">Trans</option>
+                  <option value="Group" className="bg-velora-card">Group</option>
+                </select>
+              </div>
+
+              {/* Comment & Voting Settings */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-white/10 pt-4">
+                <div>
+                  <label className="block text-xs font-bold text-velora-textSecondary mb-2">Comment Settings</label>
+                  <div className="space-y-1.5 text-xs">
+                    <label className="flex items-center gap-2 text-velora-textMuted cursor-pointer hover:text-white">
+                      <input
+                        type="radio"
+                        name="comments"
+                        checked={pubCommentSetting === "ANYONE"}
+                        onChange={() => setPubCommentSetting("ANYONE")}
+                        className="accent-amber-400"
+                      />
+                      <span>Anyone can write comments</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-velora-textMuted cursor-pointer hover:text-white">
+                      <input
+                        type="radio"
+                        name="comments"
+                        checked={pubCommentSetting === "VERIFIED"}
+                        onChange={() => setPubCommentSetting("VERIFIED")}
+                        className="accent-amber-400"
+                      />
+                      <span>Only verified users can comment</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-velora-textMuted cursor-pointer hover:text-white">
+                      <input
+                        type="radio"
+                        name="comments"
+                        checked={pubCommentSetting === "NOBODY"}
+                        onChange={() => setPubCommentSetting("NOBODY")}
+                        className="accent-amber-400"
+                      />
+                      <span>Nobody can comment</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-velora-textSecondary mb-2">Voting Settings</label>
+                  <div className="space-y-1.5 text-xs">
+                    <label className="flex items-center gap-2 text-velora-textMuted cursor-pointer hover:text-white">
+                      <input
+                        type="radio"
+                        name="voting"
+                        checked={pubVotingSetting === "ANYONE"}
+                        onChange={() => setPubVotingSetting("ANYONE")}
+                        className="accent-amber-400"
+                      />
+                      <span>Anyone can vote</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-velora-textMuted cursor-pointer hover:text-white">
+                      <input
+                        type="radio"
+                        name="voting"
+                        checked={pubVotingSetting === "DISABLED"}
+                        onChange={() => setPubVotingSetting("DISABLED")}
+                        className="accent-amber-400"
+                      />
+                      <span>Voting is disabled</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Searchable Topics Checkboxes Grid */}
+              <div className="border-t border-white/10 pt-4 space-y-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-velora-gold flex items-center gap-1.5">
+                  <Tag className="w-4 h-4 text-velora-gold" /> Searchable Topics (Select all topics that match content)
+                </label>
+                <p className="text-[11px] text-velora-textMuted">These tags allow your media to be searched by members across discovery filters.</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 max-h-48 overflow-y-auto p-2 rounded-xl bg-white/5 border border-white/10">
+                  {AMATERI_TOPICS.map((topic) => {
+                    const selected = pubSelectedTopics.includes(topic);
+                    return (
+                      <button
+                        key={topic}
+                        type="button"
+                        onClick={() => toggleTopic(topic)}
+                        className={`p-2 rounded-lg text-[11px] font-semibold text-left border transition-all flex items-center justify-between ${
+                          selected
+                            ? "bg-amber-400/20 border-amber-400 text-amber-300 font-bold"
+                            : "bg-white/5 border-white/5 text-velora-textMuted hover:text-white hover:bg-white/10"
+                        }`}
+                      >
+                        <span className="truncate">{topic}</span>
+                        {selected && <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-4 border-t border-white/10">
+                <Button variant="glass" size="lg" type="button" onClick={() => setPublisherModalOpen(false)} className="w-1/3 text-xs">
+                  Cancel
+                </Button>
+                <Button variant="gold" size="lg" type="submit" className="w-2/3 text-xs font-bold uppercase tracking-wider shadow-gold-glow">
+                  Publish Content & Category Tags
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
 
       {/* Post Dating Ad Modal */}
       {newAdModalOpen && (
