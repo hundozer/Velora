@@ -204,7 +204,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 {isTyping ? (
                   <span className="text-velora-gold font-bold">is typing...</span>
                 ) : (
-                  `${activeConversation.participant.location} • Active Now`
+                  activeConversation.participant.location
+                    ? `${activeConversation.participant.location} • Active Now`
+                    : "Active Now"
                 )}
               </p>
             </div>

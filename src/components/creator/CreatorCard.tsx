@@ -93,10 +93,12 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({ creator }) => {
                 {creator.verified && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
               </h3>
             </Link>
-            <p className="text-[11px] text-velora-textMuted flex items-center gap-1 mt-0.5">
-              <MapPin className="w-3 h-3 text-velora-gold" />
-              {creator.location}
-            </p>
+            {(creator.location || creator.city || creator.country) && (
+              <p className="text-[11px] text-velora-textMuted flex items-center gap-1 mt-0.5">
+                <MapPin className="w-3 h-3 text-velora-gold" />
+                {creator.location || [creator.city, creator.country].filter(Boolean).join(", ")}
+              </p>
+            )}
           </div>
 
           {/* Categories */}

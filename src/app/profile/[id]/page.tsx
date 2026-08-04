@@ -900,7 +900,14 @@ export default function SingleProfilePage() {
                   <ShieldCheck className="w-6 h-6 text-emerald-400" />
                 </div>
                 <p className="text-xs text-velora-gold font-medium flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5" /> {profile.location} • Level 3 Biometric Verified
+                  {(profile.location || profile.city || profile.country) ? (
+                    <>
+                      <MapPin className="w-3.5 h-3.5" />
+                      {profile.location || [profile.city, profile.country].filter(Boolean).join(", ")} • Level 3 Biometric Verified
+                    </>
+                  ) : (
+                    "Level 3 Biometric Verified"
+                  )}
                 </p>
               </div>
             </div>

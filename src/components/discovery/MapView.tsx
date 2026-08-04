@@ -66,7 +66,7 @@ export const MapView: React.FC<MapViewProps> = ({ profiles }) => {
 
               {/* Pin Label */}
               <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2.5 py-0.5 rounded-full bg-black/80 text-[10px] font-bold text-white whitespace-nowrap border border-white/10 shadow-md">
-                {p.displayName} ({p.city})
+                {p.displayName} {p.city ? `(${p.city})` : ""}
               </div>
             </div>
           );
@@ -102,9 +102,11 @@ export const MapView: React.FC<MapViewProps> = ({ profiles }) => {
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> {selectedProfile.distanceKm} km away
                   </span>
                 </div>
-                <p className="text-xs text-velora-gold flex items-center gap-1 font-medium">
-                  <MapPin className="w-3 h-3" /> {selectedProfile.city}, {selectedProfile.country}
-                </p>
+                {(selectedProfile.location || selectedProfile.city || selectedProfile.country) && (
+                  <p className="text-xs text-velora-gold flex items-center gap-1 font-medium">
+                    <MapPin className="w-3 h-3" /> {selectedProfile.location || [selectedProfile.city, selectedProfile.country].filter(Boolean).join(", ")}
+                  </p>
+                )}
                 <p className="text-[11px] text-velora-textMuted line-clamp-1 italic">"{selectedProfile.headline}"</p>
               </div>
             </div>

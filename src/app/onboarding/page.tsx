@@ -20,9 +20,9 @@ export default function OnboardingWizardPage() {
   const [selectedInterests, setSelectedInterests] = useState<string[]>(["Casual Encounters", "Chemistry & Dating"]);
   const [gender, setGender] = useState("FEMALE");
   const [sexualOrientation, setSexualOrientation] = useState("BISEXUAL");
-  const [country, setCountry] = useState("Czech Republic");
-  const [city, setCity] = useState("Prague");
-  const [headline, setHeadline] = useState("Outgoing, adventurous and looking for real chemistry");
+  const [country, setCountry] = useState("");
+  const [city, setCity] = useState("");
+  const [headline, setHeadline] = useState("");
 
   // Optional Intimate Preferences & Sex Hobbies
   const [pubicHairGrooming, setPubicHairGrooming] = useState<string>("Trimmed");
@@ -68,17 +68,21 @@ export default function OnboardingWizardPage() {
   };
 
   const { user, updateUserProfile } = useAuth();
-  const [displayName, setDisplayName] = useState("Alex Vance");
+  const [displayName, setDisplayName] = useState("");
 
   const handleFinish = () => {
     const userId = user?.id || `usr-${Date.now()}`;
     const userEmail = user?.email || "member@intimo.live";
     const userRole: UserRole = profileType === "CREATOR" ? "CREATOR" : profileType === "COUPLE" ? "COUPLE" : "MEMBER";
+    const finalName = displayName.trim() || userEmail.split("@")[0] || "Intimo Member";
+    const finalCity = city.trim();
+    const finalCountry = country.trim();
+    const formattedLoc = [finalCity, finalCountry].filter(Boolean).join(", ");
 
     const newUser: UserType = {
       id: userId,
       email: userEmail,
-      username: displayName.toLowerCase().replace(/\s+/g, "_") || "intimo_member",
+      username: finalName.toLowerCase().replace(/\s+/g, "_"),
       role: userRole,
       memberTier: "PREMIUM",
       verificationStatus: "VERIFIED",
@@ -90,14 +94,14 @@ export default function OnboardingWizardPage() {
     const newProfile: ProfileType = {
       id: `prof-${Date.now()}`,
       userId: userId,
-      displayName: displayName || "Intimo Member",
+      displayName: finalName,
       dateOfBirth: "1998-05-15",
       age: 26,
       gender: gender as any,
       sexualOrientation: sexualOrientation as any,
-      country: country || "Czech Republic",
-      city: city || "Prague",
-      location: `${city || "Prague"}, ${country || "Czech Republic"}`,
+      country: finalCountry,
+      city: finalCity,
+      location: formattedLoc,
       languages: ["English"],
       headline: headline || "Private Intimo Member Profile",
       bio: headline || "Discreet, open-minded member exploring connections on Intimo.",

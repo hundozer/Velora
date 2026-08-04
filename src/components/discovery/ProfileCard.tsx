@@ -55,11 +55,12 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onQuickMessag
           <h3 className="text-xl font-serif font-bold text-white flex items-center gap-2">
             {profile.displayName}, {profile.age}
           </h3>
-          <p className="text-xs text-velora-gold flex items-center gap-1 mt-0.5 font-medium">
-            <MapPin className="w-3.5 h-3.5" />
-            {profile.city ? `${profile.city}, ${profile.country}` : profile.location}
-            {profile.distanceKm ? ` (${profile.distanceKm} km)` : ""}
-          </p>
+          {(profile.location || profile.city || profile.country) && (
+            <p className="text-xs text-velora-gold flex items-center gap-1 mt-0.5 font-medium">
+              <MapPin className="w-3.5 h-3.5" />
+              {profile.location || [profile.city, profile.country].filter(Boolean).join(", ")}
+            </p>
+          )}
         </div>
       </div>
 

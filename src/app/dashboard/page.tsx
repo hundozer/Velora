@@ -309,12 +309,12 @@ export default function DashboardPage() {
         avatarUrl: profile?.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
         isVerified: true,
         genderSymbol: "♂",
-        location: "Monaco & Prague",
+        location: profile?.location || [profile?.city, profile?.country].filter(Boolean).join(", ") || "",
       },
       type: "TEXT",
       title: "Intimate Thoughts & Update",
       category: "Personal Post",
-      region: "Prague Region",
+      region: profile?.city || profile?.country || "",
       createdAt: "Just now",
       description: publisherInput.trim(),
       views: 1,
@@ -523,9 +523,11 @@ export default function DashboardPage() {
                       <span className="px-2.5 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/40">
                         {post.category}
                       </span>
-                      <span className="px-2.5 py-0.5 rounded-md bg-blue-500/20 text-blue-300 border border-blue-500/40 flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-blue-400" /> {post.region}
-                      </span>
+                      {post.region && (
+                        <span className="px-2.5 py-0.5 rounded-md bg-blue-500/20 text-blue-300 border border-blue-500/40 flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-blue-400" /> {post.region}
+                        </span>
+                      )}
                     </div>
 
                     <p className="text-xs text-velora-textSecondary leading-relaxed pt-1">{post.description}</p>
