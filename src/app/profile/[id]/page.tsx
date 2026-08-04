@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { ReportModal } from "@/components/safety/ReportModal";
 import { MOCK_PROFILES, MOCK_CREATOR_ALBUMS } from "@/lib/mockData";
 import { useAuth } from "@/context/AuthContext";
+import { uploadFileToR2 } from "@/lib/storage/clientUpload";
 import { Input } from "@/components/ui/Input";
 import {
   MapPin,
@@ -346,6 +347,8 @@ export default function SingleProfilePage() {
   // Amateri-Style Category Publisher Modal State
   const modalFileRef = React.useRef<HTMLInputElement>(null);
   const [modalPreviews, setModalPreviews] = useState<string[]>([]);
+  const [uploadingProgress, setUploadingProgress] = useState<number | null>(null);
+  const [uploadingFileName, setUploadingFileName] = useState<string>("");
   const [publisherModalOpen, setPublisherModalOpen] = useState(false);
   const [publisherType, setPublisherType] = useState<"VIDEO" | "ALBUM">("VIDEO");
   const [pubMonetization, setPubMonetization] = useState<"FREE" | "CREDITS">("FREE");
@@ -519,18 +522,28 @@ export default function SingleProfilePage() {
     setAlbumCommentInput("");
   };
 
-  const handleModalFilesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleModalFilesSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const filesArray = Array.from(e.target.files);
-      filesArray.forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          if (reader.result) {
-            setModalPreviews((prev) => [...prev, reader.result as string]);
-          }
-        };
-        reader.readAsDataURL(file);
-      });
+      const targetFolder = publisherType === "VIDEO" ? "videos" : "photos";
+
+      for (let i = 0; i < filesArray.length; i++) {
+        const file = filesArray[i];
+        setUploadingFileName(file.name);
+        setUploadingProgress(5);
+
+        try {
+          const result = await uploadFileToR2(file, targetFolder, (percent) => {
+            setUploadingProgress(percent);
+          });
+          setModalPreviews((prev) => [...prev, result.publicUrl]);
+        } catch (err: any) {
+          console.error("Cloudflare R2 Direct Upload Error:", err);
+        } finally {
+          setUploadingProgress(null);
+          setUploadingFileName("");
+        }
+      }
     }
   };
 
@@ -718,30 +731,40 @@ export default function SingleProfilePage() {
     setNewAdModalOpen(false);
   };
 
-  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0] && currentUser && currentProfile) {
       const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        const newAvatarUrl = reader.result as string;
-        const updatedUser = { ...currentUser, avatarUrl: newAvatarUrl };
-        const updatedProfile = { ...currentProfile, avatarUrl: newAvatarUrl };
+      try {
+        setUploadingProgress(10);
+        setUploadingFileName("Avatar Photo");
+        const result = await uploadFileToR2(file, "avatars", (percent) => setUploadingProgress(percent));
+        const updatedUser = { ...currentUser, avatarUrl: result.publicUrl };
+        const updatedProfile = { ...currentProfile, avatarUrl: result.publicUrl };
         updateUserProfile(updatedUser, updatedProfile);
-      };
-      reader.readAsDataURL(file);
+      } catch (err) {
+        console.error("Cloudflare R2 Avatar Upload Error:", err);
+      } finally {
+        setUploadingProgress(null);
+        setUploadingFileName("");
+      }
     }
   };
 
-  const handleCoverSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0] && currentUser && currentProfile) {
       const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        const newCoverUrl = reader.result as string;
-        const updatedProfile = { ...currentProfile, coverPhotoUrl: newCoverUrl };
+      try {
+        setUploadingProgress(10);
+        setUploadingFileName("Cover Photo");
+        const result = await uploadFileToR2(file, "covers", (percent) => setUploadingProgress(percent));
+        const updatedProfile = { ...currentProfile, coverPhotoUrl: result.publicUrl };
         updateUserProfile(currentUser, updatedProfile);
-      };
-      reader.readAsDataURL(file);
+      } catch (err) {
+        console.error("Cloudflare R2 Cover Upload Error:", err);
+      } finally {
+        setUploadingProgress(null);
+        setUploadingFileName("");
+      }
     }
   };
 
@@ -1402,9 +1425,33 @@ export default function SingleProfilePage() {
 
               {/* Interactive Photo/Video Upload Area */}
               <div className="space-y-3">
-                <label className="block text-xs font-bold uppercase tracking-wider text-velora-textSecondary">
-                  {publisherType === "VIDEO" ? "Upload Video File" : "Upload Album Photos"}
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-velora-textSecondary">
+                    {publisherType === "VIDEO" ? "Upload Video File" : "Upload Album Photos"}
+                  </label>
+                  <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-500/20 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                    ⚡ Cloudflare R2 Direct Uploads Active
+                  </span>
+                </div>
+
+                {/* Live Cloudflare R2 Upload Progress Indicator */}
+                {uploadingProgress !== null && (
+                  <div className="p-3.5 rounded-2xl bg-amber-400/10 border border-amber-400/30 space-y-2 text-left">
+                    <div className="flex items-center justify-between text-xs text-amber-300 font-semibold">
+                      <span className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 animate-spin text-amber-400" />
+                        Direct R2 Uploading: {uploadingFileName || "file"}...
+                      </span>
+                      <span className="font-mono font-bold text-amber-400">{uploadingProgress}%</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-black/40 overflow-hidden border border-white/10">
+                      <div
+                        className="h-full bg-gradient-to-r from-amber-500 to-amber-300 transition-all duration-300 rounded-full"
+                        style={{ width: `${uploadingProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div
                   onClick={() => modalFileRef.current?.click()}
