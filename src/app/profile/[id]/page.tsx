@@ -109,6 +109,7 @@ interface UserVideoItem {
   description: string;
   duration: string;
   thumbnail: string;
+  videoUrl?: string;
   monetization: "FREE" | "CREDITS";
   creditsPrice?: number;
   category: string;
@@ -292,6 +293,7 @@ export default function SingleProfilePage() {
       description: "Exclusive lifestyle footage along the Monte Carlo coastline.",
       duration: "1:20",
       thumbnail: profile.coverPhotoUrl || profile.avatarUrl,
+      videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
       monetization: "FREE",
       category: "Couple",
       commentPermission: "ANYONE",
@@ -309,6 +311,7 @@ export default function SingleProfilePage() {
       description: "Private moments from our Monaco salon evening.",
       duration: "2:45",
       thumbnail: profile.avatarUrl,
+      videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
       monetization: "CREDITS",
       creditsPrice: 5,
       category: "Woman",
@@ -611,6 +614,7 @@ export default function SingleProfilePage() {
           description: pubDescription || "Verified member video upload.",
           duration: "1:30",
           thumbnail: modalPreviews[0] || profile.avatarUrl,
+          videoUrl: modalPreviews[0] || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
           monetization: pubMonetization,
           creditsPrice: pubMonetization === "CREDITS" ? pubCreditsPrice : undefined,
           category: pubCategory,
@@ -2053,16 +2057,17 @@ export default function SingleProfilePage() {
               </button>
             </div>
 
-            {/* Video Player Box */}
-            <div className="h-64 sm:h-96 w-full bg-black relative flex items-center justify-center group overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={activeViewerVideo.thumbnail} alt={activeViewerVideo.title} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                <div className="w-20 h-20 rounded-full bg-amber-400 text-black flex items-center justify-center shadow-gold-glow cursor-pointer hover:scale-110 transition-transform">
-                  <Play className="w-9 h-9 fill-black ml-1" />
-                </div>
-              </div>
-              <div className="absolute bottom-4 right-4 px-3 py-1 rounded-md bg-black/80 text-amber-300 font-mono text-xs border border-white/20">
+            {/* HTML5 Video Player Box */}
+            <div className="h-64 sm:h-96 w-full bg-black relative flex items-center justify-center overflow-hidden">
+              <video
+                src={activeViewerVideo.videoUrl || activeViewerVideo.thumbnail}
+                poster={activeViewerVideo.thumbnail}
+                controls
+                autoPlay
+                playsInline
+                className="w-full h-full object-contain bg-black"
+              />
+              <div className="absolute top-4 right-4 px-3 py-1 rounded-md bg-black/80 text-amber-300 font-mono text-xs border border-white/20 z-10 pointer-events-none">
                 Duration: {activeViewerVideo.duration}
               </div>
             </div>
