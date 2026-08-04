@@ -39,6 +39,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Trash2,
+  EyeOff,
+  Edit3,
 } from "lucide-react";
 
 const AMATERI_TOPICS = [
@@ -367,6 +369,10 @@ export default function SingleProfilePage() {
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [albumCommentInput, setAlbumCommentInput] = useState("");
 
+  // Editing Media Item State
+  const [editingVideoItem, setEditingVideoItem] = useState<UserVideoItem | null>(null);
+  const [editingAlbumItem, setEditingAlbumItem] = useState<UserPhotoAlbumItem | null>(null);
+
   // Voters List Modal State
   const [votersModalOpen, setVotersModalOpen] = useState(false);
   const [votersListTarget, setVotersListTarget] = useState<{ title: string; voters: MediaVoter[] } | null>(null);
@@ -382,6 +388,70 @@ export default function SingleProfilePage() {
 
   const openVideoViewer = (vid: UserVideoItem) => {
     setActiveViewerVideo(vid);
+  };
+
+  const handleToggleVideoVisibility = (videoId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setUserVideos((prev) =>
+      prev.map((v) => {
+        if (v.id === videoId) {
+          const nextStatus = v.status === "On web" ? "Disabled" : "On web";
+          return { ...v, status: nextStatus };
+        }
+        return v;
+      })
+    );
+  };
+
+  const handleDeleteVideo = (videoId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setUserVideos((prev) => prev.filter((v) => v.id !== videoId));
+  };
+
+  const handleToggleAlbumVisibility = (albumId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setUserPhotoAlbums((prev) =>
+      prev.map((a) => {
+        if (a.id === albumId) {
+          const nextStatus = a.status === "On web" ? "Disabled" : "On web";
+          return { ...a, status: nextStatus };
+        }
+        return a;
+      })
+    );
+  };
+
+  const handleDeleteAlbum = (albumId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setUserPhotoAlbums((prev) => prev.filter((a) => a.id !== albumId));
+  };
+
+  const openEditVideoModal = (vid: UserVideoItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingVideoItem(vid);
+    setPublisherType("VIDEO");
+    setPubTitle(vid.title);
+    setPubDescription(vid.description);
+    setPubMonetization(vid.monetization);
+    setPubCreditsPrice(vid.creditsPrice || 5);
+    setPubCategory(vid.category);
+    setPubCommentSetting(vid.commentPermission === "NOBODY" ? "NOBODY" : vid.commentPermission === "VERIFIED" ? "VERIFIED" : "ANYONE");
+    setPubVotingSetting(vid.votingPermission);
+    setPubSelectedTopics(vid.topics || ["VIP Lifestyle"]);
+    setPublisherModalOpen(true);
+  };
+
+  const openEditAlbumModal = (alb: UserPhotoAlbumItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingAlbumItem(alb);
+    setPublisherType("ALBUM");
+    setPubTitle(alb.title);
+    setPubDescription(alb.description);
+    setPubMonetization(alb.monetization);
+    setPubCreditsPrice(alb.creditsPrice || 10);
+    setPubCategory(alb.category);
+    setPubSelectedTopics(alb.topics || ["VIP Lifestyle"]);
+    setPublisherModalOpen(true);
   };
 
   const handleToggleAlbumVote = (albumId: string, e?: React.MouseEvent) => {
@@ -482,49 +552,93 @@ export default function SingleProfilePage() {
     if (!pubTitle.trim()) return;
 
     if (publisherType === "VIDEO") {
-      const newVideo: UserVideoItem = {
-        id: `vid-${Date.now()}`,
-        title: pubTitle,
-        description: pubDescription || "Verified member video upload.",
-        duration: "1:30",
-        thumbnail: modalPreviews[0] || profile.avatarUrl,
-        monetization: pubMonetization,
-        creditsPrice: pubMonetization === "CREDITS" ? pubCreditsPrice : undefined,
-        category: pubCategory,
-        commentPermission: pubCommentSetting,
-        votingPermission: pubVotingSetting,
-        topics: pubSelectedTopics.length > 0 ? pubSelectedTopics : ["VIP Lifestyle"],
-        views: 1,
-        comments: 0,
-        likes: 0,
-        status: "On web",
-        createdAt: "Just now",
-      };
-      setUserVideos([newVideo, ...userVideos]);
+      if (editingVideoItem) {
+        setUserVideos((prev) =>
+          prev.map((v) =>
+            v.id === editingVideoItem.id
+              ? {
+                  ...v,
+                  title: pubTitle,
+                  description: pubDescription,
+                  thumbnail: modalPreviews[0] || v.thumbnail,
+                  monetization: pubMonetization,
+                  creditsPrice: pubMonetization === "CREDITS" ? pubCreditsPrice : undefined,
+                  category: pubCategory,
+                  commentPermission: pubCommentSetting,
+                  votingPermission: pubVotingSetting,
+                  topics: pubSelectedTopics.length > 0 ? pubSelectedTopics : v.topics,
+                }
+              : v
+          )
+        );
+      } else {
+        const newVideo: UserVideoItem = {
+          id: `vid-${Date.now()}`,
+          title: pubTitle,
+          description: pubDescription || "Verified member video upload.",
+          duration: "1:30",
+          thumbnail: modalPreviews[0] || profile.avatarUrl,
+          monetization: pubMonetization,
+          creditsPrice: pubMonetization === "CREDITS" ? pubCreditsPrice : undefined,
+          category: pubCategory,
+          commentPermission: pubCommentSetting,
+          votingPermission: pubVotingSetting,
+          topics: pubSelectedTopics.length > 0 ? pubSelectedTopics : ["VIP Lifestyle"],
+          views: 1,
+          comments: 0,
+          likes: 0,
+          status: "On web",
+          createdAt: "Just now",
+        };
+        setUserVideos([newVideo, ...userVideos]);
+      }
     } else {
-      const newAlbum: UserPhotoAlbumItem = {
-        id: `alb-${Date.now()}`,
-        title: pubTitle,
-        description: pubDescription || "Verified member photo album.",
-        coverUrl: modalPreviews[0] || profile.avatarUrl,
-        photoCount: modalPreviews.length > 0 ? modalPreviews.length : 1,
-        photos: modalPreviews.length > 0 ? modalPreviews : [profile.avatarUrl],
-        monetization: pubMonetization,
-        creditsPrice: pubMonetization === "CREDITS" ? pubCreditsPrice : undefined,
-        category: pubCategory,
-        topics: pubSelectedTopics.length > 0 ? pubSelectedTopics : ["VIP Lifestyle"],
-        views: 1,
-        comments: 0,
-        likes: 0,
-        status: "On web",
-        createdAt: "Just now",
-      };
-      setUserPhotoAlbums([newAlbum, ...userPhotoAlbums]);
+      if (editingAlbumItem) {
+        setUserPhotoAlbums((prev) =>
+          prev.map((a) =>
+            a.id === editingAlbumItem.id
+              ? {
+                  ...a,
+                  title: pubTitle,
+                  description: pubDescription,
+                  coverUrl: modalPreviews[0] || a.coverUrl,
+                  photos: modalPreviews.length > 0 ? modalPreviews : a.photos,
+                  photoCount: modalPreviews.length > 0 ? modalPreviews.length : a.photoCount,
+                  monetization: pubMonetization,
+                  creditsPrice: pubMonetization === "CREDITS" ? pubCreditsPrice : undefined,
+                  category: pubCategory,
+                  topics: pubSelectedTopics.length > 0 ? pubSelectedTopics : a.topics,
+                }
+              : a
+          )
+        );
+      } else {
+        const newAlbum: UserPhotoAlbumItem = {
+          id: `alb-${Date.now()}`,
+          title: pubTitle,
+          description: pubDescription || "Verified member photo album.",
+          coverUrl: modalPreviews[0] || profile.avatarUrl,
+          photoCount: modalPreviews.length > 0 ? modalPreviews.length : 1,
+          photos: modalPreviews.length > 0 ? modalPreviews : [profile.avatarUrl],
+          monetization: pubMonetization,
+          creditsPrice: pubMonetization === "CREDITS" ? pubCreditsPrice : undefined,
+          category: pubCategory,
+          topics: pubSelectedTopics.length > 0 ? pubSelectedTopics : ["VIP Lifestyle"],
+          views: 1,
+          comments: 0,
+          likes: 0,
+          status: "On web",
+          createdAt: "Just now",
+        };
+        setUserPhotoAlbums([newAlbum, ...userPhotoAlbums]);
+      }
     }
 
     setPubTitle("");
     setPubDescription("");
     setModalPreviews([]);
+    setEditingVideoItem(null);
+    setEditingAlbumItem(null);
     setPublisherModalOpen(false);
   };
 
@@ -837,19 +951,28 @@ export default function SingleProfilePage() {
                         <img src={alb.coverUrl} alt={alb.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         <div className="absolute inset-0 bg-gradient-to-t from-velora-bg via-black/30 to-transparent" />
 
+                        {/* Hidden Overlay when status === Disabled */}
+                        {alb.status === "Disabled" && (
+                          <div className="absolute inset-0 bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center gap-1.5 z-20">
+                            <EyeOff className="w-8 h-8 text-amber-400" />
+                            <span className="text-xs font-bold text-amber-300 uppercase font-mono tracking-wider">HIDDEN FROM PUBLIC VIEW</span>
+                            <p className="text-[10px] text-velora-textMuted">Only visible to you in your manager</p>
+                          </div>
+                        )}
+
                         {/* Top Badges */}
-                        <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                        <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
                           <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase backdrop-blur-md ${
                             alb.status === "On web" ? "bg-emerald-500/30 text-emerald-300 border border-emerald-500/40" : "bg-red-500/30 text-red-300 border border-red-500/40"
                           }`}>
-                            {alb.status}
+                            {alb.status === "Disabled" ? "Hidden" : alb.status}
                           </span>
                           <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-black/60 text-white border border-white/20 backdrop-blur-md">
                             {alb.category}
                           </span>
                         </div>
 
-                        <div className="absolute top-3 right-3">
+                        <div className="absolute top-3 right-3 z-10">
                           {alb.monetization === "CREDITS" ? (
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-amber-400/30 text-amber-300 border border-amber-400/40 backdrop-blur-md flex items-center gap-1">
                               <Coins className="w-3 h-3 text-amber-300" /> {alb.creditsPrice || 10} Credits
@@ -861,7 +984,7 @@ export default function SingleProfilePage() {
                           )}
                         </div>
 
-                        <div className="absolute bottom-3 left-3 right-3 text-left">
+                        <div className="absolute bottom-3 left-3 right-3 text-left z-10">
                           <h4 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors line-clamp-1">{alb.title}</h4>
                           <p className="text-[11px] text-velora-textMuted line-clamp-1">{alb.description}</p>
                         </div>
@@ -905,6 +1028,45 @@ export default function SingleProfilePage() {
                           </button>
                         </div>
                       </div>
+
+                      {/* Owner Actions Toolbar (Hide/Show, Edit, Delete) */}
+                      {isSelf && (
+                        <div className="p-2 bg-black/60 border-t border-white/10 flex items-center justify-between gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => handleToggleAlbumVisibility(alb.id, e)}
+                            className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+                              alb.status === "Disabled"
+                                ? "bg-amber-400/20 text-amber-300 border border-amber-400/40"
+                                : "bg-white/5 text-velora-textMuted hover:text-white border border-white/10"
+                            }`}
+                            title={alb.status === "Disabled" ? "Make album visible on web" : "Hide album completely from members"}
+                          >
+                            {alb.status === "Disabled" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                            <span>{alb.status === "Disabled" ? "Show Album" : "Hide Album"}</span>
+                          </button>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={(e) => openEditAlbumModal(alb, e)}
+                              className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-white/5 text-amber-300 hover:bg-amber-400/20 border border-white/10 flex items-center gap-1 transition-colors"
+                              title="Edit album title, categories & tags"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" /> Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={(e) => handleDeleteAlbum(alb.id, e)}
+                              className="p-1.5 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-colors"
+                              title="Delete album"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -942,6 +1104,15 @@ export default function SingleProfilePage() {
                         <img src={vid.thumbnail} alt={vid.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         <div className="absolute inset-0 bg-gradient-to-t from-velora-bg via-black/40 to-transparent" />
 
+                        {/* Hidden Overlay when status === Disabled */}
+                        {vid.status === "Disabled" && (
+                          <div className="absolute inset-0 bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center gap-1.5 z-20">
+                            <EyeOff className="w-8 h-8 text-amber-400" />
+                            <span className="text-xs font-bold text-amber-300 uppercase font-mono tracking-wider">HIDDEN FROM PUBLIC VIEW</span>
+                            <p className="text-[10px] text-velora-textMuted">Only visible to you in your manager</p>
+                          </div>
+                        )}
+
                         {/* Play Icon Center Button */}
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="w-14 h-14 rounded-full bg-amber-400/90 text-black flex items-center justify-center shadow-gold-glow group-hover:scale-110 transition-transform">
@@ -950,18 +1121,18 @@ export default function SingleProfilePage() {
                         </div>
 
                         {/* Top Badges */}
-                        <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                        <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
                           <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase backdrop-blur-md ${
                             vid.status === "On web" ? "bg-emerald-500/30 text-emerald-300 border border-emerald-500/40" : "bg-red-500/30 text-red-300 border border-red-500/40"
                           }`}>
-                            {vid.status}
+                            {vid.status === "Disabled" ? "Hidden" : vid.status}
                           </span>
                           <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-black/60 text-white border border-white/20 backdrop-blur-md">
                             {vid.category}
                           </span>
                         </div>
 
-                        <div className="absolute top-3 right-3">
+                        <div className="absolute top-3 right-3 z-10">
                           {vid.monetization === "CREDITS" ? (
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-amber-400/30 text-amber-300 border border-amber-400/40 backdrop-blur-md flex items-center gap-1">
                               <Coins className="w-3 h-3 text-amber-300" /> {vid.creditsPrice || 5} Credits
@@ -973,7 +1144,7 @@ export default function SingleProfilePage() {
                           )}
                         </div>
 
-                        <div className="absolute bottom-3 left-3 right-3 text-left">
+                        <div className="absolute bottom-3 left-3 right-3 text-left z-10">
                           <div className="flex items-center justify-between">
                             <h4 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors line-clamp-1">{vid.title}</h4>
                             <span className="text-[10px] text-amber-300 font-mono font-bold bg-black/60 px-2 py-0.5 rounded-md border border-white/10">
@@ -1001,6 +1172,45 @@ export default function SingleProfilePage() {
                           ))}
                         </div>
                       </div>
+
+                      {/* Owner Actions Toolbar (Hide/Show, Edit, Delete) */}
+                      {isSelf && (
+                        <div className="p-2 bg-black/60 border-t border-white/10 flex items-center justify-between gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => handleToggleVideoVisibility(vid.id, e)}
+                            className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+                              vid.status === "Disabled"
+                                ? "bg-amber-400/20 text-amber-300 border border-amber-400/40"
+                                : "bg-white/5 text-velora-textMuted hover:text-white border border-white/10"
+                            }`}
+                            title={vid.status === "Disabled" ? "Make video visible on web" : "Hide video completely from members"}
+                          >
+                            {vid.status === "Disabled" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                            <span>{vid.status === "Disabled" ? "Show Video" : "Hide Video"}</span>
+                          </button>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={(e) => openEditVideoModal(vid, e)}
+                              className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-white/5 text-amber-300 hover:bg-amber-400/20 border border-white/10 flex items-center gap-1 transition-colors"
+                              title="Edit video title, category & monetization"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" /> Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={(e) => handleDeleteVideo(vid.id, e)}
+                              className="p-1.5 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-colors"
+                              title="Delete video"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1168,7 +1378,11 @@ export default function SingleProfilePage() {
               <div className="flex items-center gap-2">
                 <Sparkles className="w-6 h-6 text-velora-gold" />
                 <h2 className="text-xl font-serif font-bold text-white">
-                  Publish New {publisherType === "VIDEO" ? "Video Clip" : "Photo Album"}
+                  {editingVideoItem
+                    ? "Edit Video Clip & Settings"
+                    : editingAlbumItem
+                    ? "Edit Photo Album & Settings"
+                    : `Publish New ${publisherType === "VIDEO" ? "Video Clip" : "Photo Album"}`}
                 </h2>
               </div>
               <p className="text-xs text-velora-textMuted">
@@ -1444,7 +1658,7 @@ export default function SingleProfilePage() {
                   Cancel
                 </Button>
                 <Button variant="gold" size="lg" type="submit" className="w-2/3 text-xs font-bold uppercase tracking-wider shadow-gold-glow">
-                  Publish Content & Category Tags
+                  {editingVideoItem || editingAlbumItem ? "Save Changes" : "Publish Content & Category Tags"}
                 </Button>
               </div>
             </form>
