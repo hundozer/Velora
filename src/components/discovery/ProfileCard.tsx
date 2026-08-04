@@ -41,18 +41,11 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onQuickMessag
           )}
         </div>
 
-        {/* Online Status & Match Score Top Right */}
+        {/* Online Status Top Right */}
         <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5 z-10">
           {profile.isOnline && (
             <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Online
-            </span>
-          )}
-
-          {profile.compatibilityScore && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-gold-gradient text-velora-bg shadow-gold-glow">
-              <Flame className="w-3 h-3 text-velora-bg fill-velora-bg" />
-              {profile.compatibilityScore}% Chemistry
             </span>
           )}
         </div>

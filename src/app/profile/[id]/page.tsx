@@ -914,10 +914,6 @@ export default function SingleProfilePage() {
 
           <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-4 text-xs">
             <div className="flex items-center gap-6 font-mono text-velora-textSecondary">
-              <span className="flex items-center gap-1 text-velora-gold">
-                <Flame className="w-4 h-4 text-amber-400 fill-amber-400" /> {profile.compatibilityScore}% Chemistry Match
-              </span>
-              <span>•</span>
               <span className="text-emerald-400 font-bold flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Active Online
               </span>

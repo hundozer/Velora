@@ -109,10 +109,7 @@ export const MapView: React.FC<MapViewProps> = ({ profiles }) => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-white/10">
-              <span className="text-[10px] font-mono text-amber-300 font-bold">
-                {selectedProfile.compatibilityScore}% Chemistry Match
-              </span>
+            <div className="flex items-center justify-end pt-2 border-t border-white/10">
               <Link href={`/profile/${selectedProfile.id}`}>
                 <Button variant="gold" size="sm" className="text-[10px] font-bold uppercase tracking-wider shadow-gold-glow py-1 px-3">
                   Enter Profile
