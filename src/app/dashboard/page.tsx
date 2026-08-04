@@ -28,6 +28,15 @@ import {
   Send,
   X,
   Layers,
+  Bookmark,
+  Users,
+  Bell,
+  CheckCircle2,
+  PlusCircle,
+  Clock,
+  ChevronRight,
+  Newspaper,
+  UserCheck,
 } from "lucide-react";
 
 export interface FeedComment {
@@ -45,19 +54,23 @@ export interface FeedPost {
     displayName: string;
     avatarUrl: string;
     isVerified: boolean;
+    genderSymbol: "♀" | "♂" | "👫";
     location: string;
   };
-  type: "ALBUM" | "VIDEO" | "DATING_AD";
+  type: "ALBUM" | "VIDEO" | "DATING_AD" | "TEXT";
   title: string;
   description: string;
   category: string;
+  region: string;
   createdAt: string;
   photos?: string[];
+  remainingPhotosCount?: number;
   videoUrl?: string;
   duration?: string;
   views: number;
   likes: number;
   hasLiked?: boolean;
+  isSaved?: boolean;
   comments: FeedComment[];
 }
 
@@ -66,60 +79,59 @@ const INITIAL_FEED_POSTS: FeedPost[] = [
     id: "feed-1",
     author: {
       id: "prof-1",
-      displayName: "Alex",
-      avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80",
+      displayName: "Three & Desire",
+      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
       isVerified: true,
+      genderSymbol: "👫",
       location: "Prague, Czech Republic",
     },
-    type: "VIDEO",
-    title: "Private Riviera Yacht Teaser 🛥️",
-    description: "Exclusive sunset lifestyle footage along the Monte Carlo coastline with champagne.",
-    category: "Couple",
-    createdAt: "15 mins ago",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-    duration: "1:20",
-    views: 1420,
-    likes: 189,
+    type: "DATING_AD",
+    title: "Weekend Salon & Private Getaway Connection",
+    category: "Couple seeking man",
+    region: "Prague Region",
+    createdAt: "5 minutes ago",
+    description:
+      "We want to enjoy ourselves. If you also have the desire for discreet high-end chemistry and time this weekend, please write a few sentences about yourself so we can connect. 😉",
+    views: 890,
+    likes: 42,
     hasLiked: false,
-    comments: [
-      {
-        id: "c-1",
-        authorName: "Valerie",
-        authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
-        text: "Stunning views! We love the French Riviera vibes.",
-        createdAt: "10 mins ago",
-      },
-    ],
+    isSaved: false,
+    comments: [],
   },
   {
     id: "feed-2",
     author: {
       id: "prof-2",
-      displayName: "Valerie",
-      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+      displayName: "TmaziMary",
+      avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80",
       isVerified: true,
+      genderSymbol: "♀",
       location: "Munich, Germany",
     },
     type: "ALBUM",
-    title: "Monaco Salon Evening & High Fashion 🥂",
-    description: "Capturing candid intimate moments from our private suite in Monaco.",
+    title: "Red Silk & Late Night Monaco Memories 👠",
     category: "Solo Woman",
-    createdAt: "45 mins ago",
+    region: "Bavaria & Riviera",
+    createdAt: "18 minutes ago",
+    description: "Capturing candid intimate moments from our private suite overlooking the harbor.",
     photos: [
       "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80",
       "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=80",
       "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1200&q=80",
     ],
-    views: 2180,
-    likes: 312,
+    remainingPhotosCount: 10,
+    views: 3410,
+    likes: 489,
     hasLiked: true,
+    isSaved: true,
     comments: [
       {
-        id: "c-2",
-        authorName: "Marcus & Sophia",
-        authorAvatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=150&q=80",
-        text: "Gorgeous outfit and lighting! ✨",
-        createdAt: "30 mins ago",
+        id: "c-1",
+        authorName: "Alex",
+        authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
+        text: "Stunning aesthetic Mary! The red dress is breathtaking.",
+        createdAt: "10 minutes ago",
       },
     ],
   },
@@ -130,93 +142,100 @@ const INITIAL_FEED_POSTS: FeedPost[] = [
       displayName: "Marcus & Sophia",
       avatarUrl: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=800&q=80",
       isVerified: true,
+      genderSymbol: "👫",
       location: "Berlin, Germany",
     },
     type: "VIDEO",
     title: "Late Night Lounge & Champagne Vault",
-    description: "Private moments from our Monaco salon evening with curated electronic music.",
     category: "VIP Lifestyle",
-    createdAt: "2 hours ago",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-    duration: "2:45",
-    views: 3150,
-    likes: 420,
+    region: "Berlin & Vienna",
+    createdAt: "1 hour ago",
+    description: "Private moments from our Monaco salon evening with curated electronic beats.",
+    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    duration: "1:20",
+    views: 4120,
+    likes: 620,
     hasLiked: false,
-    comments: [],
-  },
-  {
-    id: "feed-4",
-    author: {
-      id: "prof-4",
-      displayName: "Elena",
-      avatarUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80",
-      isVerified: true,
-      location: "Vienna, Austria",
-    },
-    type: "DATING_AD",
-    title: "Seeking Discreet Dinner & Opera Companion in Vienna 🍷",
-    description: "Looking for an open-minded gentleman or couple to join me for a luxury evening at the Vienna State Opera.",
-    category: "VIP Dining & Lounge",
-    createdAt: "3 hours ago",
-    views: 890,
-    likes: 95,
-    hasLiked: false,
+    isSaved: false,
     comments: [],
   },
 ];
 
-const CATEGORIES = [
-  "ALL CATEGORIES",
-  "Couple",
-  "Solo Woman",
-  "VIP Lifestyle",
-  "Outdoor & Travel",
-  "Soft Erotica",
-  "Fetish & Details",
-  "VIP Dining & Lounge",
+const SIDEBAR_BEST_ALBUMS = [
+  {
+    id: "best-1",
+    title: "Riviera Glamour",
+    imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80",
+    views: "12.4k",
+  },
+  {
+    id: "best-2",
+    title: "Midnight Lace",
+    imageUrl: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=600&q=80",
+    views: "9.8k",
+  },
+];
+
+const SIDEBAR_LATEST_ALBUMS = [
+  "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80",
+  "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=400&q=80",
+  "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=400&q=80",
+  "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=400&q=80",
+];
+
+const RECENT_VISITORS = [
+  { id: "vrs-1", name: "vrs", gender: "♂", isVerified: true, avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80" },
+  { id: "vrs-2", name: "Miss_Mysterious", gender: "♀", isVerified: true, avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" },
+  { id: "vrs-3", name: "Belive10", gender: "♀", isVerified: true, avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80" },
+  { id: "vrs-4", name: "I understand.", gender: "♀", isVerified: true, avatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=150&q=80" },
+  { id: "vrs-5", name: "DODO0666", gender: "♂", isVerified: true, hasMessage: true, avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80" },
 ];
 
 export default function DashboardPage() {
-  const { profile, role } = useAuth();
+  const { profile } = useAuth();
 
   // Feed State
   const [feedPosts, setFeedPosts] = useState<FeedPost[]>(INITIAL_FEED_POSTS);
 
-  // Filters State
-  const [selectedType, setSelectedType] = useState<"ALL" | "ALBUM" | "VIDEO" | "DATING_AD">("ALL");
-  const [selectedCategory, setSelectedCategory] = useState<string>("ALL CATEGORIES");
-  const [verifiedOnlyFilter, setVerifiedOnlyFilter] = useState<boolean>(false);
+  // Nav & Filter Tabs
+  const [activeNavTab, setActiveNavTab] = useState<"NEWEST" | "FOLLOWED" | "FRIENDS">("FOLLOWED");
+  const [activeFilterPill, setActiveFilterPill] = useState<string>("ALL");
 
-  // Active Lightbox / Comments State
+  // Publisher Input State
+  const [publisherInput, setPublisherInput] = useState("");
+
+  // Lightbox Modal
   const [activePhotoModal, setActivePhotoModal] = useState<{ photos: string[]; title: string; index: number } | null>(null);
+
+  // Comment Inputs State
   const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
 
-  // Filtered Posts Logic
   const filteredPosts = useMemo(() => {
     return feedPosts.filter((post) => {
-      // Filter by Type
-      if (selectedType !== "ALL" && post.type !== selectedType) return false;
-      // Filter by Category
-      if (selectedCategory !== "ALL CATEGORIES" && post.category !== selectedCategory) return false;
-      // Filter by Verified Only
-      if (verifiedOnlyFilter && !post.author.isVerified) return false;
+      if (activeFilterPill === "ALL") return true;
+      if (activeFilterPill === "ALBUM" && post.type === "ALBUM") return true;
+      if (activeFilterPill === "VIDEOS" && post.type === "VIDEO") return true;
+      if (activeFilterPill === "DATING" && post.type === "DATING_AD") return true;
+      if (activeFilterPill === "TEXT" && post.type === "TEXT") return true;
       return true;
     });
-  }, [feedPosts, selectedType, selectedCategory, verifiedOnlyFilter]);
+  }, [feedPosts, activeFilterPill]);
 
   const handleToggleLike = (postId: string) => {
     setFeedPosts((prev) =>
-      prev.map((post) => {
-        if (post.id === postId) {
-          const hasLiked = !post.hasLiked;
-          return {
-            ...post,
-            hasLiked,
-            likes: hasLiked ? post.likes + 1 : post.likes - 1,
-          };
+      prev.map((p) => {
+        if (p.id === postId) {
+          const hasLiked = !p.hasLiked;
+          return { ...p, hasLiked, likes: hasLiked ? p.likes + 1 : p.likes - 1 };
         }
-        return post;
+        return p;
       })
+    );
+  };
+
+  const handleToggleSave = (postId: string) => {
+    setFeedPosts((prev) =>
+      prev.map((p) => (p.id === postId ? { ...p, isSaved: !p.isSaved } : p))
     );
   };
 
@@ -225,7 +244,7 @@ export default function DashboardPage() {
     if (!text) return;
 
     const newComment: FeedComment = {
-      id: `comment-${Date.now()}`,
+      id: `c-${Date.now()}`,
       authorName: profile?.displayName || "Me",
       authorAvatar: profile?.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
       text,
@@ -233,294 +252,318 @@ export default function DashboardPage() {
     };
 
     setFeedPosts((prev) =>
-      prev.map((post) => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            comments: [...post.comments, newComment],
-          };
-        }
-        return post;
-      })
+      prev.map((p) => (p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p))
     );
 
     setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
   };
 
+  const handleCreatePost = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!publisherInput.trim()) return;
+
+    const newPost: FeedPost = {
+      id: `post-${Date.now()}`,
+      author: {
+        id: "me",
+        displayName: profile?.displayName || "Prince Charming",
+        avatarUrl: profile?.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
+        isVerified: true,
+        genderSymbol: "♂",
+        location: "Monaco & Prague",
+      },
+      type: "TEXT",
+      title: "Intimate Thoughts & Update",
+      category: "Personal Post",
+      region: "Prague Region",
+      createdAt: "Just now",
+      description: publisherInput.trim(),
+      views: 1,
+      likes: 0,
+      hasLiked: false,
+      comments: [],
+    };
+
+    setFeedPosts([newPost, ...feedPosts]);
+    setPublisherInput("");
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-left">
-      {/* Welcome Banner */}
-      <div className="relative glass-panel-gold rounded-3xl p-6 sm:p-8 shadow-gold-glow overflow-hidden">
-        <div className="relative z-10 space-y-2">
-          <div className="flex items-center gap-3">
-            <Badge type={role === "CREATOR" ? "creator" : role === "COUPLE" ? "couple" : role === "ADMIN" ? "admin" : "verified"} />
-            <span className="text-xs text-velora-textMuted uppercase tracking-widest font-mono">
-              Member Feed • Real-Time Stream
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-velora-textPrimary">
-            Welcome back, <span className="gold-gradient-text">{profile?.displayName || "Intimo Member"}</span>
-          </h1>
-          <p className="text-xs text-velora-textSecondary max-w-xl">
-            Browse the latest verified photos, HD lifestyle video clips, and personal announcements uploaded by members.
-          </p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 text-left">
+      {/* 3-Column Layout Grid matching Reference */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* LEFT SIDEBAR (Col-Span 3) */}
+        <aside className="lg:col-span-3 space-y-6">
+          {/* Best Albums Card */}
+          <Card variant="goldBorder" className="p-4 space-y-3 bg-velora-card">
+            <h3 className="text-sm font-bold text-amber-300 flex items-center justify-between border-b border-white/10 pb-2">
+              <span className="flex items-center gap-1.5">
+                <Flame className="w-4 h-4 text-amber-400 fill-amber-400" /> Best Albums
+              </span>
+              <span className="text-[10px] text-velora-textMuted uppercase font-mono">Popular</span>
+            </h3>
 
-          <div className="flex flex-wrap gap-3 pt-2">
-            <Link href="/discovery">
-              <Button variant="gold" size="sm" className="font-bold uppercase tracking-wider gap-2 text-xs">
-                <Compass className="w-4 h-4" />
-                Launch Discovery Map
-              </Button>
-            </Link>
-            <Link href="/profile/me">
-              <Button variant="glass" size="sm" className="font-bold uppercase tracking-wider gap-2 text-xs border-amber-400/40 text-amber-300">
-                <ImageIcon className="w-4 h-4 text-amber-400" />
-                Upload Photo & Video
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Dynamic Feed Filter Bar */}
-      <Card variant="goldBorder" className="p-4 sm:p-5 space-y-4 bg-velora-card">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal className="w-5 h-5 text-velora-gold" />
-            <h2 className="text-base font-serif font-bold text-white">
-              Filter Feed Content ({filteredPosts.length} Items)
-            </h2>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <label className="text-xs font-semibold text-velora-textMuted flex items-center gap-1.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={verifiedOnlyFilter}
-                onChange={(e) => setVerifiedOnlyFilter(e.target.checked)}
-                className="w-4 h-4 accent-amber-400 rounded cursor-pointer"
-              />
-              <ShieldCheck className="w-4 h-4 text-emerald-400" /> Verified Adult Members Only
-            </label>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-white/10">
-          {/* Content Type Filter Pills */}
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedType("ALL")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold uppercase transition-all flex items-center gap-1.5 ${
-                selectedType === "ALL"
-                  ? "bg-amber-400 text-black shadow-gold-glow"
-                  : "bg-white/5 text-velora-textSecondary hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" /> All Feed Media
-            </button>
-
-            <button
-              onClick={() => setSelectedType("ALBUM")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold uppercase transition-all flex items-center gap-1.5 ${
-                selectedType === "ALBUM"
-                  ? "bg-amber-400 text-black shadow-gold-glow"
-                  : "bg-white/5 text-velora-textSecondary hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              <ImageIcon className="w-3.5 h-3.5" /> Photos & Albums
-            </button>
-
-            <button
-              onClick={() => setSelectedType("VIDEO")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold uppercase transition-all flex items-center gap-1.5 ${
-                selectedType === "VIDEO"
-                  ? "bg-amber-400 text-black shadow-gold-glow"
-                  : "bg-white/5 text-velora-textSecondary hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              <VideoIcon className="w-3.5 h-3.5" /> HD Video Clips
-            </button>
-
-            <button
-              onClick={() => setSelectedType("DATING_AD")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold uppercase transition-all flex items-center gap-1.5 ${
-                selectedType === "DATING_AD"
-                  ? "bg-amber-400 text-black shadow-gold-glow"
-                  : "bg-white/5 text-velora-textSecondary hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              <Megaphone className="w-3.5 h-3.5" /> Dating Ads
-            </button>
-          </div>
-
-          {/* Category Dropdown */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-velora-textMuted shrink-0">Category:</span>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-white focus:outline-none focus:border-amber-400"
-            >
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat} className="bg-velora-card text-white">
-                  {cat}
-                </option>
+            <div className="space-y-3">
+              {SIDEBAR_BEST_ALBUMS.map((alb) => (
+                <div key={alb.id} className="relative h-44 rounded-2xl bg-black overflow-hidden border border-white/10 group cursor-pointer">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={alb.imageUrl} alt={alb.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-white">
+                    <span className="font-bold drop-shadow-md">{alb.title}</span>
+                    <span className="text-[10px] font-mono text-amber-300 bg-black/60 px-2 py-0.5 rounded-full border border-white/10">
+                      {alb.views} views
+                    </span>
+                  </div>
+                </div>
               ))}
-            </select>
-          </div>
-        </div>
-      </Card>
-
-      {/* Main Chronological Media Stream */}
-      <div className="space-y-6">
-        {filteredPosts.length === 0 ? (
-          <Card variant="glass" className="p-12 text-center text-xs text-velora-textMuted italic space-y-2">
-            <p>No media posts found matching your filter selection.</p>
-            <button
-              onClick={() => {
-                setSelectedType("ALL");
-                setSelectedCategory("ALL CATEGORIES");
-                setVerifiedOnlyFilter(false);
-              }}
-              className="text-amber-400 underline font-bold uppercase tracking-wider text-[11px]"
-            >
-              Reset Filters
-            </button>
+            </div>
           </Card>
-        ) : (
-          filteredPosts.map((post) => (
-            <Card
-              key={post.id}
-              variant="goldBorder"
-              className="p-5 sm:p-6 space-y-4 bg-velora-card/95 relative overflow-hidden"
-            >
-              {/* Post Author Header */}
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                <div className="flex items-center gap-3">
-                  <Link href={`/profile/${post.author.id}`} className="shrink-0">
-                    <div className="w-11 h-11 rounded-full border-2 border-amber-400/40 overflow-hidden hover:scale-105 transition-transform">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={post.author.avatarUrl} alt={post.author.displayName} className="w-full h-full object-cover" />
-                    </div>
-                  </Link>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <Link href={`/profile/${post.author.id}`} className="font-bold text-white hover:text-amber-300 transition-colors">
-                        {post.author.displayName}
-                      </Link>
-                      {post.author.isVerified && (
-                        <span title="Biometric Verified Adult">
-                          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-velora-textMuted flex items-center gap-1 mt-0.5">
-                      <MapPin className="w-3 h-3 text-amber-400" /> {post.author.location} • <span className="font-mono text-amber-300/80">{post.createdAt}</span>
-                    </p>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-amber-400/20 text-amber-300 border border-amber-400/40 font-mono">
-                    {post.category}
-                  </span>
+          {/* Latest Albums (2x2 Grid) */}
+          <Card variant="glass" className="p-4 space-y-3">
+            <h3 className="text-sm font-bold text-white flex items-center gap-1.5 border-b border-white/10 pb-2">
+              <ImageIcon className="w-4 h-4 text-amber-400" /> Latest Albums
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              {SIDEBAR_LATEST_ALBUMS.map((imgUrl, idx) => (
+                <div key={idx} className="h-28 rounded-xl bg-black border border-white/10 overflow-hidden group cursor-pointer">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={imgUrl} alt="Latest album" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Best Videos Card */}
+          <Card variant="glass" className="p-4 space-y-3">
+            <h3 className="text-sm font-bold text-white flex items-center gap-1.5 border-b border-white/10 pb-2">
+              <VideoIcon className="w-4 h-4 text-red-400" /> Best Videos
+            </h3>
+            <div className="relative h-40 rounded-2xl bg-black border border-white/10 overflow-hidden group cursor-pointer">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80" alt="Best Video" className="w-full h-full object-cover opacity-80" />
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-amber-400 text-black flex items-center justify-center shadow-gold-glow group-hover:scale-110 transition-transform">
+                  <Play className="w-6 h-6 fill-black ml-0.5" />
                 </div>
               </div>
-
-              {/* Title & Description */}
-              <div className="space-y-1">
-                <h3 className="text-lg font-serif font-bold text-white">{post.title}</h3>
-                <p className="text-xs text-velora-textSecondary leading-relaxed">{post.description}</p>
+              <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/80 text-[10px] font-mono text-amber-300 border border-white/20">
+                Full HD • 0:30
               </div>
+            </div>
+          </Card>
+        </aside>
 
-              {/* MEDIA RENDERER */}
-              {post.type === "ALBUM" && post.photos && post.photos.length > 0 && (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    {post.photos.map((photo, idx) => (
-                      <div
-                        key={idx}
-                        onClick={() => setActivePhotoModal({ photos: post.photos!, title: post.title, index: idx })}
-                        className="h-56 rounded-2xl bg-black border border-white/10 relative overflow-hidden group cursor-pointer"
-                      >
+        {/* CENTER MAIN FEED (Col-Span 6) */}
+        <main className="lg:col-span-6 space-y-6">
+          
+          {/* Top Publisher Composer Bar */}
+          <Card variant="goldBorder" className="p-4 bg-velora-card space-y-3">
+            <form onSubmit={handleCreatePost} className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full border border-amber-400/40 overflow-hidden shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={profile?.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d"} alt="Me" className="w-full h-full object-cover" />
+              </div>
+              <input
+                type="text"
+                value={publisherInput}
+                onChange={(e) => setPublisherInput(e.target.value)}
+                placeholder="What are you thinking about?"
+                className="w-full px-4 py-2.5 rounded-full bg-white/5 border border-white/10 text-xs text-white placeholder-velora-textMuted focus:outline-none focus:border-amber-400 transition-colors"
+              />
+              <Button type="submit" variant="gold" size="sm" className="rounded-full text-xs font-bold shrink-0 px-4">
+                Post
+              </Button>
+            </form>
+          </Card>
+
+          {/* Sub-Navigation Tabs & Filter Pills Bar */}
+          <Card variant="glass" className="p-4 space-y-4">
+            {/* Top Sub-Nav Tabs: Newest | Followed | Friends */}
+            <div className="flex items-center gap-6 border-b border-white/10 pb-3 text-xs font-bold">
+              <button
+                onClick={() => setActiveNavTab("NEWEST")}
+                className={`transition-colors relative pb-1 ${
+                  activeNavTab === "NEWEST" ? "text-amber-400" : "text-velora-textMuted hover:text-white"
+                }`}
+              >
+                Newest
+                {activeNavTab === "NEWEST" && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400 rounded-full" />}
+              </button>
+
+              <button
+                onClick={() => setActiveNavTab("FOLLOWED")}
+                className={`transition-colors relative pb-1 ${
+                  activeNavTab === "FOLLOWED" ? "text-amber-400" : "text-velora-textMuted hover:text-white"
+                }`}
+              >
+                Followed
+                {activeNavTab === "FOLLOWED" && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400 rounded-full" />}
+              </button>
+
+              <button
+                onClick={() => setActiveNavTab("FRIENDS")}
+                className={`transition-colors relative pb-1 ${
+                  activeNavTab === "FRIENDS" ? "text-amber-400" : "text-velora-textMuted hover:text-white"
+                }`}
+              >
+                Friends
+                {activeNavTab === "FRIENDS" && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400 rounded-full" />}
+              </button>
+            </div>
+
+            {/* Content Type Filter Pills */}
+            <div className="flex flex-wrap gap-2 text-xs font-bold">
+              {[
+                { id: "ALL", label: "All" },
+                { id: "ALBUM", label: "Album" },
+                { id: "VIDEOS", label: "Videos" },
+                { id: "TEXT", label: "Text posts" },
+                { id: "DATING", label: "Dating" },
+                { id: "STORIES", label: "Stories" },
+                { id: "BLOGS", label: "Blogs" },
+              ].map((pill) => (
+                <button
+                  key={pill.id}
+                  onClick={() => setActiveFilterPill(pill.id)}
+                  className={`px-4 py-1.5 rounded-full transition-all text-[11px] uppercase tracking-wider ${
+                    activeFilterPill === pill.id
+                      ? "bg-amber-400 text-black shadow-gold-glow font-bold"
+                      : "bg-white/5 text-velora-textSecondary hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  {pill.label}
+                </button>
+              ))}
+            </div>
+          </Card>
+
+          {/* Main Feed Posts Stream */}
+          <div className="space-y-6">
+            {filteredPosts.length === 0 ? (
+              <Card variant="glass" className="p-8 text-center text-xs text-velora-textMuted italic">
+                No posts found for this filter tab.
+              </Card>
+            ) : (
+              filteredPosts.map((post) => (
+                <Card key={post.id} variant="goldBorder" className="p-6 space-y-4 bg-velora-card relative overflow-hidden">
+                  
+                  {/* Post Header: Avatar, Name, Gender Symbol, Verified Badge, Time */}
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-full border-2 border-amber-400/40 overflow-hidden shrink-0">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={photo}
-                          alt={`${post.title} photo ${idx + 1}`}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <span className="text-xs font-bold text-white bg-black/70 px-3 py-1.5 rounded-full border border-white/20">
-                            Click to View Photo
-                          </span>
-                        </div>
+                        <img src={post.author.avatarUrl} alt={post.author.displayName} className="w-full h-full object-cover" />
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
-              {post.type === "VIDEO" && post.videoUrl && (
-                <div className="h-72 sm:h-96 w-full rounded-2xl bg-black border border-white/10 relative overflow-hidden">
-                  <video
-                    src={post.videoUrl}
-                    controls
-                    playsInline
-                    className="w-full h-full object-contain bg-black"
-                  />
-                  {post.duration && (
-                    <div className="absolute top-3 right-3 px-2.5 py-0.5 rounded-md bg-black/80 text-amber-300 font-mono text-[11px] border border-white/20 z-10 pointer-events-none">
-                      Duration: {post.duration}
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-white text-sm">{post.author.displayName}</span>
+                          <span className="text-amber-400 font-bold text-xs">{post.author.genderSymbol}</span>
+                          {post.author.isVerified && (
+                            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                          )}
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 ml-1" />
+                        </div>
+                        <p className="text-[11px] text-velora-textMuted font-mono mt-0.5">{post.createdAt}</p>
+                      </div>
+                    </div>
+
+                    <button className="text-velora-textMuted hover:text-white p-1">
+                      •••
+                    </button>
+                  </div>
+
+                  {/* Title & Category Badges */}
+                  <div className="space-y-2">
+                    <h3 className="text-base font-serif font-bold text-amber-300">{post.title}</h3>
+
+                    <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase font-mono">
+                      <span className="px-2.5 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                        {post.category}
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-md bg-blue-500/20 text-blue-300 border border-blue-500/40 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-blue-400" /> {post.region}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-velora-textSecondary leading-relaxed pt-1">{post.description}</p>
+                  </div>
+
+                  {/* MEDIA RENDERERS */}
+                  {post.type === "ALBUM" && post.photos && post.photos.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+                      {post.photos.slice(0, 4).map((photo, idx) => {
+                        const isLast = idx === 3 && post.remainingPhotosCount;
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => setActivePhotoModal({ photos: post.photos!, title: post.title, index: idx })}
+                            className="h-44 rounded-xl bg-black border border-white/10 relative overflow-hidden group cursor-pointer"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={photo} alt="Photo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            {isLast && (
+                              <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center">
+                                <span className="text-lg font-bold text-white">+{post.remainingPhotosCount}</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
-                </div>
-              )}
 
-              {post.type === "DATING_AD" && (
-                <div className="p-5 rounded-2xl bg-white/5 border border-amber-400/30 text-xs space-y-2">
-                  <div className="flex items-center gap-2 text-amber-300 font-bold">
-                    <Megaphone className="w-4 h-4" /> Personal Dating Announcement
+                  {post.type === "VIDEO" && post.videoUrl && (
+                    <div className="h-64 sm:h-80 w-full rounded-2xl bg-black border border-white/10 relative overflow-hidden mt-2">
+                      <video src={post.videoUrl} controls playsInline className="w-full h-full object-contain bg-black" />
+                      {post.duration && (
+                        <div className="absolute top-3 right-3 px-2.5 py-0.5 rounded bg-black/80 text-amber-300 font-mono text-[10px] border border-white/20 z-10 pointer-events-none">
+                          Full HD • {post.duration}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Post Actions Bar: Reply | Save / Favorite | Like */}
+                  <div className="flex items-center justify-between pt-3 border-t border-white/10 text-xs">
+                    <button
+                      onClick={() => {
+                        const inputEl = document.getElementById(`input-${post.id}`);
+                        if (inputEl) inputEl.focus();
+                      }}
+                      className="flex items-center gap-1.5 text-amber-300 hover:underline font-bold"
+                    >
+                      <MessageSquare className="w-4 h-4" /> Reply
+                    </button>
+
+                    <button
+                      onClick={() => handleToggleSave(post.id)}
+                      className={`flex items-center gap-1.5 font-bold transition-all ${
+                        post.isSaved ? "text-amber-400" : "text-velora-textMuted hover:text-white"
+                      }`}
+                    >
+                      <Bookmark className={`w-4 h-4 ${post.isSaved ? "fill-amber-400" : ""}`} /> Save
+                    </button>
+
+                    <button
+                      onClick={() => handleToggleLike(post.id)}
+                      className={`flex items-center gap-1.5 font-bold px-3 py-1 rounded-full border transition-all ${
+                        post.hasLiked
+                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                          : "bg-white/5 text-velora-textMuted border-white/10 hover:text-amber-300"
+                      }`}
+                    >
+                      <ThumbsUp className="w-4 h-4" /> {post.likes} Likes
+                    </button>
                   </div>
-                  <p className="text-velora-textSecondary leading-relaxed">{post.description}</p>
-                </div>
-              )}
 
-              {/* Post Footer & Social Interactions */}
-              <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs text-velora-textMuted">
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => handleToggleLike(post.id)}
-                    className={`flex items-center gap-1.5 font-bold transition-all px-3 py-1.5 rounded-full border ${
-                      post.hasLiked
-                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                        : "bg-white/5 text-velora-textSecondary border-white/10 hover:text-amber-300"
-                    }`}
-                  >
-                    <ThumbsUp className={`w-4 h-4 ${post.hasLiked ? "fill-emerald-400 text-emerald-400" : ""}`} />
-                    <span>{post.likes} Likes</span>
-                  </button>
-
-                  <span className="flex items-center gap-1 font-mono">
-                    <Eye className="w-4 h-4 text-amber-400" /> {post.views} Views
-                  </span>
-                </div>
-
-                <Link href={`/profile/${post.author.id}`}>
-                  <Button variant="glass" size="sm" className="text-xs font-bold border-white/20">
-                    View Member Profile
-                  </Button>
-                </Link>
-              </div>
-
-              {/* Interactive Comments Section */}
-              <div className="pt-3 border-t border-white/10 space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full border border-amber-400/40 overflow-hidden shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={profile?.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d"} alt="Me" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-1 flex items-center gap-2">
-                    <Input
+                  {/* Comment Input */}
+                  <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                    <input
+                      id={`input-${post.id}`}
                       type="text"
                       value={commentInputs[post.id] || ""}
                       onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
@@ -530,44 +573,114 @@ export default function DashboardPage() {
                           handleAddComment(post.id);
                         }
                       }}
-                      placeholder="Write a comment on this feed item..."
-                      className="text-xs bg-white/5 border-white/10"
+                      placeholder="Write a reply..."
+                      className="w-full px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-white focus:outline-none focus:border-amber-400"
                     />
-                    <Button
-                      variant="gold"
-                      size="sm"
-                      onClick={() => handleAddComment(post.id)}
-                      className="text-xs font-bold shrink-0"
-                    >
-                      <Send className="w-3.5 h-3.5 mr-1" /> Post
+                    <Button variant="gold" size="sm" onClick={() => handleAddComment(post.id)} className="text-[11px] font-bold shrink-0">
+                      Post
                     </Button>
                   </div>
-                </div>
 
-                {/* Render Posted Comments */}
-                {post.comments.length > 0 && (
-                  <div className="space-y-2 pt-1">
-                    {post.comments.map((c) => (
-                      <div key={c.id} className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-start gap-3 text-xs">
-                        <div className="w-7 h-7 rounded-full border border-amber-400/30 overflow-hidden shrink-0 mt-0.5">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={c.authorAvatar} alt={c.authorName} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-amber-300">{c.authorName}</span>
-                            <span className="text-[10px] text-velora-textMuted font-mono">{c.createdAt}</span>
+                  {/* Comments List */}
+                  {post.comments.length > 0 && (
+                    <div className="space-y-2 pt-1">
+                      {post.comments.map((c) => (
+                        <div key={c.id} className="p-2.5 rounded-xl bg-white/5 border border-white/10 flex items-start gap-2.5 text-xs">
+                          <div className="w-7 h-7 rounded-full border border-amber-400/30 overflow-hidden shrink-0 mt-0.5">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={c.authorAvatar} alt={c.authorName} className="w-full h-full object-cover" />
                           </div>
-                          <p className="text-velora-textSecondary mt-0.5 leading-relaxed">{c.text}</p>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-amber-300">{c.authorName}</span>
+                              <span className="text-[10px] text-velora-textMuted font-mono">{c.createdAt}</span>
+                            </div>
+                            <p className="text-velora-textSecondary mt-0.5 leading-relaxed">{c.text}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              ))
+            )}
+          </div>
+        </main>
+
+        {/* RIGHT SIDEBAR (Col-Span 3) */}
+        <aside className="lg:col-span-3 space-y-6">
+          
+          {/* Platform News & Updates Card */}
+          <Card variant="goldBorder" className="p-4 space-y-3 bg-velora-card">
+            <h3 className="text-sm font-bold text-amber-300 flex items-center justify-between border-b border-white/10 pb-2">
+              <span className="flex items-center gap-1.5">
+                <Newspaper className="w-4 h-4 text-amber-400" /> Platform News
+              </span>
+              <span className="text-[10px] text-velora-textMuted font-mono">Updates</span>
+            </h3>
+
+            <div className="space-y-2 text-xs">
+              <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 space-y-1">
+                <span className="text-[10px] font-mono text-amber-400 font-bold">6/17</span>
+                <p className="text-white font-semibold">Direct Cloudflare R2 Uploads Active</p>
+                <p className="text-[11px] text-velora-textMuted">Upload videos up to 4 GB with direct presigned cloud URLs.</p>
               </div>
-            </Card>
-          ))
-        )}
+
+              <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 space-y-1">
+                <span className="text-[10px] font-mono text-amber-400 font-bold">6/5</span>
+                <p className="text-white font-semibold">Member Identity Verification</p>
+                <p className="text-[11px] text-velora-textMuted">Submit handwritten note selfies for manual admin approval.</p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Online Friends / Active Members */}
+          <Card variant="glass" className="p-4 space-y-3">
+            <h3 className="text-sm font-bold text-white flex items-center justify-between border-b border-white/10 pb-2">
+              <span className="flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-emerald-400" /> Online Friends
+              </span>
+              <span className="text-[10px] text-emerald-400 font-mono">Active</span>
+            </h3>
+            <p className="text-xs text-velora-textMuted italic">No friends online right now.</p>
+          </Card>
+
+          {/* Recent Profile Visits */}
+          <Card variant="glass" className="p-4 space-y-3">
+            <h3 className="text-sm font-bold text-white flex items-center gap-1.5 border-b border-white/10 pb-2">
+              <UserCheck className="w-4 h-4 text-blue-400" /> Recent Visits
+            </h3>
+
+            <div className="space-y-2.5">
+              {RECENT_VISITORS.map((v) => (
+                <div key={v.id} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full border border-amber-400/40 overflow-hidden shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={v.avatar} alt={v.name} className="w-full h-full object-cover" />
+                    </div>
+                    <span className="font-bold text-white flex items-center gap-1">
+                      {v.name}
+                      <span className="text-amber-400 font-bold text-[11px]">{v.gender}</span>
+                      {v.isVerified && <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />}
+                    </span>
+                  </div>
+
+                  {v.hasMessage && (
+                    <span className="w-5 h-5 rounded-full bg-emerald-500 text-black text-[10px] font-bold flex items-center justify-center">
+                      1
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <button className="w-full py-1.5 text-center text-xs font-bold text-amber-300 hover:underline pt-2 border-t border-white/10">
+              Show More Visitors →
+            </button>
+          </Card>
+        </aside>
+
       </div>
 
       {/* Photo Lightbox Modal */}
