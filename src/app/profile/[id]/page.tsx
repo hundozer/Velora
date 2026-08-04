@@ -36,6 +36,9 @@ import {
   ThumbsUp,
   Tag,
   Filter,
+  ChevronLeft,
+  ChevronRight,
+  Trash2,
 } from "lucide-react";
 
 const AMATERI_TOPICS = [
@@ -105,6 +108,7 @@ interface UserPhotoAlbumItem {
   description: string;
   coverUrl: string;
   photoCount: number;
+  photos?: string[];
   monetization: "FREE" | "CREDITS";
   creditsPrice?: number;
   category: string;
@@ -151,7 +155,13 @@ export default function SingleProfilePage() {
       title: "Monaco Luxury Villa Portfolio",
       description: "Private photography session at our coastal suite.",
       coverUrl: profile.avatarUrl,
-      photoCount: 14,
+      photoCount: 4,
+      photos: [
+        profile.avatarUrl,
+        profile.coverPhotoUrl || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80",
+      ],
       monetization: "FREE",
       category: "Man",
       topics: ["Erotic Art", "Details", "Soft Erotica"],
@@ -166,7 +176,12 @@ export default function SingleProfilePage() {
       title: "French Riviera Yachting & Sunbathing",
       description: "Discreet afternoon photos along the Mediterranean coast.",
       coverUrl: profile.coverPhotoUrl || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
-      photoCount: 22,
+      photoCount: 3,
+      photos: [
+        profile.coverPhotoUrl || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+        profile.avatarUrl,
+        "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=800&q=80",
+      ],
       monetization: "CREDITS",
       creditsPrice: 10,
       category: "Couple",
@@ -261,6 +276,24 @@ export default function SingleProfilePage() {
   const [newAdCategory, setNewAdCategory] = useState("VIP Lifestyle");
   const [newAdDescription, setNewAdDescription] = useState("");
 
+  // Lightbox Album Viewer State
+  const [activeViewerAlbum, setActiveViewerAlbum] = useState<UserPhotoAlbumItem | null>(null);
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+  const [albumCommentInput, setAlbumCommentInput] = useState("");
+
+  // Video Viewer State
+  const [activeViewerVideo, setActiveViewerVideo] = useState<UserVideoItem | null>(null);
+  const [videoCommentInput, setVideoCommentInput] = useState("");
+
+  const openAlbumViewer = (alb: UserPhotoAlbumItem) => {
+    setActiveViewerAlbum(alb);
+    setActivePhotoIndex(0);
+  };
+
+  const openVideoViewer = (vid: UserVideoItem) => {
+    setActiveViewerVideo(vid);
+  };
+
   const handleModalFilesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const filesArray = Array.from(e.target.files);
@@ -318,7 +351,8 @@ export default function SingleProfilePage() {
         title: pubTitle,
         description: pubDescription || "Verified member photo album.",
         coverUrl: modalPreviews[0] || profile.avatarUrl,
-        photoCount: modalPreviews.length > 0 ? modalPreviews.length : 8,
+        photoCount: modalPreviews.length > 0 ? modalPreviews.length : 1,
+        photos: modalPreviews.length > 0 ? modalPreviews : [profile.avatarUrl],
         monetization: pubMonetization,
         creditsPrice: pubMonetization === "CREDITS" ? pubCreditsPrice : undefined,
         category: pubCategory,
@@ -636,7 +670,11 @@ export default function SingleProfilePage() {
                 {/* BIG Photo Album Thumbnails 2-Column Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {userPhotoAlbums.map((alb) => (
-                    <div key={alb.id} className="rounded-3xl bg-velora-card overflow-hidden border border-white/10 shadow-xl group hover:border-amber-400/40 transition-all">
+                    <div
+                      key={alb.id}
+                      onClick={() => openAlbumViewer(alb)}
+                      className="rounded-3xl bg-velora-card overflow-hidden border border-white/10 shadow-xl group hover:border-amber-400/60 transition-all cursor-pointer hover:shadow-2xl hover:-translate-y-1"
+                    >
                       {/* Big Album Thumbnail */}
                       <div className="h-48 sm:h-56 w-full bg-black relative overflow-hidden">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -716,7 +754,11 @@ export default function SingleProfilePage() {
                 {/* BIG Video Thumbnails 2-Column Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {userVideos.map((vid) => (
-                    <div key={vid.id} className="rounded-3xl bg-velora-card overflow-hidden border border-white/10 shadow-xl group hover:border-amber-400/40 transition-all">
+                    <div
+                      key={vid.id}
+                      onClick={() => openVideoViewer(vid)}
+                      className="rounded-3xl bg-velora-card overflow-hidden border border-white/10 shadow-xl group hover:border-amber-400/60 transition-all cursor-pointer hover:shadow-2xl hover:-translate-y-1"
+                    >
                       {/* Big Video Cover Thumbnail */}
                       <div className="h-48 sm:h-56 w-full bg-black relative overflow-hidden">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1301,6 +1343,194 @@ export default function SingleProfilePage() {
               </div>
             </form>
           </Card>
+        </div>
+      )}
+
+      {/* Interactive Photo Album Lightbox Viewer Modal */}
+      {activeViewerAlbum && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-xl overflow-y-auto">
+          <div className="w-full max-w-5xl bg-velora-card border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative my-auto flex flex-col max-h-[90vh]">
+            {/* Header Bar */}
+            <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-black/40">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full border border-amber-400/40 overflow-hidden shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={profile.avatarUrl} alt={profile.displayName} className="w-full h-full object-cover" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                    {activeViewerAlbum.title}
+                    <span className="px-2 py-0.5 rounded-full text-[10px] uppercase font-mono bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                      {activeViewerAlbum.category}
+                    </span>
+                  </h3>
+                  <p className="text-xs text-velora-textMuted flex items-center gap-2">
+                    <span>By {profile.displayName}</span> • <span>{activeViewerAlbum.photos?.length || activeViewerAlbum.photoCount} Photos</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {activeViewerAlbum.monetization === "CREDITS" ? (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center gap-1">
+                    <Coins className="w-3.5 h-3.5" /> {activeViewerAlbum.creditsPrice || 10} Credits
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    Free Access
+                  </span>
+                )}
+                <button
+                  onClick={() => setActiveViewerAlbum(null)}
+                  className="p-2 rounded-full text-velora-textMuted hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Main Stage: Photo Lightbox Preview */}
+            <div className="flex-1 bg-black relative flex items-center justify-center min-h-[350px] sm:min-h-[480px] p-4 group">
+              {/* Main Photo Image */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={
+                  (activeViewerAlbum.photos && activeViewerAlbum.photos[activePhotoIndex]) ||
+                  activeViewerAlbum.coverUrl
+                }
+                alt={activeViewerAlbum.title}
+                className="max-h-[60vh] max-w-full object-contain rounded-xl shadow-2xl transition-all duration-300"
+              />
+
+              {/* Prev / Next Navigation Arrows */}
+              {activeViewerAlbum.photos && activeViewerAlbum.photos.length > 1 && (
+                <>
+                  <button
+                    onClick={() =>
+                      setActivePhotoIndex((prev) =>
+                        prev === 0 ? activeViewerAlbum.photos!.length - 1 : prev - 1
+                      )
+                    }
+                    className="absolute left-4 p-3 rounded-full bg-black/60 text-white hover:bg-amber-400 hover:text-black border border-white/20 transition-all shadow-xl"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      setActivePhotoIndex((prev) =>
+                        prev === activeViewerAlbum.photos!.length - 1 ? 0 : prev + 1
+                      )
+                    }
+                    className="absolute right-4 p-3 rounded-full bg-black/60 text-white hover:bg-amber-400 hover:text-black border border-white/20 transition-all shadow-xl"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                </>
+              )}
+
+              {/* Counter Badge */}
+              <div className="absolute bottom-4 left-4 px-3 py-1 rounded-full bg-black/80 text-amber-300 font-mono text-xs border border-white/20">
+                Photo {activePhotoIndex + 1} of {activeViewerAlbum.photos?.length || 1}
+              </div>
+            </div>
+
+            {/* Thumbnails Carousel Strip */}
+            {activeViewerAlbum.photos && activeViewerAlbum.photos.length > 1 && (
+              <div className="p-3 bg-black/60 border-t border-white/10 flex items-center justify-center gap-2 overflow-x-auto">
+                {activeViewerAlbum.photos.map((photo, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActivePhotoIndex(i)}
+                    className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${
+                      i === activePhotoIndex ? "border-amber-400 scale-105 shadow-gold-glow" : "border-white/20 opacity-60 hover:opacity-100"
+                    }`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={photo} alt={`Thumb ${i}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Footer Metadata */}
+            <div className="p-5 bg-velora-card border-t border-white/10 space-y-3 text-left">
+              <div className="flex items-center justify-between text-xs text-velora-textMuted font-mono">
+                <span className="text-white font-semibold">{activeViewerAlbum.description}</span>
+                <div className="flex items-center gap-4">
+                  <span className="flex items-center gap-1"><Eye className="w-4 h-4 text-amber-400" /> {activeViewerAlbum.views} Views</span>
+                  <span className="flex items-center gap-1"><ThumbsUp className="w-4 h-4 text-emerald-400" /> {activeViewerAlbum.likes} Likes</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {activeViewerAlbum.topics.map((t) => (
+                  <span key={t} className="px-2.5 py-0.5 rounded-full text-[11px] bg-white/5 text-amber-300 border border-amber-400/30">
+                    #{t}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive Video Player Viewer Modal */}
+      {activeViewerVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-xl overflow-y-auto">
+          <div className="w-full max-w-4xl bg-velora-card border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative my-auto flex flex-col">
+            {/* Video Header */}
+            <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-black/40 text-left">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  {activeViewerVideo.title}
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                    {activeViewerVideo.category}
+                  </span>
+                </h3>
+                <p className="text-xs text-velora-textMuted mt-0.5">{activeViewerVideo.description}</p>
+              </div>
+              <button
+                onClick={() => setActiveViewerVideo(null)}
+                className="p-2 rounded-full text-velora-textMuted hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Video Player Box */}
+            <div className="h-64 sm:h-96 w-full bg-black relative flex items-center justify-center group overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={activeViewerVideo.thumbnail} alt={activeViewerVideo.title} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-amber-400 text-black flex items-center justify-center shadow-gold-glow cursor-pointer hover:scale-110 transition-transform">
+                  <Play className="w-9 h-9 fill-black ml-1" />
+                </div>
+              </div>
+              <div className="absolute bottom-4 right-4 px-3 py-1 rounded-md bg-black/80 text-amber-300 font-mono text-xs border border-white/20">
+                Duration: {activeViewerVideo.duration}
+              </div>
+            </div>
+
+            {/* Video Details & Footer */}
+            <div className="p-5 space-y-3 text-left">
+              <div className="flex items-center justify-between text-xs text-velora-textMuted font-mono">
+                <span className="text-emerald-400 font-bold">Status: {activeViewerVideo.status}</span>
+                <div className="flex items-center gap-4">
+                  <span className="flex items-center gap-1"><Eye className="w-4 h-4 text-amber-400" /> {activeViewerVideo.views} Views</span>
+                  <span className="flex items-center gap-1"><ThumbsUp className="w-4 h-4 text-emerald-400" /> {activeViewerVideo.likes} Likes</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {activeViewerVideo.topics.map((t) => (
+                  <span key={t} className="px-2.5 py-0.5 rounded-full text-[11px] bg-white/5 text-amber-300 border border-amber-400/30">
+                    #{t}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
