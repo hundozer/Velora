@@ -24,11 +24,12 @@ import {
   Eye,
   Crown,
   LogOut,
+  Camera,
 } from "lucide-react";
 
 export default function SingleProfilePage() {
   const params = useParams();
-  const { logout, user: currentUser, profile: currentProfile } = useAuth();
+  const { logout, user: currentUser, profile: currentProfile, updateUserProfile } = useAuth();
   const profileId = (params?.id as string) || "me";
 
   const isSelf =
@@ -43,11 +44,45 @@ export default function SingleProfilePage() {
   const [isFavorited, setIsFavorited] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
 
+  const avatarInputRef = React.useRef<HTMLInputElement>(null);
+  const coverInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0] && currentUser && currentProfile) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        const newAvatarUrl = reader.result as string;
+        const updatedUser = { ...currentUser, avatarUrl: newAvatarUrl };
+        const updatedProfile = { ...currentProfile, avatarUrl: newAvatarUrl };
+        updateUserProfile(updatedUser, updatedProfile);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCoverSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0] && currentUser && currentProfile) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        const newCoverUrl = reader.result as string;
+        const updatedProfile = { ...currentProfile, coverPhotoUrl: newCoverUrl };
+        updateUserProfile(currentUser, updatedProfile);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-left">
+      {/* Hidden File Inputs for Interactive Photo Uploads */}
+      <input type="file" ref={avatarInputRef} accept="image/*" className="hidden" onChange={handleAvatarSelect} />
+      <input type="file" ref={coverInputRef} accept="image/*" className="hidden" onChange={handleCoverSelect} />
+
       {/* Immersive Cover Header */}
       <Card variant="goldBorder" className="p-0 overflow-hidden text-left relative bg-gold-card">
-        <div className="h-80 w-full bg-velora-card relative">
+        <div className="h-80 w-full bg-velora-card relative group">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={profile.coverPhotoUrl || profile.avatarUrl}
@@ -55,14 +90,38 @@ export default function SingleProfilePage() {
             className="w-full h-full object-cover filter contrast-110 saturate-125"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-velora-bg via-velora-bg/60 to-transparent" />
+
+          {isSelf && (
+            <button
+              type="button"
+              onClick={() => coverInputRef.current?.click()}
+              className="absolute top-4 right-4 z-20 px-3.5 py-2 rounded-full bg-black/70 border border-white/20 text-white text-xs font-semibold hover:bg-black/90 transition-all flex items-center gap-2 backdrop-blur-md shadow-2xl hover:scale-105"
+              title="Upload New Cover Banner"
+            >
+              <Camera className="w-4 h-4 text-velora-gold" />
+              <span>Change Cover Banner</span>
+            </button>
+          )}
         </div>
 
         <div className="p-6 sm:p-8 space-y-6 -mt-24 relative z-10">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
             <div className="flex items-end gap-5">
-              <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl border-4 border-velora-gold overflow-hidden bg-velora-card shrink-0 shadow-2xl">
+              <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl border-4 border-velora-gold overflow-hidden bg-velora-card shrink-0 shadow-2xl relative group cursor-pointer">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={profile.avatarUrl} alt={profile.displayName} className="w-full h-full object-cover" />
+
+                {isSelf && (
+                  <button
+                    type="button"
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[11px] font-bold gap-1 backdrop-blur-xs"
+                    title="Upload New Avatar Photo"
+                  >
+                    <Camera className="w-6 h-6 text-velora-gold animate-bounce" />
+                    <span>Change Photo</span>
+                  </button>
+                )}
               </div>
 
               <div className="space-y-1">

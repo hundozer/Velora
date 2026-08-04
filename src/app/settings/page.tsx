@@ -30,6 +30,7 @@ import {
   Trash2,
   LogOut,
   AlertTriangle,
+  Camera,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -46,6 +47,33 @@ export default function SettingsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
+
+  const avatarInputRef = React.useRef<HTMLInputElement>(null);
+  const coverInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0] && user && profile) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        const url = reader.result as string;
+        updateUserProfile({ ...user, avatarUrl: url }, { ...profile, avatarUrl: url });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0] && user && profile) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        const url = reader.result as string;
+        updateUserProfile(user, { ...profile, coverPhotoUrl: url });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleUnblock = (id: string) => {
     setBlockedUsers(blockedUsers.filter((u) => u.id !== id));
@@ -116,14 +144,64 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* SECTION 0: PRIVATE IDENTITY & NICKNAME */}
+      {/* SECTION 0: PRIVATE IDENTITY, AVATAR & BANNER */}
       <Card variant="glass" className="p-6 space-y-6">
+        <input type="file" ref={avatarInputRef} accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+        <input type="file" ref={coverInputRef} accept="image/*" className="hidden" onChange={handleCoverUpload} />
+
         <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
           <UserCheck className="w-4 h-4 text-velora-gold" />
-          Private Identity & Display Nickname
+          Private Identity, Avatar & Cover Banner
         </h2>
 
-        <div className="space-y-3">
+        <div className="space-y-6">
+          {/* Avatar & Cover Upload Buttons */}
+          <div className="flex flex-wrap items-center gap-6 pb-2 border-b border-white/5">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl border-2 border-velora-gold/60 overflow-hidden bg-velora-card relative group shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={profile?.avatarUrl || user?.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+                  title="Upload New Avatar"
+                >
+                  <Camera className="w-5 h-5 text-velora-gold" />
+                </button>
+              </div>
+              <div>
+                <p className="text-xs font-bold text-white">Profile Picture / Avatar</p>
+                <p className="text-[10px] text-velora-textMuted mb-2">Upload a custom profile photo</p>
+                <Button variant="glass" size="sm" onClick={() => avatarInputRef.current?.click()} className="text-[11px] gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> Upload New Avatar
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 border-l border-white/10 pl-6">
+              <div className="w-24 h-16 rounded-2xl border border-white/20 overflow-hidden bg-velora-card relative group shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={profile?.coverPhotoUrl || profile?.avatarUrl} alt="Cover Banner" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => coverInputRef.current?.click()}
+                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+                  title="Upload New Cover Banner"
+                >
+                  <Camera className="w-5 h-5 text-velora-gold" />
+                </button>
+              </div>
+              <div>
+                <p className="text-xs font-bold text-white">Cover Banner Image</p>
+                <p className="text-[10px] text-velora-textMuted mb-2">Upload header background banner</p>
+                <Button variant="glass" size="sm" onClick={() => coverInputRef.current?.click()} className="text-[11px] gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> Upload New Banner
+                </Button>
+              </div>
+            </div>
+          </div>
+
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
               Club Nickname / Display Name
@@ -132,7 +210,7 @@ export default function SettingsPage() {
               type="text"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              placeholder="Enter your nickname (e.g. Zsolt, Monaco Host, Valerie)"
+              placeholder="Enter your nickname (e.g. Zsolt, Prince Charming, Valerie)"
               className="w-full text-xs"
             />
             <p className="text-[10px] text-velora-textMuted mt-1.5">
