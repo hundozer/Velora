@@ -91,6 +91,14 @@ interface MediaComment {
   createdAt: string;
 }
 
+interface MediaVoter {
+  id: string;
+  name: string;
+  avatarUrl: string;
+  isVerified?: boolean;
+  votedAt: string;
+}
+
 interface UserVideoItem {
   id: string;
   title: string;
@@ -109,6 +117,8 @@ interface UserVideoItem {
   status: "On web" | "In profile only" | "Pending correction" | "Disabled";
   createdAt: string;
   commentsList?: MediaComment[];
+  votersList?: MediaVoter[];
+  hasUserVoted?: boolean;
 }
 
 interface UserPhotoAlbumItem {
@@ -128,6 +138,8 @@ interface UserPhotoAlbumItem {
   status: "On web" | "In profile only" | "Disabled";
   createdAt: string;
   commentsList?: MediaComment[];
+  votersList?: MediaVoter[];
+  hasUserVoted?: boolean;
 }
 
 export default function SingleProfilePage() {
@@ -196,6 +208,29 @@ export default function SingleProfilePage() {
           createdAt: "5 hours ago",
         },
       ],
+      votersList: [
+        {
+          id: "v-1",
+          name: "Elena V.",
+          avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+          isVerified: true,
+          votedAt: "2 hours ago",
+        },
+        {
+          id: "v-2",
+          name: "Marco & Sofia",
+          avatarUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=150&q=80",
+          isVerified: true,
+          votedAt: "5 hours ago",
+        },
+        {
+          id: "v-3",
+          name: "Sophia K.",
+          avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80",
+          isVerified: true,
+          votedAt: "Yesterday",
+        },
+      ],
     },
     {
       id: "alb-2",
@@ -224,6 +259,22 @@ export default function SingleProfilePage() {
           authorAvatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80",
           text: "Worth every credit, amazing villa shoot!",
           createdAt: "1 day ago",
+        },
+      ],
+      votersList: [
+        {
+          id: "v-4",
+          name: "Sophia K.",
+          avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80",
+          isVerified: true,
+          votedAt: "1 day ago",
+        },
+        {
+          id: "v-5",
+          name: "Lucas & Mia",
+          avatarUrl: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=150&q=80",
+          isVerified: true,
+          votedAt: "3 days ago",
         },
       ],
     },
@@ -316,6 +367,10 @@ export default function SingleProfilePage() {
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [albumCommentInput, setAlbumCommentInput] = useState("");
 
+  // Voters List Modal State
+  const [votersModalOpen, setVotersModalOpen] = useState(false);
+  const [votersListTarget, setVotersListTarget] = useState<{ title: string; voters: MediaVoter[] } | null>(null);
+
   // Video Viewer State
   const [activeViewerVideo, setActiveViewerVideo] = useState<UserVideoItem | null>(null);
   const [videoCommentInput, setVideoCommentInput] = useState("");
@@ -327,6 +382,50 @@ export default function SingleProfilePage() {
 
   const openVideoViewer = (vid: UserVideoItem) => {
     setActiveViewerVideo(vid);
+  };
+
+  const handleToggleAlbumVote = (albumId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+
+    setUserPhotoAlbums((prev) =>
+      prev.map((alb) => {
+        if (alb.id === albumId) {
+          const hasVoted = alb.hasUserVoted;
+          const newLikes = hasVoted ? alb.likes - 1 : alb.likes + 1;
+          const myVoterObj: MediaVoter = {
+            id: currentUser?.id || "me",
+            name: currentProfile?.displayName || currentUser?.username || "You",
+            avatarUrl: currentProfile?.avatarUrl || currentUser?.avatarUrl || profile.avatarUrl,
+            isVerified: true,
+            votedAt: "Just now",
+          };
+
+          const newVoters = hasVoted
+            ? (alb.votersList || []).filter((v) => v.id !== (currentUser?.id || "me"))
+            : [myVoterObj, ...(alb.votersList || [])];
+
+          const updated = {
+            ...alb,
+            likes: Math.max(0, newLikes),
+            hasUserVoted: !hasVoted,
+            votersList: newVoters,
+          };
+
+          if (activeViewerAlbum?.id === albumId) {
+            setActiveViewerAlbum(updated);
+          }
+
+          return updated;
+        }
+        return alb;
+      })
+    );
+  };
+
+  const openVotersModal = (title: string, voters: MediaVoter[] = [], e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setVotersListTarget({ title, voters });
+    setVotersModalOpen(true);
   };
 
   const handleAddAlbumComment = () => {
@@ -773,16 +872,37 @@ export default function SingleProfilePage() {
                         <div className="flex items-center justify-between text-[11px] text-velora-textMuted font-mono">
                           <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-velora-gold" /> {alb.views} Views</span>
                           <span className="flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5 text-blue-400" /> {alb.comments} Comments</span>
-                          <span className="flex items-center gap-1"><ThumbsUp className="w-3.5 h-3.5 text-emerald-400" /> {alb.likes} Likes</span>
+                          <button
+                            type="button"
+                            onClick={(e) => openVotersModal(alb.title, alb.votersList, e)}
+                            className="flex items-center gap-1 text-emerald-400 font-bold hover:underline hover:text-amber-300 transition-colors"
+                            title="Click to see list of people who liked this album"
+                          >
+                            <ThumbsUp className={`w-3.5 h-3.5 ${alb.hasUserVoted ? "fill-emerald-400" : ""}`} /> {alb.likes} Likes
+                          </button>
                         </div>
 
-                        {/* Searchable Topics */}
-                        <div className="flex flex-wrap gap-1 pt-1 border-t border-white/5">
-                          {alb.topics.map((topic) => (
-                            <span key={topic} className="px-2 py-0.5 rounded-full text-[10px] bg-white/5 text-amber-300 border border-amber-400/20">
-                              #{topic}
-                            </span>
-                          ))}
+                        {/* Searchable Topics & Interactive Thumbs Up Vote Button */}
+                        <div className="flex items-center justify-between pt-1 border-t border-white/5">
+                          <div className="flex flex-wrap gap-1">
+                            {alb.topics.map((topic) => (
+                              <span key={topic} className="px-2 py-0.5 rounded-full text-[10px] bg-white/5 text-amber-300 border border-amber-400/20">
+                                #{topic}
+                              </span>
+                            ))}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(e) => handleToggleAlbumVote(alb.id, e)}
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all flex items-center gap-1 shrink-0 ${
+                              alb.hasUserVoted
+                                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm"
+                                : "bg-white/5 text-velora-textMuted hover:text-white border border-white/10 hover:bg-white/10"
+                            }`}
+                          >
+                            <ThumbsUp className={`w-3 h-3 ${alb.hasUserVoted ? "fill-emerald-300" : ""}`} /> {alb.hasUserVoted ? "Liked" : "Like"}
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -1514,10 +1634,29 @@ export default function SingleProfilePage() {
             <div className="p-5 bg-velora-card border-t border-white/10 space-y-4 text-left max-h-[35vh] overflow-y-auto">
               <div className="flex items-center justify-between text-xs text-velora-textMuted font-mono">
                 <span className="text-white font-semibold">{activeViewerAlbum.description}</span>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1"><Eye className="w-4 h-4 text-amber-400" /> {activeViewerAlbum.views} Views</span>
                   <span className="flex items-center gap-1"><MessageSquare className="w-4 h-4 text-blue-400" /> {activeViewerAlbum.comments} Comments</span>
-                  <span className="flex items-center gap-1"><ThumbsUp className="w-4 h-4 text-emerald-400" /> {activeViewerAlbum.likes} Likes</span>
+                  <button
+                    type="button"
+                    onClick={(e) => openVotersModal(activeViewerAlbum.title, activeViewerAlbum.votersList, e)}
+                    className="flex items-center gap-1 text-emerald-400 font-bold hover:underline hover:text-amber-300 transition-colors"
+                    title="Click to view list of members who liked this album"
+                  >
+                    <ThumbsUp className={`w-4 h-4 ${activeViewerAlbum.hasUserVoted ? "fill-emerald-400" : ""}`} /> {activeViewerAlbum.likes} Likes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => handleToggleAlbumVote(activeViewerAlbum.id, e)}
+                    className={`px-3 py-1 rounded-full text-xs font-bold uppercase transition-all flex items-center gap-1.5 ${
+                      activeViewerAlbum.hasUserVoted
+                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm"
+                        : "bg-white/5 text-velora-textMuted hover:text-white border border-white/10 hover:bg-white/10"
+                    }`}
+                  >
+                    <ThumbsUp className={`w-3.5 h-3.5 ${activeViewerAlbum.hasUserVoted ? "fill-emerald-300" : ""}`} />
+                    {activeViewerAlbum.hasUserVoted ? "Liked" : "Thumbs Up"}
+                  </button>
                 </div>
               </div>
 
@@ -1645,6 +1784,68 @@ export default function SingleProfilePage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* People Who Liked This Album Voters Modal */}
+      {votersModalOpen && votersListTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <Card variant="goldBorder" className="w-full max-w-md p-6 space-y-5 text-left bg-velora-card relative shadow-2xl">
+            <button
+              onClick={() => setVotersModalOpen(false)}
+              className="absolute top-4 right-4 text-velora-textMuted hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="space-y-1 border-b border-white/10 pb-3">
+              <h3 className="text-base font-serif font-bold text-white flex items-center gap-2">
+                <ThumbsUp className="w-5 h-5 text-emerald-400 fill-emerald-400" /> People Who Liked This Album
+              </h3>
+              <p className="text-xs text-amber-300 font-semibold truncate">
+                "{votersListTarget.title}" • {votersListTarget.voters.length} {votersListTarget.voters.length === 1 ? "Member" : "Members"}
+              </p>
+            </div>
+
+            <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+              {votersListTarget.voters.length === 0 ? (
+                <p className="text-xs text-velora-textMuted italic text-center py-4">No votes yet on this album.</p>
+              ) : (
+                votersListTarget.voters.map((voter) => (
+                  <div
+                    key={voter.id}
+                    className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between hover:border-amber-400/40 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full border border-amber-400/40 overflow-hidden shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={voter.avatarUrl} alt={voter.name} className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-white flex items-center gap-1">
+                          {voter.name}
+                          {voter.isVerified && <ShieldCheck className="w-3.5 h-3.5 text-velora-gold fill-amber-400/20" />}
+                        </p>
+                        <p className="text-[10px] text-emerald-400 font-mono">Liked {voter.votedAt}</p>
+                      </div>
+                    </div>
+
+                    <Link href={`/profile/${voter.id === "me" ? "me" : voter.id}`}>
+                      <Button variant="glass" size="sm" className="text-[11px] font-semibold">
+                        View Profile
+                      </Button>
+                    </Link>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="pt-2 border-t border-white/10 flex justify-end">
+              <Button variant="glass" size="sm" onClick={() => setVotersModalOpen(false)} className="text-xs">
+                Close
+              </Button>
+            </div>
+          </Card>
         </div>
       )}
 
