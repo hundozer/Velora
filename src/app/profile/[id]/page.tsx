@@ -44,7 +44,6 @@ import {
 } from "lucide-react";
 
 const AMATERI_TOPICS = [
-  "Amateri.com",
   "Anal",
   "BDSM",
   "Big Asses",
@@ -1386,7 +1385,7 @@ export default function SingleProfilePage() {
                 </h2>
               </div>
               <p className="text-xs text-velora-textMuted">
-                Configure monetization, target audience category, comment settings, and searchable topics (Amateri-Style Manager).
+                Configure monetization, target audience category, comment settings, and searchable topics.
               </p>
             </div>
 
