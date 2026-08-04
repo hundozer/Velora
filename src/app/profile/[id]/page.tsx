@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ReportModal } from "@/components/safety/ReportModal";
+import { GetVerifiedModal } from "@/components/profile/GetVerifiedModal";
+import { userStore } from "@/lib/auth0/userStore";
 import { MOCK_PROFILES, MOCK_CREATOR_ALBUMS } from "@/lib/mockData";
 import { useAuth } from "@/context/AuthContext";
 import { uploadFileToR2 } from "@/lib/storage/clientUpload";
@@ -374,6 +376,25 @@ export default function SingleProfilePage() {
   // Editing Media Item State
   const [editingVideoItem, setEditingVideoItem] = useState<UserVideoItem | null>(null);
   const [editingAlbumItem, setEditingAlbumItem] = useState<UserPhotoAlbumItem | null>(null);
+
+  // Member Verification State
+  const [getVerifiedModalOpen, setGetVerifiedModalOpen] = useState(false);
+  const [userVerificationStatus, setUserVerificationStatus] = useState<"UNVERIFIED" | "PENDING_REVIEW" | "VERIFIED" | "REJECTED">("UNVERIFIED");
+
+  const handleVerificationSubmitted = (verificationPhotoUrl: string) => {
+    setUserVerificationStatus("PENDING_REVIEW");
+
+    userStore.submitVerificationRequest({
+      id: `req-${Date.now()}`,
+      userId: currentUser?.id || "me",
+      userEmail: currentUser?.email || profile.displayName.toLowerCase().replace(/\s+/g, "") + "@intimo.live",
+      userName: currentProfile?.displayName || profile.displayName,
+      userAvatarUrl: currentProfile?.avatarUrl || profile.avatarUrl,
+      verificationPhotoUrl,
+      submittedAt: "Just now",
+      status: "PENDING",
+    });
+  };
 
   // Voters List Modal State
   const [votersModalOpen, setVotersModalOpen] = useState(false);
@@ -841,11 +862,32 @@ export default function SingleProfilePage() {
               </button>
 
               {isSelf ? (
-                <Link href="/settings">
-                  <Button variant="gold" size="lg" className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow">
-                    <UserCheck className="w-4 h-4" /> Edit Profile & Nickname
-                  </Button>
-                </Link>
+                <div className="flex items-center gap-2">
+                  {userVerificationStatus === "PENDING_REVIEW" ? (
+                    <span className="px-3.5 py-2.5 rounded-2xl text-xs font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center gap-1.5 shadow-sm">
+                      <Sparkles className="w-4 h-4 animate-spin text-amber-400" /> Verification In Review ⏳
+                    </span>
+                  ) : userVerificationStatus === "VERIFIED" ? (
+                    <span className="px-3.5 py-2.5 rounded-2xl text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" /> Biometric Verified
+                    </span>
+                  ) : (
+                    <Button
+                      variant="gold"
+                      size="lg"
+                      onClick={() => setGetVerifiedModalOpen(true)}
+                      className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow border-emerald-500/40 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
+                    >
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" /> GET VERIFIED
+                    </Button>
+                  )}
+
+                  <Link href="/settings">
+                    <Button variant="glass" size="lg" className="text-xs font-bold uppercase tracking-wider gap-2 border-white/20">
+                      <UserCheck className="w-4 h-4" /> Edit Profile
+                    </Button>
+                  </Link>
+                </div>
               ) : (
                 <Link href="/messages">
                   <Button variant="gold" size="lg" className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow">
@@ -2108,6 +2150,15 @@ export default function SingleProfilePage() {
           </Card>
         </div>
       )}
+
+      {/* Get Verified Modal */}
+      <GetVerifiedModal
+        isOpen={getVerifiedModalOpen}
+        onClose={() => setGetVerifiedModalOpen(false)}
+        userEmail={currentUser?.email || profile.displayName.toLowerCase().replace(/\s+/g, "") + "@intimo.live"}
+        userName={currentProfile?.displayName || profile.displayName}
+        onVerificationSubmitted={handleVerificationSubmitted}
+      />
 
       {/* Report Modal */}
       <ReportModal

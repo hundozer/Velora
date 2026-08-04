@@ -17,6 +17,7 @@ import {
   MOCK_EVENTS,
 } from "@/lib/mockData";
 import { LANGUAGES } from "@/context/LanguageContext";
+import { userStore } from "@/lib/auth0/userStore";
 import {
   VerificationRequest,
   ReportItem,
@@ -58,7 +59,12 @@ import {
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
-  const [activeTab, setActiveTab] = useState("FINANCES");
+  const [activeTab, setActiveTab] = useState("VERIFICATIONS");
+  const [verificationRequests, setVerificationRequests] = useState(userStore.getVerificationRequests());
+  const [rejectionModalTarget, setRejectionModalTarget] = useState<string | null>(null);
+  const [rejectionReasonInput, setRejectionReasonInput] = useState("");
+  const [zoomPhotoUrl, setZoomPhotoUrl] = useState<string | null>(null);
+
   const [verifications, setVerifications] = useState<VerificationRequest[]>(MOCK_VERIFICATION_REQUESTS);
   const [reports, setReports] = useState<ReportItem[]>(MOCK_REPORTS);
   const [creatorApps, setCreatorApps] = useState<CreatorApplication[]>(MOCK_CREATOR_APPLICATIONS);
@@ -68,6 +74,19 @@ export default function AdminDashboardPage() {
   const [communities, setCommunities] = useState<CommunityItem[]>(MOCK_COMMUNITIES);
   const [events, setEvents] = useState<VeloraEvent[]>(MOCK_EVENTS);
   const [logs, setLogs] = useState<ModerationLog[]>(MOCK_MODERATION_LOGS);
+
+  const handleApproveVerification = (id: string) => {
+    userStore.approveVerification(id);
+    setVerificationRequests([...userStore.getVerificationRequests()]);
+  };
+
+  const handleRejectVerification = (id: string) => {
+    if (!rejectionReasonInput.trim()) return;
+    userStore.rejectVerification(id, rejectionReasonInput.trim());
+    setVerificationRequests([...userStore.getVerificationRequests()]);
+    setRejectionModalTarget(null);
+    setRejectionReasonInput("");
+  };
 
   const handleSuspendStream = (streamId: string, title: string) => {
     setStreams(streams.map((s) => (s.id === streamId ? { ...s, status: "SUSPENDED" } : s)));
@@ -100,19 +119,19 @@ export default function AdminDashboardPage() {
             <Badge type="admin" label="Administrator Portal" />
           </div>
           <h1 className="text-3xl font-serif font-bold text-velora-textPrimary flex items-center gap-3">
-            <ShieldCheck className="w-8 h-8 text-red-400" />
-            Compliance, i18n & Operational Governance
+            <ShieldCheck className="w-8 h-8 text-emerald-400" />
+            Identity Verification & Governance Desk
           </h1>
           <p className="text-xs text-velora-textSecondary mt-1">
-            Audit platform metrics, i18n translation coverage across 6 languages, approve payouts, and supervise broadcasts.
+            Review member verification selfies, issue biometric badges, audit platform metrics, and approve payouts.
           </p>
         </div>
 
         <Tabs
           tabs={[
+            { id: "VERIFICATIONS", label: "Verification Queue", count: verificationRequests.filter((r) => r.status === "PENDING").length },
             { id: "FINANCES", label: "Financial Desk", count: payouts.filter((p) => p.status === "PENDING").length },
             { id: "TRANSLATIONS", label: "i18n Translation Desk", count: 6 },
-            { id: "ANALYTICS", label: "Platform Analytics", count: 0 },
             { id: "COMMUNITIES", label: "Community Desk", count: communities.length },
             { id: "STREAMS", label: "Live Supervision", count: streams.filter((s) => s.status === "LIVE").length },
             { id: "AUDIT", label: "Audit Log", count: logs.length },
@@ -158,6 +177,134 @@ export default function AdminDashboardPage() {
           <span className="text-[11px] text-velora-textMuted font-mono">Real-time WebRTC</span>
         </Card>
       </div>
+
+      {/* VERIFICATIONS TAB */}
+      {activeTab === "VERIFICATIONS" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
+                <ShieldCheck className="w-6 h-6 text-emerald-400" />
+                Identity Verification Requests Queue ({verificationRequests.filter((r) => r.status === "PENDING").length} Pending)
+              </h2>
+              <p className="text-xs text-velora-textMuted">
+                Review member verification selfies holding handwritten paper notes inscribed with <strong>&quot;INTIMO&quot;</strong> and current date.
+              </p>
+            </div>
+          </div>
+
+          {verificationRequests.length === 0 ? (
+            <Card variant="glass" className="p-8 text-center text-xs text-velora-textMuted italic">
+              No verification requests submitted yet.
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {verificationRequests.map((req) => (
+                <Card
+                  key={req.id}
+                  variant="goldBorder"
+                  className="p-6 space-y-4 text-left bg-velora-card relative overflow-hidden"
+                >
+                  <div className="flex items-start justify-between border-b border-white/10 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full border-2 border-amber-400/40 overflow-hidden shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={req.userAvatarUrl} alt={req.userName} className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-white flex items-center gap-1.5">
+                          {req.userName}
+                        </h3>
+                        <p className="text-xs text-velora-textMuted">{req.userEmail}</p>
+                        <p className="text-[10px] text-amber-300 font-mono mt-0.5">Submitted {req.submittedAt}</p>
+                      </div>
+                    </div>
+
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-bold uppercase border ${
+                        req.status === "PENDING"
+                          ? "bg-amber-400/20 text-amber-300 border-amber-400/40"
+                          : req.status === "APPROVED"
+                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                          : "bg-red-500/20 text-red-300 border-red-500/40"
+                      }`}
+                    >
+                      {req.status}
+                    </span>
+                  </div>
+
+                  {/* Verification Selfie & Paper Check Box */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs font-semibold text-velora-textSecondary">
+                      <span>Verification Selfie & Handwritten Paper Note:</span>
+                      <button
+                        type="button"
+                        onClick={() => setZoomPhotoUrl(req.verificationPhotoUrl)}
+                        className="text-amber-300 hover:underline flex items-center gap-1 text-[11px]"
+                      >
+                        <Eye className="w-3.5 h-3.5" /> Click to Zoom
+                      </button>
+                    </div>
+
+                    <div
+                      onClick={() => setZoomPhotoUrl(req.verificationPhotoUrl)}
+                      className="h-56 w-full rounded-2xl bg-black border border-white/10 relative overflow-hidden group cursor-pointer"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={req.verificationPhotoUrl}
+                        alt="Verification selfie"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span className="text-xs font-bold text-white bg-black/70 px-3 py-1.5 rounded-full border border-white/20">
+                          Inspect Photo & Note
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-[11px] text-velora-textMuted space-y-1">
+                      <p className="text-white font-semibold flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" /> Administrative Checklist:
+                      </p>
+                      <ul className="list-disc list-inside space-y-0.5 text-velora-textSecondary pl-1">
+                        <li>Member holds paper note with <strong>&quot;INTIMO&quot;</strong> inscribed.</li>
+                        <li>Handwritten date matches submission timeframe.</li>
+                        <li>Face and paper details are legible and unedited.</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  {req.status === "PENDING" && (
+                    <div className="flex items-center gap-3 pt-2 border-t border-white/10">
+                      <Button
+                        variant="glass"
+                        size="md"
+                        onClick={() => setRejectionModalTarget(req.id)}
+                        className="w-1/2 text-xs border-red-500/30 text-red-400 hover:bg-red-500/20"
+                      >
+                        <X className="w-4 h-4 mr-1" /> Reject Request
+                      </Button>
+                      <Button
+                        variant="gold"
+                        size="md"
+                        onClick={() => handleApproveVerification(req.id)}
+                        className="w-1/2 text-xs font-bold uppercase tracking-wider shadow-gold-glow bg-emerald-500/20 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30"
+                      >
+                        <ShieldCheck className="w-4 h-4 mr-1 text-emerald-400" /> Approve & Issue Badge
+                      </Button>
+                    </div>
+                  )}
+
+                  {req.status === "REJECTED" && (
+                    <p className="text-xs text-red-400 italic">Rejection Reason: {req.rejectionReason}</p>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* TRANSLATIONS TAB */}
       {activeTab === "TRANSLATIONS" && (
@@ -425,6 +572,66 @@ export default function AdminDashboardPage() {
               </table>
             </div>
           </Card>
+        </div>
+      )}
+
+      {/* Rejection Modal */}
+      {rejectionModalTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <Card variant="goldBorder" className="w-full max-w-md p-6 space-y-4 text-left bg-velora-card relative shadow-2xl">
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-red-400" /> Specify Rejection Reason
+            </h3>
+            <p className="text-xs text-velora-textMuted">
+              Provide feedback for the member on why their verification photo was rejected so they can re-submit.
+            </p>
+
+            <textarea
+              value={rejectionReasonInput}
+              onChange={(e) => setRejectionReasonInput(e.target.value)}
+              rows={3}
+              placeholder="e.g., Handwritten date is illegible or missing the INTIMO inscription."
+              className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white focus:outline-none focus:border-red-400 resize-none"
+            />
+
+            <div className="flex items-center gap-3 pt-2">
+              <Button
+                variant="glass"
+                size="sm"
+                onClick={() => {
+                  setRejectionModalTarget(null);
+                  setRejectionReasonInput("");
+                }}
+                className="w-1/2 text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="gold"
+                size="sm"
+                onClick={() => handleRejectVerification(rejectionModalTarget)}
+                className="w-1/2 text-xs font-bold uppercase border-red-500/40 bg-red-500/20 text-red-300 hover:bg-red-500/30"
+              >
+                Confirm Rejection
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Zoom Verification Photo Lightbox */}
+      {zoomPhotoUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
+          <div className="relative max-w-4xl max-h-[90vh] bg-black rounded-3xl overflow-hidden border border-white/20 shadow-2xl">
+            <button
+              onClick={() => setZoomPhotoUrl(null)}
+              className="absolute top-4 right-4 text-white bg-black/60 p-2 rounded-full hover:bg-black/90 z-10"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={zoomPhotoUrl} alt="Inspection selfie" className="w-full h-full object-contain max-h-[85vh]" />
+          </div>
         </div>
       )}
     </div>

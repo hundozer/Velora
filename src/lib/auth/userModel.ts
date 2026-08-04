@@ -24,6 +24,9 @@ export interface UserAccountModel {
   account_status: AccountStatus;
   status: AccountStatus; // Alias for backward compatibility
   verificationStatus: VerificationStatus;
+  verificationSubmittedAt?: string;
+  verificationPhotoUrl?: string;
+  verificationRejectionReason?: string;
   creatorStatus: CreatorStatus;
   role: UserRole;
   twoFactorEnabled: boolean;
@@ -37,6 +40,19 @@ export interface UserAccountModel {
   created_at: string;
   createdAt?: string; // Alias for backward compatibility
   updatedAt: string;
+}
+
+export interface IdentityVerificationRequest {
+  id: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  userAvatarUrl: string;
+  verificationPhotoUrl: string;
+  submittedAt: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  reviewedAt?: string;
+  rejectionReason?: string;
 }
 
 /**

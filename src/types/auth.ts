@@ -31,8 +31,10 @@ export type AccountStatus =
 export type VerificationStatus =
   | "UNVERIFIED"
   | "EMAIL_VERIFIED"
+  | "PENDING_REVIEW"
   | "IDENTITY_VERIFIED"
-  | "LEVEL_3_BIOMETRIC";
+  | "LEVEL_3_BIOMETRIC"
+  | "REJECTED";
 
 export type CreatorStatus =
   | "NONE"
