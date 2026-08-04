@@ -83,6 +83,14 @@ const AMATERI_TOPICS = [
   "VIP Lifestyle",
 ];
 
+interface MediaComment {
+  id: string;
+  authorName: string;
+  authorAvatar: string;
+  text: string;
+  createdAt: string;
+}
+
 interface UserVideoItem {
   id: string;
   title: string;
@@ -100,6 +108,7 @@ interface UserVideoItem {
   likes: number;
   status: "On web" | "In profile only" | "Pending correction" | "Disabled";
   createdAt: string;
+  commentsList?: MediaComment[];
 }
 
 interface UserPhotoAlbumItem {
@@ -118,6 +127,7 @@ interface UserPhotoAlbumItem {
   likes: number;
   status: "On web" | "In profile only" | "Disabled";
   createdAt: string;
+  commentsList?: MediaComment[];
 }
 
 export default function SingleProfilePage() {
@@ -166,10 +176,26 @@ export default function SingleProfilePage() {
       category: "Man",
       topics: ["Erotic Art", "Details", "Soft Erotica"],
       views: 2910,
-      comments: 13,
+      comments: 2,
       likes: 129,
       status: "On web",
       createdAt: "Dec 31, 2025",
+      commentsList: [
+        {
+          id: "c-1",
+          authorName: "Elena V.",
+          authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+          text: "Stunning photography! Love the composition and lighting.",
+          createdAt: "2 hours ago",
+        },
+        {
+          id: "c-2",
+          authorName: "Marco & Sofia",
+          authorAvatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=150&q=80",
+          text: "Very aesthetic shots, super classy aesthetic.",
+          createdAt: "5 hours ago",
+        },
+      ],
     },
     {
       id: "alb-2",
@@ -187,10 +213,19 @@ export default function SingleProfilePage() {
       category: "Couple",
       topics: ["Outdoor Sex", "Sex in Public", "VIP Lifestyle"],
       views: 4180,
-      comments: 29,
+      comments: 1,
       likes: 310,
       status: "On web",
       createdAt: "Oct 15, 2025",
+      commentsList: [
+        {
+          id: "c-3",
+          authorName: "Sophia K.",
+          authorAvatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80",
+          text: "Worth every credit, amazing villa shoot!",
+          createdAt: "1 day ago",
+        },
+      ],
     },
   ]);
 
@@ -292,6 +327,28 @@ export default function SingleProfilePage() {
 
   const openVideoViewer = (vid: UserVideoItem) => {
     setActiveViewerVideo(vid);
+  };
+
+  const handleAddAlbumComment = () => {
+    if (!albumCommentInput.trim() || !activeViewerAlbum) return;
+
+    const newComment: MediaComment = {
+      id: `c-${Date.now()}`,
+      authorName: currentProfile?.displayName || currentUser?.username || "Verified Member",
+      authorAvatar: currentProfile?.avatarUrl || currentUser?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+      text: albumCommentInput.trim(),
+      createdAt: "Just now",
+    };
+
+    const updatedAlbum: UserPhotoAlbumItem = {
+      ...activeViewerAlbum,
+      comments: activeViewerAlbum.comments + 1,
+      commentsList: [newComment, ...(activeViewerAlbum.commentsList || [])],
+    };
+
+    setActiveViewerAlbum(updatedAlbum);
+    setUserPhotoAlbums((prev) => prev.map((a) => (a.id === updatedAlbum.id ? updatedAlbum : a)));
+    setAlbumCommentInput("");
   };
 
   const handleModalFilesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1453,22 +1510,79 @@ export default function SingleProfilePage() {
               </div>
             )}
 
-            {/* Footer Metadata */}
-            <div className="p-5 bg-velora-card border-t border-white/10 space-y-3 text-left">
+            {/* Footer Metadata & Interactive Comments Section */}
+            <div className="p-5 bg-velora-card border-t border-white/10 space-y-4 text-left max-h-[35vh] overflow-y-auto">
               <div className="flex items-center justify-between text-xs text-velora-textMuted font-mono">
                 <span className="text-white font-semibold">{activeViewerAlbum.description}</span>
                 <div className="flex items-center gap-4">
                   <span className="flex items-center gap-1"><Eye className="w-4 h-4 text-amber-400" /> {activeViewerAlbum.views} Views</span>
+                  <span className="flex items-center gap-1"><MessageSquare className="w-4 h-4 text-blue-400" /> {activeViewerAlbum.comments} Comments</span>
                   <span className="flex items-center gap-1"><ThumbsUp className="w-4 h-4 text-emerald-400" /> {activeViewerAlbum.likes} Likes</span>
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-1.5 pt-1">
+              <div className="flex flex-wrap gap-1.5 pt-1 border-b border-white/10 pb-3">
                 {activeViewerAlbum.topics.map((t) => (
                   <span key={t} className="px-2.5 py-0.5 rounded-full text-[11px] bg-white/5 text-amber-300 border border-amber-400/30">
                     #{t}
                   </span>
                 ))}
+              </div>
+
+              {/* Interactive Member Comments Header & Form */}
+              <div className="space-y-3 pt-1">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-velora-gold flex items-center gap-1.5">
+                  <MessageSquare className="w-4 h-4 text-velora-gold" /> Member Comments ({activeViewerAlbum.commentsList?.length || activeViewerAlbum.comments})
+                </h4>
+
+                {/* Add Comment Input */}
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full border border-amber-400/40 overflow-hidden shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={currentProfile?.avatarUrl || currentUser?.avatarUrl || profile.avatarUrl} alt="Me" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 flex items-center gap-2">
+                    <Input
+                      type="text"
+                      value={albumCommentInput}
+                      onChange={(e) => setAlbumCommentInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddAlbumComment();
+                        }
+                      }}
+                      placeholder="Write a comment under this album..."
+                      className="text-xs bg-white/5 border-white/10"
+                    />
+                    <Button variant="gold" size="sm" onClick={handleAddAlbumComment} className="text-xs font-bold shrink-0">
+                      Post Comment
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Comments List */}
+                <div className="space-y-2 pt-2">
+                  {(!activeViewerAlbum.commentsList || activeViewerAlbum.commentsList.length === 0) ? (
+                    <p className="text-xs text-velora-textMuted italic">No comments yet. Be the first registered member to comment!</p>
+                  ) : (
+                    activeViewerAlbum.commentsList.map((c) => (
+                      <div key={c.id} className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full border border-amber-400/30 overflow-hidden shrink-0 mt-0.5">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={c.authorAvatar} alt={c.authorName} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex-1 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-amber-300">{c.authorName}</span>
+                            <span className="text-[10px] text-velora-textMuted font-mono">{c.createdAt}</span>
+                          </div>
+                          <p className="text-velora-textSecondary mt-1 leading-relaxed">{c.text}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </div>
