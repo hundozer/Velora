@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { notificationStore } from "@/lib/notifications/notificationStore";
 import { NotificationItem } from "@/types";
-import { Bell, Eye, Heart, MessageSquare, ShieldCheck, Check } from "lucide-react";
+import { Bell, Eye, Heart, MessageSquare, ShieldCheck, Check, Trash2 } from "lucide-react";
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<NotificationItem[]>(
@@ -29,9 +29,17 @@ export default function NotificationsPage() {
     notificationStore.markAllAsRead();
   };
 
+  const handleRemove = (id: string) => {
+    notificationStore.removeNotification(id);
+  };
+
+  const handleClearAll = () => {
+    notificationStore.clearAllNotifications();
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-left">
-      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
         <div className="flex items-center gap-3">
           <Bell className="w-7 h-7 text-velora-gold" />
           <div>
@@ -44,22 +52,34 @@ export default function NotificationsPage() {
           </div>
         </div>
 
-        {notificationStore.getUnreadCount() > 0 && (
-          <Button
-            variant="glass"
-            size="sm"
-            className="text-xs border-amber-400/40 text-amber-300 hover:bg-amber-400/10"
-            onClick={handleMarkAllRead}
-          >
-            Mark All Read
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {notificationStore.getUnreadCount() > 0 && (
+            <Button
+              variant="glass"
+              size="sm"
+              className="text-xs border-amber-400/40 text-amber-300 hover:bg-amber-400/10"
+              onClick={handleMarkAllRead}
+            >
+              Mark All Read
+            </Button>
+          )}
+          {notifications.length > 0 && (
+            <Button
+              variant="glass"
+              size="sm"
+              className="text-xs border-red-500/40 text-red-400 hover:bg-red-500/10 gap-1.5"
+              onClick={handleClearAll}
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Clear All
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-4">
         {notifications.length === 0 ? (
           <Card variant="glass" className="p-12 text-center text-xs text-velora-textMuted italic">
-            You have no activity notifications yet.
+            You have no activity notifications.
           </Card>
         ) : (
           notifications.map((n) => (
@@ -113,6 +133,13 @@ export default function NotificationsPage() {
                     <Check className="w-4 h-4" />
                   </button>
                 )}
+                <button
+                  onClick={() => handleRemove(n.id)}
+                  className="p-2 rounded-full glass-panel text-velora-textMuted hover:text-red-400 transition-colors"
+                  title="Remove Notification"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             </Card>
           ))

@@ -67,6 +67,16 @@ class NotificationStore {
     this.notify();
   }
 
+  removeNotification(id: string): void {
+    this.notifications = this.notifications.filter((n) => n.id !== id);
+    this.notify();
+  }
+
+  clearAllNotifications(): void {
+    this.notifications = [];
+    this.notify();
+  }
+
   addNotification(notification: Omit<NotificationItem, "id" | "createdAt">): void {
     const newNotif: NotificationItem = {
       ...notification,
