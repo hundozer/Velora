@@ -561,196 +561,84 @@ export default function SingleProfilePage() {
         </div>
       </Card>
 
-      {/* Grid: About Me & Open Desires + Private Media Vault */}
+      {/* Grid: Main Content (MY MEDIA & DATING SETTINGS in CENTER) & Sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left 2 Cols: About & Desires */}
+        {/* CENTER / MAIN CONTENT (lg:col-span-2): MY MEDIA & DATING SETTINGS */}
         <div className="lg:col-span-2 space-y-6">
-          <Card variant="glass" className="p-8 space-y-4 text-left">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-velora-textMuted font-mono">
-              Invitation Into {profile.displayName}'s World
-            </h3>
-
-            {profile.headline && (
-              <h2 className="text-lg font-serif font-bold text-velora-gold italic">
-                "{profile.headline}"
-              </h2>
-            )}
-
-            <p className="text-xs text-velora-textSecondary leading-relaxed whitespace-pre-line">
-              {profile.bio}
-            </p>
-          </Card>
-
-          <Card variant="glass" className="p-8 space-y-4 text-left">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-velora-textMuted font-mono">
-              Open Connections & Desires
-            </h3>
-
-            <div className="flex flex-wrap gap-2 pt-1">
-              {profile.lookingFor.map((item) => (
-                <span
-                  key={item}
-                  className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/5 text-velora-textPrimary border border-white/10"
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-          </Card>
-
-          {/* Intimate Preferences & Sex Hobbies */}
-          {(profile.sexHobbies || profile.erogenousZones || profile.favouriteSexPlaces || profile.favouriteSexPositions || profile.pubicHairGrooming) && (
-            <Card variant="goldBorder" className="p-8 space-y-5 text-left bg-gold-card">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-300 font-mono flex items-center gap-2">
-                <Flame className="w-4 h-4 text-amber-400" /> Intimate Preferences & Kinks
-              </h3>
-
-              <div className="grid grid-cols-3 gap-3 p-3 rounded-2xl bg-white/5 border border-white/10 text-center text-xs font-mono">
-                <div>
-                  <span className="block text-[10px] text-velora-textMuted uppercase">Grooming</span>
-                  <span className="font-bold text-amber-300">{profile.pubicHairGrooming || "Unspecified"}</span>
-                </div>
-                <div>
-                  <span className="block text-[10px] text-velora-textMuted uppercase">Piercing</span>
-                  <span className="font-bold text-amber-300">{profile.piercing || "Unspecified"}</span>
-                </div>
-                <div>
-                  <span className="block text-[10px] text-velora-textMuted uppercase">Tattoo</span>
-                  <span className="font-bold text-amber-300">{profile.tattoo || "Unspecified"}</span>
-                </div>
-              </div>
-
-              {profile.sexHobbies && profile.sexHobbies.length > 0 && (
-                <div className="space-y-1.5">
-                  <span className="text-[11px] font-bold text-velora-textMuted uppercase block">Sex Hobbies & Fetishes</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {profile.sexHobbies.map((hobby) => (
-                      <span key={hobby} className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-400/20 text-amber-300 border border-amber-400/40">
-                        {hobby}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {profile.erogenousZones && profile.erogenousZones.length > 0 && (
-                <div className="space-y-1.5">
-                  <span className="text-[11px] font-bold text-velora-textMuted uppercase block">Erogenous Zones</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {profile.erogenousZones.map((zone) => (
-                      <span key={zone} className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-velora-textPrimary border border-white/10">
-                        {zone}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {profile.favouriteSexPlaces && profile.favouriteSexPlaces.length > 0 && (
-                <div className="space-y-1.5">
-                  <span className="text-[11px] font-bold text-velora-textMuted uppercase block">Favourite Sex Places</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {profile.favouriteSexPlaces.map((place) => (
-                      <span key={place} className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-velora-textPrimary border border-white/10">
-                        {place}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {profile.favouriteSexPositions && profile.favouriteSexPositions.length > 0 && (
-                <div className="space-y-1.5">
-                  <span className="text-[11px] font-bold text-velora-textMuted uppercase block">Favourite Sex Positions</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {profile.favouriteSexPositions.map((pos) => (
-                      <span key={pos} className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-velora-textPrimary border border-white/10">
-                        {pos}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </Card>
-          )}
-        </div>
-
-        {/* Right Col: MY MEDIA & DATING SETTINGS */}
-        <div className="space-y-6">
-          <Card variant="goldBorder" className="p-6 space-y-5 text-left bg-gold-card">
+          <Card variant="goldBorder" className="p-6 sm:p-8 space-y-6 text-left bg-gold-card shadow-2xl">
             {/* Hidden Inputs for Media Uploads */}
             <input type="file" ref={photoUploadRef} accept="image/*" multiple className="hidden" onChange={handlePhotoUpload} />
             <input type="file" ref={videoUploadRef} accept="video/*" className="hidden" onChange={handleVideoUpload} />
 
             {/* Header Title & Count */}
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-velora-gold flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-velora-gold" /> MY MEDIA & DATING SETTINGS
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-velora-gold flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-velora-gold" /> MY MEDIA & DATING SETTINGS
               </h3>
-              <span className="text-[10px] text-velora-textMuted font-mono">
+              <span className="text-xs text-velora-textMuted font-mono font-bold bg-black/40 px-3 py-1 rounded-full border border-white/10">
                 {mediaTab === "PHOTOS" ? `${userPhotoAlbums.length} Albums` : mediaTab === "VIDEOS" ? `${userVideos.length} Videos` : `${userDatingAds.length} Active Ads`}
               </span>
             </div>
 
             {/* Navigation Menu Tabs */}
-            <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/5 border border-white/10 text-xs font-semibold">
+            <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/5 border border-white/10 text-xs font-semibold">
               <button
                 type="button"
                 onClick={() => setMediaTab("PHOTOS")}
-                className={`flex-1 py-2 px-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-2 ${
                   mediaTab === "PHOTOS" ? "bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm font-bold" : "text-velora-textMuted hover:text-white"
                 }`}
               >
-                <Image className="w-3.5 h-3.5" />
-                <span>Photos</span>
+                <Image className="w-4 h-4" />
+                <span>Photos ({userPhotoAlbums.length})</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setMediaTab("VIDEOS")}
-                className={`flex-1 py-2 px-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-2 ${
                   mediaTab === "VIDEOS" ? "bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm font-bold" : "text-velora-textMuted hover:text-white"
                 }`}
               >
-                <Video className="w-3.5 h-3.5" />
-                <span>Videos</span>
+                <Video className="w-4 h-4" />
+                <span>Videos ({userVideos.length})</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setMediaTab("ADS")}
-                className={`flex-1 py-2 px-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-2 ${
                   mediaTab === "ADS" ? "bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm font-bold" : "text-velora-textMuted hover:text-white"
                 }`}
               >
-                <Megaphone className="w-3.5 h-3.5" />
-                <span>Dating Ads</span>
+                <Megaphone className="w-4 h-4" />
+                <span>Dating Ads ({userDatingAds.length})</span>
               </button>
             </div>
 
             {/* TAB 1: MY PHOTOS */}
             {mediaTab === "PHOTOS" && (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {isSelf && (
                   <Button
                     variant="glass"
-                    size="sm"
+                    size="lg"
                     onClick={() => {
                       setPublisherType("ALBUM");
                       setPublisherModalOpen(true);
                     }}
-                    className="w-full text-xs font-bold uppercase tracking-wider gap-1.5 border-amber-500/30 text-amber-300 hover:bg-amber-400/10"
+                    className="w-full text-xs font-bold uppercase tracking-wider gap-2 border-amber-500/30 text-amber-300 hover:bg-amber-400/10 shadow-gold-glow"
                   >
                     <Plus className="w-4 h-4 text-velora-gold" /> + Create Photo Album & Categories
                   </Button>
                 )}
 
-                {/* BIG Photo Album Thumbnails */}
-                <div className="space-y-4">
+                {/* BIG Photo Album Thumbnails 2-Column Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {userPhotoAlbums.map((alb) => (
                     <div key={alb.id} className="rounded-3xl bg-velora-card overflow-hidden border border-white/10 shadow-xl group hover:border-amber-400/40 transition-all">
                       {/* Big Album Thumbnail */}
-                      <div className="h-44 sm:h-52 w-full bg-black relative overflow-hidden">
+                      <div className="h-48 sm:h-56 w-full bg-black relative overflow-hidden">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={alb.coverUrl} alt={alb.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         <div className="absolute inset-0 bg-gradient-to-t from-velora-bg via-black/30 to-transparent" />
@@ -763,7 +651,7 @@ export default function SingleProfilePage() {
                             {alb.status}
                           </span>
                           <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-black/60 text-white border border-white/20 backdrop-blur-md">
-                            Category: {alb.category}
+                            {alb.category}
                           </span>
                         </div>
 
@@ -780,7 +668,7 @@ export default function SingleProfilePage() {
                         </div>
 
                         <div className="absolute bottom-3 left-3 right-3 text-left">
-                          <h4 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors">{alb.title}</h4>
+                          <h4 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors line-clamp-1">{alb.title}</h4>
                           <p className="text-[11px] text-velora-textMuted line-clamp-1">{alb.description}</p>
                         </div>
                       </div>
@@ -810,27 +698,27 @@ export default function SingleProfilePage() {
 
             {/* TAB 2: MY VIDEOS */}
             {mediaTab === "VIDEOS" && (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {isSelf && (
                   <Button
                     variant="glass"
-                    size="sm"
+                    size="lg"
                     onClick={() => {
                       setPublisherType("VIDEO");
                       setPublisherModalOpen(true);
                     }}
-                    className="w-full text-xs font-bold uppercase tracking-wider gap-1.5 border-amber-500/30 text-amber-300 hover:bg-amber-400/10"
+                    className="w-full text-xs font-bold uppercase tracking-wider gap-2 border-amber-500/30 text-amber-300 hover:bg-amber-400/10 shadow-gold-glow"
                   >
                     <Plus className="w-4 h-4 text-velora-gold" /> + Post Video Clip & Categories
                   </Button>
                 )}
 
-                {/* BIG Video Thumbnails */}
-                <div className="space-y-4">
+                {/* BIG Video Thumbnails 2-Column Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {userVideos.map((vid) => (
                     <div key={vid.id} className="rounded-3xl bg-velora-card overflow-hidden border border-white/10 shadow-xl group hover:border-amber-400/40 transition-all">
                       {/* Big Video Cover Thumbnail */}
-                      <div className="h-44 sm:h-52 w-full bg-black relative overflow-hidden">
+                      <div className="h-48 sm:h-56 w-full bg-black relative overflow-hidden">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={vid.thumbnail} alt={vid.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         <div className="absolute inset-0 bg-gradient-to-t from-velora-bg via-black/40 to-transparent" />
@@ -850,7 +738,7 @@ export default function SingleProfilePage() {
                             {vid.status}
                           </span>
                           <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-black/60 text-white border border-white/20 backdrop-blur-md">
-                            Category: {vid.category}
+                            {vid.category}
                           </span>
                         </div>
 
@@ -868,7 +756,7 @@ export default function SingleProfilePage() {
 
                         <div className="absolute bottom-3 left-3 right-3 text-left">
                           <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors">{vid.title}</h4>
+                            <h4 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors line-clamp-1">{vid.title}</h4>
                             <span className="text-[10px] text-amber-300 font-mono font-bold bg-black/60 px-2 py-0.5 rounded-md border border-white/10">
                               {vid.duration}
                             </span>
@@ -902,35 +790,147 @@ export default function SingleProfilePage() {
 
             {/* TAB 3: MY DATING ADS */}
             {mediaTab === "ADS" && (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {isSelf && (
                   <Button
                     variant="gold"
-                    size="sm"
+                    size="lg"
                     onClick={() => setNewAdModalOpen(true)}
-                    className="w-full text-xs font-bold uppercase tracking-wider gap-1.5 shadow-gold-glow"
+                    className="w-full text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow"
                   >
                     <Plus className="w-4 h-4" /> + Post New Dating Ad
                   </Button>
                 )}
 
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {userDatingAds.map((ad) => (
-                    <div key={ad.id} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2 text-left hover:border-amber-400/40 transition-colors">
+                    <div key={ad.id} className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2 text-left hover:border-amber-400/40 transition-colors">
                       <div className="flex items-center justify-between">
                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-400/20 text-amber-300 border border-amber-400/30">
                           {ad.category}
                         </span>
                         <span className="text-[10px] text-emerald-400 font-mono font-semibold">{ad.date}</span>
                       </div>
-                      <h4 className="text-xs font-bold text-white">{ad.title}</h4>
-                      <p className="text-[11px] text-velora-textSecondary leading-relaxed">{ad.description}</p>
+                      <h4 className="text-sm font-bold text-white">{ad.title}</h4>
+                      <p className="text-xs text-velora-textSecondary leading-relaxed">{ad.description}</p>
                     </div>
                   ))}
                 </div>
               </div>
             )}
           </Card>
+        </div>
+
+        {/* RIGHT SIDEBAR (lg:col-span-1): About Me & Open Desires & Intimate Preferences */}
+        <div className="lg:col-span-1 space-y-6">
+          <Card variant="glass" className="p-6 space-y-4 text-left">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-velora-textMuted font-mono">
+              Invitation Into {profile.displayName}'s World
+            </h3>
+
+            {profile.headline && (
+              <h2 className="text-base font-serif font-bold text-velora-gold italic">
+                "{profile.headline}"
+              </h2>
+            )}
+
+            <p className="text-xs text-velora-textSecondary leading-relaxed whitespace-pre-line">
+              {profile.bio}
+            </p>
+          </Card>
+
+          <Card variant="glass" className="p-6 space-y-4 text-left">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-velora-textMuted font-mono">
+              Open Connections & Desires
+            </h3>
+
+            <div className="flex flex-wrap gap-2 pt-1">
+              {profile.lookingFor.map((item) => (
+                <span
+                  key={item}
+                  className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-velora-textPrimary border border-white/10"
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+          </Card>
+
+          {/* Intimate Preferences & Sex Hobbies */}
+          {(profile.sexHobbies || profile.erogenousZones || profile.favouriteSexPlaces || profile.favouriteSexPositions || profile.pubicHairGrooming) && (
+            <Card variant="goldBorder" className="p-6 space-y-4 text-left bg-gold-card">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-300 font-mono flex items-center gap-2">
+                <Flame className="w-4 h-4 text-amber-400" /> Intimate Preferences & Kinks
+              </h3>
+
+              <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-white/5 border border-white/10 text-center text-xs font-mono">
+                <div>
+                  <span className="block text-[9px] text-velora-textMuted uppercase">Grooming</span>
+                  <span className="font-bold text-amber-300 text-[11px]">{profile.pubicHairGrooming || "Unspecified"}</span>
+                </div>
+                <div>
+                  <span className="block text-[9px] text-velora-textMuted uppercase">Piercing</span>
+                  <span className="font-bold text-amber-300 text-[11px]">{profile.piercing || "Unspecified"}</span>
+                </div>
+                <div>
+                  <span className="block text-[9px] text-velora-textMuted uppercase">Tattoo</span>
+                  <span className="font-bold text-amber-300 text-[11px]">{profile.tattoo || "Unspecified"}</span>
+                </div>
+              </div>
+
+              {profile.sexHobbies && profile.sexHobbies.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold text-velora-textMuted uppercase block">Sex Hobbies & Fetishes</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.sexHobbies.map((hobby) => (
+                      <span key={hobby} className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-400/20 text-amber-300 border border-amber-400/40">
+                        {hobby}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {profile.erogenousZones && profile.erogenousZones.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold text-velora-textMuted uppercase block">Erogenous Zones</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.erogenousZones.map((zone) => (
+                      <span key={zone} className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/5 text-velora-textPrimary border border-white/10">
+                        {zone}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {profile.favouriteSexPlaces && profile.favouriteSexPlaces.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold text-velora-textMuted uppercase block">Favourite Places</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.favouriteSexPlaces.map((place) => (
+                      <span key={place} className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/5 text-velora-textPrimary border border-white/10">
+                        {place}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {profile.favouriteSexPositions && profile.favouriteSexPositions.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold text-velora-textMuted uppercase block">Favourite Positions</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.favouriteSexPositions.map((pos) => (
+                      <span key={pos} className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/5 text-velora-textPrimary border border-white/10">
+                        {pos}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Card>
+          )}
         </div>
       </div>
 
