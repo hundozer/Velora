@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/Card";
@@ -44,7 +44,10 @@ import {
   Trash2,
   EyeOff,
   Edit3,
+  UserPlus,
+  Users,
 } from "lucide-react";
+import { connectionStore } from "@/lib/social/connectionStore";
 
 const AMATERI_TOPICS = [
   "Anal",
@@ -383,6 +386,30 @@ export default function SingleProfilePage() {
   // Member Verification State
   const [getVerifiedModalOpen, setGetVerifiedModalOpen] = useState(false);
   const [userVerificationStatus, setUserVerificationStatus] = useState<"UNVERIFIED" | "PENDING_REVIEW" | "VERIFIED" | "REJECTED">("UNVERIFIED");
+
+  // Social Follow & Friend Connections State
+  const [isFollowing, setIsFollowing] = useState(connectionStore.isFollowing(profile.id));
+  const [friendStatus, setFriendStatus] = useState(connectionStore.getFriendStatus(profile.id));
+
+  useEffect(() => {
+    setIsFollowing(connectionStore.isFollowing(profile.id));
+    setFriendStatus(connectionStore.getFriendStatus(profile.id));
+    const unsubscribe = connectionStore.subscribe(() => {
+      setIsFollowing(connectionStore.isFollowing(profile.id));
+      setFriendStatus(connectionStore.getFriendStatus(profile.id));
+    });
+    return unsubscribe;
+  }, [profile.id]);
+
+  const handleToggleFollow = () => {
+    const updated = connectionStore.toggleFollow(profile.id);
+    setIsFollowing(updated);
+  };
+
+  const handleToggleFriend = () => {
+    const updatedStatus = connectionStore.toggleFriendRequest(profile.id);
+    setFriendStatus(updatedStatus);
+  };
 
   const handleVerificationSubmitted = (verificationPhotoUrl: string) => {
     setUserVerificationStatus("PENDING_REVIEW");
@@ -893,11 +920,57 @@ export default function SingleProfilePage() {
                   </Link>
                 </div>
               ) : (
-                <Link href="/messages">
-                  <Button variant="gold" size="lg" className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow">
-                    <MessageSquare className="w-4 h-4" /> Send Private Message
+                <div className="flex items-center gap-2">
+                  {/* Follow Button */}
+                  <Button
+                    variant={isFollowing ? "glass" : "gold"}
+                    size="lg"
+                    onClick={handleToggleFollow}
+                    className={`text-xs font-bold uppercase tracking-wider gap-2 ${
+                      isFollowing
+                        ? "border-amber-400/40 text-amber-300 bg-amber-400/10 hover:bg-amber-400/20"
+                        : "shadow-gold-glow"
+                    }`}
+                  >
+                    {isFollowing ? (
+                      <>
+                        <UserCheck className="w-4 h-4 text-amber-400" /> Following
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="w-4 h-4 text-black" /> Follow Updates
+                      </>
+                    )}
                   </Button>
-                </Link>
+
+                  {/* Add Friend Button */}
+                  <Button
+                    variant="glass"
+                    size="lg"
+                    onClick={handleToggleFriend}
+                    className={`text-xs font-bold uppercase tracking-wider gap-2 border-white/20 ${
+                      friendStatus === "FRIEND"
+                        ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
+                        : friendStatus === "PENDING"
+                        ? "border-amber-400/40 bg-amber-400/20 text-amber-300"
+                        : "hover:border-amber-400/40"
+                    }`}
+                  >
+                    <Users className="w-4 h-4 text-velora-gold" />
+                    {friendStatus === "FRIEND"
+                      ? "Mutual Friends 🤝"
+                      : friendStatus === "PENDING"
+                      ? "Request Sent ⏳"
+                      : "Add Friend"}
+                  </Button>
+
+                  {/* Message Button */}
+                  <Link href="/messages">
+                    <Button variant="glass" size="lg" className="text-xs font-bold uppercase tracking-wider gap-2 border-white/20">
+                      <MessageSquare className="w-4 h-4 text-velora-gold" /> Message
+                    </Button>
+                  </Link>
+                </div>
               )}
 
               <Button

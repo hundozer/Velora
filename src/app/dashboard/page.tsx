@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { MOCK_PROFILES } from "@/lib/mockData";
+import { connectionStore } from "@/lib/social/connectionStore";
 import {
   Compass,
   Sparkles,
@@ -201,6 +202,20 @@ export default function DashboardPage() {
   const [activeNavTab, setActiveNavTab] = useState<"NEWEST" | "FOLLOWED" | "FRIENDS">("FOLLOWED");
   const [activeFilterPill, setActiveFilterPill] = useState<string>("ALL");
 
+  // Followed & Friends State
+  const [followedIds, setFollowedIds] = useState(connectionStore.getFollowedUserIds());
+  const [friendIds, setFriendIds] = useState(connectionStore.getFriendUserIds());
+
+  React.useEffect(() => {
+    setFollowedIds(connectionStore.getFollowedUserIds());
+    setFriendIds(connectionStore.getFriendUserIds());
+    const unsubscribe = connectionStore.subscribe(() => {
+      setFollowedIds(connectionStore.getFollowedUserIds());
+      setFriendIds(connectionStore.getFriendUserIds());
+    });
+    return unsubscribe;
+  }, []);
+
   // Publisher Input State
   const [publisherInput, setPublisherInput] = useState("");
 
@@ -212,6 +227,15 @@ export default function DashboardPage() {
 
   const filteredPosts = useMemo(() => {
     return feedPosts.filter((post) => {
+      // Filter by Followed / Friends tabs
+      if (activeNavTab === "FOLLOWED" && !followedIds.includes(post.author.id) && post.author.id !== "me") {
+        return false;
+      }
+      if (activeNavTab === "FRIENDS" && !friendIds.includes(post.author.id) && post.author.id !== "me") {
+        return false;
+      }
+
+      // Filter by Content Type Pill
       if (activeFilterPill === "ALL") return true;
       if (activeFilterPill === "ALBUM" && post.type === "ALBUM") return true;
       if (activeFilterPill === "VIDEOS" && post.type === "VIDEO") return true;
@@ -219,7 +243,7 @@ export default function DashboardPage() {
       if (activeFilterPill === "TEXT" && post.type === "TEXT") return true;
       return true;
     });
-  }, [feedPosts, activeFilterPill]);
+  }, [feedPosts, activeNavTab, activeFilterPill, followedIds, friendIds]);
 
   const handleToggleLike = (postId: string) => {
     setFeedPosts((prev) =>
