@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { ReportModal } from "@/components/safety/ReportModal";
 import { MOCK_PROFILES, MOCK_CREATOR_ALBUMS } from "@/lib/mockData";
 import { useAuth } from "@/context/AuthContext";
+import { Input } from "@/components/ui/Input";
 import {
   MapPin,
   Heart,
@@ -25,6 +26,12 @@ import {
   Crown,
   LogOut,
   Camera,
+  Image,
+  Video,
+  Megaphone,
+  Plus,
+  Play,
+  X,
 } from "lucide-react";
 
 export default function SingleProfilePage() {
@@ -44,8 +51,99 @@ export default function SingleProfilePage() {
   const [isFavorited, setIsFavorited] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
 
+  // Interactive Media Vault Menu State (My Photos, My Videos, My Dating Ads)
+  const [mediaTab, setMediaTab] = useState<"PHOTOS" | "VIDEOS" | "ADS">("PHOTOS");
+
+  const [userPhotos, setUserPhotos] = useState<string[]>([
+    profile.avatarUrl,
+    profile.coverPhotoUrl || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+  ]);
+
+  const [userVideos, setUserVideos] = useState<{ id: string; title: string; duration: string; thumbnail: string }[]>([
+    { id: "v1", title: "Private Lifestyle Teaser", duration: "0:45", thumbnail: profile.avatarUrl },
+    { id: "v2", title: "Monaco Riviera Highlights", duration: "1:20", thumbnail: profile.coverPhotoUrl || profile.avatarUrl },
+  ]);
+
+  const [userDatingAds, setUserDatingAds] = useState<{ id: string; title: string; category: string; description: string; date: string }[]>([
+    {
+      id: "ad-1",
+      title: "Discreet Fine Dining & Champagne Evening",
+      category: "VIP Dining & Lounge",
+      description: "Looking for an open-minded, sophisticated partner for private dining in Monte Carlo this Friday.",
+      date: "Active • Posted 2 days ago",
+    },
+    {
+      id: "ad-2",
+      title: "Weekend Riviera Yacht & Sunbathing",
+      category: "Weekend Getaway",
+      description: "Seeking a fun, attractive companion to join for a weekend cruise along the Côte d'Azur.",
+      date: "Active • Posted 5 days ago",
+    },
+  ]);
+
   const avatarInputRef = React.useRef<HTMLInputElement>(null);
   const coverInputRef = React.useRef<HTMLInputElement>(null);
+  const photoUploadRef = React.useRef<HTMLInputElement>(null);
+  const videoUploadRef = React.useRef<HTMLInputElement>(null);
+
+  const [newAdModalOpen, setNewAdModalOpen] = useState(false);
+  const [newAdTitle, setNewAdTitle] = useState("");
+  const [newAdCategory, setNewAdCategory] = useState("VIP Lifestyle");
+  const [newAdDescription, setNewAdDescription] = useState("");
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      Array.from(e.target.files).forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (reader.result) {
+            setUserPhotos((prev) => [reader.result as string, ...prev]);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.result) {
+          setUserVideos((prev) => [
+            {
+              id: `vid-${Date.now()}`,
+              title: file.name.replace(/\.[^/.]+$/, ""),
+              duration: "0:30",
+              thumbnail: profile.avatarUrl,
+            },
+            ...prev,
+          ]);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCreateAd = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAdTitle.trim() || !newAdDescription.trim()) return;
+
+    const newAd = {
+      id: `ad-${Date.now()}`,
+      title: newAdTitle,
+      category: newAdCategory,
+      description: newAdDescription,
+      date: "Active • Posted just now",
+    };
+
+    setUserDatingAds((prev) => [newAd, ...prev]);
+    setNewAdTitle("");
+    setNewAdDescription("");
+    setNewAdModalOpen(false);
+  };
 
   const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0] && currentUser && currentProfile) {
@@ -307,42 +405,228 @@ export default function SingleProfilePage() {
           )}
         </div>
 
-        {/* Right Col: Private Vault Preview */}
+        {/* Right Col: Member Vault & Content Showcase (My Photos, My Videos, My Dating Ads) */}
         <div className="space-y-6">
-          <Card variant="goldBorder" className="p-6 space-y-4 text-left bg-gold-card">
+          <Card variant="goldBorder" className="p-6 space-y-5 text-left bg-gold-card">
+            {/* Hidden Inputs for Media Uploads */}
+            <input type="file" ref={photoUploadRef} accept="image/*" multiple className="hidden" onChange={handlePhotoUpload} />
+            <input type="file" ref={videoUploadRef} accept="video/*" className="hidden" onChange={handleVideoUpload} />
+
+            {/* Header Title & Count */}
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-velora-gold flex items-center gap-1.5">
-                <Lock className="w-4 h-4 text-velora-gold" /> Private Media Vault
+                <Sparkles className="w-4 h-4 text-velora-gold" /> Member Vault & Media Showcase
               </h3>
-              <span className="text-[10px] text-velora-textMuted font-mono">18 Media Items</span>
+              <span className="text-[10px] text-velora-textMuted font-mono">
+                {mediaTab === "PHOTOS" ? `${userPhotos.length} Photos` : mediaTab === "VIDEOS" ? `${userVideos.length} Videos` : `${userDatingAds.length} Active Ads`}
+              </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div className="h-28 rounded-2xl bg-velora-card relative overflow-hidden group border border-white/10">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={profile.avatarUrl} alt="Vault" className="w-full h-full object-cover blur-md" />
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <Lock className="w-5 h-5 text-velora-gold" />
-                </div>
-              </div>
+            {/* Navigation Menu Tabs */}
+            <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/5 border border-white/10 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setMediaTab("PHOTOS")}
+                className={`flex-1 py-2 px-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                  mediaTab === "PHOTOS" ? "bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm font-bold" : "text-velora-textMuted hover:text-white"
+                }`}
+              >
+                <Image className="w-3.5 h-3.5" />
+                <span>Photos</span>
+              </button>
 
-              <div className="h-28 rounded-2xl bg-velora-card relative overflow-hidden group border border-white/10">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={profile.coverPhotoUrl || profile.avatarUrl} alt="Vault" className="w-full h-full object-cover blur-md" />
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <Lock className="w-5 h-5 text-velora-gold" />
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={() => setMediaTab("VIDEOS")}
+                className={`flex-1 py-2 px-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                  mediaTab === "VIDEOS" ? "bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm font-bold" : "text-velora-textMuted hover:text-white"
+                }`}
+              >
+                <Video className="w-3.5 h-3.5" />
+                <span>Videos</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMediaTab("ADS")}
+                className={`flex-1 py-2 px-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                  mediaTab === "ADS" ? "bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm font-bold" : "text-velora-textMuted hover:text-white"
+                }`}
+              >
+                <Megaphone className="w-3.5 h-3.5" />
+                <span>Dating Ads</span>
+              </button>
             </div>
 
-            <Link href="/messages" className="block">
-              <Button variant="gold" size="sm" className="w-full text-xs font-bold uppercase tracking-wider shadow-gold-glow">
-                Request Vault Access
-              </Button>
-            </Link>
+            {/* TAB 1: MY PHOTOS */}
+            {mediaTab === "PHOTOS" && (
+              <div className="space-y-4">
+                {isSelf && (
+                  <Button
+                    variant="glass"
+                    size="sm"
+                    onClick={() => photoUploadRef.current?.click()}
+                    className="w-full text-xs font-bold uppercase tracking-wider gap-1.5 border-amber-500/30 text-amber-300 hover:bg-amber-400/10"
+                  >
+                    <Plus className="w-4 h-4 text-velora-gold" /> Upload New Photo
+                  </Button>
+                )}
+
+                <div className="grid grid-cols-2 gap-2">
+                  {userPhotos.map((photoUrl, idx) => (
+                    <div key={idx} className="h-28 rounded-2xl bg-velora-card relative overflow-hidden group border border-white/10 shadow-md">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={photoUrl} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                        <span className="text-[10px] text-white font-mono">Photo #{idx + 1}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: MY VIDEOS */}
+            {mediaTab === "VIDEOS" && (
+              <div className="space-y-4">
+                {isSelf && (
+                  <Button
+                    variant="glass"
+                    size="sm"
+                    onClick={() => videoUploadRef.current?.click()}
+                    className="w-full text-xs font-bold uppercase tracking-wider gap-1.5 border-amber-500/30 text-amber-300 hover:bg-amber-400/10"
+                  >
+                    <Plus className="w-4 h-4 text-velora-gold" /> Upload Video Clip
+                  </Button>
+                )}
+
+                <div className="space-y-2">
+                  {userVideos.map((vid) => (
+                    <div key={vid.id} className="p-2.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between gap-3 group hover:border-amber-400/40 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-velora-card relative overflow-hidden shrink-0 border border-white/10">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={vid.thumbnail} alt={vid.title} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <Play className="w-4 h-4 text-amber-300 fill-amber-300" />
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">{vid.title}</p>
+                          <p className="text-[10px] text-velora-textMuted font-mono">Duration: {vid.duration}</p>
+                        </div>
+                      </div>
+                      <Badge type="verified" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: MY DATING ADS */}
+            {mediaTab === "ADS" && (
+              <div className="space-y-4">
+                {isSelf && (
+                  <Button
+                    variant="gold"
+                    size="sm"
+                    onClick={() => setNewAdModalOpen(true)}
+                    className="w-full text-xs font-bold uppercase tracking-wider gap-1.5 shadow-gold-glow"
+                  >
+                    <Plus className="w-4 h-4" /> + Post New Dating Ad
+                  </Button>
+                )}
+
+                <div className="space-y-3">
+                  {userDatingAds.map((ad) => (
+                    <div key={ad.id} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2 text-left hover:border-amber-400/40 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                          {ad.category}
+                        </span>
+                        <span className="text-[10px] text-emerald-400 font-mono font-semibold">{ad.date}</span>
+                      </div>
+                      <h4 className="text-xs font-bold text-white">{ad.title}</h4>
+                      <p className="text-[11px] text-velora-textSecondary leading-relaxed">{ad.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </Card>
         </div>
       </div>
+
+      {/* Post Dating Ad Modal */}
+      {newAdModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <Card variant="goldBorder" className="w-full max-w-md p-6 space-y-5 text-left bg-velora-card relative shadow-2xl">
+            <button
+              onClick={() => setNewAdModalOpen(false)}
+              className="absolute top-4 right-4 text-velora-textMuted hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="space-y-1">
+              <h3 className="text-base font-serif font-bold text-white flex items-center gap-2">
+                <Megaphone className="w-5 h-5 text-velora-gold" /> Post Personal Dating Ad
+              </h3>
+              <p className="text-xs text-velora-textMuted">Publish an intimate announcement or lifestyle connection request.</p>
+            </div>
+
+            <form onSubmit={handleCreateAd} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-velora-textSecondary mb-1.5">Ad Title / Headline</label>
+                <Input
+                  type="text"
+                  value={newAdTitle}
+                  onChange={(e) => setNewAdTitle(e.target.value)}
+                  placeholder="e.g. Seeking Gala Partner for Monaco Weekend"
+                  className="w-full text-xs"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-velora-textSecondary mb-1.5">Category</label>
+                <select
+                  value={newAdCategory}
+                  onChange={(e) => setNewAdCategory(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white focus:outline-none focus:border-velora-gold"
+                >
+                  <option value="VIP Lifestyle" className="bg-velora-card">VIP Lifestyle & Events</option>
+                  <option value="VIP Dining & Lounge" className="bg-velora-card">VIP Dining & Lounge</option>
+                  <option value="Weekend Getaway" className="bg-velora-card">Weekend Getaway</option>
+                  <option value="Discreet Romance" className="bg-velora-card">Discreet Romance</option>
+                  <option value="Couples Experience" className="bg-velora-card">Couples Experience</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-velora-textSecondary mb-1.5">Description & Desires</label>
+                <textarea
+                  value={newAdDescription}
+                  onChange={(e) => setNewAdDescription(e.target.value)}
+                  rows={3}
+                  placeholder="Describe your ideal partner, location, expectations, and chemistry..."
+                  className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white focus:outline-none focus:border-velora-gold resize-none"
+                  required
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <Button variant="glass" size="sm" type="button" onClick={() => setNewAdModalOpen(false)} className="w-1/2 text-xs">
+                  Cancel
+                </Button>
+                <Button variant="gold" size="sm" type="submit" className="w-1/2 text-xs font-bold uppercase tracking-wider shadow-gold-glow">
+                  Publish Ad
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
 
       {/* Report Modal */}
       <ReportModal
