@@ -39,26 +39,45 @@ import {
 } from "lucide-react";
 
 const AMATERI_TOPICS = [
-  "VIP Lifestyle",
-  "Erotic Art",
-  "Couples Sex",
+  "Amateri.com",
+  "Anal",
   "BDSM",
-  "Footfetish",
-  "Group Sex",
-  "Oral Sex",
-  "Fetish",
-  "Masturbation",
-  "Outdoor Sex",
-  "Sex in Public",
-  "MILFs",
-  "Piercing",
-  "Sex in Car",
   "Big Asses",
+  "Big tits",
+  "Bulls",
+  "Candaulism",
   "Clothes",
-  "Dildos & Other Toys",
-  "Natural Body Hair",
-  "Soft Erotica",
+  "Crossdresser",
   "Deepthroat",
+  "Details",
+  "Dildos and other toys",
+  "Erotic art",
+  "Fetish",
+  "Fisting",
+  "Footfetish",
+  "Footjob",
+  "Funny and creative",
+  "Gangbang",
+  "Gloryhole",
+  "Group sex",
+  "Masturbation",
+  "MILFs",
+  "Natural body hair",
+  "Oral sex",
+  "Outdoor sex",
+  "Piercing",
+  "Piss",
+  "Sex and porn",
+  "Sex in public",
+  "Sex in the car",
+  "Soft erotica",
+  "Solo",
+  "Sperm",
+  "Squirt",
+  "Swallowing",
+  "Trans and Transvestites",
+  "Vacation",
+  "VIP Lifestyle",
 ];
 
 interface UserVideoItem {
@@ -223,6 +242,8 @@ export default function SingleProfilePage() {
   const videoUploadRef = React.useRef<HTMLInputElement>(null);
 
   // Amateri-Style Category Publisher Modal State
+  const modalFileRef = React.useRef<HTMLInputElement>(null);
+  const [modalPreviews, setModalPreviews] = useState<string[]>([]);
   const [publisherModalOpen, setPublisherModalOpen] = useState(false);
   const [publisherType, setPublisherType] = useState<"VIDEO" | "ALBUM">("VIDEO");
   const [pubMonetization, setPubMonetization] = useState<"FREE" | "CREDITS">("FREE");
@@ -232,13 +253,32 @@ export default function SingleProfilePage() {
   const [pubCategory, setPubCategory] = useState("Man");
   const [pubCommentSetting, setPubCommentSetting] = useState<"ANYONE" | "VERIFIED" | "NOBODY">("ANYONE");
   const [pubVotingSetting, setPubVotingSetting] = useState<"ANYONE" | "DISABLED">("ANYONE");
-  const [pubSelectedTopics, setPubSelectedTopics] = useState<string[]>(["VIP Lifestyle", "Soft Erotica"]);
+  const [pubSelectedTopics, setPubSelectedTopics] = useState<string[]>(["VIP Lifestyle", "Soft erotica"]);
 
   // Dating Ad Modal State
   const [newAdModalOpen, setNewAdModalOpen] = useState(false);
   const [newAdTitle, setNewAdTitle] = useState("");
   const [newAdCategory, setNewAdCategory] = useState("VIP Lifestyle");
   const [newAdDescription, setNewAdDescription] = useState("");
+
+  const handleModalFilesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const filesArray = Array.from(e.target.files);
+      filesArray.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (reader.result) {
+            setModalPreviews((prev) => [...prev, reader.result as string]);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const removeModalPreview = (index: number) => {
+    setModalPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const toggleTopic = (topic: string) => {
     if (pubSelectedTopics.includes(topic)) {
@@ -258,7 +298,7 @@ export default function SingleProfilePage() {
         title: pubTitle,
         description: pubDescription || "Verified member video upload.",
         duration: "1:30",
-        thumbnail: profile.avatarUrl,
+        thumbnail: modalPreviews[0] || profile.avatarUrl,
         monetization: pubMonetization,
         creditsPrice: pubMonetization === "CREDITS" ? pubCreditsPrice : undefined,
         category: pubCategory,
@@ -277,8 +317,8 @@ export default function SingleProfilePage() {
         id: `alb-${Date.now()}`,
         title: pubTitle,
         description: pubDescription || "Verified member photo album.",
-        coverUrl: profile.avatarUrl,
-        photoCount: 12,
+        coverUrl: modalPreviews[0] || profile.avatarUrl,
+        photoCount: modalPreviews.length > 0 ? modalPreviews.length : 8,
         monetization: pubMonetization,
         creditsPrice: pubMonetization === "CREDITS" ? pubCreditsPrice : undefined,
         category: pubCategory,
@@ -294,6 +334,7 @@ export default function SingleProfilePage() {
 
     setPubTitle("");
     setPubDescription("");
+    setModalPreviews([]);
     setPublisherModalOpen(false);
   };
 
@@ -917,6 +958,71 @@ export default function SingleProfilePage() {
             </div>
 
             <form onSubmit={handlePublishMedia} className="space-y-6">
+              {/* Hidden Input for Modal File Selection */}
+              <input
+                type="file"
+                ref={modalFileRef}
+                accept={publisherType === "VIDEO" ? "video/*" : "image/*"}
+                multiple
+                className="hidden"
+                onChange={handleModalFilesSelect}
+              />
+
+              {/* Interactive Photo/Video Upload Area */}
+              <div className="space-y-3">
+                <label className="block text-xs font-bold uppercase tracking-wider text-velora-textSecondary">
+                  {publisherType === "VIDEO" ? "Upload Video File" : "Upload Album Photos"}
+                </label>
+
+                <div
+                  onClick={() => modalFileRef.current?.click()}
+                  className="p-6 rounded-2xl border-2 border-dashed border-velora-gold/40 bg-white/5 hover:bg-white/10 transition-all cursor-pointer flex flex-col items-center justify-center gap-2 text-center group"
+                >
+                  <div className="w-12 h-12 rounded-full bg-amber-400/20 text-amber-300 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Camera className="w-6 h-6 text-amber-300" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-white">Click or drag files to add to album</p>
+                    <p className="text-[11px] text-velora-textMuted mt-0.5">Select multiple photos or video clips at once.</p>
+                  </div>
+                  <Button type="button" variant="gold" size="sm" className="text-xs font-bold gap-1 mt-1">
+                    <Plus className="w-3.5 h-3.5" /> Browse Photos & Videos
+                  </Button>
+                </div>
+
+                {/* Real-time Photo Preview Grid */}
+                {modalPreviews.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-bold text-amber-300 font-mono">
+                      {modalPreviews.length} Photo{modalPreviews.length > 1 ? "s" : ""} Selected:
+                    </p>
+                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-40 overflow-y-auto p-2 rounded-xl bg-black/40 border border-white/10">
+                      {modalPreviews.map((src, idx) => (
+                        <div key={idx} className="h-16 rounded-xl bg-velora-card relative overflow-hidden group border border-white/20">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={src} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeModalPreview(idx);
+                            }}
+                            className="absolute top-1 right-1 p-0.5 rounded-full bg-black/80 text-white hover:bg-red-500 transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                          {idx === 0 && (
+                            <span className="absolute bottom-0 left-0 right-0 text-[8px] font-bold bg-amber-400 text-black text-center uppercase">
+                              Cover
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Type Selector (Free vs For Credits) */}
               <div className="space-y-2">
                 <label className="block text-xs font-bold uppercase tracking-wider text-velora-textSecondary">
