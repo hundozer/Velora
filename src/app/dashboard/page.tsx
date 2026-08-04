@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { MOCK_PROFILES } from "@/lib/mockData";
 import { connectionStore } from "@/lib/social/connectionStore";
+import { visitorStore } from "@/lib/social/visitorStore";
 import {
   Compass,
   Sparkles,
@@ -206,14 +207,28 @@ export default function DashboardPage() {
   const [followedIds, setFollowedIds] = useState(connectionStore.getFollowedUserIds());
   const [friendIds, setFriendIds] = useState(connectionStore.getFriendUserIds());
 
+  // Profile Visitors State
+  const [visitors, setVisitors] = useState(visitorStore.getRecentVisitors());
+  const [allVisitorsModalOpen, setAllVisitorsModalOpen] = useState(false);
+
   React.useEffect(() => {
     setFollowedIds(connectionStore.getFollowedUserIds());
     setFriendIds(connectionStore.getFriendUserIds());
-    const unsubscribe = connectionStore.subscribe(() => {
+    setVisitors(visitorStore.getRecentVisitors());
+
+    const unsubscribeConn = connectionStore.subscribe(() => {
       setFollowedIds(connectionStore.getFollowedUserIds());
       setFriendIds(connectionStore.getFriendUserIds());
     });
-    return unsubscribe;
+
+    const unsubscribeVis = visitorStore.subscribe(() => {
+      setVisitors(visitorStore.getRecentVisitors());
+    });
+
+    return () => {
+      unsubscribeConn();
+      unsubscribeVis();
+    };
   }, []);
 
   // Publisher Input State
@@ -671,35 +686,46 @@ export default function DashboardPage() {
 
           {/* Recent Profile Visits */}
           <Card variant="glass" className="p-4 space-y-3">
-            <h3 className="text-sm font-bold text-white flex items-center gap-1.5 border-b border-white/10 pb-2">
-              <UserCheck className="w-4 h-4 text-blue-400" /> Recent Visits
+            <h3 className="text-sm font-bold text-white flex items-center justify-between border-b border-white/10 pb-2">
+              <span className="flex items-center gap-1.5">
+                <UserCheck className="w-4 h-4 text-blue-400" /> Recent Visits
+              </span>
+              <span className="text-[10px] font-mono text-amber-300 font-bold bg-amber-400/20 px-2 py-0.5 rounded-full border border-amber-400/30">
+                {visitors.length} Visitors
+              </span>
             </h3>
 
             <div className="space-y-2.5">
-              {RECENT_VISITORS.map((v) => (
-                <div key={v.id} className="flex items-center justify-between text-xs">
+              {visitors.slice(0, 5).map((v) => (
+                <Link key={v.id} href={`/profile/${v.userId}`} className="flex items-center justify-between text-xs hover:bg-white/5 p-1.5 rounded-xl transition-colors">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-full border border-amber-400/40 overflow-hidden shrink-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={v.avatar} alt={v.name} className="w-full h-full object-cover" />
+                      <img src={v.avatarUrl} alt={v.name} className="w-full h-full object-cover" />
                     </div>
-                    <span className="font-bold text-white flex items-center gap-1">
-                      {v.name}
-                      <span className="text-amber-400 font-bold text-[11px]">{v.gender}</span>
-                      {v.isVerified && <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />}
-                    </span>
+                    <div>
+                      <span className="font-bold text-white flex items-center gap-1">
+                        {v.name}
+                        <span className="text-amber-400 font-bold text-[11px]">{v.genderSymbol}</span>
+                        {v.isVerified && <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />}
+                      </span>
+                      <p className="text-[10px] text-velora-textMuted font-mono">{v.visitedAt}</p>
+                    </div>
                   </div>
 
-                  {v.hasMessage && (
-                    <span className="w-5 h-5 rounded-full bg-emerald-500 text-black text-[10px] font-bold flex items-center justify-center">
+                  {v.hasUnreadMessage && (
+                    <span className="w-5 h-5 rounded-full bg-emerald-500 text-black text-[10px] font-bold flex items-center justify-center shadow-sm">
                       1
                     </span>
                   )}
-                </div>
+                </Link>
               ))}
             </div>
 
-            <button className="w-full py-1.5 text-center text-xs font-bold text-amber-300 hover:underline pt-2 border-t border-white/10">
+            <button
+              onClick={() => setAllVisitorsModalOpen(true)}
+              className="w-full py-1.5 text-center text-xs font-bold text-amber-300 hover:underline pt-2 border-t border-white/10"
+            >
               Show More Visitors →
             </button>
           </Card>
@@ -725,6 +751,54 @@ export default function DashboardPage() {
               className="w-full h-full object-contain max-h-[85vh]"
             />
           </div>
+        </div>
+      )}
+
+      {/* All Recent Profile Visitors Modal */}
+      {allVisitorsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <Card variant="goldBorder" className="w-full max-w-md p-6 space-y-4 text-left bg-velora-card relative shadow-2xl">
+            <button
+              onClick={() => setAllVisitorsModalOpen(false)}
+              className="absolute top-4 right-4 text-velora-textMuted hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="space-y-1">
+              <h3 className="text-base font-serif font-bold text-white flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-blue-400" /> Recent Profile Visitors
+              </h3>
+              <p className="text-xs text-velora-textMuted">Members who recently viewed your verified Intimo profile.</p>
+            </div>
+
+            <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+              {visitors.map((v) => (
+                <div key={v.id} className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full border border-amber-400/40 overflow-hidden shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={v.avatarUrl} alt={v.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-white flex items-center gap-1">
+                        {v.name}
+                        <span className="text-amber-400 text-xs">{v.genderSymbol}</span>
+                        {v.isVerified && <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />}
+                      </p>
+                      <p className="text-[10px] text-velora-textMuted font-mono">Visited {v.visitedAt}</p>
+                    </div>
+                  </div>
+
+                  <Link href={`/profile/${v.userId}`} onClick={() => setAllVisitorsModalOpen(false)}>
+                    <Button variant="glass" size="sm" className="text-[11px] font-bold">
+                      View Profile
+                    </Button>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
       )}
     </div>
