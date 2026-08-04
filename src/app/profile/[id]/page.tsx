@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -99,8 +99,10 @@ interface UserPhotoAlbumItem {
 
 export default function SingleProfilePage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const { logout, user: currentUser, profile: currentProfile, updateUserProfile } = useAuth();
   const profileId = (params?.id as string) || "me";
+  const tabQuery = searchParams.get("tab");
 
   const isSelf =
     profileId === "me" ||
@@ -116,6 +118,12 @@ export default function SingleProfilePage() {
 
   // Interactive Media Vault Menu State (My Photos, My Videos, My Dating Ads)
   const [mediaTab, setMediaTab] = useState<"PHOTOS" | "VIDEOS" | "ADS">("PHOTOS");
+
+  React.useEffect(() => {
+    if (tabQuery === "PHOTOS") setMediaTab("PHOTOS");
+    else if (tabQuery === "VIDEOS") setMediaTab("VIDEOS");
+    else if (tabQuery === "ADS") setMediaTab("ADS");
+  }, [tabQuery]);
 
   // Rich Photo Albums
   const [userPhotoAlbums, setUserPhotoAlbums] = useState<UserPhotoAlbumItem[]>([

@@ -19,6 +19,9 @@ import {
   Settings,
   LogOut,
   Wallet,
+  Image,
+  Video,
+  Megaphone,
 } from "lucide-react";
 
 export const Navbar: React.FC = () => {
@@ -250,10 +253,34 @@ export const Navbar: React.FC = () => {
 
                   <Link
                     href={`/profile/${profile?.id || "me"}`}
-                    className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl"
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl font-medium"
                   >
                     <User className="w-4 h-4 text-velora-gold" />
                     My Profile
+                  </Link>
+
+                  <Link
+                    href={`/profile/${profile?.id || "me"}?tab=PHOTOS`}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl font-medium"
+                  >
+                    <Image className="w-4 h-4 text-amber-300" />
+                    My Photos
+                  </Link>
+
+                  <Link
+                    href={`/profile/${profile?.id || "me"}?tab=VIDEOS`}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl font-medium"
+                  >
+                    <Video className="w-4 h-4 text-emerald-400" />
+                    My Videos
+                  </Link>
+
+                  <Link
+                    href={`/profile/${profile?.id || "me"}?tab=ADS`}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl font-medium"
+                  >
+                    <Megaphone className="w-4 h-4 text-rose-400" />
+                    My Dating Ads
                   </Link>
 
                   <Link
