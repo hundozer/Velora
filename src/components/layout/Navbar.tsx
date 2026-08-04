@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation, LANGUAGES, SupportedLanguage } from "@/context/LanguageContext";
 import { NotificationDrawer } from "@/components/notifications/NotificationDrawer";
+import { notificationStore } from "@/lib/notifications/notificationStore";
 import { Badge } from "@/components/ui/Badge";
 import {
   Compass,
@@ -31,6 +32,15 @@ export const Navbar: React.FC = () => {
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(notificationStore.getUnreadCount());
+
+  React.useEffect(() => {
+    setUnreadCount(notificationStore.getUnreadCount());
+    const unsubscribe = notificationStore.subscribe(() => {
+      setUnreadCount(notificationStore.getUnreadCount());
+    });
+    return unsubscribe;
+  }, []);
 
   return (
     <header className="sticky top-0 z-40 w-full glass-panel border-b border-white/10 bg-velora-bg/85 backdrop-blur-xl">
@@ -168,9 +178,11 @@ export const Navbar: React.FC = () => {
                 title="Notifications"
               >
                 <Bell className="w-4 h-4" />
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-velora-gold text-velora-bg font-bold text-[10px] flex items-center justify-center shadow-gold-glow">
-                  2
-                </span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-velora-gold text-velora-bg font-bold text-[10px] flex items-center justify-center shadow-gold-glow animate-pulse">
+                    {unreadCount}
+                  </span>
+                )}
               </button>
 
               <NotificationDrawer

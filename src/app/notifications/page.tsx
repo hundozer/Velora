@@ -1,19 +1,32 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { MOCK_NOTIFICATIONS } from "@/lib/mockData";
+import { notificationStore } from "@/lib/notifications/notificationStore";
 import { NotificationItem } from "@/types";
 import { Bell, Eye, Heart, MessageSquare, ShieldCheck, Check } from "lucide-react";
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(
+    notificationStore.getNotifications()
+  );
+
+  useEffect(() => {
+    setNotifications(notificationStore.getNotifications());
+    const unsubscribe = notificationStore.subscribe(() => {
+      setNotifications(notificationStore.getNotifications());
+    });
+    return unsubscribe;
+  }, []);
 
   const handleMarkRead = (id: string) => {
-    setNotifications(notifications.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+    notificationStore.markAsRead(id);
+  };
+
+  const handleMarkAllRead = () => {
+    notificationStore.markAllAsRead();
   };
 
   return (
@@ -31,62 +44,79 @@ export default function NotificationsPage() {
           </div>
         </div>
 
-        <Button
-          variant="glass"
-          size="sm"
-          className="text-xs"
-          onClick={() => setNotifications(notifications.map((n) => ({ ...n, isRead: true })))}
-        >
-          Mark All Read
-        </Button>
+        {notificationStore.getUnreadCount() > 0 && (
+          <Button
+            variant="glass"
+            size="sm"
+            className="text-xs border-amber-400/40 text-amber-300 hover:bg-amber-400/10"
+            onClick={handleMarkAllRead}
+          >
+            Mark All Read
+          </Button>
+        )}
       </div>
 
       <div className="space-y-4">
-        {notifications.map((n) => (
-          <Card
-            key={n.id}
-            variant={!n.isRead ? "goldBorder" : "glass"}
-            className="p-6 space-y-3 flex items-center justify-between gap-4"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-velora-card border border-white/10 flex items-center justify-center shrink-0">
-                {n.type === "PROFILE_VIEW" && <Eye className="w-5 h-5 text-blue-400" />}
-                {n.type === "FAVORITED" && <Heart className="w-5 h-5 text-rose-400" />}
-                {n.type === "VERIFICATION_APPROVED" && <ShieldCheck className="w-5 h-5 text-emerald-400" />}
-                {n.type === "NEW_MESSAGE" && <MessageSquare className="w-5 h-5 text-velora-gold" />}
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-velora-textPrimary">{n.title}</h3>
-                  <span className="text-[10px] text-velora-textMuted">• {n.createdAt}</span>
-                </div>
-                <p className="text-xs text-velora-textSecondary mt-1 leading-relaxed">
-                  {n.message}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 shrink-0">
-              {n.targetLink && (
-                <Link href={n.targetLink}>
-                  <Button variant="gold" size="sm" className="text-xs font-bold">
-                    View
-                  </Button>
-                </Link>
-              )}
-              {!n.isRead && (
-                <button
-                  onClick={() => handleMarkRead(n.id)}
-                  className="p-2 rounded-full glass-panel text-velora-textMuted hover:text-white"
-                  title="Mark as Read"
-                >
-                  <Check className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+        {notifications.length === 0 ? (
+          <Card variant="glass" className="p-12 text-center text-xs text-velora-textMuted italic">
+            You have no activity notifications yet.
           </Card>
-        ))}
+        ) : (
+          notifications.map((n) => (
+            <Card
+              key={n.id}
+              variant={!n.isRead ? "goldBorder" : "glass"}
+              className={`p-6 space-y-3 flex items-center justify-between gap-4 transition-all ${
+                !n.isRead ? "bg-amber-400/5" : ""
+              }`}
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-velora-card border border-white/10 flex items-center justify-center shrink-0">
+                  {n.type === "PROFILE_VIEW" && <Eye className="w-5 h-5 text-blue-400" />}
+                  {n.type === "FAVORITED" && <Heart className="w-5 h-5 text-rose-400" />}
+                  {n.type === "VERIFICATION_APPROVED" && <ShieldCheck className="w-5 h-5 text-emerald-400" />}
+                  {n.type === "NEW_MESSAGE" && <MessageSquare className="w-5 h-5 text-velora-gold" />}
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-velora-textPrimary flex items-center gap-2">
+                      {n.title}
+                      {!n.isRead && (
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-400 text-black uppercase font-mono">
+                          Unread
+                        </span>
+                      )}
+                    </h3>
+                    <span className="text-[10px] text-velora-textMuted">• {n.createdAt}</span>
+                  </div>
+                  <p className="text-xs text-velora-textSecondary mt-1 leading-relaxed">
+                    {n.message}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                {n.targetLink && (
+                  <Link href={n.targetLink} onClick={() => handleMarkRead(n.id)}>
+                    <Button variant="gold" size="sm" className="text-xs font-bold">
+                      View
+                    </Button>
+                  </Link>
+                )}
+                {!n.isRead && (
+                  <button
+                    onClick={() => handleMarkRead(n.id)}
+                    className="p-2 rounded-full glass-panel text-velora-textMuted hover:text-white"
+                    title="Mark as Read"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );

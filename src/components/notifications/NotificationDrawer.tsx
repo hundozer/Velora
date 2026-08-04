@@ -1,11 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { NotificationItem } from "@/types";
-import { MOCK_NOTIFICATIONS } from "@/lib/mockData";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { notificationStore } from "@/lib/notifications/notificationStore";
 import { Bell, Eye, Heart, MessageSquare, ShieldCheck, X } from "lucide-react";
 
 interface NotificationDrawerProps {
@@ -14,25 +12,47 @@ interface NotificationDrawerProps {
 }
 
 export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ isOpen, onClose }) => {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(
+    notificationStore.getNotifications()
+  );
+
+  useEffect(() => {
+    setNotifications(notificationStore.getNotifications());
+    const unsubscribe = notificationStore.subscribe(() => {
+      setNotifications(notificationStore.getNotifications());
+    });
+    return unsubscribe;
+  }, []);
 
   if (!isOpen) return null;
 
-  const markAllRead = () => {
-    setNotifications(notifications.map((n) => ({ ...n, isRead: true })));
+  const handleMarkAllRead = () => {
+    notificationStore.markAllAsRead();
+  };
+
+  const handleItemClick = (id: string) => {
+    notificationStore.markAsRead(id);
+    onClose();
   };
 
   return (
-    <div className="absolute right-0 top-14 w-80 sm:w-96 glass-panel-gold rounded-3xl p-5 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 text-left">
+    <div className="absolute right-0 top-14 w-80 sm:w-96 glass-panel-gold rounded-3xl p-5 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 text-left bg-velora-card/95 backdrop-blur-xl border border-velora-gold/30">
       <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
         <div className="flex items-center gap-2">
           <Bell className="w-4 h-4 text-velora-gold" />
           <h3 className="text-sm font-serif font-bold text-velora-textPrimary">Notifications</h3>
+          {notificationStore.getUnreadCount() > 0 && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 font-mono">
+              {notificationStore.getUnreadCount()} new
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={markAllRead} className="text-[10px] text-velora-gold hover:underline">
-            Mark all read
-          </button>
+          {notificationStore.getUnreadCount() > 0 && (
+            <button onClick={handleMarkAllRead} className="text-[10px] text-velora-gold hover:underline font-semibold">
+              Mark all read
+            </button>
+          )}
           <button onClick={onClose} className="p-1 rounded-full text-velora-textMuted hover:text-white">
             <X className="w-4 h-4" />
           </button>
@@ -40,35 +60,42 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ isOpen, 
       </div>
 
       <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-        {notifications.map((n) => (
-          <Link
-            key={n.id}
-            href={n.targetLink || "/notifications"}
-            onClick={onClose}
-            className={`block p-3 rounded-2xl transition-all border ${
-              !n.isRead ? "glass-panel-gold border-velora-gold/40" : "glass-panel hover:bg-white/5 border-transparent"
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-velora-card border border-white/10 flex items-center justify-center shrink-0">
-                {n.type === "PROFILE_VIEW" && <Eye className="w-4 h-4 text-blue-400" />}
-                {n.type === "FAVORITED" && <Heart className="w-4 h-4 text-rose-400" />}
-                {n.type === "VERIFICATION_APPROVED" && <ShieldCheck className="w-4 h-4 text-emerald-400" />}
-                {n.type === "NEW_MESSAGE" && <MessageSquare className="w-4 h-4 text-velora-gold" />}
-              </div>
-
-              <div className="flex-1 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-velora-textPrimary">{n.title}</span>
-                  <span className="text-[10px] text-velora-textMuted">{n.createdAt}</span>
+        {notifications.length === 0 ? (
+          <p className="text-xs text-velora-textMuted text-center py-6 italic">No notifications yet.</p>
+        ) : (
+          notifications.map((n) => (
+            <Link
+              key={n.id}
+              href={n.targetLink || "/notifications"}
+              onClick={() => handleItemClick(n.id)}
+              className={`block p-3 rounded-2xl transition-all border ${
+                !n.isRead ? "bg-amber-400/10 border-amber-400/40 shadow-sm" : "glass-panel hover:bg-white/5 border-transparent"
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-velora-card border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                  {n.type === "PROFILE_VIEW" && <Eye className="w-4 h-4 text-blue-400" />}
+                  {n.type === "FAVORITED" && <Heart className="w-4 h-4 text-rose-400" />}
+                  {n.type === "VERIFICATION_APPROVED" && <ShieldCheck className="w-4 h-4 text-emerald-400" />}
+                  {n.type === "NEW_MESSAGE" && <MessageSquare className="w-4 h-4 text-velora-gold" />}
                 </div>
-                <p className="text-[11px] text-velora-textSecondary mt-0.5 leading-relaxed">
-                  {n.message}
-                </p>
+
+                <div className="flex-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-white flex items-center gap-1.5">
+                      {n.title}
+                      {!n.isRead && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />}
+                    </span>
+                    <span className="text-[10px] text-velora-textMuted font-mono">{n.createdAt}</span>
+                  </div>
+                  <p className="text-[11px] text-velora-textSecondary mt-0.5 leading-relaxed">
+                    {n.message}
+                  </p>
+                </div>
               </div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          ))
+        )}
       </div>
 
       <div className="pt-3 border-t border-white/10 mt-3 text-center">
@@ -77,7 +104,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ isOpen, 
           onClick={onClose}
           className="text-xs text-velora-gold font-bold uppercase tracking-wider hover:underline"
         >
-          View All Notifications →
+          View All Activity & Notifications →
         </Link>
       </div>
     </div>
