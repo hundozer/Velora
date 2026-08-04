@@ -249,7 +249,7 @@ export const Navbar: React.FC = () => {
                   </div>
 
                   <Link
-                    href={`/profile/${profile?.id || "prof-1"}`}
+                    href={`/profile/${profile?.id || "me"}`}
                     className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl"
                   >
                     <User className="w-4 h-4 text-velora-gold" />

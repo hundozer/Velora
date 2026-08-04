@@ -28,10 +28,17 @@ import {
 
 export default function SingleProfilePage() {
   const params = useParams();
-  const { logout } = useAuth();
-  const profileId = (params?.id as string) || "prof-1";
+  const { logout, user: currentUser, profile: currentProfile } = useAuth();
+  const profileId = (params?.id as string) || "me";
 
-  const profile = MOCK_PROFILES.find((p) => p.id === profileId) || MOCK_PROFILES[0];
+  const isSelf =
+    profileId === "me" ||
+    profileId === "my-profile" ||
+    (currentProfile?.id && profileId === currentProfile.id) ||
+    (currentUser?.id && profileId === currentUser.id) ||
+    (currentProfile?.userId && profileId === currentProfile.userId);
+
+  const profile = isSelf && currentProfile ? currentProfile : (MOCK_PROFILES.find((p) => p.id === profileId) || MOCK_PROFILES[0]);
 
   const [isFavorited, setIsFavorited] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -80,11 +87,19 @@ export default function SingleProfilePage() {
                 <Heart className={`w-5 h-5 ${isFavorited ? "fill-rose-400" : ""}`} />
               </button>
 
-              <Link href="/messages">
-                <Button variant="gold" size="lg" className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow">
-                  <MessageSquare className="w-4 h-4" /> Send Private Message
-                </Button>
-              </Link>
+              {isSelf ? (
+                <Link href="/settings">
+                  <Button variant="gold" size="lg" className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow">
+                    <UserCheck className="w-4 h-4" /> Edit Profile & Nickname
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/messages">
+                  <Button variant="gold" size="lg" className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow">
+                    <MessageSquare className="w-4 h-4" /> Send Private Message
+                  </Button>
+                </Link>
+              )}
 
               <Button
                 variant="glass"
