@@ -643,7 +643,7 @@ export default function DashboardPage() {
                     </div>
                   )}
 
-                  {/* Real Metrics Bar: Views (clickable) | Comments (clickable) | Likes (clickable) */}
+                  {/* Clean Single Metrics & Action Bar: Views (modal) | Comments (focus input) | Likes (toggle & modal) */}
                   {(() => {
                     const realViews = post.viewersList ? post.viewersList.length : (post.views || 0);
                     const realComments = post.comments.length;
@@ -661,57 +661,46 @@ export default function DashboardPage() {
 
                         <button
                           type="button"
-                          onClick={() => openFeedInteractionsModal(post, "COMMENTS")}
+                          onClick={() => {
+                            if (realComments > 0) {
+                              openFeedInteractionsModal(post, "COMMENTS");
+                            } else {
+                              const inputEl = document.getElementById(`input-${post.id}`);
+                              if (inputEl) inputEl.focus();
+                            }
+                          }}
                           className="flex items-center gap-1.5 hover:text-amber-300 transition-colors font-bold cursor-pointer"
-                          title="Click to see list of comments and members"
+                          title="Click to view comments or reply"
                         >
                           <MessageSquare className="w-4 h-4 text-blue-400" /> {realComments} {realComments === 1 ? "Comment" : "Comments"}
                         </button>
 
-                        <button
-                          type="button"
-                          onClick={() => openFeedInteractionsModal(post, "LIKES")}
-                          className="flex items-center gap-1.5 text-emerald-400 font-bold hover:underline hover:text-amber-300 transition-colors cursor-pointer"
-                          title="Click to see list of members who liked this post"
-                        >
-                          <ThumbsUp className={`w-4 h-4 ${post.hasLiked ? "fill-emerald-400" : ""}`} /> {realLikes} {realLikes === 1 ? "Like" : "Likes"}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleLike(post.id)}
+                            className={`flex items-center gap-1.5 font-bold transition-colors cursor-pointer ${
+                              post.hasLiked ? "text-emerald-400" : "hover:text-amber-300"
+                            }`}
+                            title="Click to Like / Unlike this post"
+                          >
+                            <ThumbsUp className={`w-4 h-4 ${post.hasLiked ? "fill-emerald-400 text-emerald-400" : ""}`} /> {realLikes} {realLikes === 1 ? "Like" : "Likes"}
+                          </button>
+
+                          {realLikes > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => openFeedInteractionsModal(post, "LIKES")}
+                              className="text-[10px] text-amber-300 hover:underline"
+                              title="Click to view list of members who liked this post"
+                            >
+                              (Who liked)
+                            </button>
+                          )}
+                        </div>
                       </div>
                     );
                   })()}
-
-                  {/* Post Actions Bar: Reply | Save / Favorite | Like */}
-                  <div className="flex items-center justify-between pt-3 border-t border-white/10 text-xs">
-                    <button
-                      onClick={() => {
-                        const inputEl = document.getElementById(`input-${post.id}`);
-                        if (inputEl) inputEl.focus();
-                      }}
-                      className="flex items-center gap-1.5 text-amber-300 hover:underline font-bold"
-                    >
-                      <MessageSquare className="w-4 h-4" /> Reply
-                    </button>
-
-                    <button
-                      onClick={() => handleToggleSave(post.id)}
-                      className={`flex items-center gap-1.5 font-bold transition-all ${
-                        post.isSaved ? "text-amber-400" : "text-velora-textMuted hover:text-white"
-                      }`}
-                    >
-                      <Bookmark className={`w-4 h-4 ${post.isSaved ? "fill-amber-400" : ""}`} /> Save
-                    </button>
-
-                    <button
-                      onClick={() => handleToggleLike(post.id)}
-                      className={`flex items-center gap-1.5 font-bold px-3 py-1 rounded-full border transition-all ${
-                        post.hasLiked
-                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                          : "bg-white/5 text-velora-textMuted border-white/10 hover:text-amber-300"
-                      }`}
-                    >
-                      <ThumbsUp className={`w-4 h-4 ${post.hasLiked ? "fill-emerald-400" : ""}`} /> {post.hasLiked ? "Liked" : "Like"}
-                    </button>
-                  </div>
 
                   {/* Comment Input */}
                   <div className="flex items-center gap-2 pt-2 border-t border-white/10">
