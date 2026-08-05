@@ -28,6 +28,8 @@ import {
   X,
   FileImage,
   Flame,
+  Search,
+  Crown,
 } from "lucide-react";
 
 interface ChatWindowProps {
@@ -41,6 +43,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   activeConversation,
   onSelectConversation,
 }) => {
+  const [searchQuery, setSearchQuery] = useState("");
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "m-1",
@@ -48,129 +51,222 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       senderId: activeConversation.participant.userId,
       senderName: activeConversation.participant.displayName,
       senderAvatar: activeConversation.participant.avatarUrl,
-      content: "Hello! I noticed your profile and shared interest in luxury art curation.",
+      content: activeConversation.lastMessage?.content || "Hello! Glad to connect on Intimo.",
       status: "READ",
-      createdAt: "10:30 AM",
-    },
-    {
-      id: "m-2",
-      conversationId: activeConversation.id,
-      senderId: "user-current",
-      senderName: "You",
-      senderAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=800&q=80",
-      content: "Hi! Thank you for connecting. Are you attending the Monaco gallery opening next month?",
-      status: "READ",
-      createdAt: "10:38 AM",
-    },
-    {
-      id: "m-3",
-      conversationId: activeConversation.id,
-      senderId: activeConversation.participant.userId,
-      senderName: activeConversation.participant.displayName,
-      senderAvatar: activeConversation.participant.avatarUrl,
-      content: "I'll be visiting London next Thursday. Shall we meet at the Connaught Bar?",
-      status: "READ",
-      createdAt: "10:42 AM",
+      createdAt: activeConversation.lastMessage?.createdAt || "10:30 AM",
     },
   ]);
 
+  // Load chat messages from localStorage if available
+  useEffect(() => {
+    if (typeof window === "undefined" || !activeConversation) return;
+    const participantId = activeConversation.participant.id || activeConversation.participant.userId;
+    const storageKey = `intimo_chat_${participantId}`;
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const formatted: Message[] = parsed.map((item: any) => ({
+            id: item.id || `m-${Date.now()}`,
+            conversationId: activeConversation.id,
+            senderId: item.isSelf ? "user-current" : participantId,
+            senderName: item.isSelf ? "You" : activeConversation.participant.displayName,
+            senderAvatar: item.isSelf
+              ? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=800&q=80"
+              : activeConversation.participant.avatarUrl,
+            content: item.text || item.content || "",
+            status: item.status || "READ",
+            createdAt: item.timestamp || item.createdAt || "Recently",
+          }));
+          setMessages(formatted);
+          return;
+        }
+      } catch (e) {
+        console.error("Failed to parse saved chat thread:", e);
+      }
+    }
+
+    // Default fallback messages
+    setMessages([
+      {
+        id: "m-1",
+        conversationId: activeConversation.id,
+        senderId: activeConversation.participant.userId,
+        senderName: activeConversation.participant.displayName,
+        senderAvatar: activeConversation.participant.avatarUrl,
+        content: activeConversation.lastMessage?.content || "Hello! Glad to connect on Intimo.",
+        status: "READ",
+        createdAt: activeConversation.lastMessage?.createdAt || "10:30 AM",
+      },
+    ]);
+  }, [activeConversation]);
+
   const [inputMessage, setInputMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const [attachmentMode, setAttachmentMode] = useState<AttachmentType>("STANDARD_IMAGE");
   const [isDisappearing, setIsDisappearing] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [blockModalOpen, setBlockModalOpen] = useState(false);
   const [showProfilePreview, setShowProfilePreview] = useState(false);
 
-  // Simulate typing indicator from active participant
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsTyping(true);
-    }, 4000);
-    return () => clearTimeout(timer);
-  }, [messages]);
-
   const handleSendMessage = () => {
     if (!inputMessage.trim()) return;
 
+    const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     const newMsg: Message = {
       id: "m-" + Date.now(),
       conversationId: activeConversation.id,
       senderId: "user-current",
       senderName: "You",
       senderAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=800&q=80",
-      content: inputMessage,
+      content: inputMessage.trim(),
       attachmentType: attachmentMode,
       isDisappearing: isDisappearing,
       disappearTimerSec: isDisappearing ? 10 : undefined,
       status: "SENT",
-      createdAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      createdAt: nowTime,
     };
 
-    setMessages([...messages, newMsg]);
+    const updated = [...messages, newMsg];
+    setMessages(updated);
     setInputMessage("");
-    setIsTyping(false);
 
-    // Simulate delivery transition after 1s
+    // Sync to local storage intimo_chat_${participantId}
+    if (typeof window !== "undefined") {
+      const participantId = activeConversation.participant.id || activeConversation.participant.userId;
+      const storageKey = `intimo_chat_${participantId}`;
+      const chatWidgetFormat = updated.map((m) => ({
+        id: m.id,
+        senderId: m.senderId,
+        text: m.content,
+        timestamp: m.createdAt,
+        isSelf: m.senderId === "user-current",
+        status: m.status,
+      }));
+      localStorage.setItem(storageKey, JSON.stringify(chatWidgetFormat));
+
+      // Sync to central intimo_all_conversations
+      try {
+        const raw = localStorage.getItem("intimo_all_conversations");
+        let convs = raw ? JSON.parse(raw) : conversations;
+        const idx = convs.findIndex((c: any) => c.id === activeConversation.id || c.participant?.id === participantId);
+        if (idx >= 0) {
+          convs[idx].lastMessage = {
+            id: newMsg.id,
+            conversationId: activeConversation.id,
+            senderId: "user-current",
+            senderName: "You",
+            senderAvatar: "",
+            content: newMsg.content,
+            status: "SENT",
+            createdAt: nowTime,
+          };
+          convs[idx].updatedAt = nowTime;
+        }
+        localStorage.setItem("intimo_all_conversations", JSON.stringify(convs));
+        window.dispatchEvent(new Event("intimo_conversations_updated"));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Delivery transition after 1s
     setTimeout(() => {
       setMessages((prev) =>
         prev.map((msg) => (msg.id === newMsg.id ? { ...msg, status: "DELIVERED" } : msg))
       );
-    }, 1200);
+    }, 1000);
 
-    // Simulate read transition after 3s
+    // Read transition after 2.5s
     setTimeout(() => {
       setMessages((prev) =>
         prev.map((msg) => (msg.id === newMsg.id ? { ...msg, status: "READ" } : msg))
       );
-    }, 3000);
+    }, 2500);
   };
+
+  const filteredConversations = conversations.filter((c) =>
+    c.participant.displayName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-140px)] text-left">
-      {/* Sidebar: Conversation List */}
-      <Card variant="glass" className="p-4 space-y-3 flex flex-col h-full overflow-hidden">
-        <div className="flex items-center justify-between px-2">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-velora-textMuted font-serif">
-            Encrypted Chats ({conversations.length})
-          </h2>
-          <span className="text-[10px] text-emerald-400 font-mono">100% Private</span>
+      {/* Sidebar: Conversation List matching Amateri reference */}
+      <Card variant="glass" className="p-3 space-y-3 flex flex-col h-full overflow-hidden">
+        {/* Search Conversations Input */}
+        <div className="relative">
+          <Search className="w-4 h-4 text-velora-textMuted absolute left-3 top-2.5" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search conversations..."
+            className="w-full pl-9 pr-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-white placeholder-velora-textMuted focus:outline-none focus:border-amber-400/60 transition-all"
+          />
         </div>
 
-        <div className="space-y-2 overflow-y-auto flex-1 pr-1">
-          {conversations.map((c) => {
+        <div className="flex items-center justify-between px-2 pt-1 border-t border-white/10">
+          <h2 className="text-[11px] font-bold uppercase tracking-wider text-velora-textMuted font-mono">
+            Messages ({filteredConversations.length})
+          </h2>
+          <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live Sync
+          </span>
+        </div>
+
+        <div className="space-y-1.5 overflow-y-auto flex-1 pr-1 custom-scrollbar">
+          {filteredConversations.map((c) => {
             const isActive = activeConversation.id === c.id;
+            const genderSymbol =
+              (c.participant as any).genderSymbol ||
+              (c.participant.gender === "FEMALE" ? "♀" : c.participant.gender === "MALE" ? "♂" : "👫");
+
             return (
               <div
                 key={c.id}
                 onClick={() => onSelectConversation(c)}
-                className={`p-3 rounded-2xl cursor-pointer transition-all flex items-center gap-3 ${
+                className={`p-2.5 rounded-2xl cursor-pointer transition-all flex items-center gap-3 ${
                   isActive
-                    ? "glass-panel-gold border-velora-gold/50 shadow-gold-glow"
-                    : "hover:bg-white/5"
+                    ? "bg-gradient-to-r from-amber-500/20 to-amber-900/20 border border-amber-400/40 shadow-gold-glow"
+                    : "hover:bg-white/5 border border-transparent"
                 }`}
               >
-                <div className="w-12 h-12 rounded-full border border-velora-gold/40 overflow-hidden bg-velora-card shrink-0 relative">
+                <div className="w-11 h-11 rounded-full border border-white/20 overflow-hidden bg-velora-card shrink-0 relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={c.participant.avatarUrl}
                     alt={c.participant.displayName}
                     className="w-full h-full object-cover"
                   />
-                  {c.participant.isOnline && (
-                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-velora-bg" />
+                  {c.participant.isOnline ? (
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-velora-bg" title="Online" />
+                  ) : (
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-gray-500 border-2 border-velora-bg" title="Offline" />
                   )}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold text-velora-textPrimary truncate">
-                      {c.participant.displayName}
-                    </h3>
-                    <span className="text-[10px] text-velora-textMuted">{c.lastMessage.createdAt}</span>
+                    <div className="flex items-center gap-1 min-w-0">
+                      <h3 className="text-xs font-bold text-white truncate">
+                        {c.participant.displayName}
+                      </h3>
+                      <span className="text-[10px] text-pink-400 font-bold shrink-0">{genderSymbol}</span>
+                      {c.participant.verified && (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 fill-blue-400/20 shrink-0" />
+                      )}
+                      {(c.participant as any).isVIP && (
+                        <Crown className="w-3 h-3 text-amber-400 fill-amber-400/20 shrink-0" />
+                      )}
+                    </div>
+                    <span className="text-[9px] font-mono text-velora-textMuted shrink-0 ml-1">
+                      {c.lastMessage?.createdAt}
+                    </span>
                   </div>
-                  <p className="text-[11px] text-velora-textMuted truncate mt-0.5">
-                    {c.isTyping ? <span className="text-velora-gold animate-pulse">Typing message...</span> : c.lastMessage.content}
+
+                  <p className="text-[11px] text-velora-textMuted truncate mt-0.5 flex items-center gap-1">
+                    <span className="text-[10px]">↩</span>
+                    <span className="truncate">{c.lastMessage?.content || "Conversation started"}</span>
                   </p>
                 </div>
               </div>
@@ -201,12 +297,19 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 {activeConversation.participant.verified && <Badge type="verified" label="" />}
               </h3>
               <p className="text-[10px] text-velora-textMuted">
-                {isTyping ? (
-                  <span className="text-velora-gold font-bold">is typing...</span>
+                {activeConversation.participant.isOnline ? (
+                  <span className="text-emerald-400 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    {activeConversation.participant.location
+                      ? `${activeConversation.participant.location} • Active Now`
+                      : "Active Now"}
+                  </span>
                 ) : (
-                  activeConversation.participant.location
-                    ? `${activeConversation.participant.location} • Active Now`
-                    : "Active Now"
+                  <span className="text-gray-400">
+                    {activeConversation.participant.location
+                      ? `${activeConversation.participant.location} • Offline`
+                      : "Offline"}
+                  </span>
                 )}
               </p>
             </div>
@@ -282,13 +385,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             );
           })}
 
-          {/* Typing Indicator */}
-          {isTyping && (
-            <div className="flex items-center gap-2 text-xs text-velora-textMuted font-mono">
-              <span className="w-2 h-2 rounded-full bg-velora-gold animate-ping" />
-              {activeConversation.participant.displayName} is typing...
-            </div>
-          )}
+
         </div>
 
         {/* Message Input Box with Attachment Options */}

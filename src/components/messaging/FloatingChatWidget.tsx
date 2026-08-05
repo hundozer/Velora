@@ -117,6 +117,47 @@ export function FloatingChatWidget({ chatUser, onClose }: FloatingChatWidgetProp
     const storageKey = `intimo_chat_${chatUser.id}`;
     if (typeof window !== "undefined") {
       localStorage.setItem(storageKey, JSON.stringify(updated));
+
+      // Sync central intimo_all_conversations for /messages
+      try {
+        const raw = localStorage.getItem("intimo_all_conversations");
+        let convs = raw ? JSON.parse(raw) : [];
+        const existingIdx = convs.findIndex((c: any) => c.participant?.id === chatUser.id || c.id === `conv-${chatUser.id}`);
+        const newConvData = {
+          id: existingIdx >= 0 ? convs[existingIdx].id : `conv-${chatUser.id}`,
+          participant: {
+            id: chatUser.id,
+            displayName: chatUser.displayName,
+            avatarUrl: chatUser.avatarUrl,
+            gender: chatUser.genderSymbol === "♀" ? "FEMALE" : chatUser.genderSymbol === "♂" ? "MALE" : "FEMALE",
+            verified: chatUser.verified ?? true,
+            isOnline: chatUser.isOnline ?? true,
+          },
+          lastMessage: {
+            id: `msg-${Date.now()}`,
+            conversationId: existingIdx >= 0 ? convs[existingIdx].id : `conv-${chatUser.id}`,
+            senderId: "me",
+            senderName: "You",
+            senderAvatar: "",
+            content: inputText.trim(),
+            status: "DELIVERED",
+            createdAt: nowTime,
+          },
+          unreadCount: 0,
+          updatedAt: nowTime,
+          isTyping: false,
+        };
+
+        if (existingIdx >= 0) {
+          convs[existingIdx] = newConvData;
+        } else {
+          convs.unshift(newConvData);
+        }
+        localStorage.setItem("intimo_all_conversations", JSON.stringify(convs));
+        window.dispatchEvent(new Event("intimo_conversations_updated"));
+      } catch (e) {
+        console.error("Failed to sync central conversation:", e);
+      }
     }
 
     // Trigger "Seen / Read" status update after 2.5 seconds (when chat partner views message)
