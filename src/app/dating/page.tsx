@@ -221,8 +221,8 @@ const INITIAL_ADS: DatingAdItem[] = [
 export default function DatingMarketplacePage() {
   const { user, profile } = useAuth();
   const [adsList, setAdsList] = useState<DatingAdItem[]>(INITIAL_ADS);
-  const [selectedCategory, setSelectedCategory] = useState("Woman seeking man");
-  const [selectedCountry, setSelectedCountry] = useState("Czech Republic");
+  const [selectedCategory, setSelectedCategory] = useState("Show all categories");
+  const [selectedCountry, setSelectedCountry] = useState("All Countries");
   const [selectedRegion, setSelectedRegion] = useState("All Cities / Regions");
   const [ageRange, setAgeRange] = useState<[number, number]>([18, 100]);
   const [activeFilterPill, setActiveFilterPill] = useState<string | null>(null);
