@@ -194,26 +194,161 @@ const INITIAL_FEED_POSTS: FeedPost[] = [
   },
 ];
 
-const SIDEBAR_BEST_ALBUMS = [
-  {
-    id: "best-1",
-    title: "Riviera Glamour",
-    imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80",
-    views: "12.4k",
-  },
-  {
-    id: "best-2",
-    title: "Midnight Lace",
-    imageUrl: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=600&q=80",
-    views: "9.8k",
-  },
-];
+export interface SidebarAlbumItem {
+  id: string;
+  ownerId: string;
+  ownerName: string;
+  ownerGender: "FEMALE" | "MALE" | "COUPLE";
+  title: string;
+  imageUrl: string;
+  views: string;
+  createdAt: string;
+}
 
-const SIDEBAR_LATEST_ALBUMS = [
-  "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=400&q=80",
+const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
+  // --- FEMALE USERS' ALBUMS (Shown for Men looking for Women) ---
+  {
+    id: "alb-f1",
+    ownerId: "prof-2",
+    ownerName: "Valerie",
+    ownerGender: "FEMALE",
+    title: "Red Silk & Monaco Memories 👠",
+    imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80",
+    views: "14.2k",
+    createdAt: "2 hours ago",
+  },
+  {
+    id: "alb-f2",
+    ownerId: "prof-2",
+    ownerName: "Valerie",
+    ownerGender: "FEMALE",
+    title: "Midnight Lace & Fine Dining",
+    imageUrl: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=800&q=80",
+    views: "9.8k",
+    createdAt: "5 hours ago",
+  },
+  {
+    id: "alb-f3",
+    ownerId: "usr-elena",
+    ownerName: "Elena Vance",
+    ownerGender: "FEMALE",
+    title: "French Riviera Sunbathing",
+    imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+    views: "18.5k",
+    createdAt: "1 day ago",
+  },
+  {
+    id: "alb-f4",
+    ownerId: "usr-elena",
+    ownerName: "Elena Vance",
+    ownerGender: "FEMALE",
+    title: "Sunset Champagne Lounge",
+    imageUrl: "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=800&q=80",
+    views: "11.3k",
+    createdAt: "3 hours ago",
+  },
+  {
+    id: "alb-f5",
+    ownerId: "usr-sophia",
+    ownerName: "Sophia K.",
+    ownerGender: "FEMALE",
+    title: "Riviera Glamour & Poolside",
+    imageUrl: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=800&q=80",
+    views: "16.1k",
+    createdAt: "Just now",
+  },
+  {
+    id: "alb-f6",
+    ownerId: "usr-sophia",
+    ownerName: "Sophia K.",
+    ownerGender: "FEMALE",
+    title: "Summer Sunset & High Heels",
+    imageUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80",
+    views: "8.7k",
+    createdAt: "6 hours ago",
+  },
+  {
+    id: "alb-f7",
+    ownerId: "usr-tmazi",
+    ownerName: "TmaziMary",
+    ownerGender: "FEMALE",
+    title: "Monaco Harbor Suite Teaser",
+    imageUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80",
+    views: "12.9k",
+    createdAt: "4 hours ago",
+  },
+  {
+    id: "alb-f8",
+    ownerId: "usr-tmazi",
+    ownerName: "TmaziMary",
+    ownerGender: "FEMALE",
+    title: "Private Villa Photoshoot",
+    imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+    views: "21.4k",
+    createdAt: "Yesterday",
+  },
+
+  // --- MALE USERS' ALBUMS (Shown for Women looking for Men) ---
+  {
+    id: "alb-m1",
+    ownerId: "prof-1",
+    ownerName: "Alex",
+    ownerGender: "MALE",
+    title: "Prague Penthouse & Cocktails 🍸",
+    imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80",
+    views: "15.8k",
+    createdAt: "1 hour ago",
+  },
+  {
+    id: "alb-m2",
+    ownerId: "prof-1",
+    ownerName: "Alex",
+    ownerGender: "MALE",
+    title: "VIP Jet Journey & Fitness",
+    imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80",
+    views: "11.2k",
+    createdAt: "4 hours ago",
+  },
+  {
+    id: "alb-m3",
+    ownerId: "usr-lucas",
+    ownerName: "Lucas R.",
+    ownerGender: "MALE",
+    title: "Mediterranean Yacht Expedition",
+    imageUrl: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=800&q=80",
+    views: "19.3k",
+    createdAt: "2 hours ago",
+  },
+  {
+    id: "alb-m4",
+    ownerId: "usr-lucas",
+    ownerName: "Lucas R.",
+    ownerGender: "MALE",
+    title: "Monte Carlo Casino Salon",
+    imageUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=800&q=80",
+    views: "13.6k",
+    createdAt: "5 hours ago",
+  },
+  {
+    id: "alb-m5",
+    ownerId: "usr-marco",
+    ownerName: "Marco B.",
+    ownerGender: "MALE",
+    title: "Vintage Automobile & Cellar",
+    imageUrl: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=800&q=80",
+    views: "10.4k",
+    createdAt: "Yesterday",
+  },
+  {
+    id: "alb-m6",
+    ownerId: "usr-dodo",
+    ownerName: "DODO0666",
+    ownerGender: "MALE",
+    title: "Private Studio Beat Sessions",
+    imageUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=800&q=80",
+    views: "7.9k",
+    createdAt: "3 hours ago",
+  },
 ];
 
 const RECENT_VISITORS = [
@@ -228,6 +363,35 @@ import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding"
 
 export default function DashboardPage() {
   const { user, profile } = useAuth();
+
+  // Determine target gender for sidebar albums based on user's preference
+  // (Men looking for women -> FEMALE albums, Women looking for men -> MALE albums)
+  const targetGender = useMemo(() => {
+    const rawGender = String(profile?.gender || (user as any)?.gender || "MALE").toUpperCase();
+    if (rawGender.includes("MALE") && !rawGender.includes("FE")) {
+      return "FEMALE";
+    } else if (rawGender.includes("FEMALE")) {
+      return "MALE";
+    }
+    return "FEMALE";
+  }, [profile?.gender, user]);
+
+  // Sidebar Albums State (Best Albums & Latest Albums)
+  const [sidebarBestAlbums, setSidebarBestAlbums] = useState<SidebarAlbumItem[]>([]);
+  const [sidebarLatestAlbums, setSidebarLatestAlbums] = useState<SidebarAlbumItem[]>([]);
+
+  // Randomize albums on mount/page refresh based on target gender
+  React.useEffect(() => {
+    const eligiblePool = ALL_SIDEBAR_ALBUMS.filter((alb) => alb.ownerGender === targetGender);
+    const fallbackPool = ALL_SIDEBAR_ALBUMS.length > 0 ? ALL_SIDEBAR_ALBUMS : eligiblePool;
+    const finalPool = eligiblePool.length >= 6 ? eligiblePool : fallbackPool;
+
+    // Fisher-Yates random shuffle on every page refresh
+    const shuffled = [...finalPool].sort(() => 0.5 - Math.random());
+
+    setSidebarBestAlbums(shuffled.slice(0, 2));
+    setSidebarLatestAlbums(shuffled.slice(2, 6));
+  }, [targetGender]);
 
 
   // Helper to sync feed posts and merge dating ads from local storage
@@ -516,14 +680,32 @@ export default function DashboardPage() {
             </h3>
 
             <div className="space-y-3">
-              {SIDEBAR_BEST_ALBUMS.map((alb) => (
-                <div key={alb.id} className="relative h-44 rounded-2xl bg-black overflow-hidden border border-white/10 group cursor-pointer">
+              {sidebarBestAlbums.map((alb) => (
+                <div
+                  key={alb.id}
+                  onClick={() =>
+                    setActivePhotoModal({
+                      photos: [alb.imageUrl],
+                      title: `${alb.ownerName} – ${alb.title}`,
+                      index: 0,
+                    })
+                  }
+                  className="relative h-44 rounded-2xl bg-black overflow-hidden border border-white/10 group cursor-pointer"
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={alb.imageUrl} alt={alb.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <img
+                    src={alb.imageUrl}
+                    alt={alb.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                  <div className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-black/70 backdrop-blur-md border border-white/15 text-[10px] font-bold text-white flex items-center gap-1.5 shadow-lg">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                    {alb.ownerName}
+                  </div>
                   <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-white">
-                    <span className="font-bold drop-shadow-md">{alb.title}</span>
-                    <span className="text-[10px] font-mono text-amber-300 bg-black/60 px-2 py-0.5 rounded-full border border-white/10">
+                    <span className="font-bold drop-shadow-md truncate max-w-[140px]">{alb.title}</span>
+                    <span className="text-[10px] font-mono text-amber-300 bg-black/60 px-2 py-0.5 rounded-full border border-white/10 shrink-0">
                       {alb.views} views
                     </span>
                   </div>
@@ -538,10 +720,28 @@ export default function DashboardPage() {
               <ImageIcon className="w-4 h-4 text-amber-400" /> Latest Albums
             </h3>
             <div className="grid grid-cols-2 gap-2">
-              {SIDEBAR_LATEST_ALBUMS.map((imgUrl, idx) => (
-                <div key={idx} className="h-28 rounded-xl bg-black border border-white/10 overflow-hidden group cursor-pointer">
+              {sidebarLatestAlbums.map((alb) => (
+                <div
+                  key={alb.id}
+                  onClick={() =>
+                    setActivePhotoModal({
+                      photos: [alb.imageUrl],
+                      title: `${alb.ownerName} – ${alb.title}`,
+                      index: 0,
+                    })
+                  }
+                  className="relative h-28 rounded-xl bg-black border border-white/10 overflow-hidden group cursor-pointer"
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={imgUrl} alt="Latest album" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                  <img
+                    src={alb.imageUrl}
+                    alt={alb.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute bottom-1.5 left-1.5 right-1.5 text-[10px] font-bold text-white truncate drop-shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                    {alb.ownerName}
+                  </div>
                 </div>
               ))}
             </div>
