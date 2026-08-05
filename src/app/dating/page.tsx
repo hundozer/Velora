@@ -29,6 +29,7 @@ import {
   RotateCcw,
   History,
   Trash2,
+  Lock as LockIcon,
 } from "lucide-react";
 
 export interface DatingAdItem {
@@ -283,6 +284,66 @@ export default function DatingMarketplacePage() {
   };
 
   const [activeTab, setActiveTab] = useState<"browse" | "my-ads">("browse");
+  const [restrictedNoticeAd, setRestrictedNoticeAd] = useState<{ ad: DatingAdItem; reason: string } | null>(null);
+
+  const checkCanReply = (ad: DatingAdItem): { canReply: boolean; reason?: string } => {
+    if (ad.authorId === user?.id || ad.authorId === "me") {
+      return { canReply: true };
+    }
+
+    const userGenderStr = String(profile?.gender || (user as any)?.gender || "MALE").toUpperCase();
+    let userGenderSymbol = "♂";
+
+    if (userGenderStr.includes("FEMALE")) userGenderSymbol = "♀";
+    else if (userGenderStr.includes("COUPLE_FF")) userGenderSymbol = "👭";
+    else if (userGenderStr.includes("COUPLE_MM")) userGenderSymbol = "👬";
+    else if (userGenderStr.includes("COUPLE")) userGenderSymbol = "👫";
+    else if (userGenderStr.includes("TRANS")) userGenderSymbol = "⚧";
+    else if (userGenderStr.includes("MALE")) userGenderSymbol = "♂";
+
+    if (ad.allowedReplyGenders && ad.allowedReplyGenders.length > 0) {
+      if (!ad.allowedReplyGenders.includes(userGenderSymbol)) {
+        const allowedLabels = ad.allowedReplyGenders
+          .map((g) =>
+            g === "♂"
+              ? "Male (♂)"
+              : g === "♀"
+              ? "Female (♀)"
+              : g === "👫"
+              ? "Couples (👫)"
+              : g === "👭"
+              ? "Female Couples (👭)"
+              : g === "👬"
+              ? "Male Couples (👬)"
+              : "Transgender (⚧)"
+          )
+          .join(", ");
+
+        return {
+          canReply: false,
+          reason: `Replies restricted by creator: This dating ad accepts replies from ${allowedLabels} profiles only. Your profile gender (${userGenderSymbol}) does not match the creator's restriction.`,
+        };
+      }
+    }
+
+    const isUserVerified = Boolean(profile?.verified || (profile as any)?.isVerified || (user as any)?.isVerified);
+    if (ad.requireVerified && !isUserVerified) {
+      return {
+        canReply: false,
+        reason: "Replies restricted: This dating ad requires an Identity Verified profile with a Biometric Badge.",
+      };
+    }
+
+    const isUserVip = (profile as any)?.tier === "VIP" || (profile as any)?.membershipTier === "VIP";
+    if (ad.requireVip && !isUserVip) {
+      return {
+        canReply: false,
+        reason: "Replies restricted: This dating ad is reserved for VIP Members only.",
+      };
+    }
+
+    return { canReply: true };
+  };
 
   const handleReactivateAd = (id: string) => {
     setAdsList((prev) =>
@@ -673,11 +734,29 @@ export default function DatingMarketplacePage() {
                         <span className="hidden sm:inline">{ad.saved ? "Saved" : "Save"}</span>
                       </button>
 
-                      <Link href={`/messages?user=${ad.authorId}`}>
-                        <Button variant="gold" size="sm" className="text-xs font-bold uppercase gap-1.5 shadow-gold-glow">
-                          <MessageSquare className="w-3.5 h-3.5" /> Reply to Ad
-                        </Button>
-                      </Link>
+                      {(() => {
+                        const replyCheck = checkCanReply(ad);
+                        if (replyCheck.canReply) {
+                          return (
+                            <Link href={`/messages?user=${ad.authorId}`}>
+                              <Button variant="gold" size="sm" className="text-xs font-bold uppercase gap-1.5 shadow-gold-glow">
+                                <MessageSquare className="w-3.5 h-3.5" /> Reply to Ad
+                              </Button>
+                            </Link>
+                          );
+                        } else {
+                          return (
+                            <Button
+                              variant="glass"
+                              size="sm"
+                              onClick={() => setRestrictedNoticeAd({ ad, reason: replyCheck.reason || "Replies restricted." })}
+                              className="text-xs font-bold uppercase gap-1.5 text-rose-300 border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/20 shadow-none"
+                            >
+                              <LockIcon className="w-3.5 h-3.5 text-rose-400" /> Replies Restricted
+                            </Button>
+                          );
+                        }
+                      })()}
                     </>
                   )}
                 </div>
@@ -1026,6 +1105,52 @@ export default function DatingMarketplacePage() {
                 </Button>
               </div>
             </form>
+          </Card>
+        </div>
+      )}
+
+      {/* Restricted Reply Explanation Modal */}
+      {restrictedNoticeAd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <Card variant="goldBorder" className="w-full max-w-md p-6 space-y-4 text-left bg-velora-card relative shadow-2xl">
+            <button
+              onClick={() => setRestrictedNoticeAd(null)}
+              className="absolute top-4 right-4 text-velora-textMuted hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="border-b border-white/10 pb-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0">
+                <LockIcon className="w-5 h-5 text-rose-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-serif font-bold text-white">Replies Restricted</h3>
+                <p className="text-xs text-velora-textMuted">Ad Target Conditions Specified by {restrictedNoticeAd.ad.authorName}</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
+              <p className="text-xs text-rose-200 leading-relaxed font-sans">
+                {restrictedNoticeAd.reason}
+              </p>
+
+              <div className="pt-2 text-[11px] font-mono text-amber-300 border-t border-white/10 flex items-center justify-between">
+                <span>Ad Category: {restrictedNoticeAd.ad.category}</span>
+                <span>Allowed Target: {restrictedNoticeAd.ad.allowedReplyGenders.join(" ")}</span>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <Button
+                variant="gold"
+                size="sm"
+                onClick={() => setRestrictedNoticeAd(null)}
+                className="text-xs font-bold uppercase shadow-gold-glow"
+              >
+                Understood
+              </Button>
+            </div>
           </Card>
         </div>
       )}
