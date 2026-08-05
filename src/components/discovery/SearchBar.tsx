@@ -58,8 +58,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearchQueryChange }) => 
           value={query}
           onChange={handleChange}
           onFocus={() => setIsOpen(true)}
-          placeholder={t("common.search")}
-          className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 pl-11 pr-10 text-xs text-velora-textPrimary placeholder:text-velora-textMuted focus:outline-none focus:border-velora-gold/50 focus:bg-white/10 transition-all shadow-inner"
+          placeholder="Search profiles by name, city, country, or keyword..."
+          className="w-full bg-black/50 border border-amber-400/30 rounded-2xl py-3.5 pl-11 pr-10 text-xs text-velora-textPrimary placeholder:text-velora-textMuted focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/50 transition-all shadow-inner"
         />
         {query && (
           <button

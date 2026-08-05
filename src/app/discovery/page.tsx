@@ -201,11 +201,6 @@ export default function DiscoveryMarketplacePage() {
         </div>
       </div>
 
-      {/* Global Search Bar with Autocomplete */}
-      <div className="max-w-2xl">
-        <SearchBar onSearchQueryChange={setSearchQuery} />
-      </div>
-
       {/* 3-COLUMN DESKTOP LAYOUT */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* LEFT COLUMN: Persistent Filter Sidebar (Desktop w-80 / 3 cols) */}
@@ -218,6 +213,18 @@ export default function DiscoveryMarketplacePage() {
 
         {/* CENTER COLUMN: Profile Results (Grid / List / Map) (Desktop 6 cols / lg:col-span-6) */}
         <div className="lg:col-span-6 space-y-6">
+          {/* Horizontal Search Bar Directly Above Profiles */}
+          <div className="w-full bg-velora-card p-4 rounded-3xl border border-velora-gold/30 shadow-gold-glow space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <label className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-2 font-mono">
+                <Compass className="w-4 h-4 text-velora-gold" /> Search Profiles
+              </label>
+              <span className="text-[11px] font-mono text-amber-400 font-bold">
+                {filteredProfiles.length} {filteredProfiles.length === 1 ? "Matching Member" : "Matching Members"}
+              </span>
+            </div>
+            <SearchBar onSearchQueryChange={setSearchQuery} />
+          </div>
           {filteredProfiles.length === 0 ? (
             <Card variant="glass" className="p-12 text-center space-y-4">
               <Sparkles className="w-12 h-12 text-velora-gold mx-auto" />
