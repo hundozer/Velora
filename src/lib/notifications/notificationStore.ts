@@ -2,38 +2,7 @@ import { NotificationItem } from "@/types";
 
 const STORAGE_KEY = "intimo_notifications";
 
-const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: "notif-1",
-    userId: "me",
-    type: "VERIFICATION_APPROVED",
-    title: "Identity Verification Active 🛡️",
-    message: "Get verified today by uploading a selfie holding a handwritten note with 'INTIMO' and current date.",
-    isRead: false,
-    createdAt: "10 mins ago",
-    targetLink: "/profile/me",
-  },
-  {
-    id: "notif-2",
-    userId: "me",
-    type: "NEW_MESSAGE",
-    title: "New Private Lounge Message 💬",
-    message: "Alex sent you a new encrypted message: 'Hey! Are you free for drinks tonight?'",
-    isRead: false,
-    createdAt: "1 hour ago",
-    targetLink: "/messages",
-  },
-  {
-    id: "notif-3",
-    userId: "me",
-    type: "PROFILE_VIEW",
-    title: "New Profile Visitor 👀",
-    message: "Valerie from Munich viewed your verified Intimo profile.",
-    isRead: true,
-    createdAt: "Yesterday",
-    targetLink: "/discovery",
-  },
-];
+const DEFAULT_NOTIFICATIONS: NotificationItem[] = [];
 
 class NotificationStore {
   private notifications: NotificationItem[] = [];
@@ -48,14 +17,28 @@ class NotificationStore {
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
-          this.notifications = JSON.parse(saved);
-          return;
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            // Filter out any legacy fake/demo notifications
+            this.notifications = parsed.filter(
+              (n: any) =>
+                n.id !== "notif-1" &&
+                n.id !== "notif-2" &&
+                n.id !== "notif-3" &&
+                !n.message?.includes("Prince Charming") &&
+                !n.message?.includes("Alex sent you a new encrypted message") &&
+                !n.message?.includes("Alex viewed your Intimo profile") &&
+                !n.message?.includes("Valerie from Munich")
+            );
+            this.saveToStorage();
+            return;
+          }
         }
       } catch (err) {
         console.error("Failed to load notifications from localStorage", err);
       }
     }
-    this.notifications = DEFAULT_NOTIFICATIONS;
+    this.notifications = [];
   }
 
   private saveToStorage() {

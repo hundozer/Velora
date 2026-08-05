@@ -536,25 +536,16 @@ export default function SingleProfilePage() {
 
   // Record Profile Visit Effect
   useEffect(() => {
-    if (!isSelf && profile) {
+    if (!isSelf && profile && currentUser) {
       visitorStore.recordProfileVisit({
-        userId: currentUser?.id || "me",
-        name: currentProfile?.displayName || profile.displayName || "Prince Charming",
+        userId: currentUser.id,
+        name: currentProfile?.displayName || currentUser.username || "Member",
         genderSymbol: "♂",
-        avatarUrl: currentProfile?.avatarUrl || profile.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
+        avatarUrl: currentProfile?.avatarUrl || currentUser.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
         isVerified: true,
       });
-
-      notificationStore.addNotification({
-        userId: profile.id,
-        type: "PROFILE_VIEW",
-        title: "New Profile Visitor 👀",
-        message: `${currentProfile?.displayName || profile.displayName || "Prince Charming"} viewed your Intimo profile.`,
-        isRead: false,
-        targetLink: `/profile/me`,
-      });
     }
-  }, [isSelf, profile.id]);
+  }, [isSelf, profile, currentUser, currentProfile]);
 
   const handleVerificationSubmitted = (verificationPhotoUrl: string) => {
     setUserVerificationStatus("PENDING_REVIEW");
