@@ -23,6 +23,7 @@ import {
   Image,
   Video,
   Megaphone,
+  Heart,
 } from "lucide-react";
 
 export const Navbar: React.FC = () => {
@@ -74,8 +75,20 @@ export const Navbar: React.FC = () => {
                   : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
               }`}
             >
-              <Compass className="w-4 h-4" />
+              <Compass className="w-4 h-4 text-amber-400" />
               {t("nav.feed")}
+            </Link>
+
+            <Link
+              href="/dating"
+              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
+                pathname.startsWith("/dating")
+                  ? "bg-white/10 text-velora-gold border border-velora-gold/30"
+                  : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
+              }`}
+            >
+              <Heart className="w-4 h-4 text-rose-400 fill-rose-400/20" />
+              Dating
             </Link>
 
             <Link
