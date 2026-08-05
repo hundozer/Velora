@@ -138,12 +138,40 @@ export default function CreateDatingAdPage() {
       saved: false,
     };
 
-    // Save to local cache first
+    const newFeedPost = {
+      id: newAdItem.id,
+      author: {
+        id: user?.id || "me",
+        displayName: profile?.displayName || user?.username || "Prince Charming",
+        avatarUrl: profile?.avatarUrl || user?.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
+        isVerified: true,
+        genderSymbol: (String(profile?.gender || "").toUpperCase().includes("COUPLE") ? "👫" : String(profile?.gender || "").toUpperCase().includes("MAN") ? "♂" : "♀") as any,
+        location: formRegion || formCountry,
+      },
+      type: "DATING_AD" as const,
+      title: formTitle.trim(),
+      description: formText.trim(),
+      category: formCategory,
+      region: formRegion || formCountry,
+      createdAt: "Just now",
+      photos: photoPreview ? [photoPreview] : undefined,
+      hasLiked: false,
+      isSaved: false,
+      comments: [],
+    };
+
+    // Save to local cache first (both Dating Marketplace and Feed)
     if (typeof window !== "undefined") {
-      const existingStr = localStorage.getItem("intimo_all_dating_ads");
-      const existing = existingStr ? JSON.parse(existingStr) : [];
-      const updated = [newAdItem, ...existing.filter((a: any) => a.id !== newAdItem.id)];
-      localStorage.setItem("intimo_all_dating_ads", JSON.stringify(updated));
+      const existingAdsStr = localStorage.getItem("intimo_all_dating_ads");
+      const existingAds = existingAdsStr ? JSON.parse(existingAdsStr) : [];
+      const updatedAds = [newAdItem, ...existingAds.filter((a: any) => a.id !== newAdItem.id)];
+      localStorage.setItem("intimo_all_dating_ads", JSON.stringify(updatedAds));
+
+      const existingFeedStr = localStorage.getItem("intimo_feed_posts");
+      const existingFeed = existingFeedStr ? JSON.parse(existingFeedStr) : [];
+      const updatedFeed = [newFeedPost, ...existingFeed.filter((f: any) => f.id !== newFeedPost.id)];
+      localStorage.setItem("intimo_feed_posts", JSON.stringify(updatedFeed));
+
       window.dispatchEvent(new Event("intimo_ads_updated"));
     }
 

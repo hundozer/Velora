@@ -230,20 +230,84 @@ export default function DashboardPage() {
   const { user, profile } = useAuth();
 
 
-  // Feed State with localStorage Persistence
-  const [feedPosts, setFeedPosts] = useState<FeedPost[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("intimo_feed_posts");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (e) {
-          console.error("Failed to parse saved feed posts:", e);
-        }
+  // Helper to sync feed posts and merge dating ads from local storage
+  const syncFeedPosts = React.useCallback(() => {
+    if (typeof window === "undefined") return;
+
+    let posts: FeedPost[] = [];
+    const savedPostsStr = localStorage.getItem("intimo_feed_posts");
+    if (savedPostsStr) {
+      try {
+        posts = JSON.parse(savedPostsStr);
+      } catch (e) {
+        console.error("Failed to parse saved feed posts:", e);
       }
     }
-    return INITIAL_FEED_POSTS;
-  });
+    if (!posts || posts.length === 0) {
+      posts = INITIAL_FEED_POSTS;
+    }
+
+    // Merge dating ads into feed posts if not already present
+    const savedAdsStr = localStorage.getItem("intimo_all_dating_ads");
+    if (savedAdsStr) {
+      try {
+        const ads = JSON.parse(savedAdsStr);
+        if (Array.isArray(ads) && ads.length > 0) {
+          const map = new Map<string, FeedPost>();
+          // Add existing feed posts first
+          posts.forEach((p) => map.set(p.id, p));
+
+          // Map each dating ad to a FeedPost
+          ads.forEach((ad: any) => {
+            if (!map.has(ad.id)) {
+              map.set(ad.id, {
+                id: ad.id,
+                author: {
+                  id: ad.authorId || "me",
+                  displayName: ad.authorName || "Intimo Member",
+                  avatarUrl: ad.authorAvatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
+                  isVerified: ad.isVerified ?? true,
+                  genderSymbol: "👫",
+                  location: ad.region || ad.country || "",
+                },
+                type: "DATING_AD",
+                title: ad.title,
+                description: ad.text,
+                category: ad.category,
+                region: ad.region || ad.country || "",
+                createdAt: ad.createdAt || "Recently",
+                photos: ad.photoUrl ? [ad.photoUrl] : undefined,
+                hasLiked: false,
+                isSaved: ad.saved ?? false,
+                comments: [],
+              });
+            }
+          });
+
+          posts = Array.from(map.values());
+        }
+      } catch (e) {
+        console.error("Failed to parse dating ads for feed:", e);
+      }
+    }
+
+    setFeedPosts(posts);
+  }, []);
+
+  // Feed State
+  const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
+
+  // Sync on mount and event triggers
+  React.useEffect(() => {
+    syncFeedPosts();
+    const handleUpdate = () => syncFeedPosts();
+    window.addEventListener("intimo_ads_updated", handleUpdate);
+    window.addEventListener("focus", handleUpdate);
+    return () => {
+      window.removeEventListener("intimo_ads_updated", handleUpdate);
+      window.removeEventListener("focus", handleUpdate);
+    };
+  }, [syncFeedPosts]);
 
   // Save feedPosts to localStorage on change
   React.useEffect(() => {
@@ -295,11 +359,18 @@ export default function DashboardPage() {
 
   const filteredPosts = useMemo(() => {
     return feedPosts.filter((post) => {
+      const isUserOwnPost =
+        post.author.id === user?.id ||
+        post.author.id === profile?.id ||
+        post.author.id === "me" ||
+        (profile?.displayName && post.author.displayName === profile.displayName) ||
+        (user?.username && post.author.displayName === user.username);
+
       // Filter by Followed / Friends tabs
-      if (activeNavTab === "FOLLOWED" && !followedIds.includes(post.author.id) && post.author.id !== "me") {
+      if (activeNavTab === "FOLLOWED" && !followedIds.includes(post.author.id) && !isUserOwnPost) {
         return false;
       }
-      if (activeNavTab === "FRIENDS" && !friendIds.includes(post.author.id) && post.author.id !== "me") {
+      if (activeNavTab === "FRIENDS" && !friendIds.includes(post.author.id) && !isUserOwnPost) {
         return false;
       }
 
@@ -311,7 +382,7 @@ export default function DashboardPage() {
       if (activeFilterPill === "TEXT" && post.type === "TEXT") return true;
       return true;
     });
-  }, [feedPosts, activeNavTab, activeFilterPill, followedIds, friendIds]);
+  }, [feedPosts, activeNavTab, activeFilterPill, followedIds, friendIds, user?.id, profile?.id, profile?.displayName, user?.username]);
 
   // Feed Interactions Modal State (Views, Comments, Likes)
   const [feedInteractionsModal, setFeedInteractionsModal] = useState<{
