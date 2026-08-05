@@ -219,6 +219,7 @@ const INITIAL_ADS: DatingAdItem[] = [
 ];
 
 import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
+import { getAllActiveAds, createAd, deleteAd } from "@/lib/supabase/datingAdService";
 
 export default function DatingMarketplacePage() {
   const { user, profile } = useAuth();
@@ -226,23 +227,34 @@ export default function DatingMarketplacePage() {
   if (!user) {
     return <BehindTheDoorLanding />;
   }
-  const [adsList, setAdsList] = useState<DatingAdItem[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("intimo_all_dating_ads");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (e) {
-          console.error("Failed to parse saved dating ads:", e);
+  const [adsList, setAdsList] = useState<DatingAdItem[]>(INITIAL_ADS);
+  const [isLoadingAds, setIsLoadingAds] = useState(true);
+
+  // Fetch live dating ads from Supabase on mount
+  React.useEffect(() => {
+    async function loadAds() {
+      try {
+        const { data, error } = await getAllActiveAds();
+        if (data && data.length > 0) {
+          setAdsList(data);
+        } else if (typeof window !== "undefined") {
+          const saved = localStorage.getItem("intimo_all_dating_ads");
+          if (saved) {
+            setAdsList(JSON.parse(saved));
+          }
         }
+      } catch (e) {
+        console.error("Failed to load dating ads from Supabase:", e);
+      } finally {
+        setIsLoadingAds(false);
       }
     }
-    return INITIAL_ADS;
-  });
+    loadAds();
+  }, []);
 
-  // Save dating ads list to localStorage whenever updated
+  // Sync state to local cache as fallback
   React.useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && adsList.length > 0) {
       localStorage.setItem("intimo_all_dating_ads", JSON.stringify(adsList));
     }
   }, [adsList]);
@@ -413,11 +425,11 @@ export default function DatingMarketplacePage() {
     setAdsList((prev) => prev.filter((ad) => ad.id !== id));
   };
 
-  const handleCreateAd = (e: React.FormEvent) => {
+  const handleCreateAd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim() || !formText.trim()) return;
 
-    const newAd: DatingAdItem = {
+    const newAdItem: DatingAdItem = {
       id: `ad-${Date.now()}`,
       authorId: user?.id || "me",
       authorName: profile?.displayName || user?.username || "Prince Charming",
@@ -443,7 +455,30 @@ export default function DatingMarketplacePage() {
       saved: false,
     };
 
-    setAdsList([newAd, ...adsList]);
+    setAdsList([newAdItem, ...adsList]);
+
+    // Persist to Supabase in background
+    createAd({
+      author_id: profile?.id || null,
+      author_name: profile?.displayName || user?.username || "Intimo Member",
+      author_avatar: profile?.avatarUrl || null,
+      is_verified: true,
+      category: formCategory,
+      title: formTitle.trim(),
+      text: formText.trim(),
+      photo_url: photoPreview || null,
+      validity_days: formValidity,
+      country: formCountry,
+      region: formRegion,
+      allowed_reply_genders: formReplyGenders,
+      transgender_option: formTransgender,
+      min_age: formMinAge,
+      max_age: formMaxAge,
+      require_vip: formRequireVip,
+      require_media: formRequireMedia,
+      require_verified: formRequireVerified,
+      status: "active",
+    }).catch((err) => console.error("Failed to save ad to Supabase:", err));
 
     // Reset Form
     setFormTitle("");

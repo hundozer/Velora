@@ -1,9 +1,18 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { User, UserRole, Profile } from "@/types";
 import { EmailVerificationService } from "@/lib/auth/emailVerification";
 import { EmailNotificationService } from "@/lib/notifications/emailService";
+import {
+  getProfileByEmail,
+  upsertProfile,
+  updateProfile as updateProfileInDb,
+  dbRowToUser,
+  dbRowToProfile,
+  profileToDbRow,
+  ProfileRow,
+} from "@/lib/supabase/profileService";
 
 interface AuthContextType {
   user: User | null;
@@ -12,7 +21,7 @@ interface AuthContextType {
   isAgeVerified: boolean;
   confirmAge: () => void;
   switchRole: (newRole: UserRole) => void;
-  login: (email: string, role?: UserRole) => { success: boolean; message?: string };
+  login: (email: string, role?: UserRole) => Promise<{ success: boolean; message?: string }>;
   loginWithAuth0: (screenHint?: string) => void;
   logoutWithAuth0: () => void;
   register: (data: Partial<User> & { displayName: string }) => { success: boolean; pendingVerification: boolean; email: string };
@@ -28,14 +37,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [role, setRole] = useState<UserRole>("MEMBER");
   const [isAgeVerified, setIsAgeVerified] = useState<boolean>(false);
 
+  // ── Session Restoration ────────────────────────────────
   useEffect(() => {
-    // Check local storage for persistent age verification
     const savedAgeCheck = localStorage.getItem("intimo_age_verified") || localStorage.getItem("velora_age_verified");
     if (savedAgeCheck === "true") {
       setIsAgeVerified(true);
     }
 
-    // Restore active session from local storage or session cookie if present
+    // Restore from localStorage cache first (fast), then validate with Supabase
     try {
       const savedUserStr = localStorage.getItem("intimo_active_user");
       const savedProfileStr = localStorage.getItem("intimo_active_profile");
@@ -47,60 +56,89 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (parsedUser.role) {
           setRole(parsedUser.role);
         }
+
+        // Background sync: fetch latest profile from Supabase
+        if (parsedUser.email) {
+          getProfileByEmail(parsedUser.email).then(({ data }) => {
+            if (data) {
+              const freshUser = dbRowToUser(data);
+              const freshProfile = dbRowToProfile(data);
+              setUser(freshUser);
+              setProfile(freshProfile);
+              if (freshUser.role) setRole(freshUser.role as UserRole);
+              localStorage.setItem("intimo_active_user", JSON.stringify(freshUser));
+              localStorage.setItem("intimo_active_profile", JSON.stringify(freshProfile));
+            }
+          });
+        }
       } else if (typeof document !== "undefined" && document.cookie.includes("intimo_user_data=")) {
         const match = document.cookie.match(/intimo_user_data=([^;]+)/);
         if (match) {
           const cookieUserData = JSON.parse(decodeURIComponent(match[1]));
-          const savedNickname = localStorage.getItem(`intimo_nickname_${cookieUserData.email.toLowerCase()}`);
-          const effectiveName = savedNickname || cookieUserData.username || cookieUserData.email.split("@")[0];
 
-          const cookieUser: User = {
-            id: cookieUserData.id,
-            email: cookieUserData.email,
-            username: effectiveName,
-            role: "MEMBER",
-            memberTier: "PREMIUM",
-            verificationStatus: "VERIFIED",
-            verificationLevel: "LEVEL_3_PROFILE_BIOMETRIC",
-            createdAt: new Date().toISOString().split("T")[0],
-            avatarUrl: cookieUserData.avatarUrl,
-          };
-          const cookieProfile: Profile = {
-            id: `prof_${cookieUserData.id}`,
-            userId: cookieUserData.id,
-            displayName: effectiveName,
-            dateOfBirth: "1998-05-15",
-            age: 26,
-            gender: "FEMALE",
-            sexualOrientation: "BISEXUAL",
-            country: "",
-            city: "",
-            location: "",
-            languages: ["English"],
-            headline: "Intimo Member",
-            bio: "Verified Intimo Member",
-            interests: ["Private Connections"],
-            lifestyleTags: ["Discreet", "Luxury Lifestyle"],
-            hobbies: [],
-            relationshipStatus: "SINGLE",
-            lookingFor: ["Connections"],
-            isCoupleProfile: false,
-            publicProfileVisibility: true,
-            photoVisibilityDefault: "PUBLIC",
-            locationPrecision: "CITY",
-            showOnlineStatus: true,
-            showDistance: true,
-            allowDirectMessages: true,
-            requireVerificationToMessage: false,
-            verified: true,
-            isOnline: true,
-            compatibilityScore: 95,
-            avatarUrl: cookieUserData.avatarUrl,
-            coverPhotoUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
-            galleryImages: [],
-          };
-          setUser(cookieUser);
-          setProfile(cookieProfile);
+          // Try to load from Supabase first
+          getProfileByEmail(cookieUserData.email).then(({ data }) => {
+            if (data) {
+              const freshUser = dbRowToUser(data);
+              const freshProfile = dbRowToProfile(data);
+              setUser(freshUser);
+              setProfile(freshProfile);
+              localStorage.setItem("intimo_active_user", JSON.stringify(freshUser));
+              localStorage.setItem("intimo_active_profile", JSON.stringify(freshProfile));
+            } else {
+              // Fallback: create from cookie data
+              const savedNickname = localStorage.getItem(`intimo_nickname_${cookieUserData.email.toLowerCase()}`);
+              const effectiveName = savedNickname || cookieUserData.username || cookieUserData.email.split("@")[0];
+
+              const cookieUser: User = {
+                id: cookieUserData.id,
+                email: cookieUserData.email,
+                username: effectiveName,
+                role: "MEMBER",
+                memberTier: "PREMIUM",
+                verificationStatus: "VERIFIED",
+                verificationLevel: "LEVEL_3_PROFILE_BIOMETRIC",
+                createdAt: new Date().toISOString().split("T")[0],
+                avatarUrl: cookieUserData.avatarUrl,
+              };
+              const cookieProfile: Profile = {
+                id: `prof_${cookieUserData.id}`,
+                userId: cookieUserData.id,
+                displayName: effectiveName,
+                dateOfBirth: "1998-05-15",
+                age: 26,
+                gender: "FEMALE",
+                sexualOrientation: "BISEXUAL",
+                country: "",
+                city: "",
+                location: "",
+                languages: ["English"],
+                headline: "Intimo Member",
+                bio: "Verified Intimo Member",
+                interests: ["Private Connections"],
+                lifestyleTags: ["Discreet", "Luxury Lifestyle"],
+                hobbies: [],
+                relationshipStatus: "SINGLE",
+                lookingFor: ["Connections"],
+                isCoupleProfile: false,
+                publicProfileVisibility: true,
+                photoVisibilityDefault: "PUBLIC",
+                locationPrecision: "CITY",
+                showOnlineStatus: true,
+                showDistance: true,
+                allowDirectMessages: true,
+                requireVerificationToMessage: false,
+                verified: true,
+                isOnline: true,
+                compatibilityScore: 95,
+                avatarUrl: cookieUserData.avatarUrl,
+                coverPhotoUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+                galleryImages: [],
+              };
+              setUser(cookieUser);
+              setProfile(cookieProfile);
+            }
+          });
         }
       }
     } catch (err) {
@@ -108,47 +146,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  // ── Age Verification ───────────────────────────────────
   const confirmAge = () => {
     setIsAgeVerified(true);
     localStorage.setItem("intimo_age_verified", "true");
   };
 
-  const updateUserProfile = (newUser: User, newProfile: Profile) => {
+  // ── Update User Profile (State + localStorage cache + Supabase) ──
+  const updateUserProfile = useCallback((newUser: User, newProfile: Profile) => {
     setUser(newUser);
     setProfile(newProfile);
     if (newUser.role) {
       setRole(newUser.role);
     }
+
+    // Cache in localStorage for fast session restore
     if (typeof window !== "undefined") {
       localStorage.setItem("intimo_active_user", JSON.stringify(newUser));
       localStorage.setItem("intimo_active_profile", JSON.stringify(newProfile));
-      if (newUser.email) {
-        const emailKey = newUser.email.toLowerCase().trim();
-        localStorage.setItem(`intimo_account_user_${emailKey}`, JSON.stringify(newUser));
-        localStorage.setItem(`intimo_account_profile_${emailKey}`, JSON.stringify(newProfile));
-        if (newProfile.displayName) {
-          localStorage.setItem(`intimo_nickname_${emailKey}`, newProfile.displayName);
-        }
-      }
     }
-  };
 
+    // Persist to Supabase (async, fire-and-forget)
+    if (newUser.email) {
+      const dbRow = profileToDbRow(newUser.id, newUser.email, newProfile, newUser);
+      upsertProfile(newUser.id, newUser.email, dbRow).catch((err) => {
+        console.error("Failed to sync profile to Supabase:", err);
+      });
+    }
+  }, []);
+
+  // ── Switch Role ────────────────────────────────────────
   const switchRole = (newRole: UserRole) => {
     setRole(newRole);
     if (user && profile) {
-      const updatedUser: User = {
-        ...user,
-        role: newRole,
-      };
-      const updatedProfile: Profile = {
-        ...profile,
-        isCoupleProfile: newRole === "COUPLE",
-      };
+      const updatedUser: User = { ...user, role: newRole };
+      const updatedProfile: Profile = { ...profile, isCoupleProfile: newRole === "COUPLE" };
       updateUserProfile(updatedUser, updatedProfile);
     }
   };
 
-  const login = (email: string, selectedRole: UserRole = "MEMBER") => {
+  // ── Login ──────────────────────────────────────────────
+  const login = async (email: string, selectedRole: UserRole = "MEMBER"): Promise<{ success: boolean; message?: string }> => {
     const isVerified = EmailVerificationService.isEmailVerified(email);
 
     if (!isVerified) {
@@ -158,75 +196,98 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
     }
 
-    const emailKey = email.toLowerCase().trim();
+    // Try to restore from Supabase first
+    const { data: existingProfile } = await getProfileByEmail(email);
 
-    // Restore saved account user & profile if previously modified & saved in localStorage!
-    if (typeof window !== "undefined") {
-      const savedUserStr = localStorage.getItem(`intimo_account_user_${emailKey}`);
-      const savedProfileStr = localStorage.getItem(`intimo_account_profile_${emailKey}`);
-
-      if (savedUserStr && savedProfileStr) {
-        try {
-          const restoredUser: User = JSON.parse(savedUserStr);
-          const restoredProfile: Profile = JSON.parse(savedProfileStr);
-          updateUserProfile(restoredUser, restoredProfile);
-          return { success: true };
-        } catch (e) {
-          console.error("Failed to parse saved account profile:", e);
-        }
-      }
+    if (existingProfile) {
+      const restoredUser = dbRowToUser(existingProfile);
+      const restoredProfile = dbRowToProfile(existingProfile);
+      setUser(restoredUser);
+      setProfile(restoredProfile);
+      if (restoredUser.role) setRole(restoredUser.role as UserRole);
+      localStorage.setItem("intimo_active_user", JSON.stringify(restoredUser));
+      localStorage.setItem("intimo_active_profile", JSON.stringify(restoredProfile));
+      return { success: true };
     }
 
-    const newUser: User = {
-      id: "usr-" + Date.now(),
-      email,
-      username: email.split("@")[0],
+    // New user — create profile in Supabase
+    const authId = "usr-" + Date.now();
+    const displayName = email.split("@")[0];
+
+    const newRow: Partial<ProfileRow> = {
+      display_name: displayName,
+      username: displayName,
       role: selectedRole,
-      memberTier: "PREMIUM",
-      verificationStatus: "VERIFIED",
-      verificationLevel: "LEVEL_3_PROFILE_BIOMETRIC",
-      createdAt: new Date().toISOString().split("T")[0],
+      member_tier: "PREMIUM",
+      verification_status: "VERIFIED",
+      verification_level: "LEVEL_3_PROFILE_BIOMETRIC",
     };
 
-    const newProfile: Profile = {
-      id: "prof-" + Date.now(),
-      userId: newUser.id,
-      displayName: email.split("@")[0],
-      dateOfBirth: "1998-01-01",
-      age: 28,
-      gender: "FEMALE",
-      sexualOrientation: "BISEXUAL",
-      country: "",
-      city: "",
-      location: "",
-      languages: ["English"],
-      headline: "Intimo Member",
-      bio: "Private member profile.",
-      interests: ["Discreet Encounters", "Fine Dining"],
-      lifestyleTags: ["Luxury Lifestyle"],
-      hobbies: [],
-      relationshipStatus: "SINGLE",
-      lookingFor: ["Connections"],
-      isCoupleProfile: false,
-      publicProfileVisibility: true,
-      photoVisibilityDefault: "PUBLIC",
-      locationPrecision: "CITY",
-      showOnlineStatus: true,
-      showDistance: true,
-      allowDirectMessages: true,
-      requireVerificationToMessage: false,
-      verified: true,
-      isOnline: true,
-      compatibilityScore: 90,
-      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
-      coverPhotoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=1200&q=80",
-      galleryImages: [],
-    };
+    const { data: createdRow } = await upsertProfile(authId, email, newRow);
 
-    updateUserProfile(newUser, newProfile);
+    if (createdRow) {
+      const newUser = dbRowToUser(createdRow);
+      const newProfile = dbRowToProfile(createdRow);
+      setUser(newUser);
+      setProfile(newProfile);
+      if (newUser.role) setRole(newUser.role as UserRole);
+      localStorage.setItem("intimo_active_user", JSON.stringify(newUser));
+      localStorage.setItem("intimo_active_profile", JSON.stringify(newProfile));
+    } else {
+      // Fallback: set local state even if Supabase fails
+      const fallbackUser: User = {
+        id: authId,
+        email,
+        username: displayName,
+        role: selectedRole,
+        memberTier: "PREMIUM",
+        verificationStatus: "VERIFIED",
+        verificationLevel: "LEVEL_3_PROFILE_BIOMETRIC",
+        createdAt: new Date().toISOString().split("T")[0],
+      };
+      const fallbackProfile: Profile = {
+        id: "prof-" + Date.now(),
+        userId: authId,
+        displayName,
+        age: 28,
+        gender: "FEMALE",
+        sexualOrientation: "BISEXUAL",
+        country: "",
+        city: "",
+        location: "",
+        languages: ["English"],
+        headline: "Intimo Member",
+        bio: "Private member profile.",
+        interests: ["Discreet Encounters", "Fine Dining"],
+        lifestyleTags: ["Luxury Lifestyle"],
+        hobbies: [],
+        relationshipStatus: "SINGLE",
+        lookingFor: ["Connections"],
+        isCoupleProfile: false,
+        publicProfileVisibility: true,
+        photoVisibilityDefault: "PUBLIC",
+        locationPrecision: "CITY",
+        showOnlineStatus: true,
+        showDistance: true,
+        allowDirectMessages: true,
+        requireVerificationToMessage: false,
+        verified: true,
+        isOnline: true,
+        compatibilityScore: 90,
+        avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+        coverPhotoUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+        galleryImages: [],
+      };
+      setUser(fallbackUser);
+      setProfile(fallbackProfile);
+      localStorage.setItem("intimo_active_user", JSON.stringify(fallbackUser));
+      localStorage.setItem("intimo_active_profile", JSON.stringify(fallbackProfile));
+    }
+
     return { success: true };
   };
 
+  // ── Auth0 Login/Logout ─────────────────────────────────
   const loginWithAuth0 = (screenHint?: string) => {
     if (typeof window !== "undefined") {
       const targetUrl = screenHint ? `/api/auth/login?screen_hint=${screenHint}` : "/api/auth/login";
@@ -241,6 +302,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // ── Register ───────────────────────────────────────────
   const register = (data: Partial<User> & { displayName: string }) => {
     const userEmail = data.email || "user@intimo.live";
     const userId = "usr-" + Date.now();
@@ -258,6 +320,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   };
 
+  // ── Logout ─────────────────────────────────────────────
   const logout = () => {
     setUser(null);
     setProfile(null);

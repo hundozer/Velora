@@ -51,6 +51,8 @@ import {
 import { connectionStore } from "@/lib/social/connectionStore";
 import { visitorStore } from "@/lib/social/visitorStore";
 import { notificationStore } from "@/lib/notifications/notificationStore";
+import { getAlbumsByOwner, createAlbum, getVideosByOwner, createVideo } from "@/lib/supabase/mediaService";
+import { getAdsByAuthor } from "@/lib/supabase/datingAdService";
 
 const AMATERI_TOPICS = [
   "Anal",
@@ -341,23 +343,31 @@ export default function SingleProfilePage() {
 
   // Load & Persist Photo Albums
   React.useEffect(() => {
-    if (typeof window !== "undefined" && currentUser?.email) {
-      const emailKey = currentUser.email.toLowerCase().trim();
-      const saved = localStorage.getItem(`intimo_user_albums_${emailKey}`);
-      if (saved) {
-        try {
-          setUserPhotoAlbums(JSON.parse(saved));
-        } catch (e) {}
-      }
+    if (profile?.id) {
+      getAlbumsByOwner(profile.id).then(({ data }: { data: any }) => {
+        if (data && data.length > 0) {
+          const mappedAlbums: UserPhotoAlbumItem[] = data.map((row: any) => ({
+            id: row.id,
+            title: row.title,
+            description: row.description || "",
+            coverUrl: row.cover_url || profile.avatarUrl,
+            photoCount: row.photo_count || (row.photos ? row.photos.length : 1),
+            photos: row.photos || [profile.avatarUrl],
+            monetization: row.monetization as any,
+            creditsPrice: row.credits_price || undefined,
+            category: row.category || "General",
+            topics: row.topics || [],
+            views: row.views || 0,
+            comments: row.comments || 0,
+            likes: row.likes || 0,
+            status: row.status as any,
+            createdAt: row.created_at ? new Date(row.created_at).toLocaleDateString() : "Recently",
+          }));
+          setUserPhotoAlbums(mappedAlbums);
+        }
+      });
     }
-  }, [currentUser?.email]);
-
-  React.useEffect(() => {
-    if (typeof window !== "undefined" && currentUser?.email) {
-      const emailKey = currentUser.email.toLowerCase().trim();
-      localStorage.setItem(`intimo_user_albums_${emailKey}`, JSON.stringify(userPhotoAlbums));
-    }
-  }, [userPhotoAlbums, currentUser?.email]);
+  }, [profile?.id]);
 
   // Rich Videos List
   const [userVideos, setUserVideos] = useState<UserVideoItem[]>([
@@ -416,25 +426,35 @@ export default function SingleProfilePage() {
     },
   ]);
 
-  // Load & Persist Videos
+  // Load Videos from Supabase
   React.useEffect(() => {
-    if (typeof window !== "undefined" && currentUser?.email) {
-      const emailKey = currentUser.email.toLowerCase().trim();
-      const saved = localStorage.getItem(`intimo_user_videos_${emailKey}`);
-      if (saved) {
-        try {
-          setUserVideos(JSON.parse(saved));
-        } catch (e) {}
-      }
+    if (profile?.id) {
+      getVideosByOwner(profile.id).then(({ data }: { data: any }) => {
+        if (data && data.length > 0) {
+          const mappedVideos: UserVideoItem[] = data.map((row: any) => ({
+            id: row.id,
+            title: row.title,
+            description: row.description || "",
+            duration: row.duration || "1:30",
+            thumbnail: row.thumbnail_url || profile.avatarUrl,
+            videoUrl: row.video_url || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+            monetization: row.monetization as any,
+            creditsPrice: row.credits_price || undefined,
+            category: row.category || "General",
+            commentPermission: row.comment_permission as any,
+            votingPermission: row.voting_permission as any,
+            topics: row.topics || [],
+            views: row.views || 0,
+            comments: row.comments || 0,
+            likes: row.likes || 0,
+            status: row.status as any,
+            createdAt: row.created_at ? new Date(row.created_at).toLocaleDateString() : "Recently",
+          }));
+          setUserVideos(mappedVideos);
+        }
+      });
     }
-  }, [currentUser?.email]);
-
-  React.useEffect(() => {
-    if (typeof window !== "undefined" && currentUser?.email) {
-      const emailKey = currentUser.email.toLowerCase().trim();
-      localStorage.setItem(`intimo_user_videos_${emailKey}`, JSON.stringify(userVideos));
-    }
-  }, [userVideos, currentUser?.email]);
+  }, [profile?.id]);
 
   // Dating Ads List
   const [userDatingAds, setUserDatingAds] = useState<{ id: string; title: string; category: string; description: string; date: string }[]>([
@@ -892,6 +912,25 @@ export default function SingleProfilePage() {
           createdAt: "Just now",
         };
         setUserVideos([newVideo, ...userVideos]);
+
+        createVideo({
+          owner_id: profile.id,
+          title: pubTitle,
+          description: pubDescription || "Verified member video upload.",
+          video_url: modalPreviews[0] || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+          thumbnail_url: modalPreviews[0] || profile.avatarUrl,
+          duration: "1:30",
+          monetization: pubMonetization,
+          credits_price: pubMonetization === "CREDITS" ? pubCreditsPrice : null,
+          category: pubCategory,
+          comment_permission: pubCommentSetting,
+          voting_permission: pubVotingSetting,
+          topics: pubSelectedTopics.length > 0 ? pubSelectedTopics : ["VIP Lifestyle"],
+          views: 1,
+          comments: 0,
+          likes: 0,
+          status: "On web",
+        }).catch((err: any) => console.error("Failed to save video to Supabase:", err));
       }
     } else {
       if (editingAlbumItem) {
@@ -932,6 +971,23 @@ export default function SingleProfilePage() {
           createdAt: "Just now",
         };
         setUserPhotoAlbums([newAlbum, ...userPhotoAlbums]);
+
+        createAlbum({
+          owner_id: profile.id,
+          title: pubTitle,
+          description: pubDescription || "Verified member photo album.",
+          cover_url: modalPreviews[0] || profile.avatarUrl,
+          photos: modalPreviews.length > 0 ? modalPreviews : [profile.avatarUrl],
+          photo_count: modalPreviews.length > 0 ? modalPreviews.length : 1,
+          monetization: pubMonetization,
+          credits_price: pubMonetization === "CREDITS" ? pubCreditsPrice : null,
+          category: pubCategory,
+          topics: pubSelectedTopics.length > 0 ? pubSelectedTopics : ["VIP Lifestyle"],
+          views: 1,
+          comments: 0,
+          likes: 0,
+          status: "On web",
+        }).catch((err: any) => console.error("Failed to save album to Supabase:", err));
       }
     }
 
