@@ -26,6 +26,9 @@ import {
   UserCheck,
   ChevronDown,
   Globe,
+  RotateCcw,
+  History,
+  Trash2,
 } from "lucide-react";
 
 export interface DatingAdItem {
@@ -49,6 +52,8 @@ export interface DatingAdItem {
   requireMedia: boolean;
   requireVerified: boolean;
   createdAt: string;
+  status: "active" | "expired";
+  daysLeft: number;
   saved: boolean;
 }
 
@@ -106,6 +111,8 @@ const INITIAL_ADS: DatingAdItem[] = [
     requireMedia: false,
     requireVerified: true,
     createdAt: "2 hours ago",
+    status: "active",
+    daysLeft: 7,
     saved: false,
   },
   {
@@ -129,6 +136,8 @@ const INITIAL_ADS: DatingAdItem[] = [
     requireMedia: true,
     requireVerified: true,
     createdAt: "5 hours ago",
+    status: "active",
+    daysLeft: 14,
     saved: true,
   },
   {
@@ -152,6 +161,8 @@ const INITIAL_ADS: DatingAdItem[] = [
     requireMedia: false,
     requireVerified: true,
     createdAt: "1 day ago",
+    status: "active",
+    daysLeft: 6,
     saved: false,
   },
   {
@@ -175,6 +186,33 @@ const INITIAL_ADS: DatingAdItem[] = [
     requireMedia: true,
     requireVerified: true,
     createdAt: "2 days ago",
+    status: "active",
+    daysLeft: 28,
+    saved: false,
+  },
+  {
+    id: "ad-105",
+    authorId: "me",
+    authorName: "Prince Charming",
+    authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
+    isVerified: true,
+    category: "Man seeking woman",
+    title: "Discreet Opera & Fine Dining Experience in Vienna",
+    text: "Inviting an elegant companion for an evening at the Vienna State Opera followed by wine at a private lounge.",
+    photoUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
+    validityDays: 7,
+    country: "Austria",
+    region: "Vienna",
+    allowedReplyGenders: ["♀"],
+    transgenderOption: "Including trans",
+    minAge: 21,
+    maxAge: 45,
+    requireVip: false,
+    requireMedia: false,
+    requireVerified: true,
+    createdAt: "10 days ago",
+    status: "expired",
+    daysLeft: 0,
     saved: false,
   },
 ];
@@ -244,6 +282,27 @@ export default function DatingMarketplacePage() {
     }
   };
 
+  const [activeTab, setActiveTab] = useState<"browse" | "my-ads">("browse");
+
+  const handleReactivateAd = (id: string) => {
+    setAdsList((prev) =>
+      prev.map((ad) =>
+        ad.id === id
+          ? {
+              ...ad,
+              status: "active",
+              daysLeft: ad.validityDays,
+              createdAt: "Just now",
+            }
+          : ad
+      )
+    );
+  };
+
+  const handleDeleteAd = (id: string) => {
+    setAdsList((prev) => prev.filter((ad) => ad.id !== id));
+  };
+
   const handleCreateAd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim() || !formText.trim()) return;
@@ -269,6 +328,8 @@ export default function DatingMarketplacePage() {
       requireMedia: formRequireMedia,
       requireVerified: formRequireVerified,
       createdAt: "Just now",
+      status: "active",
+      daysLeft: formValidity,
       saved: false,
     };
 
@@ -288,9 +349,18 @@ export default function DatingMarketplacePage() {
   };
 
   const filteredAds = adsList.filter((ad) => {
-    if (selectedCategory !== "Show all categories" && ad.category !== selectedCategory) {
-      return false;
+    if (activeTab === "my-ads") {
+      // Show all user's ads (both active & expired)
+      const isMyAd = ad.authorId === user?.id || ad.authorId === "me";
+      if (!isMyAd) return false;
+    } else {
+      // Browse Marketplace: Show active ads ONLY! Expired ads disappear to prevent clutter!
+      if (ad.status !== "active") return false;
+      if (selectedCategory !== "Show all categories" && ad.category !== selectedCategory) {
+        return false;
+      }
     }
+
     if (activeFilterPill === "Saved" && !ad.saved) return false;
     if (activeFilterPill === "With photo" && !ad.photoUrl) return false;
     if (activeFilterPill === "Verified" && !ad.isVerified) return false;
@@ -304,13 +374,19 @@ export default function DatingMarketplacePage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white flex items-center gap-3">
             <Heart className="w-7 h-7 text-rose-400 fill-rose-400/20" />
-            {selectedCategory === "Show all categories" ? "All Active Dating Ads" : selectedCategory}
+            {activeTab === "my-ads"
+              ? "My Dating Ads History"
+              : selectedCategory === "Show all categories"
+              ? "All Active Dating Ads"
+              : selectedCategory}
             <span className="text-xs font-mono text-amber-300 font-bold bg-white/5 px-3 py-1 rounded-full border border-white/10">
               {selectedRegion || selectedCountry}
             </span>
           </h1>
           <p className="text-xs text-velora-textMuted mt-1">
-            Browse and post discreet adult dating ads, announcements, and invitations in your area.
+            {activeTab === "my-ads"
+              ? "Manage your active and expired dating announcements. Expired ads are hidden from the feed and can be reactivated anytime."
+              : "Browse and post discreet adult dating ads, announcements, and invitations in your area."}
           </p>
         </div>
 
@@ -323,6 +399,35 @@ export default function DatingMarketplacePage() {
         >
           <Plus className="w-4 h-4 text-black" /> Add new dating ad
         </Button>
+      </div>
+
+      {/* Navigation Sub-Tabs: Browse Marketplace vs My Dating Ads (History) */}
+      <div className="flex flex-wrap items-center gap-3 border-b border-white/10 pb-4">
+        <button
+          type="button"
+          onClick={() => setActiveTab("browse")}
+          className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${
+            activeTab === "browse"
+              ? "bg-amber-400 text-black shadow-gold-glow font-bold"
+              : "bg-white/5 text-velora-textMuted hover:text-white border border-white/10"
+          }`}
+        >
+          <Search className="w-4 h-4" />
+          Browse Marketplace (Active Ads)
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("my-ads")}
+          className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${
+            activeTab === "my-ads"
+              ? "bg-amber-400 text-black shadow-gold-glow font-bold"
+              : "bg-white/5 text-velora-textMuted hover:text-white border border-white/10"
+          }`}
+        >
+          <History className="w-4 h-4 text-amber-400" />
+          My Dating Ads ({adsList.filter((a) => a.authorId === user?.id || a.authorId === "me").length})
+        </button>
       </div>
 
       {/* 29-Category Grid Selection Section */}
@@ -494,7 +599,7 @@ export default function DatingMarketplacePage() {
                     <img src={ad.authorAvatar} alt={ad.authorName} className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Link href={`/profile/${ad.authorId}`}>
                         <h4 className="text-sm font-bold text-white hover:text-amber-300 transition-colors">
                           {ad.authorName}
@@ -504,6 +609,15 @@ export default function DatingMarketplacePage() {
                       <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-rose-500/20 text-rose-300 border border-rose-500/30">
                         {ad.category}
                       </span>
+                      {ad.status === "active" ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          🟢 Active ({ad.daysLeft}d left)
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                          🔴 Expired (Hidden from Public Feed)
+                        </span>
+                      )}
                     </div>
                     <p className="text-[11px] text-velora-textMuted font-mono flex items-center gap-1 mt-0.5">
                       <MapPin className="w-3 h-3 text-blue-400" /> {ad.region}, {ad.country} • Posted {ad.createdAt}
@@ -511,26 +625,61 @@ export default function DatingMarketplacePage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleToggleSaveAd(ad.id)}
-                    className={`p-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-1 ${
-                      ad.saved
-                        ? "bg-amber-400/20 text-amber-300 border-amber-400 shadow-gold-glow"
-                        : "bg-white/5 text-velora-textMuted border-white/10 hover:text-white"
-                    }`}
-                    title={ad.saved ? "Saved to Favorites" : "Save Dating Ad"}
-                  >
-                    <Bookmark className={`w-3.5 h-3.5 ${ad.saved ? "fill-amber-300 text-amber-300" : ""}`} />
-                    <span className="hidden sm:inline">{ad.saved ? "Saved" : "Save"}</span>
-                  </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  {(ad.authorId === user?.id || ad.authorId === "me") ? (
+                    <>
+                      {ad.status === "expired" ? (
+                        <Button
+                          variant="gold"
+                          size="sm"
+                          onClick={() => handleReactivateAd(ad.id)}
+                          className="text-xs font-bold uppercase gap-1.5 shadow-gold-glow"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" /> Reactivate Ad (+{ad.validityDays} Days)
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="glass"
+                          size="sm"
+                          onClick={() => handleReactivateAd(ad.id)}
+                          className="text-xs font-semibold gap-1 text-amber-300 border-amber-400/30 hover:bg-amber-400/10"
+                        >
+                          <RotateCcw className="w-3 h-3" /> Extend +{ad.validityDays}d
+                        </Button>
+                      )}
 
-                  <Link href={`/messages?user=${ad.authorId}`}>
-                    <Button variant="gold" size="sm" className="text-xs font-bold uppercase gap-1.5 shadow-gold-glow">
-                      <MessageSquare className="w-3.5 h-3.5" /> Reply to Ad
-                    </Button>
-                  </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteAd(ad.id)}
+                        className="p-2 rounded-xl border border-white/10 bg-white/5 text-velora-textMuted hover:text-rose-400 hover:border-rose-500/40 transition-colors"
+                        title="Delete Ad"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleSaveAd(ad.id)}
+                        className={`p-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-1 ${
+                          ad.saved
+                            ? "bg-amber-400/20 text-amber-300 border-amber-400 shadow-gold-glow"
+                            : "bg-white/5 text-velora-textMuted border-white/10 hover:text-white"
+                        }`}
+                        title={ad.saved ? "Saved to Favorites" : "Save Dating Ad"}
+                      >
+                        <Bookmark className={`w-3.5 h-3.5 ${ad.saved ? "fill-amber-300 text-amber-300" : ""}`} />
+                        <span className="hidden sm:inline">{ad.saved ? "Saved" : "Save"}</span>
+                      </button>
+
+                      <Link href={`/messages?user=${ad.authorId}`}>
+                        <Button variant="gold" size="sm" className="text-xs font-bold uppercase gap-1.5 shadow-gold-glow">
+                          <MessageSquare className="w-3.5 h-3.5" /> Reply to Ad
+                        </Button>
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
 
