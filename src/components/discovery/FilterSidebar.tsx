@@ -151,9 +151,6 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
             <h2 className="text-base font-serif font-bold text-white flex items-center gap-2">
               Filters & Preferences
             </h2>
-            <p className="text-xs text-velora-textMuted font-mono">
-              Refine profiles horizontally by location, gender, orientation, & intimate kinks
-            </p>
           </div>
         </div>
 
