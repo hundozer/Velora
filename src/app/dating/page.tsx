@@ -246,12 +246,32 @@ function DatingMarketplaceContent() {
 
   const [isLoadingAds, setIsLoadingAds] = useState(true);
 
-  // Sync state to local cache whenever updated
-  React.useEffect(() => {
-    if (typeof window !== "undefined" && adsList.length > 0) {
-      localStorage.setItem("intimo_all_dating_ads", JSON.stringify(adsList));
+  // Helper function to safely read and merge local ads
+  const syncLocalAds = React.useCallback(() => {
+    if (typeof window === "undefined") return;
+    const saved = localStorage.getItem("intimo_all_dating_ads");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setAdsList((prev) => {
+            const map = new Map<string, DatingAdItem>();
+            // Add freshly created local ads first
+            parsed.forEach((ad: DatingAdItem) => map.set(ad.id, ad));
+            // Keep existing ads if not present in map
+            prev.forEach((ad: DatingAdItem) => {
+              if (!map.has(ad.id)) {
+                map.set(ad.id, ad);
+              }
+            });
+            return Array.from(map.values());
+          });
+        }
+      } catch (e) {
+        console.error("Failed to parse local dating ads:", e);
+      }
     }
-  }, [adsList]);
+  }, []);
 
   // Fetch live dating ads from Supabase on mount & merge with local ads
   React.useEffect(() => {
@@ -279,8 +299,9 @@ function DatingMarketplaceContent() {
   const [selectedCountry, setSelectedCountry] = useState("All Countries");
   const [selectedRegion, setSelectedRegion] = useState("All Cities / Regions");
 
-  // Read category / tab from URL searchParams
+  // Read category / tab from URL searchParams & sync local storage ads on navigation/focus
   React.useEffect(() => {
+    syncLocalAds();
     const cat = searchParams?.get("category");
     const tab = searchParams?.get("tab");
     if (cat) {
@@ -291,7 +312,15 @@ function DatingMarketplaceContent() {
     if (tab === "my-ads") {
       setActiveTab("my-ads");
     }
-  }, [searchParams]);
+
+    const handleUpdate = () => syncLocalAds();
+    window.addEventListener("intimo_ads_updated", handleUpdate);
+    window.addEventListener("focus", handleUpdate);
+    return () => {
+      window.removeEventListener("intimo_ads_updated", handleUpdate);
+      window.removeEventListener("focus", handleUpdate);
+    };
+  }, [searchParams, syncLocalAds]);
 
   const [ageRange, setAgeRange] = useState<[number, number]>([18, 100]);
   const [activeFilterPill, setActiveFilterPill] = useState<string | null>(null);
@@ -438,90 +467,42 @@ function DatingMarketplaceContent() {
   };
 
   const handleReactivateAd = (id: string) => {
-    setAdsList((prev) =>
-      prev.map((ad) =>
+    setAdsList((prev) => {
+      const updated = prev.map((ad) =>
         ad.id === id
           ? {
               ...ad,
-              status: "active",
+              status: "active" as const,
               daysLeft: ad.validityDays,
               createdAt: "Just now",
             }
           : ad
-      )
-    );
+      );
+      if (typeof window !== "undefined") {
+        localStorage.setItem("intimo_all_dating_ads", JSON.stringify(updated));
+      }
+      return updated;
+    });
   };
 
   const handleDeleteAd = (id: string) => {
-    setAdsList((prev) => prev.filter((ad) => ad.id !== id));
-  };
-
-  const handleCreateAd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formTitle.trim() || !formText.trim()) return;
-
-    const newAdItem: DatingAdItem = {
-      id: `ad-${Date.now()}`,
-      authorId: user?.id || "me",
-      authorName: profile?.displayName || user?.username || "Prince Charming",
-      authorAvatar: profile?.avatarUrl || user?.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
-      isVerified: true,
-      category: formCategory,
-      title: formTitle.trim(),
-      text: formText.trim(),
-      photoUrl: photoPreview || undefined,
-      validityDays: formValidity,
-      country: formCountry,
-      region: formRegion,
-      allowedReplyGenders: formReplyGenders,
-      transgenderOption: formTransgender,
-      minAge: formMinAge,
-      maxAge: formMaxAge,
-      requireVip: formRequireVip,
-      requireMedia: formRequireMedia,
-      requireVerified: formRequireVerified,
-      createdAt: "Just now",
-      status: "active",
-      daysLeft: formValidity,
-      saved: false,
-    };
-
-    setAdsList([newAdItem, ...adsList]);
-
-    // Persist to Supabase in background
-    createAd({
-      author_id: profile?.id || null,
-      author_name: profile?.displayName || user?.username || "Intimo Member",
-      author_avatar: profile?.avatarUrl || null,
-      is_verified: true,
-      category: formCategory,
-      title: formTitle.trim(),
-      text: formText.trim(),
-      photo_url: photoPreview || null,
-      validity_days: formValidity,
-      country: formCountry,
-      region: formRegion,
-      allowed_reply_genders: formReplyGenders,
-      transgender_option: formTransgender,
-      min_age: formMinAge,
-      max_age: formMaxAge,
-      require_vip: formRequireVip,
-      require_media: formRequireMedia,
-      require_verified: formRequireVerified,
-      status: "active",
-    }).catch((err) => console.error("Failed to save ad to Supabase:", err));
-
-    // Reset Form
-    setFormTitle("");
-    setFormText("");
-    setPhotoPreview(null);
-    setIsAddModalOpen(false);
+    setAdsList((prev) => {
+      const updated = prev.filter((ad) => ad.id !== id);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("intimo_all_dating_ads", JSON.stringify(updated));
+      }
+      return updated;
+    });
   };
 
   const handleToggleSaveAd = (id: string) => {
-    setAdsList((prev) =>
-      prev.map((ad) => (ad.id === id ? { ...ad, saved: !ad.saved } : ad))
-    );
+    setAdsList((prev) => {
+      const updated = prev.map((ad) => (ad.id === id ? { ...ad, saved: !ad.saved } : ad));
+      if (typeof window !== "undefined") {
+        localStorage.setItem("intimo_all_dating_ads", JSON.stringify(updated));
+      }
+      return updated;
+    });
   };
 
   const filteredAds = adsList.filter((ad) => {
@@ -931,309 +912,6 @@ function DatingMarketplaceContent() {
           ))
         )}
       </div>
-
-      {/* "ADD NEW DATING AD" MODAL (Matching User Screenshot) */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto">
-          <Card
-            variant="goldBorder"
-            className="w-full max-w-2xl p-6 space-y-5 text-left bg-velora-card relative shadow-2xl my-auto max-h-[90vh] overflow-y-auto"
-          >
-            <button
-              onClick={() => setIsAddModalOpen(false)}
-              className="absolute top-4 right-4 text-velora-textMuted hover:text-white"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="border-b border-white/10 pb-3">
-              <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
-                <Heart className="w-6 h-6 text-rose-400 fill-rose-400" /> Add new dating ad
-              </h2>
-              <p className="text-xs text-velora-textMuted mt-0.5">
-                Create a discreet dating announcement visible to verified members.
-              </p>
-            </div>
-
-            <form onSubmit={handleCreateAd} className="space-y-4 text-xs">
-              {/* Category Dropdown */}
-              <div>
-                <label className="block font-bold uppercase tracking-wider text-amber-300 mb-1.5 font-mono">
-                  Category
-                </label>
-                <select
-                  value={formCategory}
-                  onChange={(e) => setFormCategory(e.target.value)}
-                  className="w-full bg-black/60 border border-white/15 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-400"
-                >
-                  {DATING_CATEGORIES.filter((c) => c !== "Show all categories").map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Title */}
-              <div>
-                <label className="block font-bold uppercase tracking-wider text-amber-300 mb-1.5 font-mono">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formTitle}
-                  onChange={(e) => setFormTitle(e.target.value)}
-                  placeholder="e.g. Discreet Fine Dining & Private Champagne Lounge"
-                  className="w-full bg-black/60 border border-white/15 rounded-xl p-3 text-xs text-white placeholder:text-velora-textMuted focus:outline-none focus:border-amber-400"
-                />
-              </div>
-
-              {/* Text Area Description */}
-              <div>
-                <label className="block font-bold uppercase tracking-wider text-amber-300 mb-1.5 font-mono">
-                  Text
-                </label>
-                <textarea
-                  rows={4}
-                  required
-                  value={formText}
-                  onChange={(e) => setFormText(e.target.value)}
-                  placeholder="Describe your invitation, preferences, and expectations..."
-                  className="w-full bg-black/60 border border-white/15 rounded-xl p-3 text-xs text-white placeholder:text-velora-textMuted focus:outline-none focus:border-amber-400"
-                />
-                <p className="text-[10px] text-velora-textMuted mt-1 leading-relaxed">
-                  It is forbidden to link to external websites. It is not allowed to offend or attack other users or insert contact details such as phone numbers in public text.
-                </p>
-              </div>
-
-              {/* Photo Attachment (1 Photo) */}
-              <div>
-                <label className="block font-bold uppercase tracking-wider text-amber-300 mb-1.5 font-mono">
-                  Attach 1 Photo (Optional)
-                </label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoSelect}
-                  className="hidden"
-                />
-
-                {photoPreview ? (
-                  <div className="relative w-32 h-32 rounded-2xl overflow-hidden border-2 border-amber-400 bg-black">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => setPhotoPreview(null)}
-                      className="absolute top-1 right-1 p-1 rounded-full bg-black/80 text-white hover:text-rose-400"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="p-4 rounded-2xl border border-dashed border-white/20 bg-white/5 hover:bg-white/10 text-amber-300 flex items-center gap-2 transition-colors font-bold"
-                  >
-                    <Camera className="w-5 h-5 text-amber-400" /> Upload 1 Ad Photo
-                  </button>
-                )}
-              </div>
-
-              {/* Validity */}
-              <div>
-                <label className="block font-bold uppercase tracking-wider text-amber-300 mb-1.5 font-mono">
-                  Validity
-                </label>
-                <select
-                  value={formValidity}
-                  onChange={(e) => setFormValidity(parseInt(e.target.value))}
-                  className="w-full bg-black/60 border border-white/15 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-400"
-                >
-                  <option value={7}>7 days</option>
-                  <option value={14}>14 days</option>
-                  <option value={30}>30 days</option>
-                </select>
-              </div>
-
-              {/* Location Searching In */}
-              <div className="space-y-3 pt-2 border-t border-white/10">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-white font-mono">
-                  Location you are searching in
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] text-velora-textMuted uppercase font-mono mb-1">
-                      Country
-                    </label>
-                    <select
-                      value={formCountry}
-                      onChange={(e) => handleFormCountryChange(e.target.value)}
-                      className="w-full bg-black/60 border border-white/15 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-400"
-                    >
-                      {Object.keys(SUPPORTED_COUNTRIES).map((cName) => (
-                        <option key={cName} value={cName}>
-                          {SUPPORTED_COUNTRIES[cName].flag} {cName}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-velora-textMuted uppercase font-mono mb-1">
-                      Region / City
-                    </label>
-                    <select
-                      value={formRegion}
-                      onChange={(e) => setFormRegion(e.target.value)}
-                      className="w-full bg-black/60 border border-white/15 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-400"
-                    >
-                      {(SUPPORTED_COUNTRIES[formCountry]?.cities || ["All Cities / Regions"]).map((cityName) => (
-                        <option key={cityName} value={cityName}>
-                          {cityName}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Set Who Can Reply */}
-              <div className="space-y-3 pt-2 border-t border-white/10">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-white font-mono">
-                  Set who can reply
-                </h4>
-
-                <div>
-                  <label className="block text-[11px] text-velora-textMuted uppercase font-mono mb-1.5">
-                    Category / Gender Symbols
-                  </label>
-                  <div className="flex items-center gap-2">
-                    {["♂", "♀", "👫", "👭", "👬", "⚧"].map((g) => {
-                      const active = formReplyGenders.includes(g);
-                      return (
-                        <button
-                          key={g}
-                          type="button"
-                          onClick={() => toggleReplyGender(g)}
-                          className={`w-9 h-9 rounded-xl border font-bold text-sm flex items-center justify-center transition-all ${
-                            active
-                              ? "bg-amber-400/20 text-amber-300 border-amber-400 shadow-gold-glow"
-                              : "bg-white/5 text-velora-textMuted border-white/10"
-                          }`}
-                        >
-                          {g}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] text-velora-textMuted uppercase font-mono mb-1">
-                    Transgender
-                  </label>
-                  <select
-                    value={formTransgender}
-                    onChange={(e) => setFormTransgender(e.target.value as any)}
-                    className="w-full bg-black/60 border border-white/15 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-400"
-                  >
-                    <option value="Including trans">Including trans</option>
-                    <option value="Excluding trans">Excluding trans</option>
-                    <option value="Only trans">Only trans</option>
-                  </select>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between text-[11px] font-mono text-velora-textMuted mb-1">
-                    <span>Target Age:</span>
-                    <span className="text-amber-300 font-bold">{formMinAge} – {formMaxAge}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min={18}
-                    max={100}
-                    value={formMaxAge}
-                    onChange={(e) => setFormMaxAge(parseInt(e.target.value))}
-                    className="w-full accent-amber-400 cursor-pointer"
-                  />
-                  <div className="flex items-center justify-center gap-3 text-[10px] font-mono text-amber-300 pt-1">
-                    <button type="button" onClick={() => { setFormMinAge(18); setFormMaxAge(25); }}>18–25</button>
-                    <button type="button" onClick={() => { setFormMinAge(26); setFormMaxAge(35); }}>26–35</button>
-                    <button type="button" onClick={() => { setFormMinAge(36); setFormMaxAge(45); }}>36–45</button>
-                    <button type="button" onClick={() => { setFormMinAge(46); setFormMaxAge(55); }}>46–55</button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] text-velora-textMuted uppercase font-mono mb-1.5">
-                    Only users matching conditions:
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setFormRequireVip(!formRequireVip)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                        formRequireVip
-                          ? "bg-amber-400/20 text-amber-300 border-amber-400 shadow-gold-glow"
-                          : "bg-white/5 text-velora-textMuted border-white/10"
-                      }`}
-                    >
-                      With VIP membership
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setFormRequireMedia(!formRequireMedia)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                        formRequireMedia
-                          ? "bg-amber-400/20 text-amber-300 border-amber-400 shadow-gold-glow"
-                          : "bg-white/5 text-velora-textMuted border-white/10"
-                      }`}
-                    >
-                      With albums/videos
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setFormRequireVerified(!formRequireVerified)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                        formRequireVerified
-                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-gold-glow"
-                          : "bg-white/5 text-velora-textMuted border-white/10"
-                      }`}
-                    >
-                      Verified users
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-white/10 flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="glass"
-                  size="sm"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="text-xs"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  variant="gold"
-                  size="sm"
-                  className="text-xs font-bold uppercase tracking-wider shadow-gold-glow"
-                >
-                  Add Dating Ad
-                </Button>
-              </div>
-            </form>
-          </Card>
-        </div>
-      )}
 
       {/* Restricted Reply Explanation Modal */}
       {restrictedNoticeAd && (

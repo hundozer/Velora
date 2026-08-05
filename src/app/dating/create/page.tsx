@@ -142,7 +142,9 @@ export default function CreateDatingAdPage() {
     if (typeof window !== "undefined") {
       const existingStr = localStorage.getItem("intimo_all_dating_ads");
       const existing = existingStr ? JSON.parse(existingStr) : [];
-      localStorage.setItem("intimo_all_dating_ads", JSON.stringify([newAdItem, ...existing]));
+      const updated = [newAdItem, ...existing.filter((a: any) => a.id !== newAdItem.id)];
+      localStorage.setItem("intimo_all_dating_ads", JSON.stringify(updated));
+      window.dispatchEvent(new Event("intimo_ads_updated"));
     }
 
     // Persist to Supabase in background
