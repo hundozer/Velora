@@ -1197,7 +1197,11 @@ export default function SingleProfilePage() {
               <div className="space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-3xl font-serif font-bold text-white">{profile.displayName}, {profile.age}</h1>
-                  <ShieldCheck className="w-6 h-6 text-emerald-400" />
+                  {(isSelf ? userVerificationStatus === "VERIFIED" : profile.verified) && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Verified Profile
+                    </span>
+                  )}
                   {profile.showOnlineStatus !== false && profile.isOnline ? (
                     <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Active Online
