@@ -286,6 +286,14 @@ export default function DatingMarketplacePage() {
   const [activeTab, setActiveTab] = useState<"browse" | "my-ads">("browse");
   const [restrictedNoticeAd, setRestrictedNoticeAd] = useState<{ ad: DatingAdItem; reason: string } | null>(null);
 
+  const handleShowAllActiveAds = () => {
+    setActiveTab("browse");
+    setSelectedCategory("Show all categories");
+    setSelectedCountry("All Countries");
+    setSelectedRegion("All Cities / Regions");
+    setActiveFilterPill(null);
+  };
+
   const checkCanReply = (ad: DatingAdItem): { canReply: boolean; reason?: string } => {
     if (ad.authorId === user?.id || ad.authorId === "me") {
       return { canReply: true };
@@ -481,15 +489,15 @@ export default function DatingMarketplacePage() {
       <div className="flex flex-wrap items-center gap-3 border-b border-white/10 pb-4">
         <button
           type="button"
-          onClick={() => setActiveTab("browse")}
+          onClick={handleShowAllActiveAds}
           className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${
-            activeTab === "browse"
+            activeTab === "browse" && selectedCategory === "Show all categories"
               ? "bg-amber-400 text-black shadow-gold-glow font-bold"
               : "bg-white/5 text-velora-textMuted hover:text-white border border-white/10"
           }`}
         >
           <Search className="w-4 h-4" />
-          Browse Marketplace (Active Ads)
+          All Active Ads
         </button>
 
         <button
