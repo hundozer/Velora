@@ -156,12 +156,18 @@ interface UserPhotoAlbumItem {
   hasUserVoted?: boolean;
 }
 
+import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
+
 export default function SingleProfilePage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const { logout, user: currentUser, profile: currentProfile, updateUserProfile } = useAuth();
   const profileId = (params?.id as string) || "me";
   const tabQuery = searchParams.get("tab");
+
+  if (!currentUser) {
+    return <BehindTheDoorLanding />;
+  }
 
   const isSelf =
     profileId === "me" ||

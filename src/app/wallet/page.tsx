@@ -22,8 +22,16 @@ import {
   Clock,
 } from "lucide-react";
 
+import { useAuth } from "@/context/AuthContext";
+import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
+
 export default function WalletPage() {
+  const { user } = useAuth();
   const [wallet, setWallet] = useState(MOCK_WALLET);
+
+  if (!user) {
+    return <BehindTheDoorLanding />;
+  }
   const [transactions, setTransactions] = useState<PaymentTransaction[]>(MOCK_TRANSACTIONS);
   const [addFundsOpen, setAddFundsOpen] = useState(false);
   const [topupAmount, setTopupAmount] = useState("100");

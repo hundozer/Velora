@@ -21,8 +21,16 @@ import {
   Clock,
 } from "lucide-react";
 
+import { useAuth } from "@/context/AuthContext";
+import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
+
 export default function EventsMarketplacePage() {
+  const { user } = useAuth();
   const [events, setEvents] = useState<VeloraEvent[]>(MOCK_EVENTS);
+
+  if (!user) {
+    return <BehindTheDoorLanding />;
+  }
   const [filterType, setFilterType] = useState("ALL");
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [ticketModalOpen, setTicketModalOpen] = useState(false);

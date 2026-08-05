@@ -152,32 +152,11 @@ export const Navbar: React.FC = () => {
             </Link>
           </nav>
         ) : (
-          /* UNAUTHENTICATED GUEST NAVIGATION */
-          <nav className="hidden md:flex items-center gap-4">
-            <Link
-              href="/discovery"
-              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-                pathname === "/discovery"
-                  ? "text-velora-gold font-bold"
-                  : "text-velora-textSecondary hover:text-velora-textPrimary"
-              }`}
-            >
-              <Compass className="w-4 h-4 text-velora-gold" />
-              {t("nav.discover")}
-            </Link>
-
-            <Link
-              href="/creators"
-              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-                pathname === "/creators"
-                  ? "text-velora-gold font-bold"
-                  : "text-velora-textSecondary hover:text-velora-textPrimary"
-              }`}
-            >
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              {t("nav.creators")}
-            </Link>
-          </nav>
+          /* UNAUTHENTICATED GUEST BRAND TAG */
+          <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-amber-300/80 uppercase tracking-widest">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            <span>High-Discretion Members Sanctuary</span>
+          </div>
         )}
 
         {/* Right Section: Language Selector & Auth / Avatar Controls */}

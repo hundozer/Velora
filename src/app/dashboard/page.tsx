@@ -224,8 +224,14 @@ const RECENT_VISITORS = [
   { id: "vrs-5", name: "DODO0666", gender: "♂", isVerified: true, hasMessage: true, avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80" },
 ];
 
+import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
+
 export default function DashboardPage() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
+
+  if (!user) {
+    return <BehindTheDoorLanding />;
+  }
 
   // Feed State
   const [feedPosts, setFeedPosts] = useState<FeedPost[]>(INITIAL_FEED_POSTS);

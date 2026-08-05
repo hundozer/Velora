@@ -8,7 +8,16 @@ import { Button } from "@/components/ui/Button";
 import { MOCK_PROFILES } from "@/lib/mockData";
 import { Heart, MapPin, MessageSquare } from "lucide-react";
 
+import { useAuth } from "@/context/AuthContext";
+import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
+
 export default function FavoritesPage() {
+  const { user } = useAuth();
+
+  if (!user) {
+    return <BehindTheDoorLanding />;
+  }
+
   const favorites = MOCK_PROFILES.slice(0, 2);
 
   return (

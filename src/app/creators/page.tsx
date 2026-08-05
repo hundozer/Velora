@@ -19,12 +19,19 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { CreatorPreRegistrationModal } from "@/components/creator/CreatorPreRegistrationModal";
+import { useAuth } from "@/context/AuthContext";
+import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
 
 export default function CreatorMarketplacePage() {
+  const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [selectedCreator, setSelectedCreator] = useState<any | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [creatorModalOpen, setCreatorModalOpen] = useState(false);
+
+  if (!user) {
+    return <BehindTheDoorLanding />;
+  }
 
   const creators = MOCK_PROFILES.filter((p) => p.categories && p.categories.length > 0);
 

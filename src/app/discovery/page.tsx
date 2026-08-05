@@ -30,13 +30,18 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
+import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
 
 export default function DiscoveryMarketplacePage() {
   const { t } = useTranslation();
-  const { profile: currentUserProfile } = useAuth();
+  const { user, profile: currentUserProfile } = useAuth();
   const [viewMode, setViewMode] = useState<"GRID" | "LIST" | "MAP">("GRID");
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+
+  if (!user) {
+    return <BehindTheDoorLanding />;
+  }
 
   // Sidebar Filter State
   const [sidebarFilters, setSidebarFilters] = useState<FilterState>({

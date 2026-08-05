@@ -218,8 +218,14 @@ const INITIAL_ADS: DatingAdItem[] = [
   },
 ];
 
+import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
+
 export default function DatingMarketplacePage() {
   const { user, profile } = useAuth();
+
+  if (!user) {
+    return <BehindTheDoorLanding />;
+  }
   const [adsList, setAdsList] = useState<DatingAdItem[]>(INITIAL_ADS);
   const [selectedCategory, setSelectedCategory] = useState("Show all categories");
   const [selectedCountry, setSelectedCountry] = useState("All Countries");
