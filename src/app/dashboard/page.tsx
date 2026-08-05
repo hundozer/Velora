@@ -229,7 +229,7 @@ const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
   },
   {
     id: "alb-f3",
-    ownerId: "prof-2",
+    ownerId: "prof-elena",
     ownerName: "Elena Vance",
     ownerGender: "FEMALE",
     title: "French Riviera Sunbathing",
@@ -239,7 +239,7 @@ const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
   },
   {
     id: "alb-f4",
-    ownerId: "prof-2",
+    ownerId: "prof-elena",
     ownerName: "Elena Vance",
     ownerGender: "FEMALE",
     title: "Sunset Champagne Lounge",
@@ -269,7 +269,7 @@ const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
   },
   {
     id: "alb-f7",
-    ownerId: "prof-2",
+    ownerId: "prof-tmazi",
     ownerName: "TmaziMary",
     ownerGender: "FEMALE",
     title: "Monaco Harbor Suite Teaser",
@@ -279,7 +279,7 @@ const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
   },
   {
     id: "alb-f8",
-    ownerId: "prof-2",
+    ownerId: "prof-tmazi",
     ownerName: "TmaziMary",
     ownerGender: "FEMALE",
     title: "Private Villa Photoshoot",
@@ -311,7 +311,7 @@ const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
   },
   {
     id: "alb-m3",
-    ownerId: "prof-1",
+    ownerId: "prof-lucas",
     ownerName: "Lucas R.",
     ownerGender: "MALE",
     title: "Mediterranean Yacht Expedition",
@@ -321,7 +321,7 @@ const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
   },
   {
     id: "alb-m4",
-    ownerId: "prof-1",
+    ownerId: "prof-lucas",
     ownerName: "Lucas R.",
     ownerGender: "MALE",
     title: "Monte Carlo Casino Salon",
@@ -331,7 +331,7 @@ const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
   },
   {
     id: "alb-m5",
-    ownerId: "prof-1",
+    ownerId: "prof-marco",
     ownerName: "Marco B.",
     ownerGender: "MALE",
     title: "Vintage Automobile & Cellar",
@@ -341,7 +341,7 @@ const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
   },
   {
     id: "alb-m6",
-    ownerId: "prof-1",
+    ownerId: "prof-dodo",
     ownerName: "DODO0666",
     ownerGender: "MALE",
     title: "Private Studio Beat Sessions",
