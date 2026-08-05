@@ -4,8 +4,8 @@ import React, { useState, useRef } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/context/AuthContext";
+import { SUPPORTED_COUNTRIES } from "@/lib/data/locations";
 import {
   Heart,
   Plus,
@@ -184,7 +184,7 @@ export default function DatingMarketplacePage() {
   const [adsList, setAdsList] = useState<DatingAdItem[]>(INITIAL_ADS);
   const [selectedCategory, setSelectedCategory] = useState("Woman seeking man");
   const [selectedCountry, setSelectedCountry] = useState("Czech Republic");
-  const [selectedRegion, setSelectedRegion] = useState("Hlavní město Praha");
+  const [selectedRegion, setSelectedRegion] = useState("All Cities / Regions");
   const [ageRange, setAgeRange] = useState<[number, number]>([18, 100]);
   const [activeFilterPill, setActiveFilterPill] = useState<string | null>(null);
 
@@ -205,6 +205,21 @@ export default function DatingMarketplacePage() {
   const [formRequireVip, setFormRequireVip] = useState(false);
   const [formRequireMedia, setFormRequireMedia] = useState(false);
   const [formRequireVerified, setFormRequireVerified] = useState(true);
+
+  const handleCountryFilterChange = (countryName: string) => {
+    setSelectedCountry(countryName);
+    setSelectedRegion("All Cities / Regions");
+  };
+
+  const handleFormCountryChange = (countryName: string) => {
+    setFormCountry(countryName);
+    const countryData = SUPPORTED_COUNTRIES[countryName];
+    if (countryData && countryData.cities.length > 1) {
+      setFormRegion(countryData.cities[1]);
+    } else {
+      setFormRegion("All Cities / Regions");
+    }
+  };
 
   // Photo Attachment File
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -351,16 +366,15 @@ export default function DatingMarketplacePage() {
               <span className="font-mono text-velora-textMuted uppercase text-[11px]">Country:</span>
               <select
                 value={selectedCountry}
-                onChange={(e) => setSelectedCountry(e.target.value)}
+                onChange={(e) => handleCountryFilterChange(e.target.value)}
                 className="bg-black/50 border border-white/15 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400"
               >
-                <option value="Czech Republic">🇨🇿 Czech Republic</option>
-                <option value="Monaco">🇲🇨 Monaco</option>
-                <option value="France">🇫🇷 France</option>
-                <option value="Germany">🇩🇪 Germany</option>
-                <option value="Austria">🇦🇹 Austria</option>
-                <option value="United Kingdom">🇬🇧 United Kingdom</option>
                 <option value="All Countries">🌐 All Countries</option>
+                {Object.keys(SUPPORTED_COUNTRIES).map((cName) => (
+                  <option key={cName} value={cName}>
+                    {SUPPORTED_COUNTRIES[cName].flag} {cName}
+                  </option>
+                ))}
               </select>
 
               <select
@@ -368,12 +382,14 @@ export default function DatingMarketplacePage() {
                 onChange={(e) => setSelectedRegion(e.target.value)}
                 className="bg-black/50 border border-white/15 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400"
               >
-                <option value="Hlavní město Praha">Hlavní město Praha</option>
-                <option value="Monte Carlo">Monte Carlo</option>
-                <option value="Paris">Paris</option>
-                <option value="Berlin">Berlin</option>
-                <option value="Vienna">Vienna</option>
-                <option value="All Regions">All Regions</option>
+                {(selectedCountry !== "All Countries" && SUPPORTED_COUNTRIES[selectedCountry]
+                  ? SUPPORTED_COUNTRIES[selectedCountry].cities
+                  : ["All Cities / Regions"]
+                ).map((cityName) => (
+                  <option key={cityName} value={cityName}>
+                    {cityName}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -700,14 +716,14 @@ export default function DatingMarketplacePage() {
                     </label>
                     <select
                       value={formCountry}
-                      onChange={(e) => setFormCountry(e.target.value)}
+                      onChange={(e) => handleFormCountryChange(e.target.value)}
                       className="w-full bg-black/60 border border-white/15 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-400"
                     >
-                      <option value="Czech Republic">🇨🇿 Czech Republic</option>
-                      <option value="Monaco">🇲🇨 Monaco</option>
-                      <option value="France">🇫🇷 France</option>
-                      <option value="Germany">🇩🇪 Germany</option>
-                      <option value="Austria">🇦🇹 Austria</option>
+                      {Object.keys(SUPPORTED_COUNTRIES).map((cName) => (
+                        <option key={cName} value={cName}>
+                          {SUPPORTED_COUNTRIES[cName].flag} {cName}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -720,10 +736,11 @@ export default function DatingMarketplacePage() {
                       onChange={(e) => setFormRegion(e.target.value)}
                       className="w-full bg-black/60 border border-white/15 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-400"
                     >
-                      <option value="Hlavní město Praha">Hlavní město Praha</option>
-                      <option value="Monte Carlo">Monte Carlo</option>
-                      <option value="Paris">Paris</option>
-                      <option value="Berlin">Berlin</option>
+                      {(SUPPORTED_COUNTRIES[formCountry]?.cities || ["All Cities / Regions"]).map((cityName) => (
+                        <option key={cityName} value={cityName}>
+                          {cityName}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
