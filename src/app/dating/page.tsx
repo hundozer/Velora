@@ -845,11 +845,32 @@ function DatingMarketplaceContent() {
                         const replyCheck = checkCanReply(ad);
                         if (replyCheck.canReply) {
                           return (
-                            <Link href={`/messages?user=${ad.authorId}`}>
-                              <Button variant="gold" size="sm" className="text-xs font-bold uppercase gap-1.5 shadow-gold-glow">
-                                <MessageSquare className="w-3.5 h-3.5" /> Reply to Ad
-                              </Button>
-                            </Link>
+                             <Button
+                               variant="gold"
+                               size="sm"
+                               className="text-xs font-bold uppercase gap-1.5 shadow-gold-glow"
+                               onClick={() => {
+                                 if (typeof window !== "undefined") {
+                                   window.dispatchEvent(
+                                     new CustomEvent("intimo_open_chat", {
+                                       detail: {
+                                         id: ad.authorId,
+                                         displayName: ad.authorName,
+                                         avatarUrl: ad.authorAvatar,
+                                         genderSymbol: "👫",
+                                         verified: ad.isVerified ?? true,
+                                         location: ad.region || ad.country || "Prague, Czech Republic",
+                                         followersCount: 8,
+                                         photoCount: 12,
+                                         videoCount: 4,
+                                       },
+                                     })
+                                   );
+                                 }
+                               }}
+                             >
+                               <MessageSquare className="w-3.5 h-3.5" /> Reply to Ad
+                             </Button>
                           );
                         } else {
                           return (

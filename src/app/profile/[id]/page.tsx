@@ -1296,11 +1296,32 @@ export default function SingleProfilePage() {
                   </Button>
 
                   {/* Message Button */}
-                  <Link href="/messages">
-                    <Button variant="glass" size="lg" className="text-xs font-bold uppercase tracking-wider gap-2 border-white/20">
-                      <MessageSquare className="w-4 h-4 text-velora-gold" /> Message
-                    </Button>
-                  </Link>
+                  <Button
+                    variant="glass"
+                    size="lg"
+                    className="text-xs font-bold uppercase tracking-wider gap-2 border-white/20 hover:border-amber-400/50"
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        window.dispatchEvent(
+                          new CustomEvent("intimo_open_chat", {
+                            detail: {
+                              id: profile.id,
+                              displayName: profile.displayName,
+                              avatarUrl: profile.avatarUrl,
+                              genderSymbol: profile.gender === "FEMALE" ? "♀" : profile.gender === "MALE" ? "♂" : "👫",
+                              verified: profile.verified ?? true,
+                              location: profile.location || profile.city || "Prague, Czech Republic",
+                              followersCount: profile.followersCount || 8,
+                              photoCount: userPhotoAlbums.length || 12,
+                              videoCount: userVideos.length || 4,
+                            },
+                          })
+                        );
+                      }
+                    }}
+                  >
+                    <MessageSquare className="w-4 h-4 text-velora-gold" /> Message
+                  </Button>
                 </div>
               )}
 
