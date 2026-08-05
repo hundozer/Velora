@@ -201,136 +201,122 @@ export default function DiscoveryMarketplacePage() {
         </div>
       </div>
 
-      {/* 3-COLUMN DESKTOP LAYOUT */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* LEFT COLUMN: Persistent Filter Sidebar (Desktop w-80 / 3 cols) */}
-        <div className="hidden lg:block lg:col-span-3 space-y-6">
-          <FilterSidebar
-            matchingCount={filteredProfiles.length}
-            onFilterChange={(newFilters) => setSidebarFilters(newFilters)}
-          />
-        </div>
-
-        {/* CENTER COLUMN: Profile Results (Grid / List / Map) (Desktop 6 cols / lg:col-span-6) */}
-        <div className="lg:col-span-6 space-y-6">
-          {/* Horizontal Search Bar Directly Above Profiles */}
-          <div className="w-full bg-velora-card p-4 rounded-3xl border border-velora-gold/30 shadow-gold-glow space-y-2">
-            <div className="flex items-center justify-between px-1">
-              <label className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-2 font-mono">
-                <Compass className="w-4 h-4 text-velora-gold" /> Search Profiles
-              </label>
-              <span className="text-[11px] font-mono text-amber-400 font-bold">
-                {filteredProfiles.length} {filteredProfiles.length === 1 ? "Matching Member" : "Matching Members"}
-              </span>
-            </div>
-            <SearchBar onSearchQueryChange={setSearchQuery} />
+      {/* HORIZONTAL SEARCH & FILTER BAR DIRECTLY ABOVE PROFILES */}
+      <div className="space-y-4">
+        {/* Horizontal Keyword Search Bar */}
+        <div className="w-full bg-velora-card p-4 rounded-3xl border border-velora-gold/30 shadow-gold-glow space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <label className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-2 font-mono">
+              <Compass className="w-4 h-4 text-velora-gold" /> Search Profiles by Keyword / Name / Interests
+            </label>
+            <span className="text-[11px] font-mono text-amber-400 font-bold">
+              {filteredProfiles.length} {filteredProfiles.length === 1 ? "Matching Member" : "Matching Members"}
+            </span>
           </div>
-          {filteredProfiles.length === 0 ? (
-            <Card variant="glass" className="p-12 text-center space-y-4">
-              <Sparkles className="w-12 h-12 text-velora-gold mx-auto" />
-              <h3 className="text-lg font-serif font-bold text-velora-textPrimary">No Profiles Match Selection</h3>
-              <p className="text-xs text-velora-textMuted">Try broadening your intimate preferences, grooming, or location filters.</p>
-            </Card>
-          ) : viewMode === "MAP" ? (
-            <MapView profiles={filteredProfiles} />
-          ) : viewMode === "LIST" ? (
-            /* LIST VIEW */
-            <div className="space-y-4">
-              {filteredProfiles.map((p) => (
-                <Card key={p.id} variant="goldBorder" hoverEffect className="p-4 bg-gold-card flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
-                  <div className="flex items-center gap-4">
-                    <div className="w-20 h-20 rounded-2xl border-2 border-velora-gold overflow-hidden bg-velora-card shrink-0">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={p.avatarUrl} alt={p.displayName} className="w-full h-full object-cover" />
+          <SearchBar onSearchQueryChange={setSearchQuery} />
+        </div>
+
+        {/* Horizontal Filter Bar */}
+        <FilterSidebar
+          matchingCount={filteredProfiles.length}
+          onFilterChange={(newFilters) => setSidebarFilters(newFilters)}
+        />
+      </div>
+
+      {/* FULL-WIDTH PROFILES GRID / LIST / MAP SECTION DIRECTLY BELOW SEARCH BAR */}
+      <div>
+        {filteredProfiles.length === 0 ? (
+          <Card variant="glass" className="p-12 text-center space-y-4">
+            <Sparkles className="w-12 h-12 text-velora-gold mx-auto" />
+            <h3 className="text-lg font-serif font-bold text-velora-textPrimary">No Profiles Match Selection</h3>
+            <p className="text-xs text-velora-textMuted">Try broadening your intimate preferences, grooming, or location filters.</p>
+          </Card>
+        ) : viewMode === "MAP" ? (
+          <MapView profiles={filteredProfiles} />
+        ) : viewMode === "LIST" ? (
+          /* LIST VIEW */
+          <div className="space-y-4">
+            {filteredProfiles.map((p) => (
+              <Card key={p.id} variant="goldBorder" hoverEffect className="p-4 bg-gold-card flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 rounded-2xl border-2 border-velora-gold overflow-hidden bg-velora-card shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.avatarUrl} alt={p.displayName} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-serif font-bold text-white">{p.displayName}, {p.age}</h3>
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
                     </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-base font-serif font-bold text-white">{p.displayName}, {p.age}</h3>
-                        <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                    <p className="text-xs text-velora-gold font-medium">
+                      {p.gender} • {p.sexualOrientation} • {p.city}, {p.country}
+                    </p>
+                    <p className="text-xs text-velora-textMuted line-clamp-1 italic">"{p.headline}"</p>
+                    {p.sexHobbies && p.sexHobbies.length > 0 && (
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        {p.sexHobbies.slice(0, 4).map((h) => (
+                          <span key={h} className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                            {h}
+                          </span>
+                        ))}
                       </div>
-                      <p className="text-xs text-velora-gold font-medium">
-                        {p.gender} • {p.sexualOrientation} • {p.city}, {p.country}
-                      </p>
-                      <p className="text-xs text-velora-textMuted line-clamp-1 italic">"{p.headline}"</p>
-                      {p.sexHobbies && p.sexHobbies.length > 0 && (
-                        <div className="flex flex-wrap gap-1 pt-1">
-                          {p.sexHobbies.slice(0, 3).map((h) => (
-                            <span key={h} className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                              {h}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </div>
-
-                  <Link href={`/profile/${p.id}`} className="w-full sm:w-auto shrink-0">
-                    <Button variant="gold" size="sm" className="w-full text-xs font-bold uppercase tracking-wider shadow-gold-glow">
-                      Enter Profile
-                    </Button>
-                  </Link>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            /* GRID VIEW */
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {filteredProfiles.map((profile) => (
-                <ProfileCard key={profile.id} profile={profile} />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT COLUMN: Trending Creators & Suggested Profiles (Desktop 3 cols / lg:col-span-3) */}
-        <div className="hidden lg:block lg:col-span-3 space-y-6">
-          {/* Trending Creators Widget */}
-          <Card variant="goldBorder" className="p-5 space-y-4 text-left bg-gold-card">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5 font-mono">
-                <Crown className="w-4 h-4 text-amber-400" /> Trending Salons & Creators
-              </h3>
-            </div>
-
-            <div className="space-y-3">
-              {MOCK_PROFILES.filter((p) => p.categories && p.categories.length > 0).map((creator) => (
-                <div key={creator.id} className="flex items-center justify-between p-2 rounded-2xl glass-panel">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full border border-amber-400 overflow-hidden bg-velora-card shrink-0">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={creator.avatarUrl} alt={creator.displayName} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="text-left min-w-0">
-                      <h4 className="text-xs font-bold text-velora-textPrimary truncate">{creator.displayName}</h4>
-                      <span className="text-[10px] text-amber-300 font-mono">${creator.monthlySubscriptionPrice}/mo</span>
-                    </div>
-                  </div>
-
-                  <Link href={`/profile/${creator.id}`}>
-                    <Button variant="ghost" size="sm" className="text-[10px] font-bold text-velora-gold px-2">
-                      View
-                    </Button>
-                  </Link>
                 </div>
-              ))}
-            </div>
-          </Card>
 
-          {/* Live Broadcasts Coming Soon Teaser Widget */}
-          <Card variant="glass" className="p-5 space-y-3 text-left border-amber-500/30">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5 font-mono">
-                <Radio className="w-4 h-4 text-amber-400 animate-pulse" /> Live Salons & Broadcasts
-              </h3>
-              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase">
-                Coming Soon
-              </span>
-            </div>
-            <p className="text-xs text-velora-textSecondary leading-relaxed">
-              Encrypted WebRTC live broadcast rooms for creators and verified members are currently in development for Phase 2.
-            </p>
-          </Card>
-        </div>
+                <Link href={`/profile/${p.id}`} className="w-full sm:w-auto shrink-0">
+                  <Button variant="gold" size="sm" className="w-full text-xs font-bold uppercase tracking-wider shadow-gold-glow">
+                    Enter Profile
+                  </Button>
+                </Link>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          /* GRID VIEW: 4 COLUMNS ACROSS FULL WIDTH */
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {filteredProfiles.map((profile) => (
+              <ProfileCard key={profile.id} profile={profile} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* TRENDING SALONS & CREATORS FOOTER BAR */}
+      <div className="pt-6 border-t border-white/10">
+        <Card variant="goldBorder" className="p-6 space-y-4 text-left bg-gold-card">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <h3 className="text-sm font-serif font-bold text-amber-300 flex items-center gap-2">
+              <Crown className="w-4 h-4 text-amber-400" /> Trending Salons & Verified Creators
+            </h3>
+            <Link href="/creators" className="text-xs text-amber-400 font-bold hover:underline">
+              View All Creators →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {MOCK_PROFILES.filter((p) => p.categories && p.categories.length > 0).map((creator) => (
+              <div key={creator.id} className="flex items-center justify-between p-3 rounded-2xl glass-panel">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full border border-amber-400 overflow-hidden bg-velora-card shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={creator.avatarUrl} alt={creator.displayName} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="text-left min-w-0">
+                    <h4 className="text-xs font-bold text-velora-textPrimary truncate">{creator.displayName}</h4>
+                    <span className="text-[10px] text-amber-300 font-mono">${creator.monthlySubscriptionPrice}/mo</span>
+                  </div>
+                </div>
+
+                <Link href={`/profile/${creator.id}`}>
+                  <Button variant="ghost" size="sm" className="text-[10px] font-bold text-velora-gold px-2">
+                    View
+                  </Button>
+                </Link>
+              </div>
+            ))}
+          </div>
+        </Card>
       </div>
 
       {/* MOBILE SLIDE-OVER FILTER DRAWER */}

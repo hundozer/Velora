@@ -3,28 +3,14 @@
 import React, { useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { LOCATION_DATA } from "@/lib/locationData";
+import { SUPPORTED_COUNTRIES } from "@/lib/data/locations";
 import {
   Filter,
-  MapPin,
-  SlidersHorizontal,
+  RotateCcw,
+  Sparkles,
+  Bookmark,
   ChevronDown,
   ChevronUp,
-  RotateCcw,
-  Bookmark,
-  Bell,
-  Check,
-  ShieldCheck,
-  User,
-  Users,
-  Crown,
-  Sparkles,
-  Heart,
-  Globe,
-  Flame,
-  Zap,
-  ArrowUpDown,
 } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 
@@ -71,15 +57,7 @@ interface FilterSidebarProps {
 export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onFilterChange }) => {
   const { t } = useTranslation();
 
-  // Expanded Accordion States
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    location: true,
-    demographics: true,
-    type: true,
-    intimate: true,
-    age: true,
-    sorting: true,
-  });
+  const [expanded, setExpanded] = useState(false);
 
   // Filter States
   const [country, setCountry] = useState<string>("ALL");
@@ -89,39 +67,14 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
   const [distanceKm, setDistanceKm] = useState<number>(50);
   const [profileType, setProfileType] = useState<string>("ALL");
   const [minAge, setMinAge] = useState<number>(18);
-  const [maxAge, setMaxAge] = useState<number>(45);
+  const [maxAge, setMaxAge] = useState<number>(60);
 
   // Intimate Preferences & Sex Hobbies Filter States
   const [pubicHairGrooming, setPubicHairGrooming] = useState<string>("ALL");
   const [piercing, setPiercing] = useState<string>("ALL");
   const [tattoo, setTattoo] = useState<string>("ALL");
-  const [selectedErogenousZones, setSelectedErogenousZones] = useState<string[]>([]);
-  const [selectedPlaces, setSelectedPlaces] = useState<string[]>([]);
-  const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
   const [selectedSexHobbies, setSelectedSexHobbies] = useState<string[]>([]);
-
   const [sortBy, setSortBy] = useState<string>("NEWEST");
-
-  // Saved Searches Presets
-  const [savedPresets, setSavedPresets] = useState<SavedSearchPreset[]>([
-    {
-      id: "preset-1",
-      name: "Prague Straight & Bisexual Members",
-      country: "Czech Republic",
-      city: "Prague",
-      gender: "ALL",
-      sexualOrientation: "ALL",
-      distanceKm: 25,
-      profileType: "ALL",
-      pubicHairGrooming: "ALL",
-      piercing: "ALL",
-      tattoo: "ALL",
-      verifiedOnly: true,
-      alertsEnabled: true,
-    },
-  ]);
-  const [newPresetName, setNewPresetName] = useState("");
-  const [isSavingPreset, setIsSavingPreset] = useState(false);
 
   const notifyChange = (updated: Partial<FilterState>) => {
     const nextState: FilterState = {
@@ -136,17 +89,13 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
       pubicHairGrooming: updated.pubicHairGrooming !== undefined ? updated.pubicHairGrooming : pubicHairGrooming,
       piercing: updated.piercing !== undefined ? updated.piercing : piercing,
       tattoo: updated.tattoo !== undefined ? updated.tattoo : tattoo,
-      erogenousZones: updated.erogenousZones !== undefined ? updated.erogenousZones : selectedErogenousZones,
-      favouriteSexPlaces: updated.favouriteSexPlaces !== undefined ? updated.favouriteSexPlaces : selectedPlaces,
-      favouriteSexPositions: updated.favouriteSexPositions !== undefined ? updated.favouriteSexPositions : selectedPositions,
+      erogenousZones: [],
+      favouriteSexPlaces: [],
+      favouriteSexPositions: [],
       sexHobbies: updated.sexHobbies !== undefined ? updated.sexHobbies : selectedSexHobbies,
       sortBy: updated.sortBy !== undefined ? updated.sortBy : sortBy,
     };
     onFilterChange(nextState);
-  };
-
-  const toggleSection = (section: string) => {
-    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
   const toggleMultiSelect = (item: string, current: string[], setter: (val: string[]) => void, key: keyof FilterState) => {
@@ -163,13 +112,10 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
     setDistanceKm(50);
     setProfileType("ALL");
     setMinAge(18);
-    setMaxAge(45);
+    setMaxAge(60);
     setPubicHairGrooming("ALL");
     setPiercing("ALL");
     setTattoo("ALL");
-    setSelectedErogenousZones([]);
-    setSelectedPlaces([]);
-    setSelectedPositions([]);
     setSelectedSexHobbies([]);
     setSortBy("NEWEST");
 
@@ -181,7 +127,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
       distanceKm: 50,
       profileType: "ALL",
       minAge: 18,
-      maxAge: 45,
+      maxAge: 60,
       pubicHairGrooming: "ALL",
       piercing: "ALL",
       tattoo: "ALL",
@@ -193,588 +139,281 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
     });
   };
 
-  const handleSavePreset = () => {
-    if (!newPresetName.trim()) return;
-    const newPreset: SavedSearchPreset = {
-      id: "preset-" + Date.now(),
-      name: newPresetName.trim(),
-      country,
-      city,
-      gender,
-      sexualOrientation,
-      distanceKm,
-      profileType,
-      pubicHairGrooming,
-      piercing,
-      tattoo,
-      verifiedOnly: true,
-      alertsEnabled: true,
-    };
-    setSavedPresets([...savedPresets, newPreset]);
-    setNewPresetName("");
-    setIsSavingPreset(false);
-  };
-
-  const applyPreset = (preset: SavedSearchPreset) => {
-    setCountry(preset.country);
-    setCity(preset.city);
-    setGender(preset.gender);
-    setSexualOrientation(preset.sexualOrientation);
-    setDistanceKm(preset.distanceKm);
-    setProfileType(preset.profileType);
-    setPubicHairGrooming(preset.pubicHairGrooming);
-    setPiercing(preset.piercing);
-    setTattoo(preset.tattoo);
-    notifyChange({
-      country: preset.country,
-      city: preset.city,
-      gender: preset.gender,
-      sexualOrientation: preset.sexualOrientation,
-      distanceKm: preset.distanceKm,
-      profileType: preset.profileType,
-      pubicHairGrooming: preset.pubicHairGrooming,
-      piercing: preset.piercing,
-      tattoo: preset.tattoo,
-    });
-  };
-
   return (
-    <Card variant="goldBorder" className="p-5 space-y-6 text-left bg-gold-card sticky top-24 max-h-[85vh] overflow-y-auto">
-      {/* Header Controls */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-4">
-        <div className="flex items-center gap-2">
-          <SlidersHorizontal className="w-5 h-5 text-velora-gold" />
-          <h3 className="text-base font-serif font-bold text-velora-textPrimary">
-            {t("common.filter")}
-          </h3>
+    <Card variant="goldBorder" className="w-full p-5 space-y-4 bg-gold-card text-left shadow-2xl">
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0">
+            <Filter className="w-5 h-5 text-amber-400" />
+          </div>
+          <div>
+            <h2 className="text-base font-serif font-bold text-white flex items-center gap-2">
+              Filters & Preferences
+            </h2>
+            <p className="text-xs text-velora-textMuted font-mono">
+              Refine profiles horizontally by location, gender, orientation, & intimate kinks
+            </p>
+          </div>
         </div>
 
-        <button
-          onClick={handleReset}
-          className="text-xs font-mono text-velora-textMuted hover:text-velora-gold flex items-center gap-1 transition-colors"
-          title="Reset all filters"
-        >
-          <RotateCcw className="w-3.5 h-3.5" /> Reset
-        </button>
-      </div>
-
-      {/* Matching Profiles Indicator */}
-      <div className="p-3 rounded-2xl bg-velora-gold/10 border border-velora-gold/30 text-center space-y-1">
-        <span className="text-xs text-velora-gold font-bold uppercase tracking-wider block">
-          Showing {matchingCount} Matching Profiles
-        </span>
-        <span className="text-[10px] text-velora-textMuted font-mono">Filters updated in real time</span>
-      </div>
-
-      {/* SAVED SEARCHES PRESETS */}
-      <div className="space-y-3 pt-1">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-velora-gold flex items-center gap-1.5 font-mono">
-            <Bookmark className="w-3.5 h-3.5 text-velora-gold" /> Saved Searches
+        <div className="flex items-center gap-3 justify-between sm:justify-end">
+          <span className="px-3 py-1.5 rounded-full text-xs font-mono font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5" /> {matchingCount} {matchingCount === 1 ? "Matching Member" : "Matching Members"}
           </span>
+
           <button
-            onClick={() => setIsSavingPreset(!isSavingPreset)}
-            className="text-[11px] font-bold text-amber-300 hover:underline"
+            onClick={() => setExpanded(!expanded)}
+            className="px-3 py-1.5 rounded-full text-xs font-bold text-amber-300 bg-white/5 border border-amber-400/30 hover:bg-amber-400/10 flex items-center gap-1.5 transition-all"
           >
-            + Save Current
+            {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            <span>{expanded ? "Less Filters" : "More Filters"}</span>
+          </button>
+
+          <button
+            onClick={handleReset}
+            className="px-3 py-1.5 rounded-full text-xs font-bold text-velora-textMuted hover:text-white bg-white/5 border border-white/10 flex items-center gap-1.5 transition-colors"
+            title="Reset Filters"
+          >
+            <RotateCcw className="w-3.5 h-3.5" /> Reset
           </button>
         </div>
+      </div>
 
-        {isSavingPreset && (
-          <div className="flex gap-2 p-2 glass-panel rounded-2xl">
-            <Input
-              value={newPresetName}
-              onChange={(e) => setNewPresetName(e.target.value)}
-              placeholder="e.g. Vienna Couples"
-              className="text-xs py-1"
-            />
-            <Button variant="gold" size="sm" className="text-xs font-bold shrink-0 py-1" onClick={handleSavePreset}>
-              Save
-            </Button>
-          </div>
-        )}
+      {/* Horizontal Primary Filter Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        {/* 1. Country */}
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-velora-textMuted mb-1">
+            Country
+          </label>
+          <select
+            value={country}
+            onChange={(e) => {
+              setCountry(e.target.value);
+              setCity("");
+              notifyChange({ country: e.target.value, city: "" });
+            }}
+            className="w-full rounded-xl bg-black/60 border border-white/10 px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none"
+          >
+            <option value="ALL">🌐 All Countries</option>
+            {Object.keys(SUPPORTED_COUNTRIES).map((cKey) => (
+              <option key={cKey} value={cKey}>
+                {SUPPORTED_COUNTRIES[cKey].flag} {SUPPORTED_COUNTRIES[cKey].name}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <div className="space-y-1.5">
-          {savedPresets.map((preset) => (
-            <div key={preset.id} className="flex items-center justify-between p-2 rounded-xl glass-panel text-xs">
-              <button
-                onClick={() => applyPreset(preset)}
-                className="font-semibold text-velora-textPrimary hover:text-velora-gold text-left truncate flex-1"
-              >
-                {preset.name}
-              </button>
-              <button
-                onClick={() =>
-                  setSavedPresets(
-                    savedPresets.map((p) => (p.id === preset.id ? { ...p, alertsEnabled: !p.alertsEnabled } : p))
-                  )
-                }
-                className={`p-1 rounded-full ${preset.alertsEnabled ? "text-velora-gold" : "text-velora-textMuted"}`}
-                title="Toggle Instant New Match Alert Notifications"
-              >
-                <Bell className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ))}
+        {/* 2. Cascading City */}
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-velora-textMuted mb-1">
+            City Filter
+          </label>
+          <select
+            value={city}
+            onChange={(e) => {
+              setCity(e.target.value);
+              notifyChange({ city: e.target.value });
+            }}
+            className="w-full rounded-xl bg-black/60 border border-white/10 px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none"
+          >
+            <option value="">All Cities</option>
+            {country !== "ALL" &&
+              SUPPORTED_COUNTRIES[country]?.cities.map((ct) => (
+                <option key={ct} value={ct}>
+                  {ct}
+                </option>
+              ))}
+          </select>
+        </div>
+
+        {/* 3. Gender */}
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-velora-textMuted mb-1">
+            Gender
+          </label>
+          <select
+            value={gender}
+            onChange={(e) => {
+              setGender(e.target.value);
+              notifyChange({ gender: e.target.value });
+            }}
+            className="w-full rounded-xl bg-black/60 border border-white/10 px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none"
+          >
+            <option value="ALL">All Genders</option>
+            <option value="FEMALE">Female (♀)</option>
+            <option value="MALE">Male (♂)</option>
+            <option value="COUPLE">Couples (👫)</option>
+            <option value="TRANSGENDER">Transgender (⚧)</option>
+          </select>
+        </div>
+
+        {/* 4. Sexual Orientation */}
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-velora-textMuted mb-1">
+            Sexual Orientation
+          </label>
+          <select
+            value={sexualOrientation}
+            onChange={(e) => {
+              setSexualOrientation(e.target.value);
+              notifyChange({ sexualOrientation: e.target.value });
+            }}
+            className="w-full rounded-xl bg-black/60 border border-white/10 px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none"
+          >
+            <option value="ALL">All Sexualities</option>
+            <option value="HETEROSEXUAL">Heterosexual</option>
+            <option value="BISEXUAL">Bisexual</option>
+            <option value="HOMOSEXUAL">Homosexual</option>
+            <option value="PANSEXUAL">Pansexual</option>
+            <option value="FLUID">Fluid</option>
+          </select>
+        </div>
+
+        {/* 5. Pubic Grooming */}
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-velora-textMuted mb-1">
+            Pubic Grooming
+          </label>
+          <select
+            value={pubicHairGrooming}
+            onChange={(e) => {
+              setPubicHairGrooming(e.target.value);
+              notifyChange({ pubicHairGrooming: e.target.value });
+            }}
+            className="w-full rounded-xl bg-black/60 border border-white/10 px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none"
+          >
+            <option value="ALL">Any Grooming</option>
+            <option value="Natural">Natural</option>
+            <option value="Trimmed">Trimmed</option>
+            <option value="Shaved">Shaved</option>
+          </select>
+        </div>
+
+        {/* 6. Piercings & Body Art */}
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-velora-textMuted mb-1">
+            Piercings & Tattoos
+          </label>
+          <select
+            value={piercing}
+            onChange={(e) => {
+              setPiercing(e.target.value);
+              notifyChange({ piercing: e.target.value });
+            }}
+            className="w-full rounded-xl bg-black/60 border border-white/10 px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none"
+          >
+            <option value="ALL">Any Body Art</option>
+            <option value="Yes">With Piercings</option>
+            <option value="Multiple">Multiple Tattoos/Piercings</option>
+            <option value="No">No Body Art</option>
+          </select>
         </div>
       </div>
 
-      {/* ACCORDION 1: LOCATION (COUNTRY & CITY) */}
-      <div className="border-t border-white/10 pt-4 space-y-3">
-        <button
-          onClick={() => toggleSection("location")}
-          className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-wider text-velora-textPrimary"
-        >
-          <span className="flex items-center gap-1.5">
-            <MapPin className="w-4 h-4 text-velora-gold" /> Location (Country & City)
-          </span>
-          {openSections.location ? <ChevronUp className="w-4 h-4 text-velora-textMuted" /> : <ChevronDown className="w-4 h-4 text-velora-textMuted" />}
-        </button>
-
-        {openSections.location && (
-          <div className="space-y-3 pt-1">
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1">Country</label>
-              <select
-                value={country}
-                onChange={(e) => {
-                  const newCountry = e.target.value;
-                  setCountry(newCountry);
-                  setCity("ALL");
-                  notifyChange({ country: newCountry, city: "ALL" });
-                }}
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
-              >
-                <option value="ALL">All Countries</option>
-                {LOCATION_DATA.COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1">City Filter</label>
-              <select
-                value={city}
-                onChange={(e) => {
-                  setCity(e.target.value);
-                  notifyChange({ city: e.target.value });
-                }}
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
-              >
-                <option value="ALL">All Cities</option>
-                {(country !== "ALL"
-                  ? LOCATION_DATA.getCitiesForCountry(country)
-                  : LOCATION_DATA.COUNTRIES.flatMap((c) => c.cities)
-                ).map((ct) => (
-                  <option key={ct} value={ct}>
-                    {ct}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs font-mono text-velora-textSecondary">
-                <span>Distance Radius</span>
-                <span className="text-velora-gold font-bold">{distanceKm === 100 ? "Anywhere" : `Within ${distanceKm} km`}</span>
+      {/* Expanded Controls: Age Slider & Intimate Hobbies */}
+      {expanded && (
+        <div className="space-y-4 pt-3 border-t border-white/10 transition-all">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Age Range Slider */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs">
+                <span className="font-bold text-velora-textMuted uppercase tracking-wider">Age Range</span>
+                <span className="font-mono text-amber-300 font-bold">{minAge} — {maxAge} years</span>
               </div>
-              <input
-                type="range"
-                min="10"
-                max="100"
-                step="5"
-                value={distanceKm}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  setDistanceKm(val);
-                  notifyChange({ distanceKm: val });
-                }}
-                className="w-full accent-velora-gold bg-white/10 h-1.5 rounded-lg cursor-pointer"
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ACCORDION 2: GENDER & SEXUAL ORIENTATION */}
-      <div className="border-t border-white/10 pt-4 space-y-3">
-        <button
-          onClick={() => toggleSection("demographics")}
-          className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-wider text-velora-textPrimary"
-        >
-          <span className="flex items-center gap-1.5">
-            <Heart className="w-4 h-4 text-velora-gold" /> Gender & Sexuality
-          </span>
-          {openSections.demographics ? <ChevronUp className="w-4 h-4 text-velora-textMuted" /> : <ChevronDown className="w-4 h-4 text-velora-textMuted" />}
-        </button>
-
-        {openSections.demographics && (
-          <div className="space-y-3 pt-1">
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1">Gender</label>
-              <select
-                value={gender}
-                onChange={(e) => {
-                  setGender(e.target.value);
-                  notifyChange({ gender: e.target.value });
-                }}
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
-              >
-                <option value="ALL">All Genders</option>
-                <option value="FEMALE">Female</option>
-                <option value="MALE">Male</option>
-                <option value="COUPLE_MF">Couple (M & F)</option>
-                <option value="NON_BINARY">Non-Binary</option>
-                <option value="TRANSGENDER">Transgender</option>
-                <option value="OTHER">Other</option>
-              </select>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min="18"
+                  max="70"
+                  value={minAge}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setMinAge(val);
+                    notifyChange({ minAge: val });
+                  }}
+                  className="w-full accent-amber-400"
+                />
+                <input
+                  type="range"
+                  min="18"
+                  max="70"
+                  value={maxAge}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setMaxAge(val);
+                    notifyChange({ maxAge: val });
+                  }}
+                  className="w-full accent-amber-400"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1">Sexual Orientation</label>
-              <select
-                value={sexualOrientation}
-                onChange={(e) => {
-                  setSexualOrientation(e.target.value);
-                  notifyChange({ sexualOrientation: e.target.value });
-                }}
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
-              >
-                <option value="ALL">All Sexualities</option>
-                <option value="BISEXUAL">Bisexual</option>
-                <option value="HETEROSEXUAL">Heterosexual (Straight)</option>
-                <option value="HOMOSEXUAL">Homosexual (Gay/Lesbian)</option>
-                <option value="PANSEXUAL">Pansexual</option>
-                <option value="FLUID">Fluid / Open</option>
-              </select>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ACCORDION 3: INTIMATE PREFERENCES & SEX HOBBIES (REFERENCE DESIGN) */}
-      <div className="border-t border-white/10 pt-4 space-y-3">
-        <button
-          onClick={() => toggleSection("intimate")}
-          className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-wider text-velora-textPrimary"
-        >
-          <span className="flex items-center gap-1.5">
-            <Flame className="w-4 h-4 text-velora-gold" /> Intimate Preferences & Sex Hobbies
-          </span>
-          {openSections.intimate ? <ChevronUp className="w-4 h-4 text-velora-textMuted" /> : <ChevronDown className="w-4 h-4 text-velora-textMuted" />}
-        </button>
-
-        {openSections.intimate && (
-          <div className="space-y-4 pt-1">
-            {/* Pubic Hair Grooming */}
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1.5">Pubic hair grooming</label>
-              <div className="flex gap-2">
-                {["ALL", "Natural", "Trimmed", "Shaved"].map((item) => (
+            {/* Profile Type */}
+            <div className="space-y-2">
+              <span className="block text-xs font-bold text-velora-textMuted uppercase tracking-wider">Profile Category</span>
+              <div className="flex items-center gap-2">
+                {[
+                  { id: "ALL", label: "All Profiles" },
+                  { id: "SINGLE", label: "Singles" },
+                  { id: "COUPLE", label: "Couples" },
+                  { id: "CREATOR", label: "Creators" },
+                ].map((item) => (
                   <button
-                    key={item}
-                    type="button"
+                    key={item.id}
                     onClick={() => {
-                      setPubicHairGrooming(item);
-                      notifyChange({ pubicHairGrooming: item });
+                      setProfileType(item.id);
+                      notifyChange({ profileType: item.id });
                     }}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                      pubicHairGrooming === item
-                        ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold shadow-gold-glow"
-                        : "glass-panel text-velora-textMuted hover:text-white"
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                      profileType === item.id
+                        ? "bg-amber-400 text-black border-amber-400 shadow-gold-glow"
+                        : "bg-white/5 text-velora-textMuted border-white/10 hover:text-white"
                     }`}
                   >
-                    {item === "ALL" ? "All" : item}
+                    {item.label}
                   </button>
                 ))}
               </div>
             </div>
+          </div>
 
-            {/* Piercing Dropdown */}
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1">Piercing</label>
-              <select
-                value={piercing}
-                onChange={(e) => {
-                  setPiercing(e.target.value);
-                  notifyChange({ piercing: e.target.value });
-                }}
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
-              >
-                <option value="ALL">All</option>
-                <option value="Yes">Yes</option>
-                <option value="No">No</option>
-                <option value="Multiple">Multiple</option>
-              </select>
-            </div>
-
-            {/* Tattoo Dropdown */}
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1">Tattoo</label>
-              <select
-                value={tattoo}
-                onChange={(e) => {
-                  setTattoo(e.target.value);
-                  notifyChange({ tattoo: e.target.value });
-                }}
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
-              >
-                <option value="ALL">All</option>
-                <option value="Yes">Yes</option>
-                <option value="No">No</option>
-                <option value="Multiple">Multiple</option>
-              </select>
-            </div>
-
-            {/* Sex Hobbies Pills */}
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1.5">Sex Hobbies & Fetishes</label>
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  "Oral Pleasure",
-                  "Anal",
-                  "Piss / Watersports",
-                  "Sensual Massage",
-                  "BDSM",
-                  "Roleplay",
-                  "Fetish",
-                  "Exhibitionism",
-                  "Swapping",
-                  "Adult Toys",
-                  "Shibari",
-                  "Voyeurism",
-                  "Bondage",
-                ].map((item) => {
-                  const isSelected = selectedSexHobbies.includes(item);
-                  return (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => toggleMultiSelect(item, selectedSexHobbies, setSelectedSexHobbies, "sexHobbies")}
-                      className={`px-2.5 py-1 rounded-full text-[11px] border transition-all ${
-                        isSelected
-                          ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold shadow-gold-glow"
-                          : "glass-panel text-velora-textMuted hover:text-white"
-                      }`}
-                    >
-                      {item}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Erogenous Zones Pills */}
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1.5">Erogenous zones</label>
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  "Mouth and lips",
-                  "Ears",
-                  "Neck",
-                  "Breasts and nipples",
-                  "Belly",
-                  "Lower back",
-                  "Thighs",
-                  "Genitals",
-                  "Hands and fingers",
-                  "Buttocks",
-                ].map((item) => {
-                  const isSelected = selectedErogenousZones.includes(item);
-                  return (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => toggleMultiSelect(item, selectedErogenousZones, setSelectedErogenousZones, "erogenousZones")}
-                      className={`px-2.5 py-1 rounded-full text-[11px] border transition-all ${
-                        isSelected
-                          ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold shadow-gold-glow"
-                          : "glass-panel text-velora-textMuted hover:text-white"
-                      }`}
-                    >
-                      {item}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Favourite Sex Places Pills */}
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1.5">Favourite sex places</label>
-              <div className="flex flex-wrap gap-1.5">
-                {["Bed", "Car", "Office", "Nature", "Public"].map((item) => {
-                  const isSelected = selectedPlaces.includes(item);
-                  return (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => toggleMultiSelect(item, selectedPlaces, setSelectedPlaces, "favouriteSexPlaces")}
-                      className={`px-2.5 py-1 rounded-full text-[11px] border transition-all ${
-                        isSelected
-                          ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold shadow-gold-glow"
-                          : "glass-panel text-velora-textMuted hover:text-white"
-                      }`}
-                    >
-                      {item}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Favourite Sex Positions Pills */}
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-velora-textMuted mb-1.5">Favourite sex positions</label>
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  "Missionary",
-                  "Cowgirl",
-                  "Doggy",
-                  "69",
-                  "Legs on shoulders",
-                  "From the side",
-                  "Reverse cowgirl",
-                ].map((item) => {
-                  const isSelected = selectedPositions.includes(item);
-                  return (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => toggleMultiSelect(item, selectedPositions, setSelectedPositions, "favouriteSexPositions")}
-                      className={`px-2.5 py-1 rounded-full text-[11px] border transition-all ${
-                        isSelected
-                          ? "bg-gold-gradient text-velora-bg font-bold border-velora-gold shadow-gold-glow"
-                          : "glass-panel text-velora-textMuted hover:text-white"
-                      }`}
-                    >
-                      {item}
-                    </button>
-                  );
-                })}
-              </div>
+          {/* Quick Intimate Tags */}
+          <div className="space-y-2 pt-2">
+            <span className="block text-xs font-bold text-amber-300 uppercase tracking-wider font-mono">
+              Intimate Hobbies & Desires Filter:
+            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                "Sensual Massage",
+                "Oral Pleasure",
+                "BDSM & Kink",
+                "Roleplay & Dressing",
+                "Swinging & Parties",
+                "Erotic Photography",
+                "Casual Encounters",
+                "Dominance / Submission",
+              ].map((hobby) => {
+                const isSelected = selectedSexHobbies.includes(hobby);
+                return (
+                  <button
+                    key={hobby}
+                    onClick={() => toggleMultiSelect(hobby, selectedSexHobbies, setSelectedSexHobbies, "sexHobbies")}
+                    className={`px-3 py-1 rounded-full text-xs font-bold transition-all border ${
+                      isSelected
+                        ? "bg-amber-400 text-black border-amber-400 shadow-gold-glow"
+                        : "bg-white/5 text-velora-textMuted border-white/10 hover:text-white"
+                    }`}
+                  >
+                    {hobby}
+                  </button>
+                );
+              })}
             </div>
           </div>
-        )}
-      </div>
-
-      {/* ACCORDION 4: PROFILE TYPE */}
-      <div className="border-t border-white/10 pt-4 space-y-3">
-        <button
-          onClick={() => toggleSection("type")}
-          className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-wider text-velora-textPrimary"
-        >
-          <span className="flex items-center gap-1.5">
-            <User className="w-4 h-4 text-velora-gold" /> Profile Type
-          </span>
-          {openSections.type ? <ChevronUp className="w-4 h-4 text-velora-textMuted" /> : <ChevronDown className="w-4 h-4 text-velora-textMuted" />}
-        </button>
-
-        {openSections.type && (
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            {[
-              { id: "ALL", label: "All Members" },
-              { id: "SINGLE", label: "Individual" },
-              { id: "COUPLE", label: "Couple" },
-              { id: "CREATOR", label: "Creator" },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setProfileType(item.id);
-                  notifyChange({ profileType: item.id });
-                }}
-                className={`py-2 px-3 rounded-xl border text-[11px] font-bold text-center transition-all ${
-                  profileType === item.id
-                    ? "bg-gold-gradient text-velora-bg border-velora-gold shadow-gold-glow"
-                    : "glass-panel text-velora-textMuted hover:text-white"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ACCORDION 5: AGE RANGE */}
-      <div className="border-t border-white/10 pt-4 space-y-3">
-        <button
-          onClick={() => toggleSection("age")}
-          className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-wider text-velora-textPrimary"
-        >
-          <span className="flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-velora-gold" /> Age Range ({minAge} – {maxAge})
-          </span>
-          {openSections.age ? <ChevronUp className="w-4 h-4 text-velora-textMuted" /> : <ChevronDown className="w-4 h-4 text-velora-textMuted" />}
-        </button>
-
-        {openSections.age && (
-          <div className="space-y-3 pt-1">
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                min="18"
-                max="99"
-                value={minAge}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  setMinAge(val);
-                  notifyChange({ minAge: val });
-                }}
-                className="text-xs py-1"
-                placeholder="Min"
-              />
-              <Input
-                type="number"
-                min="18"
-                max="99"
-                value={maxAge}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  setMaxAge(val);
-                  notifyChange({ maxAge: val });
-                }}
-                className="text-xs py-1"
-                placeholder="Max"
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ACCORDION 6: SORTING OPTIONS */}
-      <div className="border-t border-white/10 pt-4 space-y-3">
-        <button
-          onClick={() => toggleSection("sorting")}
-          className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-wider text-velora-textPrimary"
-        >
-          <span className="flex items-center gap-1.5">
-            <ArrowUpDown className="w-4 h-4 text-velora-gold" /> Sort Results By
-          </span>
-          {openSections.sorting ? <ChevronUp className="w-4 h-4 text-velora-textMuted" /> : <ChevronDown className="w-4 h-4 text-velora-textMuted" />}
-        </button>
-
-        {openSections.sorting && (
-          <select
-            value={sortBy}
-            onChange={(e) => {
-              setSortBy(e.target.value);
-              notifyChange({ sortBy: e.target.value });
-            }}
-            className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold font-mono"
-          >
-            <option value="NEWEST">Newest Members</option>
-            <option value="ACTIVE">Recently Active</option>
-            <option value="NEAREST">Nearest Location</option>
-            <option value="VERIFIED">Verified First</option>
-            <option value="POPULAR">Most Favourited</option>
-          </select>
-        )}
-      </div>
+        </div>
+      )}
     </Card>
   );
 };
