@@ -13,6 +13,8 @@ import {
   Mic,
   Plus,
   Send,
+  Check,
+  CheckCheck,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -35,6 +37,8 @@ interface ChatMessage {
   text: string;
   timestamp: string;
   isSelf: boolean;
+  status?: "SENT" | "DELIVERED" | "READ";
+  readAt?: string;
 }
 
 interface FloatingChatWidgetProps {
@@ -73,6 +77,7 @@ export function FloatingChatWidget({ chatUser, onClose }: FloatingChatWidgetProp
           text: `Ahoj! Thanks for stopping by my profile. Feel free to send me a message! 😊`,
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           isSelf: false,
+          status: "READ",
         },
       ];
       setMessages(initial);
@@ -93,12 +98,16 @@ export function FloatingChatWidget({ chatUser, onClose }: FloatingChatWidgetProp
     if (e) e.preventDefault();
     if (!inputText.trim()) return;
 
+    const msgId = `msg-${Date.now()}`;
+    const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
     const newMsg: ChatMessage = {
-      id: `msg-${Date.now()}`,
+      id: msgId,
       senderId: currentProfile?.id || currentUser?.id || "me",
       text: inputText.trim(),
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: nowTime,
       isSelf: true,
+      status: "DELIVERED",
     };
 
     const updated = [...messages, newMsg];
@@ -110,6 +119,19 @@ export function FloatingChatWidget({ chatUser, onClose }: FloatingChatWidgetProp
       localStorage.setItem(storageKey, JSON.stringify(updated));
     }
 
+    // Trigger "Seen / Read" status update after 2.5 seconds (when chat partner views message)
+    setTimeout(() => {
+      setMessages((prev) => {
+        const readTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        const updatedRead = prev.map((m) =>
+          m.id === msgId ? { ...m, status: "READ" as const, readAt: readTime } : m
+        );
+        if (typeof window !== "undefined") {
+          localStorage.setItem(storageKey, JSON.stringify(updatedRead));
+        }
+        return updatedRead;
+      });
+    }, 2500);
   };
 
   // Minimized Floating Pill Render matching Amateri reference
@@ -219,9 +241,7 @@ export function FloatingChatWidget({ chatUser, onClose }: FloatingChatWidgetProp
         </div>
       </div>
 
-
-
-      {/* 3. Messages Stream */}
+      {/* 2. Messages Stream */}
       <div className="flex-1 p-3 space-y-3 overflow-y-auto custom-scrollbar">
         <div className="text-center my-1">
           <span className="text-[10px] font-mono uppercase bg-white/10 px-2.5 py-0.5 rounded-full text-velora-textMuted">
@@ -229,7 +249,7 @@ export function FloatingChatWidget({ chatUser, onClose }: FloatingChatWidgetProp
           </span>
         </div>
 
-        {messages.map((msg) => (
+        {messages.map((msg, index) => (
           <div
             key={msg.id}
             className={`flex flex-col ${msg.isSelf ? "items-end" : "items-start"}`}
@@ -242,13 +262,34 @@ export function FloatingChatWidget({ chatUser, onClose }: FloatingChatWidgetProp
               }`}
             >
               <p className="whitespace-pre-wrap">{msg.text}</p>
-              <span
-                className={`block text-[9px] font-mono mt-1 ${
-                  msg.isSelf ? "text-blue-200 text-right" : "text-gray-400"
+
+              {/* Timestamp & Read Receipt Checkmarks */}
+              <div
+                className={`flex items-center gap-1 text-[9px] font-mono mt-1 ${
+                  msg.isSelf ? "text-blue-200 justify-end" : "text-gray-400"
                 }`}
               >
-                {msg.timestamp}
-              </span>
+                <span>{msg.timestamp}</span>
+
+                {/* Seen status for sent messages */}
+                {msg.isSelf && (
+                  <span
+                    className="flex items-center gap-0.5"
+                    title={msg.status === "READ" ? `Seen at ${msg.readAt || msg.timestamp}` : "Delivered"}
+                  >
+                    {msg.status === "READ" ? (
+                      <>
+                        <CheckCheck className="w-3.5 h-3.5 text-sky-300 inline" />
+                        <span className="text-[9px] font-semibold text-sky-300 ml-0.5">Seen</span>
+                      </>
+                    ) : msg.status === "DELIVERED" ? (
+                      <CheckCheck className="w-3.5 h-3.5 text-blue-200/70 inline" />
+                    ) : (
+                      <Check className="w-3.5 h-3.5 text-blue-200/70 inline" />
+                    )}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         ))}
