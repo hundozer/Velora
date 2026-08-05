@@ -224,9 +224,6 @@ import { getAllActiveAds, createAd, deleteAd } from "@/lib/supabase/datingAdServ
 export default function DatingMarketplacePage() {
   const { user, profile } = useAuth();
 
-  if (!user) {
-    return <BehindTheDoorLanding />;
-  }
   const [adsList, setAdsList] = useState<DatingAdItem[]>(INITIAL_ADS);
   const [isLoadingAds, setIsLoadingAds] = useState(true);
 
@@ -511,6 +508,10 @@ export default function DatingMarketplacePage() {
     if (activeFilterPill === "Verified" && !ad.isVerified) return false;
     return true;
   });
+
+  if (!user) {
+    return <BehindTheDoorLanding />;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 text-left">

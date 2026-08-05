@@ -167,9 +167,6 @@ export default function SingleProfilePage() {
   const profileId = (params?.id as string) || "me";
   const tabQuery = searchParams.get("tab");
 
-  if (!currentUser) {
-    return <BehindTheDoorLanding />;
-  }
 
   const isSelf =
     profileId === "me" ||
@@ -1112,6 +1109,10 @@ export default function SingleProfilePage() {
       }
     }
   };
+
+  if (!currentUser) {
+    return <BehindTheDoorLanding />;
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-left">

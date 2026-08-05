@@ -29,16 +29,16 @@ export default function CreatorMarketplacePage() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [creatorModalOpen, setCreatorModalOpen] = useState(false);
 
-  if (!user) {
-    return <BehindTheDoorLanding />;
-  }
-
   const creators = MOCK_PROFILES.filter((p) => p.categories && p.categories.length > 0);
 
   const handleSubscribe = (creator: any) => {
     setSelectedCreator(creator);
     setCheckoutOpen(true);
   };
+
+  if (!user) {
+    return <BehindTheDoorLanding />;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 text-left">

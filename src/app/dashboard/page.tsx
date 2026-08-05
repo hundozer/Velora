@@ -229,9 +229,6 @@ import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding"
 export default function DashboardPage() {
   const { user, profile } = useAuth();
 
-  if (!user) {
-    return <BehindTheDoorLanding />;
-  }
 
   // Feed State
   const [feedPosts, setFeedPosts] = useState<FeedPost[]>(INITIAL_FEED_POSTS);
@@ -407,6 +404,10 @@ export default function DashboardPage() {
     setFeedPosts([newPost, ...feedPosts]);
     setPublisherInput("");
   };
+
+  if (!user) {
+    return <BehindTheDoorLanding />;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 text-left">

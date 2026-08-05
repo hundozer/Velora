@@ -28,10 +28,6 @@ import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding"
 export default function WalletPage() {
   const { user } = useAuth();
   const [wallet, setWallet] = useState(MOCK_WALLET);
-
-  if (!user) {
-    return <BehindTheDoorLanding />;
-  }
   const [transactions, setTransactions] = useState<PaymentTransaction[]>(MOCK_TRANSACTIONS);
   const [addFundsOpen, setAddFundsOpen] = useState(false);
   const [topupAmount, setTopupAmount] = useState("100");
@@ -71,6 +67,10 @@ export default function WalletPage() {
       }, 1500);
     }, 1200);
   };
+
+  if (!user) {
+    return <BehindTheDoorLanding />;
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-left">

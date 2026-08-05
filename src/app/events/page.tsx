@@ -27,10 +27,6 @@ import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding"
 export default function EventsMarketplacePage() {
   const { user } = useAuth();
   const [events, setEvents] = useState<VeloraEvent[]>(MOCK_EVENTS);
-
-  if (!user) {
-    return <BehindTheDoorLanding />;
-  }
   const [filterType, setFilterType] = useState("ALL");
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [ticketModalOpen, setTicketModalOpen] = useState(false);
@@ -77,6 +73,10 @@ export default function EventsMarketplacePage() {
     setTitle("");
     setDescription("");
   };
+
+  if (!user) {
+    return <BehindTheDoorLanding />;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 text-left">

@@ -39,9 +39,6 @@ export default function DiscoveryMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
-  if (!user) {
-    return <BehindTheDoorLanding />;
-  }
 
   // Sidebar Filter State
   const [sidebarFilters, setSidebarFilters] = useState<FilterState>({
@@ -143,6 +140,10 @@ export default function DiscoveryMarketplacePage() {
 
     return true;
   });
+
+  if (!user) {
+    return <BehindTheDoorLanding />;
+  }
 
   return (
     <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 text-left">
