@@ -536,15 +536,16 @@ export default function DatingMarketplacePage() {
           </p>
         </div>
 
-        {/* Primary "+ Add new dating ad" Button */}
-        <Button
-          variant="gold"
-          size="lg"
-          onClick={() => setIsAddModalOpen(true)}
-          className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow border-amber-400/40 text-black shrink-0"
-        >
-          <Plus className="w-4 h-4 text-black" /> Add new dating ad
-        </Button>
+        {/* Primary "+ Add new dating ad" Button -> Navigates to full page /dating/create */}
+        <Link href="/dating/create">
+          <Button
+            variant="gold"
+            size="lg"
+            className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow border-amber-400/40 text-black shrink-0"
+          >
+            <Plus className="w-4 h-4 text-black" /> Add new dating ad
+          </Button>
+        </Link>
       </div>
 
       {/* Navigation Sub-Tabs: Browse Marketplace vs My Dating Ads (History) */}
@@ -720,14 +721,15 @@ export default function DatingMarketplacePage() {
             <Sparkles className="w-10 h-10 text-amber-400 mx-auto" />
             <h3 className="text-base font-serif font-bold text-white">No Dating Ads Found in This Category</h3>
             <p className="text-xs text-velora-textMuted">Be the first member to post a dating announcement!</p>
-            <Button
-              variant="gold"
-              size="sm"
-              onClick={() => setIsAddModalOpen(true)}
-              className="text-xs font-bold uppercase mt-2 shadow-gold-glow"
-            >
-              + Post New Dating Ad
-            </Button>
+            <Link href="/dating/create">
+              <Button
+                variant="gold"
+                size="sm"
+                className="text-xs font-bold uppercase mt-2 shadow-gold-glow text-black"
+              >
+                + Post New Dating Ad
+              </Button>
+            </Link>
           </Card>
         ) : (
           filteredAds.map((ad) => (
