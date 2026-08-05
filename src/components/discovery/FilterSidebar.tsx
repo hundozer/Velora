@@ -158,9 +158,6 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ matchingCount, onF
         </div>
 
         <div className="flex items-center gap-3 justify-between sm:justify-end">
-          <span className="px-3 py-1.5 rounded-full text-xs font-mono font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" /> {matchingCount} {matchingCount === 1 ? "Matching Member" : "Matching Members"}
-          </span>
 
           <button
             onClick={() => setExpanded(!expanded)}

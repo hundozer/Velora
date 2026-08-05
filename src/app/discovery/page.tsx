@@ -214,9 +214,6 @@ export default function DiscoveryMarketplacePage() {
             <label className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-2 font-mono">
               <Compass className="w-4 h-4 text-velora-gold" /> Search Profiles by Keyword / Name / Interests
             </label>
-            <span className="text-[11px] font-mono text-amber-400 font-bold">
-              {filteredProfiles.length} {filteredProfiles.length === 1 ? "Matching Member" : "Matching Members"}
-            </span>
           </div>
           <SearchBar onSearchQueryChange={setSearchQuery} />
         </div>
