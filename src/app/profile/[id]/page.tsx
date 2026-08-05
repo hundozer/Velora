@@ -11,6 +11,7 @@ import { GetVerifiedModal } from "@/components/profile/GetVerifiedModal";
 import { userStore } from "@/lib/auth0/userStore";
 import { MOCK_PROFILES, MOCK_CREATOR_ALBUMS } from "@/lib/mockData";
 import { useAuth } from "@/context/AuthContext";
+import { Profile } from "@/types";
 import { uploadFileToR2 } from "@/lib/storage/clientUpload";
 import { Input } from "@/components/ui/Input";
 import {
@@ -446,6 +447,68 @@ export default function SingleProfilePage() {
   // Member Verification State
   const [getVerifiedModalOpen, setGetVerifiedModalOpen] = useState(false);
   const [userVerificationStatus, setUserVerificationStatus] = useState<"UNVERIFIED" | "PENDING_REVIEW" | "VERIFIED" | "REJECTED">("UNVERIFIED");
+
+  // Edit Bio & Headline Modal State
+  const [editBioModalOpen, setEditBioModalOpen] = useState(false);
+  const [headlineInput, setHeadlineInput] = useState(profile.headline || "");
+  const [bioInput, setBioInput] = useState(profile.bio || "");
+
+  // Edit Desires Modal State
+  const [editDesiresModalOpen, setEditDesiresModalOpen] = useState(false);
+  const [desiresList, setDesiresList] = useState<string[]>(profile.lookingFor || ["Connections"]);
+  const [customDesireInput, setCustomDesireInput] = useState("");
+
+  const PRESET_DESIRES = [
+    "Connections",
+    "Discreet Hookups",
+    "Couples",
+    "VIP Dining",
+    "Threesomes",
+    "Sugar Dating",
+    "Friendship",
+    "Long Term",
+    "Swingers / Parties",
+    "Travel Partner",
+    "Erotic Art",
+  ];
+
+  const handleSaveBio = () => {
+    if (currentUser && currentProfile) {
+      const updatedProfile: Profile = {
+        ...currentProfile,
+        headline: headlineInput.trim(),
+        bio: bioInput.trim(),
+      };
+      updateUserProfile(currentUser, updatedProfile);
+    }
+    setEditBioModalOpen(false);
+  };
+
+  const handleSaveDesires = () => {
+    if (currentUser && currentProfile) {
+      const updatedProfile: Profile = {
+        ...currentProfile,
+        lookingFor: desiresList,
+      };
+      updateUserProfile(currentUser, updatedProfile);
+    }
+    setEditDesiresModalOpen(false);
+  };
+
+  const toggleDesire = (desire: string) => {
+    if (desiresList.includes(desire)) {
+      setDesiresList(desiresList.filter((d) => d !== desire));
+    } else {
+      setDesiresList([...desiresList, desire]);
+    }
+  };
+
+  const handleAddCustomDesire = () => {
+    if (customDesireInput.trim() && !desiresList.includes(customDesireInput.trim())) {
+      setDesiresList([...desiresList, customDesireInput.trim()]);
+      setCustomDesireInput("");
+    }
+  };
 
   // Social Follow & Friend Connections State
   const [isFollowing, setIsFollowing] = useState(connectionStore.isFollowing(profile.id));
@@ -1552,36 +1615,109 @@ export default function SingleProfilePage() {
 
         {/* RIGHT SIDEBAR (lg:col-span-1): About Me & Open Desires & Intimate Preferences */}
         <div className="lg:col-span-1 space-y-6">
-          <Card variant="glass" className="p-6 space-y-4 text-left">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-velora-textMuted font-mono">
-              Invitation Into {profile.displayName}'s World
-            </h3>
+          <Card variant="glass" className="p-6 space-y-4 text-left relative">
+            <div className="flex items-center justify-between border-b border-white/10 pb-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-velora-textMuted font-mono">
+                Invitation Into {profile.displayName}'s World
+              </h3>
+              {isSelf && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHeadlineInput(profile.headline || "");
+                    setBioInput(profile.bio || "");
+                    setEditBioModalOpen(true);
+                  }}
+                  className="px-2 py-1 rounded-lg text-[10px] font-bold bg-white/5 text-amber-300 hover:bg-amber-400/20 border border-white/10 flex items-center gap-1 transition-colors"
+                  title="Edit Headline & Bio"
+                >
+                  <Edit3 className="w-3 h-3" /> Edit Bio
+                </button>
+              )}
+            </div>
 
-            {profile.headline && (
+            {profile.headline ? (
               <h2 className="text-base font-serif font-bold text-velora-gold italic">
                 "{profile.headline}"
               </h2>
-            )}
+            ) : isSelf ? (
+              <p
+                onClick={() => {
+                  setHeadlineInput(profile.headline || "");
+                  setBioInput(profile.bio || "");
+                  setEditBioModalOpen(true);
+                }}
+                className="text-xs text-amber-300/80 italic cursor-pointer hover:underline"
+              >
+                + Add your headline intro
+              </p>
+            ) : null}
 
-            <p className="text-xs text-velora-textSecondary leading-relaxed whitespace-pre-line">
-              {profile.bio}
-            </p>
+            {profile.bio ? (
+              <p className="text-xs text-velora-textSecondary leading-relaxed whitespace-pre-line">
+                {profile.bio}
+              </p>
+            ) : isSelf ? (
+              <p
+                onClick={() => {
+                  setHeadlineInput(profile.headline || "");
+                  setBioInput(profile.bio || "");
+                  setEditBioModalOpen(true);
+                }}
+                className="text-xs text-velora-textMuted italic cursor-pointer hover:underline"
+              >
+                + Add your bio & personal message
+              </p>
+            ) : (
+              <p className="text-xs text-velora-textMuted italic">No introduction bio provided yet.</p>
+            )}
           </Card>
 
           <Card variant="glass" className="p-6 space-y-4 text-left">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-velora-textMuted font-mono">
-              Open Connections & Desires
-            </h3>
+            <div className="flex items-center justify-between border-b border-white/10 pb-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-velora-textMuted font-mono">
+                Open Connections & Desires
+              </h3>
+              {isSelf && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDesiresList(profile.lookingFor || ["Connections"]);
+                    setEditDesiresModalOpen(true);
+                  }}
+                  className="px-2 py-1 rounded-lg text-[10px] font-bold bg-white/5 text-amber-300 hover:bg-amber-400/20 border border-white/10 flex items-center gap-1 transition-colors"
+                  title="Edit Desires & Connections"
+                >
+                  <Edit3 className="w-3 h-3" /> Edit Desires
+                </button>
+              )}
+            </div>
 
             <div className="flex flex-wrap gap-2 pt-1">
-              {profile.lookingFor.map((item) => (
-                <span
-                  key={item}
-                  className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-velora-textPrimary border border-white/10"
+              {profile.lookingFor && profile.lookingFor.length > 0 ? (
+                profile.lookingFor.map((item) => (
+                  <Link key={item} href={`/discovery?q=${encodeURIComponent(item)}`}>
+                    <span
+                      className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-velora-textPrimary border border-white/10 hover:border-amber-400/60 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1.5"
+                      title={`Click to filter discovery by ${item}`}
+                    >
+                      <Sparkles className="w-3 h-3 text-amber-400" /> {item}
+                    </span>
+                  </Link>
+                ))
+              ) : isSelf ? (
+                <p
+                  onClick={() => {
+                    setDesiresList(profile.lookingFor || ["Connections"]);
+                    setEditDesiresModalOpen(true);
+                  }}
+                  className="text-xs text-amber-300/80 italic cursor-pointer hover:underline"
                 >
-                  {item}
-                </span>
-              ))}
+                  + Add what you are looking for
+                </p>
+              ) : (
+                <p className="text-xs text-velora-textMuted italic">No desires specified.</p>
+              )}
             </div>
           </Card>
 
@@ -2424,6 +2560,139 @@ export default function SingleProfilePage() {
             <div className="pt-2 border-t border-white/10 flex justify-end">
               <Button variant="glass" size="sm" onClick={() => setInteractionsModalOpen(false)} className="text-xs">
                 Close
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Edit Bio & Headline Modal */}
+      {editBioModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <Card variant="goldBorder" className="w-full max-w-lg p-6 space-y-4 text-left bg-velora-card relative shadow-2xl">
+            <button
+              onClick={() => setEditBioModalOpen(false)}
+              className="absolute top-4 right-4 text-velora-textMuted hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="border-b border-white/10 pb-3">
+              <h3 className="text-base font-serif font-bold text-white flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-amber-400" /> Edit Introduction & Bio
+              </h3>
+              <p className="text-xs text-velora-textMuted">Update your personal tagline and introduction message for members.</p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-amber-300 mb-1.5 font-mono">
+                  Personal Headline / Tagline
+                </label>
+                <input
+                  type="text"
+                  value={headlineInput}
+                  onChange={(e) => setHeadlineInput(e.target.value)}
+                  placeholder="e.g. Seeking discretion, art, & deep conversations in Monaco"
+                  className="w-full bg-white/5 border border-white/15 rounded-xl p-3 text-xs text-white placeholder:text-velora-textMuted focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-amber-300 mb-1.5 font-mono">
+                  Biography & Introduction Message
+                </label>
+                <textarea
+                  rows={4}
+                  value={bioInput}
+                  onChange={(e) => setBioInput(e.target.value)}
+                  placeholder="Tell other verified members about yourself, your lifestyle, and what you enjoy..."
+                  className="w-full bg-white/5 border border-white/15 rounded-xl p-3 text-xs text-white placeholder:text-velora-textMuted focus:outline-none focus:border-amber-400"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-white/10 flex justify-end gap-2">
+              <Button variant="glass" size="sm" onClick={() => setEditBioModalOpen(false)} className="text-xs">
+                Cancel
+              </Button>
+              <Button variant="gold" size="sm" onClick={handleSaveBio} className="text-xs font-bold uppercase shadow-gold-glow">
+                Save Bio
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Edit Desires & Connections Modal */}
+      {editDesiresModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <Card variant="goldBorder" className="w-full max-w-lg p-6 space-y-4 text-left bg-velora-card relative shadow-2xl">
+            <button
+              onClick={() => setEditDesiresModalOpen(false)}
+              className="absolute top-4 right-4 text-velora-textMuted hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="border-b border-white/10 pb-3">
+              <h3 className="text-base font-serif font-bold text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-400" /> Edit Open Connections & Desires
+              </h3>
+              <p className="text-xs text-velora-textMuted">Select what you are looking for so matching members can discover you.</p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-amber-300 mb-2 font-mono">
+                  Select Preset Categories
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {PRESET_DESIRES.map((item) => {
+                    const isSelected = desiresList.includes(item);
+                    return (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => toggleDesire(item)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                          isSelected
+                            ? "bg-amber-400/20 text-amber-300 border-amber-400 shadow-gold-glow"
+                            : "bg-white/5 text-velora-textMuted border-white/10 hover:border-white/20"
+                        }`}
+                      >
+                        {isSelected ? "✓ " : "+ "}{item}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-amber-300 mb-1.5 font-mono">
+                  Add Custom Connection / Desire Tag
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={customDesireInput}
+                    onChange={(e) => setCustomDesireInput(e.target.value)}
+                    placeholder="e.g. Fine Wine Tasting"
+                    className="flex-1 bg-white/5 border border-white/15 rounded-xl p-2.5 text-xs text-white placeholder:text-velora-textMuted focus:outline-none focus:border-amber-400"
+                  />
+                  <Button variant="glass" size="sm" onClick={handleAddCustomDesire} className="text-xs font-bold">
+                    + Add
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-white/10 flex justify-end gap-2">
+              <Button variant="glass" size="sm" onClick={() => setEditDesiresModalOpen(false)} className="text-xs">
+                Cancel
+              </Button>
+              <Button variant="gold" size="sm" onClick={handleSaveDesires} className="text-xs font-bold uppercase shadow-gold-glow">
+                Save Desires
               </Button>
             </div>
           </Card>
