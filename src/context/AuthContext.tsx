@@ -59,17 +59,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Background sync: fetch latest profile from Supabase
         if (parsedUser.email) {
-          getProfileByEmail(parsedUser.email).then(({ data }) => {
-            if (data) {
-              const freshUser = dbRowToUser(data);
-              const freshProfile = dbRowToProfile(data);
-              setUser(freshUser);
-              setProfile(freshProfile);
-              if (freshUser.role) setRole(freshUser.role as UserRole);
-              localStorage.setItem("intimo_active_user", JSON.stringify(freshUser));
-              localStorage.setItem("intimo_active_profile", JSON.stringify(freshProfile));
-            }
-          });
+          getProfileByEmail(parsedUser.email)
+            .then(({ data }) => {
+              if (data) {
+                const freshUser = dbRowToUser(data);
+                const freshProfile = dbRowToProfile(data);
+                setUser(freshUser);
+                setProfile(freshProfile);
+                if (freshUser.role) setRole(freshUser.role as UserRole);
+                localStorage.setItem("intimo_active_user", JSON.stringify(freshUser));
+                localStorage.setItem("intimo_active_profile", JSON.stringify(freshProfile));
+              }
+            })
+            .catch((err) => console.error("Background profile sync error:", err));
         }
       } else if (typeof document !== "undefined" && document.cookie.includes("intimo_user_data=")) {
         const match = document.cookie.match(/intimo_user_data=([^;]+)/);
@@ -77,15 +79,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const cookieUserData = JSON.parse(decodeURIComponent(match[1]));
 
           // Try to load from Supabase first
-          getProfileByEmail(cookieUserData.email).then(({ data }) => {
-            if (data) {
-              const freshUser = dbRowToUser(data);
-              const freshProfile = dbRowToProfile(data);
-              setUser(freshUser);
-              setProfile(freshProfile);
-              localStorage.setItem("intimo_active_user", JSON.stringify(freshUser));
-              localStorage.setItem("intimo_active_profile", JSON.stringify(freshProfile));
-            } else {
+          getProfileByEmail(cookieUserData.email)
+            .then(({ data }) => {
+              if (data) {
+                const freshUser = dbRowToUser(data);
+                const freshProfile = dbRowToProfile(data);
+                setUser(freshUser);
+                setProfile(freshProfile);
+                localStorage.setItem("intimo_active_user", JSON.stringify(freshUser));
+                localStorage.setItem("intimo_active_profile", JSON.stringify(freshProfile));
+              } else {
               // Fallback: create from cookie data
               const savedNickname = localStorage.getItem(`intimo_nickname_${cookieUserData.email.toLowerCase()}`);
               const effectiveName = savedNickname || cookieUserData.username || cookieUserData.email.split("@")[0];
@@ -138,7 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setUser(cookieUser);
               setProfile(cookieProfile);
             }
-          });
+          }).catch((err) => console.error("Cookie profile sync error:", err));
         }
       }
     } catch (err) {
