@@ -230,8 +230,27 @@ export default function DashboardPage() {
   const { user, profile } = useAuth();
 
 
-  // Feed State
-  const [feedPosts, setFeedPosts] = useState<FeedPost[]>(INITIAL_FEED_POSTS);
+  // Feed State with localStorage Persistence
+  const [feedPosts, setFeedPosts] = useState<FeedPost[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("intimo_feed_posts");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error("Failed to parse saved feed posts:", e);
+        }
+      }
+    }
+    return INITIAL_FEED_POSTS;
+  });
+
+  // Save feedPosts to localStorage on change
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && feedPosts.length > 0) {
+      localStorage.setItem("intimo_feed_posts", JSON.stringify(feedPosts));
+    }
+  }, [feedPosts]);
 
   // Nav & Filter Tabs
   const [activeNavTab, setActiveNavTab] = useState<"NEWEST" | "FOLLOWED" | "FRIENDS">("FOLLOWED");
