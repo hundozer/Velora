@@ -110,23 +110,6 @@ export function FloatingChatWidget({ chatUser, onClose }: FloatingChatWidgetProp
       localStorage.setItem(storageKey, JSON.stringify(updated));
     }
 
-    // Simulated quick reply after 1.5s
-    setTimeout(() => {
-      const autoReply: ChatMessage = {
-        id: `msg-reply-${Date.now()}`,
-        senderId: chatUser.id,
-        text: `Thanks for your message! I'm online now. Talk to you in a second! 💕`,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        isSelf: false,
-      };
-      setMessages((prev) => {
-        const withReply = [...prev, autoReply];
-        if (typeof window !== "undefined") {
-          localStorage.setItem(storageKey, JSON.stringify(withReply));
-        }
-        return withReply;
-      });
-    }, 1500);
   };
 
   // Minimized Floating Pill Render matching Amateri reference
@@ -236,39 +219,7 @@ export function FloatingChatWidget({ chatUser, onClose }: FloatingChatWidgetProp
         </div>
       </div>
 
-      {/* 2. User Quick Summary Card inside Chat Drawer */}
-      <div className="p-3 bg-white/5 border-b border-white/10 space-y-2 shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/20 border border-blue-500/30 text-[10px] font-bold text-blue-300">
-            <CheckCircle2 className="w-3 h-3 text-blue-400" /> Verified profile
-          </div>
-          <span className="text-[10px] text-velora-textMuted">
-            {chatUser.location || "Prague, Czech Republic"}
-          </span>
-        </div>
 
-        {/* 3 Metrics (Followers, Photos, Videos) */}
-        <div className="grid grid-cols-3 gap-2 pt-1">
-          <div className="bg-black/40 rounded-xl p-2 text-center border border-white/5">
-            <span className="block text-sm font-extrabold text-white">
-              {chatUser.followersCount ?? 8}
-            </span>
-            <span className="text-[9px] text-velora-textMuted uppercase font-mono">Followers</span>
-          </div>
-          <div className="bg-black/40 rounded-xl p-2 text-center border border-white/5">
-            <span className="block text-sm font-extrabold text-amber-300">
-              {chatUser.photoCount ?? 12}
-            </span>
-            <span className="text-[9px] text-velora-textMuted uppercase font-mono">Photos</span>
-          </div>
-          <div className="bg-black/40 rounded-xl p-2 text-center border border-white/5">
-            <span className="block text-sm font-extrabold text-red-400">
-              {chatUser.videoCount ?? 4}
-            </span>
-            <span className="text-[9px] text-velora-textMuted uppercase font-mono">Videos</span>
-          </div>
-        </div>
-      </div>
 
       {/* 3. Messages Stream */}
       <div className="flex-1 p-3 space-y-3 overflow-y-auto custom-scrollbar">
