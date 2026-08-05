@@ -1208,16 +1208,12 @@ export default function SingleProfilePage() {
                     </span>
                   )}
                 </div>
+                {(profile.location || profile.city || profile.country) && (
                 <p className="text-xs text-velora-gold font-medium flex items-center gap-1">
-                  {(profile.location || profile.city || profile.country) ? (
-                    <>
-                      <MapPin className="w-3.5 h-3.5" />
-                      {profile.location || [profile.city, profile.country].filter(Boolean).join(", ")} • Level 3 Biometric Verified
-                    </>
-                  ) : (
-                    "Level 3 Biometric Verified"
-                  )}
+                  <MapPin className="w-3.5 h-3.5" />
+                  {profile.location || [profile.city, profile.country].filter(Boolean).join(", ")}
                 </p>
+                )}
               </div>
             </div>
 
