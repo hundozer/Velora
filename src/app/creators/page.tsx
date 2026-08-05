@@ -18,11 +18,13 @@ import {
   Flame,
   CheckCircle2,
 } from "lucide-react";
+import { CreatorPreRegistrationModal } from "@/components/creator/CreatorPreRegistrationModal";
 
 export default function CreatorMarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [selectedCreator, setSelectedCreator] = useState<any | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [creatorModalOpen, setCreatorModalOpen] = useState(false);
 
   const creators = MOCK_PROFILES.filter((p) => p.categories && p.categories.length > 0);
 
@@ -40,7 +42,7 @@ export default function CreatorMarketplacePage() {
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5">
               <Crown className="w-3.5 h-3.5" /> EXCLUSIVE CREATOR SALONS
             </span>
-            <span className="text-xs text-velora-gold font-mono uppercase tracking-widest">• Verified Adult Monetization</span>
+            <span className="text-xs text-velora-gold font-mono uppercase tracking-widest">• Creator Pre-Registration Open</span>
           </div>
           <h1 className="text-3xl font-serif font-bold text-velora-textPrimary flex items-center gap-3">
             <Sparkles className="w-8 h-8 text-amber-400" />
@@ -51,11 +53,13 @@ export default function CreatorMarketplacePage() {
           </p>
         </div>
 
-        <Link href="/creator-studio">
-          <Button variant="gold" className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow shrink-0">
-            <Crown className="w-4 h-4" /> Become a Creator
-          </Button>
-        </Link>
+        <Button
+          variant="gold"
+          onClick={() => setCreatorModalOpen(true)}
+          className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow shrink-0 text-black"
+        >
+          <Crown className="w-4 h-4 text-black" /> Become a Creator (Pre-Register)
+        </Button>
       </div>
 
       {/* Category Pills Slider */}
@@ -166,6 +170,12 @@ export default function CreatorMarketplacePage() {
           type="CREATOR_SUBSCRIPTION"
         />
       )}
+
+      {/* Creator Pre-Registration Modal */}
+      <CreatorPreRegistrationModal
+        isOpen={creatorModalOpen}
+        onClose={() => setCreatorModalOpen(false)}
+      />
     </div>
   );
 }

@@ -33,8 +33,11 @@ import {
   Receipt,
 } from "lucide-react";
 
+import { CreatorPreRegistrationModal } from "@/components/creator/CreatorPreRegistrationModal";
+
 export default function CreatorStudioPage() {
   const [activeTab, setActiveTab] = useState("OVERVIEW");
+  const [intentModalOpen, setIntentModalOpen] = useState(false);
   const [albums, setAlbums] = useState<ContentAlbum[]>(MOCK_CREATOR_ALBUMS);
   const [videos, setVideos] = useState<ContentVideo[]>(MOCK_CREATOR_VIDEOS);
 
@@ -128,6 +131,75 @@ export default function CreatorStudioPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-left">
+      {/* Creator Registration Coming Soon & Pre-Registration Banner */}
+      <Card variant="goldBorder" className="p-6 space-y-4 bg-gradient-to-r from-amber-500/10 via-velora-card to-purple-900/10 border-amber-400/40 relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-widest inline-flex items-center gap-1.5">
+                <Crown className="w-3.5 h-3.5" /> CREATOR REGISTRATION — COMING SOON
+              </span>
+              <span className="text-[11px] text-amber-400 font-mono font-bold">• Pre-Launch Waitlist Active</span>
+            </div>
+            <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-amber-400" />
+              Express Your Creator Intent & Lock In 0% Launch Commission
+            </h2>
+            <p className="text-xs text-velora-textSecondary max-w-3xl leading-relaxed">
+              Direct creator registration is launching soon. Pre-register your intent now to get early access, verified creator status, and 0% platform fee during launch.
+            </p>
+          </div>
+
+          <Button
+            variant="gold"
+            size="sm"
+            onClick={() => setIntentModalOpen(true)}
+            className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow shrink-0 text-black"
+          >
+            <Crown className="w-4 h-4 text-black" /> Express Creator Intent
+          </Button>
+        </div>
+
+        {/* 5-Step Visual Process Infographic */}
+        <div className="space-y-2 pt-1">
+          <div className="text-[11px] font-bold text-amber-300 uppercase tracking-wider">
+            How Becoming an Intimo Creator Works (5 Simple Steps):
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+            <div className="p-3 rounded-2xl bg-black/50 border border-amber-400/30 text-center space-y-1 relative group hover:border-amber-400 transition-all">
+              <div className="w-7 h-7 rounded-full bg-amber-400/20 text-amber-300 font-bold text-xs flex items-center justify-center mx-auto border border-amber-400/40">1</div>
+              <div className="text-xs font-bold text-white">1. Register</div>
+              <div className="text-[10px] text-velora-textMuted leading-tight">Pre-register profile & creator intent</div>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-black/50 border border-purple-500/30 text-center space-y-1 relative group hover:border-purple-400 transition-all">
+              <div className="w-7 h-7 rounded-full bg-purple-500/20 text-purple-300 font-bold text-xs flex items-center justify-center mx-auto border border-purple-500/40">2</div>
+              <div className="text-xs font-bold text-white">2. Get Verified</div>
+              <div className="text-[10px] text-velora-textMuted leading-tight">Selfie photo biometric badge</div>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-black/50 border border-sky-500/30 text-center space-y-1 relative group hover:border-sky-400 transition-all">
+              <div className="w-7 h-7 rounded-full bg-sky-500/20 text-sky-300 font-bold text-xs flex items-center justify-center mx-auto border border-sky-500/40">3</div>
+              <div className="text-xs font-bold text-white">3. Upload</div>
+              <div className="text-[10px] text-velora-textMuted leading-tight">Photo, 4K video & live salons</div>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-black/50 border border-emerald-500/30 text-center space-y-1 relative group hover:border-emerald-400 transition-all">
+              <div className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-xs flex items-center justify-center mx-auto border border-emerald-500/40">4</div>
+              <div className="text-xs font-bold text-white">4. Users Buy</div>
+              <div className="text-[10px] text-velora-textMuted leading-tight">Subscriptions & PPV media</div>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-black/50 border border-amber-400/50 text-center space-y-1 relative group hover:border-amber-400 transition-all">
+              <div className="w-7 h-7 rounded-full bg-amber-400 text-black font-bold text-xs flex items-center justify-center mx-auto shadow-gold-glow">5</div>
+              <div className="text-xs font-bold text-amber-300">5. Get Paid</div>
+              <div className="text-[10px] text-velora-textMuted leading-tight">Direct payouts to your bank account</div>
+            </div>
+          </div>
+        </div>
+      </Card>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
         <div>
@@ -459,6 +531,12 @@ export default function CreatorStudioPage() {
           </div>
         )}
       </Modal>
+
+      {/* Creator Pre-Registration Modal */}
+      <CreatorPreRegistrationModal
+        isOpen={intentModalOpen}
+        onClose={() => setIntentModalOpen(false)}
+      />
     </div>
   );
 }

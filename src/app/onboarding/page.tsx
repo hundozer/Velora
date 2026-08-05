@@ -23,6 +23,7 @@ export default function OnboardingWizardPage() {
   const [country, setCountry] = useState("");
   const [city, setCity] = useState("");
   const [headline, setHeadline] = useState("");
+  const [expressedCreatorIntent, setExpressedCreatorIntent] = useState(true);
 
   // Optional Intimate Preferences & Sex Hobbies
   const [pubicHairGrooming, setPubicHairGrooming] = useState<string>("Trimmed");
@@ -194,6 +195,64 @@ export default function OnboardingWizardPage() {
                 );
               })}
             </div>
+
+            {profileType === "CREATOR" && (
+              <div className="p-4 rounded-2xl border border-amber-400/40 bg-amber-500/10 space-y-4 text-left">
+                <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  Creator Registration Coming Soon — Express Your Intent
+                </div>
+                <p className="text-xs text-velora-textSecondary leading-relaxed">
+                  Full creator monetization tools are currently in pre-launch. Expressing your creator intent now grants you priority early access and a 0% platform fee during our launch window.
+                </p>
+
+                {/* 5-Step Visual Process Infographic */}
+                <div className="space-y-2 pt-1">
+                  <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+                    How Becoming a Creator Works:
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
+                    <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center space-y-1">
+                      <div className="w-6 h-6 rounded-full bg-amber-400/20 text-amber-300 font-bold text-[10px] flex items-center justify-center mx-auto border border-amber-400/40">1</div>
+                      <div className="text-[11px] font-bold text-white">1. Register</div>
+                      <div className="text-[9px] text-velora-textMuted leading-tight">Pre-register profile & intent</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center space-y-1">
+                      <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-300 font-bold text-[10px] flex items-center justify-center mx-auto border border-purple-500/40">2</div>
+                      <div className="text-[11px] font-bold text-white">2. Get Verified</div>
+                      <div className="text-[9px] text-velora-textMuted leading-tight">Selfie photo biometric badge</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center space-y-1">
+                      <div className="w-6 h-6 rounded-full bg-sky-500/20 text-sky-300 font-bold text-[10px] flex items-center justify-center mx-auto border border-sky-500/40">3</div>
+                      <div className="text-[11px] font-bold text-white">3. Upload</div>
+                      <div className="text-[9px] text-velora-textMuted leading-tight">Photo, 4K video & live salons</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center space-y-1">
+                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-[10px] flex items-center justify-center mx-auto border border-emerald-500/40">4</div>
+                      <div className="text-[11px] font-bold text-white">4. Users Buy</div>
+                      <div className="text-[9px] text-velora-textMuted leading-tight">Subscriptions & PPV media</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-black/50 border border-amber-400/40 text-center space-y-1">
+                      <div className="w-6 h-6 rounded-full bg-amber-400 text-black font-bold text-[10px] flex items-center justify-center mx-auto shadow-gold-glow">5</div>
+                      <div className="text-[11px] font-bold text-amber-300">5. Get Paid</div>
+                      <div className="text-[9px] text-velora-textMuted leading-tight">Direct payouts to your bank</div>
+                    </div>
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-2 pt-2 cursor-pointer border-t border-white/10">
+                  <input
+                    type="checkbox"
+                    checked={expressedCreatorIntent}
+                    onChange={(e) => setExpressedCreatorIntent(e.target.checked)}
+                    className="w-4 h-4 accent-amber-400 rounded cursor-pointer"
+                  />
+                  <span className="text-xs text-amber-200 font-bold">
+                    Pre-register my Creator Intent for priority early access notification
+                  </span>
+                </label>
+              </div>
+            )}
 
             <div className="pt-3 space-y-2">
               <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">
