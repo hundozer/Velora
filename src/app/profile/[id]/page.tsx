@@ -340,7 +340,15 @@ export default function SingleProfilePage() {
 
   // Load & Persist Photo Albums
   React.useEffect(() => {
-    if (profile?.id) {
+    if (typeof window !== "undefined" && profile?.id) {
+      const cacheKey = `intimo_user_albums_${profile.id}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          setUserPhotoAlbums(JSON.parse(cached));
+        } catch (e) {}
+      }
+
       getAlbumsByOwner(profile.id).then(({ data }: { data: any }) => {
         if (data && data.length > 0) {
           const mappedAlbums: UserPhotoAlbumItem[] = data.map((row: any) => ({
@@ -365,6 +373,13 @@ export default function SingleProfilePage() {
       });
     }
   }, [profile?.id]);
+
+  // Sync photo albums state to localStorage whenever modified (e.g. comments, likes added)
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && profile?.id && userPhotoAlbums.length > 0) {
+      localStorage.setItem(`intimo_user_albums_${profile.id}`, JSON.stringify(userPhotoAlbums));
+    }
+  }, [userPhotoAlbums, profile?.id]);
 
   // Rich Videos List
   const [userVideos, setUserVideos] = useState<UserVideoItem[]>([
@@ -423,9 +438,17 @@ export default function SingleProfilePage() {
     },
   ]);
 
-  // Load Videos from Supabase
+  // Load Videos from Supabase & Local Cache
   React.useEffect(() => {
-    if (profile?.id) {
+    if (typeof window !== "undefined" && profile?.id) {
+      const cacheKey = `intimo_user_videos_${profile.id}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          setUserVideos(JSON.parse(cached));
+        } catch (e) {}
+      }
+
       getVideosByOwner(profile.id).then(({ data }: { data: any }) => {
         if (data && data.length > 0) {
           const mappedVideos: UserVideoItem[] = data.map((row: any) => ({
@@ -452,6 +475,13 @@ export default function SingleProfilePage() {
       });
     }
   }, [profile?.id]);
+
+  // Sync userVideos state to localStorage whenever modified (e.g. comments, likes added)
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && profile?.id && userVideos.length > 0) {
+      localStorage.setItem(`intimo_user_videos_${profile.id}`, JSON.stringify(userVideos));
+    }
+  }, [userVideos, profile?.id]);
 
   // Dating Ads List
   const [userDatingAds, setUserDatingAds] = useState<{ id: string; title: string; category: string; description: string; date: string }[]>([
