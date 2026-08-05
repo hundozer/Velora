@@ -106,6 +106,7 @@ interface MediaVoter {
   avatarUrl: string;
   isVerified?: boolean;
   votedAt: string;
+  commentText?: string;
 }
 
 interface UserVideoItem {
@@ -128,6 +129,7 @@ interface UserVideoItem {
   createdAt: string;
   commentsList?: MediaComment[];
   votersList?: MediaVoter[];
+  viewersList?: MediaVoter[];
   hasUserVoted?: boolean;
 }
 
@@ -149,6 +151,7 @@ interface UserPhotoAlbumItem {
   createdAt: string;
   commentsList?: MediaComment[];
   votersList?: MediaVoter[];
+  viewersList?: MediaVoter[];
   hasUserVoted?: boolean;
 }
 
@@ -450,9 +453,13 @@ export default function SingleProfilePage() {
     });
   };
 
-  // Voters List Modal State
-  const [votersModalOpen, setVotersModalOpen] = useState(false);
-  const [votersListTarget, setVotersListTarget] = useState<{ title: string; voters: MediaVoter[] } | null>(null);
+  // Media Interactions List Modal State (Viewers / Commenters / Likers)
+  const [interactionsModalOpen, setInteractionsModalOpen] = useState(false);
+  const [interactionsTarget, setInteractionsTarget] = useState<{
+    title: string;
+    type: "VIEWS" | "COMMENTS" | "LIKES";
+    users: MediaVoter[];
+  } | null>(null);
 
   // Video Viewer State
   const [activeViewerVideo, setActiveViewerVideo] = useState<UserVideoItem | null>(null);
@@ -569,10 +576,19 @@ export default function SingleProfilePage() {
     );
   };
 
-  const openVotersModal = (title: string, voters: MediaVoter[] = [], e?: React.MouseEvent) => {
+  const openInteractionsModal = (
+    type: "VIEWS" | "COMMENTS" | "LIKES",
+    title: string,
+    users: MediaVoter[] = [],
+    e?: React.MouseEvent
+  ) => {
     if (e) e.stopPropagation();
-    setVotersListTarget({ title, voters });
-    setVotersModalOpen(true);
+    setInteractionsTarget({ title, type, users });
+    setInteractionsModalOpen(true);
+  };
+
+  const openVotersModal = (title: string, voters: MediaVoter[] = [], e?: React.MouseEvent) => {
+    openInteractionsModal("LIKES", title, voters, e);
   };
 
   const handleAddAlbumComment = () => {
@@ -1161,15 +1177,31 @@ export default function SingleProfilePage() {
                       {/* Album Footer Metrics & Topics */}
                       <div className="p-3.5 space-y-2.5 text-xs bg-white/5">
                         <div className="flex items-center justify-between text-[11px] text-velora-textMuted font-mono">
-                          <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-velora-gold" /> {alb.views} Views</span>
-                          <span className="flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5 text-blue-400" /> {alb.comments} Comments</span>
                           <button
                             type="button"
-                            onClick={(e) => openVotersModal(alb.title, alb.votersList, e)}
-                            className="flex items-center gap-1 text-emerald-400 font-bold hover:underline hover:text-amber-300 transition-colors"
-                            title="Click to see list of people who liked this album"
+                            onClick={(e) => openInteractionsModal("VIEWS", alb.title, alb.viewersList || [], e)}
+                            className="flex items-center gap-1 hover:text-amber-300 transition-colors font-bold cursor-pointer"
+                            title="Click to see list of members who viewed this album"
                           >
-                            <ThumbsUp className={`w-3.5 h-3.5 ${alb.hasUserVoted ? "fill-emerald-400" : ""}`} /> {alb.likes} Likes
+                            <Eye className="w-3.5 h-3.5 text-velora-gold" /> {alb.viewersList?.length || alb.views || 0} Views
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => openInteractionsModal("COMMENTS", alb.title, (alb.commentsList || []).map((c) => ({ id: c.id, name: c.authorName, avatarUrl: c.authorAvatar, votedAt: c.createdAt, commentText: c.text })), e)}
+                            className="flex items-center gap-1 hover:text-amber-300 transition-colors font-bold cursor-pointer"
+                            title="Click to see list of comments and members"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5 text-blue-400" /> {alb.commentsList?.length || alb.comments || 0} Comments
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => openInteractionsModal("LIKES", alb.title, alb.votersList || [], e)}
+                            className="flex items-center gap-1 text-emerald-400 font-bold hover:underline hover:text-amber-300 transition-colors cursor-pointer"
+                            title="Click to see list of members who liked this album"
+                          >
+                            <ThumbsUp className={`w-3.5 h-3.5 ${alb.hasUserVoted ? "fill-emerald-400" : ""}`} /> {alb.votersList?.length || alb.likes || 0} Likes
                           </button>
                         </div>
 
@@ -2041,15 +2073,31 @@ export default function SingleProfilePage() {
               <div className="flex items-center justify-between text-xs text-velora-textMuted font-mono">
                 <span className="text-white font-semibold">{activeViewerAlbum.description}</span>
                 <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-1"><Eye className="w-4 h-4 text-amber-400" /> {activeViewerAlbum.views} Views</span>
-                  <span className="flex items-center gap-1"><MessageSquare className="w-4 h-4 text-blue-400" /> {activeViewerAlbum.comments} Comments</span>
                   <button
                     type="button"
-                    onClick={(e) => openVotersModal(activeViewerAlbum.title, activeViewerAlbum.votersList, e)}
-                    className="flex items-center gap-1 text-emerald-400 font-bold hover:underline hover:text-amber-300 transition-colors"
-                    title="Click to view list of members who liked this album"
+                    onClick={(e) => openInteractionsModal("VIEWS", activeViewerAlbum.title, activeViewerAlbum.viewersList || [], e)}
+                    className="flex items-center gap-1 hover:text-amber-300 transition-colors font-bold cursor-pointer"
+                    title="Click to see list of members who viewed this album"
                   >
-                    <ThumbsUp className={`w-4 h-4 ${activeViewerAlbum.hasUserVoted ? "fill-emerald-400" : ""}`} /> {activeViewerAlbum.likes} Likes
+                    <Eye className="w-4 h-4 text-amber-400" /> {activeViewerAlbum.viewersList?.length || activeViewerAlbum.views || 0} Views
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => openInteractionsModal("COMMENTS", activeViewerAlbum.title, (activeViewerAlbum.commentsList || []).map((c) => ({ id: c.id, name: c.authorName, avatarUrl: c.authorAvatar, votedAt: c.createdAt, commentText: c.text })), e)}
+                    className="flex items-center gap-1 hover:text-amber-300 transition-colors font-bold cursor-pointer"
+                    title="Click to see list of comments and members"
+                  >
+                    <MessageSquare className="w-4 h-4 text-blue-400" /> {activeViewerAlbum.commentsList?.length || activeViewerAlbum.comments || 0} Comments
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => openInteractionsModal("LIKES", activeViewerAlbum.title, activeViewerAlbum.votersList || [], e)}
+                    className="flex items-center gap-1 text-emerald-400 font-bold hover:underline hover:text-amber-300 transition-colors cursor-pointer"
+                    title="Click to see list of members who liked this album"
+                  >
+                    <ThumbsUp className={`w-4 h-4 ${activeViewerAlbum.hasUserVoted ? "fill-emerald-400" : ""}`} /> {activeViewerAlbum.votersList?.length || activeViewerAlbum.likes || 0} Likes
                   </button>
                   <button
                     type="button"
@@ -2194,12 +2242,12 @@ export default function SingleProfilePage() {
         </div>
       )}
 
-      {/* People Who Liked This Album Voters Modal */}
-      {votersModalOpen && votersListTarget && (
+      {/* Media Interactions Modal (Viewers / Commenters / Likers) */}
+      {interactionsModalOpen && interactionsTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <Card variant="goldBorder" className="w-full max-w-md p-6 space-y-5 text-left bg-velora-card relative shadow-2xl">
+          <Card variant="goldBorder" className="w-full max-w-md p-6 space-y-4 text-left bg-velora-card relative shadow-2xl">
             <button
-              onClick={() => setVotersModalOpen(false)}
+              onClick={() => setInteractionsModalOpen(false)}
               className="absolute top-4 right-4 text-velora-textMuted hover:text-white"
             >
               <X className="w-5 h-5" />
@@ -2207,37 +2255,48 @@ export default function SingleProfilePage() {
 
             <div className="space-y-1 border-b border-white/10 pb-3">
               <h3 className="text-base font-serif font-bold text-white flex items-center gap-2">
-                <ThumbsUp className="w-5 h-5 text-emerald-400 fill-emerald-400" /> People Who Liked This Album
+                {interactionsTarget.type === "VIEWS" && <Eye className="w-5 h-5 text-amber-400" />}
+                {interactionsTarget.type === "COMMENTS" && <MessageSquare className="w-5 h-5 text-blue-400" />}
+                {interactionsTarget.type === "LIKES" && <ThumbsUp className="w-5 h-5 text-emerald-400 fill-emerald-400" />}
+                {interactionsTarget.type === "VIEWS" && "Members Who Viewed"}
+                {interactionsTarget.type === "COMMENTS" && "Members Who Commented"}
+                {interactionsTarget.type === "LIKES" && "Members Who Liked"}
               </h3>
               <p className="text-xs text-amber-300 font-semibold truncate">
-                "{votersListTarget.title}" • {votersListTarget.voters.length} {votersListTarget.voters.length === 1 ? "Member" : "Members"}
+                "{interactionsTarget.title}" • {interactionsTarget.users.length} {interactionsTarget.users.length === 1 ? "Member" : "Members"}
               </p>
             </div>
 
             <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-              {votersListTarget.voters.length === 0 ? (
-                <p className="text-xs text-velora-textMuted italic text-center py-4">No votes yet on this album.</p>
+              {interactionsTarget.users.length === 0 ? (
+                <p className="text-xs text-velora-textMuted italic text-center py-4">
+                  No {interactionsTarget.type.toLowerCase()} recorded yet.
+                </p>
               ) : (
-                votersListTarget.voters.map((voter) => (
+                interactionsTarget.users.map((user, idx) => (
                   <div
-                    key={voter.id}
+                    key={user.id + "-" + idx}
                     className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between hover:border-amber-400/40 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full border border-amber-400/40 overflow-hidden shrink-0">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={voter.avatarUrl} alt={voter.name} className="w-full h-full object-cover" />
+                        <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
                       </div>
                       <div>
                         <p className="text-xs font-bold text-white flex items-center gap-1">
-                          {voter.name}
-                          {voter.isVerified && <ShieldCheck className="w-3.5 h-3.5 text-velora-gold fill-amber-400/20" />}
+                          {user.name}
+                          {user.isVerified && <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />}
                         </p>
-                        <p className="text-[10px] text-emerald-400 font-mono">Liked {voter.votedAt}</p>
+                        {user.commentText ? (
+                          <p className="text-[11px] text-amber-200/90 italic font-serif">"{user.commentText}"</p>
+                        ) : (
+                          <p className="text-[10px] text-velora-textMuted font-mono">{user.votedAt}</p>
+                        )}
                       </div>
                     </div>
 
-                    <Link href={`/profile/${voter.id === "me" ? "me" : voter.id}`}>
+                    <Link href={`/profile/${user.id === "me" ? "me" : user.id}`} onClick={() => setInteractionsModalOpen(false)}>
                       <Button variant="glass" size="sm" className="text-[11px] font-semibold">
                         View Profile
                       </Button>
@@ -2248,7 +2307,7 @@ export default function SingleProfilePage() {
             </div>
 
             <div className="pt-2 border-t border-white/10 flex justify-end">
-              <Button variant="glass" size="sm" onClick={() => setVotersModalOpen(false)} className="text-xs">
+              <Button variant="glass" size="sm" onClick={() => setInteractionsModalOpen(false)} className="text-xs">
                 Close
               </Button>
             </div>

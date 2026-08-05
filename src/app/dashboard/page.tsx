@@ -49,6 +49,16 @@ export interface FeedComment {
   createdAt: string;
 }
 
+export interface FeedInteractionUser {
+  id: string;
+  name: string;
+  avatarUrl: string;
+  genderSymbol?: "♀" | "♂" | "👫";
+  isVerified?: boolean;
+  timestamp: string;
+  commentText?: string;
+}
+
 export interface FeedPost {
   id: string;
   author: {
@@ -69,8 +79,10 @@ export interface FeedPost {
   remainingPhotosCount?: number;
   videoUrl?: string;
   duration?: string;
-  views: number;
-  likes: number;
+  views?: number;
+  likes?: number;
+  viewersList?: FeedInteractionUser[];
+  votersList?: FeedInteractionUser[];
   hasLiked?: boolean;
   isSaved?: boolean;
   comments: FeedComment[];
@@ -85,7 +97,7 @@ const INITIAL_FEED_POSTS: FeedPost[] = [
       avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
       isVerified: true,
       genderSymbol: "👫",
-      location: "Prague, Czech Republic",
+      location: "",
     },
     type: "DATING_AD",
     title: "Weekend Salon & Private Getaway Connection",
@@ -94,10 +106,16 @@ const INITIAL_FEED_POSTS: FeedPost[] = [
     createdAt: "5 minutes ago",
     description:
       "We want to enjoy ourselves. If you also have the desire for discreet high-end chemistry and time this weekend, please write a few sentences about yourself so we can connect. 😉",
-    views: 890,
-    likes: 42,
     hasLiked: false,
     isSaved: false,
+    viewersList: [
+      { id: "prof-2", name: "TmaziMary", avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80", genderSymbol: "♀", isVerified: true, timestamp: "10 minutes ago" },
+      { id: "prof-3", name: "Marcus & Sophia", avatarUrl: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=150&q=80", genderSymbol: "👫", isVerified: true, timestamp: "15 minutes ago" },
+      { id: "prof-4", name: "vrs", avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80", genderSymbol: "♂", isVerified: true, timestamp: "25 minutes ago" },
+    ],
+    votersList: [
+      { id: "prof-2", name: "TmaziMary", avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80", genderSymbol: "♀", isVerified: true, timestamp: "10 minutes ago" },
+    ],
     comments: [],
   },
   {
@@ -108,7 +126,7 @@ const INITIAL_FEED_POSTS: FeedPost[] = [
       avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80",
       isVerified: true,
       genderSymbol: "♀",
-      location: "Munich, Germany",
+      location: "",
     },
     type: "ALBUM",
     title: "Red Silk & Late Night Monaco Memories 👠",
@@ -123,14 +141,22 @@ const INITIAL_FEED_POSTS: FeedPost[] = [
       "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1200&q=80",
     ],
     remainingPhotosCount: 10,
-    views: 3410,
-    likes: 489,
     hasLiked: true,
     isSaved: true,
+    viewersList: [
+      { id: "me", name: "Prince Charming", avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80", genderSymbol: "♂", isVerified: true, timestamp: "Just now" },
+      { id: "prof-1", name: "Three & Desire", avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80", genderSymbol: "👫", isVerified: true, timestamp: "5 minutes ago" },
+      { id: "prof-3", name: "Marcus & Sophia", avatarUrl: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=150&q=80", genderSymbol: "👫", isVerified: true, timestamp: "12 minutes ago" },
+      { id: "prof-4", name: "Belive10", avatarUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=150&q=80", genderSymbol: "♀", isVerified: true, timestamp: "15 minutes ago" },
+    ],
+    votersList: [
+      { id: "me", name: "Prince Charming", avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80", genderSymbol: "♂", isVerified: true, timestamp: "Just now" },
+      { id: "prof-4", name: "Belive10", avatarUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=150&q=80", genderSymbol: "♀", isVerified: true, timestamp: "15 minutes ago" },
+    ],
     comments: [
       {
         id: "c-1",
-        authorName: "Alex",
+        authorName: "Prince Charming",
         authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
         text: "Stunning aesthetic Mary! The red dress is breathtaking.",
         createdAt: "10 minutes ago",
@@ -145,7 +171,7 @@ const INITIAL_FEED_POSTS: FeedPost[] = [
       avatarUrl: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=800&q=80",
       isVerified: true,
       genderSymbol: "👫",
-      location: "Berlin, Germany",
+      location: "",
     },
     type: "VIDEO",
     title: "Late Night Lounge & Champagne Vault",
@@ -155,10 +181,15 @@ const INITIAL_FEED_POSTS: FeedPost[] = [
     description: "Private moments from our Monaco salon evening with curated electronic beats.",
     videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
     duration: "1:20",
-    views: 4120,
-    likes: 620,
     hasLiked: false,
     isSaved: false,
+    viewersList: [
+      { id: "prof-2", name: "TmaziMary", avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80", genderSymbol: "♀", isVerified: true, timestamp: "20 minutes ago" },
+      { id: "prof-5", name: "DODO0666", avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80", genderSymbol: "♂", isVerified: true, timestamp: "45 minutes ago" },
+    ],
+    votersList: [
+      { id: "prof-2", name: "TmaziMary", avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80", genderSymbol: "♀", isVerified: true, timestamp: "20 minutes ago" },
+    ],
     comments: [],
   },
 ];
@@ -260,12 +291,57 @@ export default function DashboardPage() {
     });
   }, [feedPosts, activeNavTab, activeFilterPill, followedIds, friendIds]);
 
+  // Feed Interactions Modal State (Views, Comments, Likes)
+  const [feedInteractionsModal, setFeedInteractionsModal] = useState<{
+    title: string;
+    type: "VIEWS" | "COMMENTS" | "LIKES";
+    users: FeedInteractionUser[];
+  } | null>(null);
+
+  const openFeedInteractionsModal = (post: FeedPost, type: "VIEWS" | "COMMENTS" | "LIKES") => {
+    let usersList: FeedInteractionUser[] = [];
+    if (type === "VIEWS") {
+      usersList = post.viewersList || [];
+    } else if (type === "LIKES") {
+      usersList = post.votersList || [];
+    } else if (type === "COMMENTS") {
+      usersList = post.comments.map((c) => ({
+        id: c.id,
+        name: c.authorName,
+        avatarUrl: c.authorAvatar,
+        timestamp: c.createdAt,
+        commentText: c.text,
+      }));
+    }
+
+    setFeedInteractionsModal({
+      title: post.title,
+      type,
+      users: usersList,
+    });
+  };
+
   const handleToggleLike = (postId: string) => {
+    const myId = profile?.id || "me";
+    const myName = profile?.displayName || "Prince Charming";
+    const myAvatar = profile?.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d";
+
     setFeedPosts((prev) =>
       prev.map((p) => {
         if (p.id === postId) {
-          const hasLiked = !p.hasLiked;
-          return { ...p, hasLiked, likes: hasLiked ? p.likes + 1 : p.likes - 1 };
+          const nextLiked = !p.hasLiked;
+          let currentVoters = p.votersList || [];
+          if (nextLiked) {
+            if (!currentVoters.some((v) => v.id === myId || v.name === myName)) {
+              currentVoters = [
+                { id: myId, name: myName, avatarUrl: myAvatar, isVerified: true, timestamp: "Just now", genderSymbol: "♂" },
+                ...currentVoters,
+              ];
+            }
+          } else {
+            currentVoters = currentVoters.filter((v) => v.id !== myId && v.name !== myName);
+          }
+          return { ...p, hasLiked: nextLiked, votersList: currentVoters };
         }
         return p;
       })
@@ -568,6 +644,43 @@ export default function DashboardPage() {
                     </div>
                   )}
 
+                  {/* Real Metrics Bar: Views (clickable) | Comments (clickable) | Likes (clickable) */}
+                  {(() => {
+                    const realViews = post.viewersList ? post.viewersList.length : (post.views || 0);
+                    const realComments = post.comments.length;
+                    const realLikes = post.votersList ? post.votersList.length : (post.hasLiked ? 1 : 0);
+                    return (
+                      <div className="flex items-center justify-between text-xs text-velora-textMuted font-mono pt-3 border-t border-white/10">
+                        <button
+                          type="button"
+                          onClick={() => openFeedInteractionsModal(post, "VIEWS")}
+                          className="flex items-center gap-1.5 hover:text-amber-300 transition-colors font-bold cursor-pointer"
+                          title="Click to see list of members who viewed this post"
+                        >
+                          <Eye className="w-4 h-4 text-amber-400" /> {realViews} {realViews === 1 ? "View" : "Views"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => openFeedInteractionsModal(post, "COMMENTS")}
+                          className="flex items-center gap-1.5 hover:text-amber-300 transition-colors font-bold cursor-pointer"
+                          title="Click to see list of comments and members"
+                        >
+                          <MessageSquare className="w-4 h-4 text-blue-400" /> {realComments} {realComments === 1 ? "Comment" : "Comments"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => openFeedInteractionsModal(post, "LIKES")}
+                          className="flex items-center gap-1.5 text-emerald-400 font-bold hover:underline hover:text-amber-300 transition-colors cursor-pointer"
+                          title="Click to see list of members who liked this post"
+                        >
+                          <ThumbsUp className={`w-4 h-4 ${post.hasLiked ? "fill-emerald-400" : ""}`} /> {realLikes} {realLikes === 1 ? "Like" : "Likes"}
+                        </button>
+                      </div>
+                    );
+                  })()}
+
                   {/* Post Actions Bar: Reply | Save / Favorite | Like */}
                   <div className="flex items-center justify-between pt-3 border-t border-white/10 text-xs">
                     <button
@@ -597,7 +710,7 @@ export default function DashboardPage() {
                           : "bg-white/5 text-velora-textMuted border-white/10 hover:text-amber-300"
                       }`}
                     >
-                      <ThumbsUp className="w-4 h-4" /> {post.likes} Likes
+                      <ThumbsUp className={`w-4 h-4 ${post.hasLiked ? "fill-emerald-400" : ""}`} /> {post.hasLiked ? "Liked" : "Like"}
                     </button>
                   </div>
 
@@ -799,6 +912,80 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               ))}
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Feed Interaction Modal (Viewers / Commenters / Likers) */}
+      {feedInteractionsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <Card variant="goldBorder" className="w-full max-w-md p-6 space-y-4 text-left bg-velora-card relative shadow-2xl">
+            <button
+              onClick={() => setFeedInteractionsModal(null)}
+              className="absolute top-4 right-4 text-velora-textMuted hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="space-y-1 border-b border-white/10 pb-3">
+              <h3 className="text-base font-serif font-bold text-white flex items-center gap-2">
+                {feedInteractionsModal.type === "VIEWS" && <Eye className="w-5 h-5 text-amber-400" />}
+                {feedInteractionsModal.type === "COMMENTS" && <MessageSquare className="w-5 h-5 text-blue-400" />}
+                {feedInteractionsModal.type === "LIKES" && <ThumbsUp className="w-5 h-5 text-emerald-400 fill-emerald-400" />}
+                {feedInteractionsModal.type === "VIEWS" && "Members Who Viewed"}
+                {feedInteractionsModal.type === "COMMENTS" && "Members Who Commented"}
+                {feedInteractionsModal.type === "LIKES" && "Members Who Liked"}
+              </h3>
+              <p className="text-xs text-amber-300 font-semibold truncate">
+                "{feedInteractionsModal.title}" • {feedInteractionsModal.users.length} {feedInteractionsModal.users.length === 1 ? "Member" : "Members"}
+              </p>
+            </div>
+
+            <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+              {feedInteractionsModal.users.length === 0 ? (
+                <p className="text-xs text-velora-textMuted italic text-center py-6">
+                  No {feedInteractionsModal.type.toLowerCase()} recorded yet.
+                </p>
+              ) : (
+                feedInteractionsModal.users.map((u, idx) => (
+                  <div
+                    key={u.id + "-" + idx}
+                    className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between hover:border-amber-400/40 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full border border-amber-400/40 overflow-hidden shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={u.avatarUrl} alt={u.name} className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-white flex items-center gap-1">
+                          {u.name}
+                          {u.genderSymbol && <span className="text-amber-400 text-xs">{u.genderSymbol}</span>}
+                          {u.isVerified && <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />}
+                        </p>
+                        {u.commentText ? (
+                          <p className="text-[11px] text-amber-200/90 italic font-serif">"{u.commentText}"</p>
+                        ) : (
+                          <p className="text-[10px] text-velora-textMuted font-mono">{u.timestamp}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <Link href={`/profile/${u.id === "me" ? "me" : u.id}`} onClick={() => setFeedInteractionsModal(null)}>
+                      <Button variant="glass" size="sm" className="text-[11px] font-bold">
+                        View Profile
+                      </Button>
+                    </Link>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="pt-2 border-t border-white/10 flex justify-end">
+              <Button variant="glass" size="sm" onClick={() => setFeedInteractionsModal(null)} className="text-xs">
+                Close
+              </Button>
             </div>
           </Card>
         </div>
