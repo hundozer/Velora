@@ -326,19 +326,34 @@ export default function DatingMarketplacePage() {
       }
     }
 
-    const isUserVerified = Boolean(profile?.verified || (profile as any)?.isVerified || (user as any)?.isVerified);
+    const isUserVerified = Boolean(
+      profile?.verified || (profile as any)?.isVerified || (user as any)?.isVerified || profile?.reputationBadge === "IDENTITY_VERIFIED"
+    );
     if (ad.requireVerified && !isUserVerified) {
       return {
         canReply: false,
-        reason: "Replies restricted: This dating ad requires an Identity Verified profile with a Biometric Badge.",
+        reason: "Replies restricted by creator: Only verified users (members who completed selfie identity verification) can reply to this ad.",
       };
     }
 
-    const isUserVip = (profile as any)?.tier === "VIP" || (profile as any)?.membershipTier === "VIP";
+    const isUserVip = (profile as any)?.tier === "VIP" || (profile as any)?.membershipTier === "VIP" || user?.role === "ADMIN";
     if (ad.requireVip && !isUserVip) {
       return {
         canReply: false,
-        reason: "Replies restricted: This dating ad is reserved for VIP Members only.",
+        reason: "Replies restricted by creator: Only users who have bought a VIP membership can reply to this ad.",
+      };
+    }
+
+    const hasMediaAlbums = Boolean(
+      ((profile as any)?.albums && (profile as any).albums.length > 0) ||
+      ((profile as any)?.videos && (profile as any).videos.length > 0) ||
+      (profile as any)?.hasMedia ||
+      user?.role === "ADMIN"
+    );
+    if (ad.requireMedia && !hasMediaAlbums) {
+      return {
+        canReply: false,
+        reason: "Replies restricted by creator: Only users who have uploaded photo albums or video albums to their profile can reply to this ad.",
       };
     }
 
