@@ -46,7 +46,7 @@ export const Navbar: React.FC = () => {
     <header className="sticky top-0 z-40 w-full glass-panel border-b border-white/10 bg-velora-bg/85 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-3 group shrink-0">
+        <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-3 group shrink-0">
           <div className="w-10 h-10 rounded-full bg-gold-gradient p-[1px] shadow-gold-glow flex items-center justify-center">
             <div className="w-full h-full bg-velora-bg rounded-full flex items-center justify-center group-hover:bg-velora-bg/80 transition-colors">
               <span className="font-serif font-bold text-lg text-velora-gold">I</span>
