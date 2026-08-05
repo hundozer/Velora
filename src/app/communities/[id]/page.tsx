@@ -54,7 +54,7 @@ export default function SingleCommunityChatroomPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
-  // Update state when room changes
+  // Update state when room changes and ensure logged in user is included in members count
   useEffect(() => {
     const found = DEFAULT_COMMUNITY_CHATROOMS.find(
       (r) => r.id === rawId || r.slug === rawId
@@ -62,9 +62,55 @@ export default function SingleCommunityChatroomPage() {
     if (found) {
       setCurrentRoom(found);
       setMessages(found.messages);
-      setMembers(found.members);
+
+      let roomMembers = [...found.members];
+      // Automatically include current logged in user in room members if not already listed
+      if (
+        user &&
+        !roomMembers.some(
+          (m) =>
+            m.id === user.id ||
+            m.displayName === (profile?.displayName || user.username)
+        )
+      ) {
+        const userGenderStr = String(
+          profile?.gender || (user as any)?.gender || "MALE"
+        ).toUpperCase();
+        let userGender: "FEMALE" | "MALE" | "COUPLE" | "TRANSGENDER" = "MALE";
+        let userSymbol = "♂";
+
+        if (userGenderStr.includes("FEMALE")) {
+          userGender = "FEMALE";
+          userSymbol = "♀";
+        } else if (userGenderStr.includes("COUPLE")) {
+          userGender = "COUPLE";
+          userSymbol = "👫";
+        } else if (userGenderStr.includes("TRANS")) {
+          userGender = "TRANSGENDER";
+          userSymbol = "⚧";
+        }
+
+        roomMembers.unshift({
+          id: user.id || "me-" + Date.now(),
+          displayName: profile?.displayName || user.username || "You",
+          avatarUrl:
+            profile?.avatarUrl ||
+            user.avatarUrl ||
+            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
+          gender: userGender,
+          genderSymbol: userSymbol,
+          age: profile?.age || 27,
+          location: profile?.city
+            ? `${profile.city}, ${profile.country || ""}`
+            : "Prague, CZ",
+          isVerified: profile?.verified ?? true,
+          isOnline: true,
+          statusText: "Active in chatroom",
+        });
+      }
+      setMembers(roomMembers);
     }
-  }, [rawId]);
+  }, [rawId, user, profile]);
 
   // Auto-scroll chat to bottom
   useEffect(() => {
@@ -222,7 +268,7 @@ export default function SingleCommunityChatroomPage() {
               <div className="flex items-center gap-2 shrink-0">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
                 <span className="text-xs font-mono font-bold text-emerald-300">
-                  {currentRoom.activeOnlineCount} Online
+                  {members.length} {members.length === 1 ? "Member Online" : "Members Online"}
                 </span>
               </div>
             </div>

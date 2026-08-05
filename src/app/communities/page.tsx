@@ -93,7 +93,7 @@ export default function CommunitiesPage() {
 
                   <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                    {room.activeOnlineCount} Online
+                    {room.members.length} Members Online
                   </span>
                 </div>
 
