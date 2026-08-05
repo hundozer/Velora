@@ -184,9 +184,9 @@ export default function SingleProfilePage() {
   const [mediaTab, setMediaTab] = useState<"PHOTOS" | "VIDEOS" | "ADS">("PHOTOS");
 
   React.useEffect(() => {
-    if (tabQuery === "PHOTOS") setMediaTab("PHOTOS");
-    else if (tabQuery === "VIDEOS") setMediaTab("VIDEOS");
-    else if (tabQuery === "ADS") setMediaTab("ADS");
+    if (tabQuery === "PHOTOS" || tabQuery === "photos" || tabQuery === "albums") setMediaTab("PHOTOS");
+    else if (tabQuery === "VIDEOS" || tabQuery === "videos") setMediaTab("VIDEOS");
+    else if (tabQuery === "ADS" || tabQuery === "ads") setMediaTab("ADS");
   }, [tabQuery]);
 
   // Rich Photo Albums

@@ -229,7 +229,7 @@ const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
   },
   {
     id: "alb-f3",
-    ownerId: "usr-elena",
+    ownerId: "prof-2",
     ownerName: "Elena Vance",
     ownerGender: "FEMALE",
     title: "French Riviera Sunbathing",
@@ -239,7 +239,7 @@ const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
   },
   {
     id: "alb-f4",
-    ownerId: "usr-elena",
+    ownerId: "prof-2",
     ownerName: "Elena Vance",
     ownerGender: "FEMALE",
     title: "Sunset Champagne Lounge",
@@ -249,8 +249,8 @@ const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
   },
   {
     id: "alb-f5",
-    ownerId: "usr-sophia",
-    ownerName: "Sophia K.",
+    ownerId: "prof-4",
+    ownerName: "Chloe V.",
     ownerGender: "FEMALE",
     title: "Riviera Glamour & Poolside",
     imageUrl: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=800&q=80",
@@ -259,8 +259,8 @@ const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
   },
   {
     id: "alb-f6",
-    ownerId: "usr-sophia",
-    ownerName: "Sophia K.",
+    ownerId: "prof-4",
+    ownerName: "Chloe V.",
     ownerGender: "FEMALE",
     title: "Summer Sunset & High Heels",
     imageUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80",
@@ -269,7 +269,7 @@ const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
   },
   {
     id: "alb-f7",
-    ownerId: "usr-tmazi",
+    ownerId: "prof-2",
     ownerName: "TmaziMary",
     ownerGender: "FEMALE",
     title: "Monaco Harbor Suite Teaser",
@@ -279,7 +279,7 @@ const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
   },
   {
     id: "alb-f8",
-    ownerId: "usr-tmazi",
+    ownerId: "prof-2",
     ownerName: "TmaziMary",
     ownerGender: "FEMALE",
     title: "Private Villa Photoshoot",
@@ -311,7 +311,7 @@ const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
   },
   {
     id: "alb-m3",
-    ownerId: "usr-lucas",
+    ownerId: "prof-1",
     ownerName: "Lucas R.",
     ownerGender: "MALE",
     title: "Mediterranean Yacht Expedition",
@@ -321,7 +321,7 @@ const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
   },
   {
     id: "alb-m4",
-    ownerId: "usr-lucas",
+    ownerId: "prof-1",
     ownerName: "Lucas R.",
     ownerGender: "MALE",
     title: "Monte Carlo Casino Salon",
@@ -331,7 +331,7 @@ const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
   },
   {
     id: "alb-m5",
-    ownerId: "usr-marco",
+    ownerId: "prof-1",
     ownerName: "Marco B.",
     ownerGender: "MALE",
     title: "Vintage Automobile & Cellar",
@@ -341,7 +341,7 @@ const ALL_SIDEBAR_ALBUMS: SidebarAlbumItem[] = [
   },
   {
     id: "alb-m6",
-    ownerId: "usr-dodo",
+    ownerId: "prof-1",
     ownerName: "DODO0666",
     ownerGender: "MALE",
     title: "Private Studio Beat Sessions",
@@ -681,35 +681,27 @@ export default function DashboardPage() {
 
             <div className="space-y-3">
               {sidebarBestAlbums.map((alb) => (
-                <div
-                  key={alb.id}
-                  onClick={() =>
-                    setActivePhotoModal({
-                      photos: [alb.imageUrl],
-                      title: `${alb.ownerName} – ${alb.title}`,
-                      index: 0,
-                    })
-                  }
-                  className="relative h-44 rounded-2xl bg-black overflow-hidden border border-white/10 group cursor-pointer"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={alb.imageUrl}
-                    alt={alb.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                  <div className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-black/70 backdrop-blur-md border border-white/15 text-[10px] font-bold text-white flex items-center gap-1.5 shadow-lg">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                    {alb.ownerName}
+                <Link key={alb.id} href={`/profile/${alb.ownerId}?tab=PHOTOS`} className="block">
+                  <div className="relative h-44 rounded-2xl bg-black overflow-hidden border border-white/10 group cursor-pointer">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={alb.imageUrl}
+                      alt={alb.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                    <div className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-black/70 backdrop-blur-md border border-white/15 text-[10px] font-bold text-white flex items-center gap-1.5 shadow-lg">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                      {alb.ownerName}
+                    </div>
+                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-white">
+                      <span className="font-bold drop-shadow-md truncate max-w-[140px]">{alb.title}</span>
+                      <span className="text-[10px] font-mono text-amber-300 bg-black/60 px-2 py-0.5 rounded-full border border-white/10 shrink-0">
+                        {alb.views} views
+                      </span>
+                    </div>
                   </div>
-                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-white">
-                    <span className="font-bold drop-shadow-md truncate max-w-[140px]">{alb.title}</span>
-                    <span className="text-[10px] font-mono text-amber-300 bg-black/60 px-2 py-0.5 rounded-full border border-white/10 shrink-0">
-                      {alb.views} views
-                    </span>
-                  </div>
-                </div>
+                </Link>
               ))}
             </div>
           </Card>
@@ -721,28 +713,20 @@ export default function DashboardPage() {
             </h3>
             <div className="grid grid-cols-2 gap-2">
               {sidebarLatestAlbums.map((alb) => (
-                <div
-                  key={alb.id}
-                  onClick={() =>
-                    setActivePhotoModal({
-                      photos: [alb.imageUrl],
-                      title: `${alb.ownerName} – ${alb.title}`,
-                      index: 0,
-                    })
-                  }
-                  className="relative h-28 rounded-xl bg-black border border-white/10 overflow-hidden group cursor-pointer"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={alb.imageUrl}
-                    alt={alb.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="absolute bottom-1.5 left-1.5 right-1.5 text-[10px] font-bold text-white truncate drop-shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
-                    {alb.ownerName}
+                <Link key={alb.id} href={`/profile/${alb.ownerId}?tab=PHOTOS`} className="block">
+                  <div className="relative h-28 rounded-xl bg-black border border-white/10 overflow-hidden group cursor-pointer">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={alb.imageUrl}
+                      alt={alb.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute bottom-1.5 left-1.5 right-1.5 text-[10px] font-bold text-white truncate drop-shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                      {alb.ownerName}
+                    </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </Card>
