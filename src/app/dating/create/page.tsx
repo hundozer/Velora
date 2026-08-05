@@ -172,7 +172,7 @@ export default function CreateDatingAdPage() {
       console.error("Failed to save ad to Supabase:", err);
     }
 
-    router.push("/dating");
+    router.push(`/dating?category=${encodeURIComponent(formCategory)}`);
   };
 
   if (!user) {

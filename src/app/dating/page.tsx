@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
@@ -221,24 +222,49 @@ const INITIAL_ADS: DatingAdItem[] = [
 import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
 import { getAllActiveAds, createAd, deleteAd } from "@/lib/supabase/datingAdService";
 
-export default function DatingMarketplacePage() {
+function DatingMarketplaceContent() {
   const { user, profile } = useAuth();
+  const searchParams = useSearchParams();
 
-  const [adsList, setAdsList] = useState<DatingAdItem[]>(INITIAL_ADS);
+  // Lazy load local ads first so newly created ads are never lost on mount
+  const [adsList, setAdsList] = useState<DatingAdItem[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("intimo_all_dating_ads");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        } catch (e) {
+          console.error("Failed to parse local dating ads:", e);
+        }
+      }
+    }
+    return INITIAL_ADS;
+  });
+
   const [isLoadingAds, setIsLoadingAds] = useState(true);
 
-  // Fetch live dating ads from Supabase on mount
+  // Sync state to local cache whenever updated
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && adsList.length > 0) {
+      localStorage.setItem("intimo_all_dating_ads", JSON.stringify(adsList));
+    }
+  }, [adsList]);
+
+  // Fetch live dating ads from Supabase on mount & merge with local ads
   React.useEffect(() => {
     async function loadAds() {
       try {
         const { data, error } = await getAllActiveAds();
         if (data && data.length > 0) {
-          setAdsList(data);
-        } else if (typeof window !== "undefined") {
-          const saved = localStorage.getItem("intimo_all_dating_ads");
-          if (saved) {
-            setAdsList(JSON.parse(saved));
-          }
+          setAdsList((prev) => {
+            const map = new Map<string, DatingAdItem>();
+            prev.forEach((ad) => map.set(ad.id, ad));
+            data.forEach((ad) => map.set(ad.id, ad));
+            return Array.from(map.values());
+          });
         }
       } catch (e) {
         console.error("Failed to load dating ads from Supabase:", e);
@@ -249,16 +275,24 @@ export default function DatingMarketplacePage() {
     loadAds();
   }, []);
 
-  // Sync state to local cache as fallback
-  React.useEffect(() => {
-    if (typeof window !== "undefined" && adsList.length > 0) {
-      localStorage.setItem("intimo_all_dating_ads", JSON.stringify(adsList));
-    }
-  }, [adsList]);
-
   const [selectedCategory, setSelectedCategory] = useState("Show all categories");
   const [selectedCountry, setSelectedCountry] = useState("All Countries");
   const [selectedRegion, setSelectedRegion] = useState("All Cities / Regions");
+
+  // Read category / tab from URL searchParams
+  React.useEffect(() => {
+    const cat = searchParams?.get("category");
+    const tab = searchParams?.get("tab");
+    if (cat) {
+      setSelectedCategory(cat);
+      setSelectedCountry("All Countries");
+      setSelectedRegion("All Cities / Regions");
+    }
+    if (tab === "my-ads") {
+      setActiveTab("my-ads");
+    }
+  }, [searchParams]);
+
   const [ageRange, setAgeRange] = useState<[number, number]>([18, 100]);
   const [activeFilterPill, setActiveFilterPill] = useState<string | null>(null);
 
@@ -493,7 +527,12 @@ export default function DatingMarketplacePage() {
   const filteredAds = adsList.filter((ad) => {
     if (activeTab === "my-ads") {
       // Show all user's ads (both active & expired)
-      const isMyAd = ad.authorId === user?.id || ad.authorId === "me";
+      const isMyAd =
+        ad.authorId === user?.id ||
+        ad.authorId === profile?.id ||
+        ad.authorId === "me" ||
+        (profile?.displayName && ad.authorName === profile.displayName) ||
+        (user?.username && ad.authorName === user.username);
       if (!isMyAd) return false;
     } else {
       // Browse Marketplace: Show active ads ONLY! Expired ads disappear to prevent clutter!
@@ -1242,5 +1281,13 @@ export default function DatingMarketplacePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DatingMarketplacePage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-amber-400 font-mono">Loading Dating Marketplace...</div>}>
+      <DatingMarketplaceContent />
+    </Suspense>
   );
 }
