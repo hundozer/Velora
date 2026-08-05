@@ -1195,9 +1195,18 @@ export default function SingleProfilePage() {
               </div>
 
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-3xl font-serif font-bold text-white">{profile.displayName}, {profile.age}</h1>
                   <ShieldCheck className="w-6 h-6 text-emerald-400" />
+                  {profile.showOnlineStatus !== false && profile.isOnline ? (
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Active Online
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-0.5 rounded-full bg-gray-500/20 text-gray-400 text-[10px] font-bold border border-gray-500/30 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-400" /> Offline
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-velora-gold font-medium flex items-center gap-1">
                   {(profile.location || profile.city || profile.country) ? (
@@ -1314,6 +1323,7 @@ export default function SingleProfilePage() {
                               followersCount: profile.followersCount || 8,
                               photoCount: userPhotoAlbums.length || 12,
                               videoCount: userVideos.length || 4,
+                              isOnline: profile.showOnlineStatus !== false && (profile.isOnline ?? false),
                             },
                           })
                         );

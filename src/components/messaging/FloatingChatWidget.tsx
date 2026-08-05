@@ -134,6 +134,8 @@ export function FloatingChatWidget({ chatUser, onClose }: FloatingChatWidgetProp
     }, 2500);
   };
 
+  const isOnline = chatUser.isOnline ?? false;
+
   // Minimized Floating Pill Render matching Amateri reference
   if (isMinimized) {
     return (
@@ -145,7 +147,11 @@ export function FloatingChatWidget({ chatUser, onClose }: FloatingChatWidgetProp
             alt={chatUser.displayName}
             className="w-8 h-8 rounded-full object-cover border border-white/20"
           />
-          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-black" />
+          {isOnline ? (
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-black" title="Online" />
+          ) : (
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-gray-500 rounded-full border-2 border-black" title="Offline" />
+          )}
         </div>
         <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => setIsMinimized(false)}>
           <span className="text-xs font-bold text-white">{chatUser.displayName}</span>
@@ -191,7 +197,11 @@ export function FloatingChatWidget({ chatUser, onClose }: FloatingChatWidgetProp
               alt={chatUser.displayName}
               className="w-9 h-9 rounded-full object-cover border border-white/20"
             />
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-black" />
+            {isOnline ? (
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-black" title="Online" />
+            ) : (
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-gray-500 rounded-full border-2 border-black" title="Offline" />
+            )}
           </div>
           <div>
             <div className="flex items-center gap-1.5">
@@ -203,9 +213,15 @@ export function FloatingChatWidget({ chatUser, onClose }: FloatingChatWidgetProp
                 <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 fill-blue-400/20" />
               )}
             </div>
-            <p className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Active now
-            </p>
+            {isOnline ? (
+              <p className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Active now
+              </p>
+            ) : (
+              <p className="text-[10px] text-gray-400 font-mono flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-gray-400" /> Offline
+              </p>
+            )}
           </div>
         </div>
 
