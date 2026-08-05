@@ -1,0 +1,397 @@
+export interface ChatMember {
+  id: string;
+  displayName: string;
+  avatarUrl: string;
+  gender: "FEMALE" | "MALE" | "COUPLE" | "TRANSGENDER";
+  genderSymbol: string;
+  age: number;
+  location: string;
+  isVerified: boolean;
+  isOnline: boolean;
+  statusText?: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderAvatar: string;
+  senderGender: "FEMALE" | "MALE" | "COUPLE" | "TRANSGENDER";
+  senderGenderSymbol: string;
+  senderVerified: boolean;
+  text: string;
+  mediaUrl?: string;
+  createdAt: string;
+}
+
+export interface CommunityChatroom {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  badge: string;
+  description: string;
+  activeOnlineCount: number;
+  members: ChatMember[];
+  messages: ChatMessage[];
+}
+
+export const DEFAULT_COMMUNITY_CHATROOMS: CommunityChatroom[] = [
+  {
+    id: "room-sexpartner-finder",
+    name: "SexPartner Finder",
+    slug: "sexpartner-finder",
+    icon: "🔥",
+    badge: "Discreet Hookups & Encounters",
+    description: "Real-time adult lounge for verified singles & couples seeking discreet local adult encounters, chemistry, and casual meetings.",
+    activeOnlineCount: 142,
+    members: [
+      {
+        id: "usr-101",
+        displayName: "Valerie Night",
+        avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+        gender: "FEMALE",
+        genderSymbol: "♀",
+        age: 26,
+        location: "Prague, CZ",
+        isVerified: true,
+        isOnline: true,
+        statusText: "Looking for drinks tonight in Old Town 🍸",
+      },
+      {
+        id: "usr-102",
+        displayName: "Zsolt & Partner",
+        avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80",
+        gender: "COUPLE",
+        genderSymbol: "👫",
+        age: 31,
+        location: "Budapest, HU",
+        isVerified: true,
+        isOnline: true,
+        statusText: "Open-minded couple seeking female companion",
+      },
+      {
+        id: "usr-103",
+        displayName: "Alexander Vance",
+        avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
+        gender: "MALE",
+        genderSymbol: "♂",
+        age: 29,
+        location: "Vienna, AT",
+        isVerified: true,
+        isOnline: true,
+        statusText: "Executive host with private penthouse lounge",
+      },
+      {
+        id: "usr-104",
+        displayName: "Chloe Rose",
+        avatarUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=150&q=80",
+        gender: "FEMALE",
+        genderSymbol: "♀",
+        age: 24,
+        location: "Berlin, DE",
+        isVerified: true,
+        isOnline: true,
+        statusText: "Visiting Munich this weekend ✈️",
+      },
+      {
+        id: "usr-105",
+        displayName: "Nikita & Alex",
+        avatarUrl: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=150&q=80",
+        gender: "COUPLE",
+        genderSymbol: "👫",
+        age: 28,
+        location: "Bratislava, SK",
+        isVerified: true,
+        isOnline: true,
+        statusText: "Exploring swinger parties & discreet meets",
+      },
+      {
+        id: "usr-106",
+        displayName: "Sienna Trans",
+        avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80",
+        gender: "TRANSGENDER",
+        genderSymbol: "⚧",
+        age: 27,
+        location: "Warsaw, PL",
+        isVerified: true,
+        isOnline: true,
+        statusText: "Trans beauty available for late night chats",
+      },
+    ],
+    messages: [
+      {
+        id: "msg-1",
+        senderId: "usr-101",
+        senderName: "Valerie Night",
+        senderAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+        senderGender: "FEMALE",
+        senderGenderSymbol: "♀",
+        senderVerified: true,
+        text: "Hey everyone! Anyone in Prague Old Town tonight for a cocktail at an exclusive lounge? 🍸",
+        createdAt: "20 mins ago",
+      },
+      {
+        id: "msg-2",
+        senderId: "usr-102",
+        senderName: "Zsolt & Partner",
+        senderAvatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80",
+        senderGender: "COUPLE",
+        senderGenderSymbol: "👫",
+        senderVerified: true,
+        text: "Hi Valerie! We're visiting Prague tomorrow evening, would love to connect for drinks!",
+        createdAt: "14 mins ago",
+      },
+      {
+        id: "msg-3",
+        senderId: "usr-103",
+        senderName: "Alexander Vance",
+        senderAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
+        senderGender: "MALE",
+        senderGenderSymbol: "♂",
+        senderVerified: true,
+        text: "Welcome all! Remember to keep invitations discreet. Check my profile for penthouse lounge events.",
+        createdAt: "5 mins ago",
+      },
+    ],
+  },
+  {
+    id: "room-chatting",
+    name: "Chatting",
+    slug: "chatting",
+    icon: "💬",
+    badge: "Open Lounge & Casual Talk",
+    description: "Relaxed, adult open lounge to socialize, chat, share lifestyle stories, and meet members from around Europe.",
+    activeOnlineCount: 98,
+    members: [
+      {
+        id: "usr-201",
+        displayName: "Elena Vance",
+        avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+        gender: "FEMALE",
+        genderSymbol: "♀",
+        age: 26,
+        location: "Vienna, AT",
+        isVerified: true,
+        isOnline: true,
+        statusText: "Art curator & wine lover 🍷",
+      },
+      {
+        id: "usr-202",
+        displayName: "Marcus King",
+        avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
+        gender: "MALE",
+        genderSymbol: "♂",
+        age: 32,
+        location: "Prague, CZ",
+        isVerified: true,
+        isOnline: true,
+        statusText: "Coffee enthusiast & nocturnal chatter",
+      },
+      {
+        id: "usr-203",
+        displayName: "Sophia & Liam",
+        avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80",
+        gender: "COUPLE",
+        genderSymbol: "👫",
+        age: 30,
+        location: "Budapest, HU",
+        isVerified: true,
+        isOnline: true,
+        statusText: "Planning our weekend trip to Austria",
+      },
+    ],
+    messages: [
+      {
+        id: "msg-201",
+        senderId: "usr-201",
+        senderName: "Elena Vance",
+        senderAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+        senderGender: "FEMALE",
+        senderGenderSymbol: "♀",
+        senderVerified: true,
+        text: "Good evening everyone! What's your favorite late-night spot in Central Europe?",
+        createdAt: "30 mins ago",
+      },
+      {
+        id: "msg-202",
+        senderId: "usr-202",
+        senderName: "Marcus King",
+        senderAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
+        senderGender: "MALE",
+        senderGenderSymbol: "♂",
+        senderVerified: true,
+        text: "Definitely the rooftop bar in Old Town Prague! Spectacular view at midnight.",
+        createdAt: "18 mins ago",
+      },
+    ],
+  },
+  {
+    id: "room-bdsm",
+    name: "BDSM",
+    slug: "bdsm",
+    icon: "⛓️",
+    badge: "Kink, Fetish & Leather",
+    description: "Dedicated safe space for BDSM, Dominance, Submission, Shibari, bondage, and adult kink discussions.",
+    activeOnlineCount: 76,
+    members: [
+      {
+        id: "usr-301",
+        displayName: "Mistress V",
+        avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+        gender: "FEMALE",
+        genderSymbol: "♀",
+        age: 31,
+        location: "Berlin, DE",
+        isVerified: true,
+        isOnline: true,
+        statusText: "Dominant • Shibari practitioner & Studio owner",
+      },
+      {
+        id: "usr-302",
+        displayName: "Submissive Jack",
+        avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
+        gender: "MALE",
+        genderSymbol: "♂",
+        age: 28,
+        location: "Prague, CZ",
+        isVerified: true,
+        isOnline: true,
+        statusText: "Respectful sub seeking strict instruction",
+      },
+      {
+        id: "usr-303",
+        displayName: "Kinky Couple",
+        avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80",
+        gender: "COUPLE",
+        genderSymbol: "👫",
+        age: 33,
+        location: "Vienna, AT",
+        isVerified: true,
+        isOnline: true,
+        statusText: "Dominant couple hosting private dungeon sessions",
+      },
+    ],
+    messages: [
+      {
+        id: "msg-301",
+        senderId: "usr-301",
+        senderName: "Mistress V",
+        senderAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+        senderGender: "FEMALE",
+        senderGenderSymbol: "♀",
+        senderVerified: true,
+        text: "Welcome to the BDSM sanctuary. Always state your boundaries and safe words clearly before connecting.",
+        createdAt: "1 hour ago",
+      },
+    ],
+  },
+  {
+    id: "room-wet-dreams",
+    name: "Wet dreams",
+    slug: "wet-dreams",
+    icon: "🌙",
+    badge: "Erotic Fantasies & Confessions",
+    description: "Share intimate night dreams, erotic fantasies, sensory desires, and passionate adult secrets in confidence.",
+    activeOnlineCount: 65,
+    members: [
+      {
+        id: "usr-401",
+        displayName: "Midnight Desire",
+        avatarUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=150&q=80",
+        gender: "FEMALE",
+        genderSymbol: "♀",
+        age: 25,
+        location: "Budapest, HU",
+        isVerified: true,
+        isOnline: true,
+        statusText: "Sharing late night erotic confessions 💭",
+      },
+      {
+        id: "usr-402",
+        displayName: "Dreamer Luc",
+        avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
+        gender: "MALE",
+        genderSymbol: "♂",
+        age: 30,
+        location: "Prague, CZ",
+        isVerified: true,
+        isOnline: true,
+        statusText: "Passionate storyteller",
+      },
+    ],
+    messages: [
+      {
+        id: "msg-401",
+        senderId: "usr-401",
+        senderName: "Midnight Desire",
+        senderAvatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=150&q=80",
+        senderGender: "FEMALE",
+        senderGenderSymbol: "♀",
+        senderVerified: true,
+        text: "Had the most incredible vivid dream last night about a secret candlelit villa encounter...",
+        createdAt: "45 mins ago",
+      },
+    ],
+  },
+  {
+    id: "room-gay-lesbi-bi",
+    name: "Gay/Lesbi/Bi",
+    slug: "gay-lesbi-bi",
+    icon: "🌈",
+    badge: "LGBTQ+ Intimate Circle",
+    description: "Vibrant, inclusive chatroom for Gay, Lesbian, Bisexual, Transgender, and Queer adult connections across Europe.",
+    activeOnlineCount: 112,
+    members: [
+      {
+        id: "usr-501",
+        displayName: "Chloe & Valerie",
+        avatarUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=150&q=80",
+        gender: "FEMALE",
+        genderSymbol: "♀",
+        age: 26,
+        location: "Prague, CZ",
+        isVerified: true,
+        isOnline: true,
+        statusText: "Bisexual female duo seeking open-minded friends",
+      },
+      {
+        id: "usr-502",
+        displayName: "David Pride",
+        avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
+        gender: "MALE",
+        genderSymbol: "♂",
+        age: 31,
+        location: "Berlin, DE",
+        isVerified: true,
+        isOnline: true,
+        statusText: "Gay host in Kreuzberg",
+      },
+      {
+        id: "usr-503",
+        displayName: "Sienna Trans",
+        avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80",
+        gender: "TRANSGENDER",
+        genderSymbol: "⚧",
+        age: 27,
+        location: "Vienna, AT",
+        isVerified: true,
+        isOnline: true,
+        statusText: "Trans & proud 🏳️‍⚧️",
+      },
+    ],
+    messages: [
+      {
+        id: "msg-501",
+        senderId: "usr-501",
+        senderName: "Chloe & Valerie",
+        senderAvatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=150&q=80",
+        senderGender: "FEMALE",
+        senderGenderSymbol: "♀",
+        senderVerified: true,
+        text: "Hi everyone! Celebrating Pride weekend in Prague! Anyone attending the rooftop party?",
+        createdAt: "10 mins ago",
+      },
+    ],
+  },
+];

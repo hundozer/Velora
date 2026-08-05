@@ -1,293 +1,491 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { MOCK_COMMUNITIES, MOCK_COMMUNITY_POSTS } from "@/lib/mockData";
-import { CommunityPost } from "@/types";
+import { useParams, useRouter } from "next/navigation";
+import {
+  DEFAULT_COMMUNITY_CHATROOMS,
+  CommunityChatroom,
+  ChatMessage,
+  ChatMember,
+} from "@/lib/data/communitiesChatrooms";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
+import { Input } from "@/components/ui/Input";
+import { useAuth } from "@/context/AuthContext";
 import {
   Users,
   MessageSquare,
-  Heart,
-  Share2,
   Send,
   ShieldCheck,
-  Lock,
   Plus,
   Image as ImageIcon,
   CheckCircle2,
+  Filter,
+  Sparkles,
+  ArrowLeft,
+  Lock,
+  User,
+  Heart,
+  X,
 } from "lucide-react";
 
-export default function SingleCommunityPage() {
+export default function SingleCommunityChatroomPage() {
   const params = useParams();
-  const communityId = (params?.id as string) || "com-1";
+  const router = useRouter();
+  const rawId = (params?.id as string) || "room-sexpartner-finder";
+  const { user, profile } = useAuth();
 
-  const community = MOCK_COMMUNITIES.find((c) => c.id === communityId) || MOCK_COMMUNITIES[0];
+  // Find target room by id or slug
+  const [currentRoom, setCurrentRoom] = useState<CommunityChatroom>(() => {
+    const found = DEFAULT_COMMUNITY_CHATROOMS.find(
+      (r) => r.id === rawId || r.slug === rawId
+    );
+    return found || DEFAULT_COMMUNITY_CHATROOMS[0];
+  });
 
-  const [posts, setPosts] = useState<CommunityPost[]>(MOCK_COMMUNITY_POSTS);
-  const [postTitle, setPostTitle] = useState("");
-  const [postContent, setPostContent] = useState("");
-  const [commentInput, setCommentInput] = useState<{ [postId: string]: string }>({});
+  const [messages, setMessages] = useState<ChatMessage[]>(currentRoom.messages);
+  const [members, setMembers] = useState<ChatMember[]>(currentRoom.members);
+  const [inputMessage, setInputMessage] = useState("");
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [genderFilter, setGenderFilter] = useState<string>("ALL");
+  const [selectedMember, setSelectedMember] = useState<ChatMember | null>(null);
 
-  const handleCreatePost = () => {
-    if (!postContent.trim()) return;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatBottomRef = useRef<HTMLDivElement>(null);
 
-    const newPost: CommunityPost = {
-      id: "post-" + Date.now(),
-      communityId: community.id,
-      authorName: "You",
-      authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=800&q=80",
-      authorBadge: "Verified Member",
-      title: postTitle.trim() || undefined,
-      content: postContent,
-      likesCount: 0,
-      commentsCount: 0,
-      isLiked: false,
-      comments: [],
+  // Update state when room changes
+  useEffect(() => {
+    const found = DEFAULT_COMMUNITY_CHATROOMS.find(
+      (r) => r.id === rawId || r.slug === rawId
+    );
+    if (found) {
+      setCurrentRoom(found);
+      setMessages(found.messages);
+      setMembers(found.members);
+    }
+  }, [rawId]);
+
+  // Auto-scroll chat to bottom
+  useEffect(() => {
+    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const url = URL.createObjectURL(e.target.files[0]);
+      setPhotoPreview(url);
+    }
+  };
+
+  const handleSendMessage = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!inputMessage.trim() && !photoPreview) return;
+
+    const userGenderStr = String(profile?.gender || (user as any)?.gender || "MALE").toUpperCase();
+    let userGender: "FEMALE" | "MALE" | "COUPLE" | "TRANSGENDER" = "MALE";
+    let userSymbol = "♂";
+
+    if (userGenderStr.includes("FEMALE")) {
+      userGender = "FEMALE";
+      userSymbol = "♀";
+    } else if (userGenderStr.includes("COUPLE")) {
+      userGender = "COUPLE";
+      userSymbol = "👫";
+    } else if (userGenderStr.includes("TRANS")) {
+      userGender = "TRANSGENDER";
+      userSymbol = "⚧";
+    }
+
+    const newMsg: ChatMessage = {
+      id: "msg-" + Date.now(),
+      senderId: user?.id || "me",
+      senderName: profile?.displayName || user?.username || "You",
+      senderAvatar: profile?.avatarUrl || user?.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
+      senderGender: userGender,
+      senderGenderSymbol: userSymbol,
+      senderVerified: true,
+      text: inputMessage.trim(),
+      mediaUrl: photoPreview || undefined,
       createdAt: "Just now",
     };
 
-    setPosts([newPost, ...posts]);
-    setPostTitle("");
-    setPostContent("");
+    setMessages((prev) => [...prev, newMsg]);
+    setInputMessage("");
+    setPhotoPreview(null);
   };
 
-  const handleToggleLike = (postId: string) => {
-    setPosts(
-      posts.map((p) =>
-        p.id === postId
-          ? {
-              ...p,
-              isLiked: !p.isLiked,
-              likesCount: p.isLiked ? p.likesCount - 1 : p.likesCount + 1,
-            }
-          : p
-      )
-    );
+  // Gender Color Style Helper
+  const getGenderStyle = (gender: string) => {
+    const g = String(gender).toUpperCase();
+    if (g.includes("FEMALE")) {
+      return {
+        text: "text-rose-400",
+        badge: "bg-rose-500/20 text-rose-300 border-rose-500/40",
+        bg: "bg-rose-500/10",
+        border: "border-rose-500/30",
+        symbol: "♀",
+      };
+    } else if (g.includes("COUPLE")) {
+      return {
+        text: "text-amber-300",
+        badge: "bg-amber-500/20 text-amber-300 border-amber-500/40",
+        bg: "bg-amber-500/10",
+        border: "border-amber-500/30",
+        symbol: "👫",
+      };
+    } else if (g.includes("TRANS")) {
+      return {
+        text: "text-purple-400",
+        badge: "bg-purple-500/20 text-purple-300 border-purple-500/40",
+        bg: "bg-purple-500/10",
+        border: "border-purple-500/30",
+        symbol: "⚧",
+      };
+    } else {
+      // MALE
+      return {
+        text: "text-sky-400",
+        badge: "bg-sky-500/20 text-sky-300 border-sky-500/40",
+        bg: "bg-sky-500/10",
+        border: "border-sky-500/30",
+        symbol: "♂",
+      };
+    }
   };
 
-  const handleAddComment = (postId: string) => {
-    const text = commentInput[postId];
-    if (!text || !text.trim()) return;
-
-    setPosts(
-      posts.map((p) => {
-        if (p.id === postId) {
-          const newComm = {
-            id: "c-" + Date.now(),
-            postId,
-            authorName: "You",
-            authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=800&q=80",
-            content: text,
-            createdAt: "Just now",
-          };
-          return {
-            ...p,
-            commentsCount: p.commentsCount + 1,
-            comments: [...(p.comments || []), newComm],
-          };
-        }
-        return p;
-      })
-    );
-
-    setCommentInput({ ...commentInput, [postId]: "" });
-  };
+  const filteredMembers = members.filter((m) => {
+    if (genderFilter === "ALL") return true;
+    return m.gender === genderFilter;
+  });
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-left">
-      {/* Community Header Banner */}
-      <Card variant="glass" className="p-0 overflow-hidden text-left relative">
-        <div className="h-56 w-full bg-velora-card relative">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={community.coverImageUrl} alt={community.name} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-velora-bg via-velora-bg/50 to-transparent" />
+    <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 text-left">
+      {/* Top Bar: Room Selector & Return Navigation */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
+        <div className="flex items-center gap-3">
+          <Link href="/communities">
+            <Button variant="glass" size="sm" className="text-xs font-bold gap-1.5 border-white/10">
+              <ArrowLeft className="w-4 h-4" /> Back to All Communities
+            </Button>
+          </Link>
+          <span className="text-xs text-amber-400 font-mono font-bold">• Live Topic Chatrooms</span>
         </div>
 
-        <div className="p-6 sm:p-8 space-y-4 -mt-16 relative z-10">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-velora-gold/20 text-velora-gold border border-velora-gold/40 uppercase">
-                  {community.location || "Global Community"}
-                </span>
-                {community.isPrivate && (
-                  <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
-                    <Lock className="w-3 h-3" /> Private Invite-Only
-                  </span>
-                )}
+        {/* 5 Topic Chatrooms Switcher Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {DEFAULT_COMMUNITY_CHATROOMS.map((room) => {
+            const isActive = room.id === currentRoom.id;
+            return (
+              <Link key={room.id} href={`/communities/${room.slug}`}>
+                <button
+                  type="button"
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                    isActive
+                      ? "bg-amber-400 text-black shadow-gold-glow border border-amber-400 font-bold"
+                      : "bg-white/5 text-velora-textMuted border border-white/10 hover:text-white"
+                  }`}
+                >
+                  <span>{room.icon}</span>
+                  <span>{room.name}</span>
+                </button>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* MAIN CHATROOM LAYOUT: Left Stream (lg:col-span-8) + Right Active Users Sidebar (lg:col-span-4) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* LEFT STREAM: Live Messages & Composer (lg:col-span-8) */}
+        <div className="lg:col-span-8 space-y-4">
+          <Card variant="goldBorder" className="p-0 overflow-hidden bg-velora-card flex flex-col h-[750px] shadow-2xl">
+            {/* Chatroom Header Bar */}
+            <div className="p-4 bg-black/60 border-b border-white/10 flex items-center justify-between gap-4 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-xl shrink-0">
+                  {currentRoom.icon}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-serif font-bold text-white">{currentRoom.name}</h2>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 uppercase font-mono">
+                      {currentRoom.badge}
+                    </span>
+                  </div>
+                  <p className="text-xs text-velora-textMuted leading-tight mt-0.5 line-clamp-1">
+                    {currentRoom.description}
+                  </p>
+                </div>
               </div>
 
-              <h1 className="text-3xl font-serif font-bold text-velora-textPrimary">{community.name}</h1>
-              <p className="text-xs text-velora-textMuted max-w-2xl mt-1 leading-relaxed">{community.description}</p>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                <span className="text-xs font-mono font-bold text-emerald-300">
+                  {currentRoom.activeOnlineCount} Online
+                </span>
+              </div>
             </div>
 
-            <Button variant="gold" size="sm" className="text-xs font-bold uppercase tracking-wider shrink-0 shadow-gold-glow">
-              {community.isJoined ? "Joined ✓" : "Join Club"}
-            </Button>
-          </div>
+            {/* Chat Messages Stream Area */}
+            <div className="flex-1 p-4 overflow-y-auto space-y-4 scrollbar-thin bg-black/40">
+              {messages.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
+                  <Sparkles className="w-10 h-10 text-amber-400" />
+                  <h3 className="text-base font-serif font-bold text-white">Welcome to #{currentRoom.name}</h3>
+                  <p className="text-xs text-velora-textMuted max-w-sm">
+                    Be the first to share a high-discretion thought or invitation in this lounge.
+                  </p>
+                </div>
+              ) : (
+                messages.map((msg) => {
+                  const style = getGenderStyle(msg.senderGender);
+                  return (
+                    <div key={msg.id} className="flex items-start gap-3 group text-left">
+                      <div className={`w-10 h-10 rounded-full border ${style.border} overflow-hidden bg-velora-card shrink-0 mt-0.5`}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={msg.senderAvatar} alt={msg.senderName} className="w-full h-full object-cover" />
+                      </div>
 
-          <div className="flex items-center gap-6 pt-3 border-t border-white/10 text-xs font-mono text-velora-textSecondary">
-            <span className="flex items-center gap-1">
-              <Users className="w-4 h-4 text-velora-gold" /> {community.membersCount} Members
-            </span>
-            <span className="flex items-center gap-1">
-              <MessageSquare className="w-4 h-4 text-amber-400" /> {community.postsCount} Discussions
-            </span>
-          </div>
-        </div>
-      </Card>
-
-      {/* Main Grid: Create Post + Social Feed & Rules Side Card */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left 2 Cols: Feed */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Create Post Box */}
-          <Card variant="glass" className="p-6 space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-velora-textMuted flex items-center gap-2">
-              <Plus className="w-4 h-4 text-velora-gold" />
-              Share Announcement or Discussion
-            </h3>
-
-            <input
-              type="text"
-              placeholder="Post title (optional)..."
-              value={postTitle}
-              onChange={(e) => setPostTitle(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
-            />
-
-            <textarea
-              rows={3}
-              placeholder="What's on your mind? High-discretion discussion..."
-              value={postContent}
-              onChange={(e) => setPostContent(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
-            />
-
-            <div className="flex items-center justify-between border-t border-white/10 pt-3">
-              <button className="flex items-center gap-1.5 text-xs text-velora-textMuted hover:text-velora-gold transition-colors">
-                <ImageIcon className="w-4 h-4" /> Add Photo
-              </button>
-
-              <Button
-                variant="gold"
-                size="sm"
-                className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow"
-                onClick={handleCreatePost}
-              >
-                <Send className="w-3.5 h-3.5" /> Publish Post
-              </Button>
-            </div>
-          </Card>
-
-          {/* Social Posts Thread */}
-          <div className="space-y-6">
-            {posts.map((post) => (
-              <Card key={post.id} variant="glass" className="p-6 space-y-4 text-left">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full border border-velora-gold/40 overflow-hidden bg-velora-card">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={post.authorAvatar} alt={post.authorName} className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-xs font-bold text-velora-textPrimary">{post.authorName}</h4>
-                        {post.authorBadge && (
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                            {post.authorBadge}
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {/* Color-Coded Nickname by Gender */}
+                          <span className={`text-xs font-bold ${style.text}`}>
+                            {msg.senderName}
                           </span>
-                        )}
-                      </div>
-                      <span className="text-[10px] text-velora-textMuted">{post.createdAt}</span>
-                    </div>
-                  </div>
-                </div>
 
-                {post.title && <h3 className="text-sm font-bold text-velora-textPrimary">{post.title}</h3>}
-                <p className="text-xs text-velora-textSecondary leading-relaxed whitespace-pre-line">{post.content}</p>
+                          {/* Gender Symbol Badge */}
+                          <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold border ${style.badge}`}>
+                            {msg.senderGenderSymbol}
+                          </span>
 
-                {post.mediaUrls && post.mediaUrls.length > 0 && (
-                  <div className="rounded-2xl overflow-hidden border border-white/10 max-h-80">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={post.mediaUrls[0]} alt="Post image" className="w-full h-full object-cover" />
-                  </div>
-                )}
+                          {msg.senderVerified && (
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          )}
 
-                {/* Actions & Reactions Bar */}
-                <div className="flex items-center justify-between pt-3 border-t border-white/10">
-                  <button
-                    onClick={() => handleToggleLike(post.id)}
-                    className={`flex items-center gap-1.5 text-xs font-bold transition-all ${
-                      post.isLiked ? "text-rose-400" : "text-velora-textMuted hover:text-rose-400"
-                    }`}
-                  >
-                    <Heart className={`w-4 h-4 ${post.isLiked ? "fill-rose-400" : ""}`} />
-                    {post.likesCount} Likes
-                  </button>
-
-                  <span className="text-xs text-velora-textMuted flex items-center gap-1">
-                    <MessageSquare className="w-4 h-4" /> {post.commentsCount} Comments
-                  </span>
-                </div>
-
-                {/* Comments List */}
-                {post.comments && post.comments.length > 0 && (
-                  <div className="space-y-2 pt-2 border-t border-white/5">
-                    {post.comments.map((c) => (
-                      <div key={c.id} className="p-2.5 glass-panel rounded-xl text-xs space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-velora-textPrimary">{c.authorName}</span>
-                          <span className="text-[10px] text-velora-textMuted">{c.createdAt}</span>
+                          <span className="text-[10px] text-velora-textMuted font-mono ml-auto">
+                            {msg.createdAt}
+                          </span>
                         </div>
-                        <p className="text-velora-textSecondary leading-relaxed">{c.content}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
 
-                {/* Add Comment Input */}
-                <div className="flex items-center gap-2 pt-2">
-                  <input
-                    type="text"
-                    placeholder="Write a reply..."
-                    value={commentInput[post.id] || ""}
-                    onChange={(e) => setCommentInput({ ...commentInput, [post.id]: e.target.value })}
-                    onKeyDown={(e) => e.key === "Enter" && handleAddComment(post.id)}
-                    className="flex-1 bg-white/5 border border-white/10 rounded-full px-3 py-2 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
-                  />
-                  <Button variant="gold" size="sm" className="p-2 rounded-full" onClick={() => handleAddComment(post.id)}>
-                    <Send className="w-3.5 h-3.5" />
-                  </Button>
+                        <div className="p-3 rounded-2xl bg-white/5 border border-white/10 text-xs text-velora-textPrimary leading-relaxed whitespace-pre-line max-w-2xl">
+                          {msg.text}
+                          {msg.mediaUrl && (
+                            <div className="mt-2 rounded-xl overflow-hidden max-w-sm border border-white/10">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={msg.mediaUrl} alt="Attachment" className="w-full max-h-60 object-cover" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+              <div ref={chatBottomRef} />
+            </div>
+
+            {/* Message Composer Area */}
+            <form onSubmit={handleSendMessage} className="p-3 bg-black/80 border-t border-white/10 space-y-2 shrink-0">
+              {photoPreview && (
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/10 w-fit">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={photoPreview} alt="Preview" className="w-12 h-12 rounded-lg object-cover" />
+                  <button type="button" onClick={() => setPhotoPreview(null)} className="p-1 text-velora-textMuted hover:text-white">
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-              </Card>
-            ))}
-          </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handlePhotoSelect}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-2.5 rounded-xl border border-white/10 bg-white/5 text-velora-textMuted hover:text-white hover:border-amber-400/40 transition-colors"
+                  title="Attach Photo"
+                >
+                  <ImageIcon className="w-4 h-4" />
+                </button>
+
+                <Input
+                  type="text"
+                  placeholder={`Share a message in #${currentRoom.name}...`}
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  className="flex-1 text-xs bg-white/5 border-white/10 text-white placeholder:text-velora-textMuted"
+                />
+
+                <Button
+                  type="submit"
+                  variant="gold"
+                  size="sm"
+                  className="text-xs font-bold uppercase tracking-wider gap-1.5 shadow-gold-glow shrink-0 text-black"
+                >
+                  <Send className="w-3.5 h-3.5" /> Send
+                </Button>
+              </div>
+            </form>
+          </Card>
         </div>
 
-        {/* Right Col: Community Rules & Info */}
-        <div className="space-y-6">
-          <Card variant="glass" className="p-6 space-y-4 text-left">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-velora-textMuted flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              Community Rules & Discretion Code
-            </h3>
+        {/* RIGHT SIDEBAR: Active Room Members with Gender Color Distinction & Filter (lg:col-span-4) */}
+        <div className="lg:col-span-4 space-y-4">
+          <Card variant="goldBorder" className="p-5 space-y-4 bg-gold-card text-left shadow-2xl">
+            {/* Header & Filter Controls */}
+            <div className="border-b border-white/10 pb-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-serif font-bold uppercase tracking-wider text-amber-300 flex items-center gap-2 font-mono">
+                  <Users className="w-4 h-4 text-amber-400" /> Active Members in Room
+                </h3>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                  {filteredMembers.length} Members
+                </span>
+              </div>
+              <p className="text-[11px] text-velora-textMuted">
+                Nicknames are color-coded by gender profile type.
+              </p>
 
-            <ul className="space-y-2.5 text-xs text-velora-textSecondary">
-              {community.rules.map((rule, idx) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-velora-gold shrink-0 mt-0.5" />
-                  <span>{rule}</span>
-                </li>
-              ))}
-            </ul>
+              {/* Gender Distinction Filter Buttons */}
+              <div className="flex items-center gap-1.5 pt-1 overflow-x-auto scrollbar-none">
+                {[
+                  { id: "ALL", label: "All" },
+                  { id: "FEMALE", label: "♀ Females", color: "text-rose-400" },
+                  { id: "MALE", label: "♂ Males", color: "text-sky-400" },
+                  { id: "COUPLE", label: "👫 Couples", color: "text-amber-300" },
+                  { id: "TRANSGENDER", label: "⚧ Trans", color: "text-purple-400" },
+                ].map((btn) => {
+                  const isSelected = genderFilter === btn.id;
+                  return (
+                    <button
+                      key={btn.id}
+                      type="button"
+                      onClick={() => setGenderFilter(btn.id)}
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-all shrink-0 border ${
+                        isSelected
+                          ? "bg-amber-400 text-black border-amber-400 shadow-gold-glow"
+                          : "bg-white/5 text-velora-textMuted border-white/10 hover:text-white"
+                      }`}
+                    >
+                      {btn.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Active Members List */}
+            <div className="space-y-3 max-h-[580px] overflow-y-auto pr-1 scrollbar-thin">
+              {filteredMembers.length === 0 ? (
+                <div className="p-6 text-center text-xs text-velora-textMuted">
+                  No active members matching gender filter.
+                </div>
+              ) : (
+                filteredMembers.map((m) => {
+                  const style = getGenderStyle(m.gender);
+                  return (
+                    <div
+                      key={m.id}
+                      onClick={() => setSelectedMember(m)}
+                      className="p-2.5 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-400/40 transition-all flex items-center justify-between gap-3 cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        {/* Avatar with Online Indicator */}
+                        <div className="relative shrink-0">
+                          <div className={`w-10 h-10 rounded-full border-2 ${style.border} overflow-hidden bg-velora-card`}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={m.avatarUrl} alt={m.displayName} className="w-full h-full object-cover" />
+                          </div>
+                          <span className="w-3 h-3 rounded-full bg-emerald-400 border-2 border-velora-bg absolute bottom-0 right-0" />
+                        </div>
+
+                        <div className="min-w-0 text-left space-y-0.5">
+                          {/* Color-Coded Nickname */}
+                          <div className="flex items-center gap-1.5">
+                            <h4 className={`text-xs font-bold truncate group-hover:underline ${style.text}`}>
+                              {m.displayName}
+                            </h4>
+                            <span className={`text-[10px] font-bold ${style.text}`}>
+                              {m.genderSymbol}
+                            </span>
+                            {m.isVerified && <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />}
+                          </div>
+
+                          <div className="text-[10px] text-velora-textMuted font-mono truncate">
+                            {m.age} yrs • {m.location}
+                          </div>
+
+                          {m.statusText && (
+                            <p className="text-[10px] text-amber-200/80 italic truncate">
+                              "{m.statusText}"
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <Link href={`/messages?user=${m.id}`} onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="sm" className="text-[10px] font-bold text-amber-400 px-2 shrink-0">
+                          Message
+                        </Button>
+                      </Link>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </Card>
         </div>
       </div>
+
+      {/* Member Details Modal */}
+      {selectedMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <Card variant="goldBorder" className="w-full max-w-sm p-6 space-y-4 text-left bg-velora-card relative shadow-2xl">
+            <button onClick={() => setSelectedMember(null)} className="absolute top-4 right-4 text-velora-textMuted hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center space-y-3">
+              <div className="w-20 h-20 rounded-full border-2 border-amber-400 mx-auto overflow-hidden bg-black shadow-gold-glow">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={selectedMember.avatarUrl} alt={selectedMember.displayName} className="w-full h-full object-cover" />
+              </div>
+
+              <div>
+                <h3 className={`text-base font-serif font-bold ${getGenderStyle(selectedMember.gender).text}`}>
+                  {selectedMember.displayName} {selectedMember.genderSymbol}
+                </h3>
+                <p className="text-xs text-velora-gold font-mono">{selectedMember.age} yrs • {selectedMember.location}</p>
+              </div>
+
+              {selectedMember.statusText && (
+                <p className="text-xs text-velora-textSecondary italic p-3 rounded-xl bg-white/5 border border-white/10">
+                  "{selectedMember.statusText}"
+                </p>
+              )}
+
+              <div className="pt-2 flex gap-2">
+                <Link href={`/profile/${selectedMember.id}`} className="w-1/2">
+                  <Button variant="glass" size="sm" className="w-full text-xs font-bold">
+                    View Profile
+                  </Button>
+                </Link>
+                <Link href={`/messages?user=${selectedMember.id}`} className="w-1/2">
+                  <Button variant="gold" size="sm" className="w-full text-xs font-bold uppercase shadow-gold-glow text-black">
+                    Send Message
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
