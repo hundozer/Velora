@@ -112,6 +112,48 @@ export default function SingleCommunityChatroomPage() {
     }
   }, [rawId, user, profile]);
 
+  // If user is not authenticated or not logged in, block entry to chatroom
+  if (!user) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center space-y-6">
+        <Card variant="goldBorder" className="p-8 sm:p-12 space-y-6 bg-gold-card shadow-2xl relative overflow-hidden border-amber-400/40">
+          <div className="w-20 h-20 rounded-3xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center mx-auto text-amber-400 shadow-gold-glow">
+            <Lock className="w-10 h-10" />
+          </div>
+
+          <div className="space-y-3 max-w-lg mx-auto">
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40 uppercase font-mono">
+              🔒 Registered Members Only
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white">
+              Private Lounge Access Restricted
+            </h1>
+            <p className="text-xs text-velora-textMuted leading-relaxed">
+              To protect member discretion and privacy, only registered & authenticated members can enter topic chatrooms, read live discussions, and view active room members.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 max-w-md mx-auto">
+            <Link href="/login" className="w-full sm:w-1/2">
+              <Button variant="gold" size="lg" className="w-full text-xs font-bold uppercase tracking-wider shadow-gold-glow text-black">
+                Log In to Enter
+              </Button>
+            </Link>
+            <Link href="/register" className="w-full sm:w-1/2">
+              <Button variant="glass" size="lg" className="w-full text-xs font-bold uppercase tracking-wider border-white/20">
+                Register Free
+              </Button>
+            </Link>
+          </div>
+
+          <div className="pt-6 border-t border-white/10 flex items-center justify-center gap-2 text-xs text-amber-300/80 font-mono">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" /> 100% Encrypted & Anonymous Adult Community
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   // Auto-scroll chat to bottom
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });

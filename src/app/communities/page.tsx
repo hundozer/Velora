@@ -19,10 +19,27 @@ import {
   Flame,
   Radio,
   ArrowRight,
+  X,
 } from "lucide-react";
 
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+
 export default function CommunitiesPage() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pendingRoomSlug, setPendingRoomSlug] = useState<string | null>(null);
+
+  const handleEnterRoom = (slug: string) => {
+    if (!user) {
+      setPendingRoomSlug(slug);
+      setShowAuthModal(true);
+      return;
+    }
+    router.push(`/communities/${slug}`);
+  };
 
   const filteredChatrooms = DEFAULT_COMMUNITY_CHATROOMS.filter((room) => {
     if (!searchQuery) return true;
@@ -121,15 +138,14 @@ export default function CommunitiesPage() {
               </div>
 
               <div className="pt-3">
-                <Link href={`/communities/${room.slug}`}>
-                  <Button
-                    variant="gold"
-                    size="sm"
-                    className="w-full text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow text-black"
-                  >
-                    <MessageSquare className="w-4 h-4 text-black" /> Enter Live Chatroom <ArrowRight className="w-3.5 h-3.5" />
-                  </Button>
-                </Link>
+                <Button
+                  variant="gold"
+                  size="sm"
+                  onClick={() => handleEnterRoom(room.slug)}
+                  className="w-full text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow text-black"
+                >
+                  <MessageSquare className="w-4 h-4 text-black" /> Enter Live Chatroom <ArrowRight className="w-3.5 h-3.5" />
+                </Button>
               </div>
             </Card>
           ))}
@@ -188,22 +204,74 @@ export default function CommunitiesPage() {
               </div>
 
               <div className="p-5 pt-0 flex items-center justify-between border-t border-white/10 mt-3">
-                <Link href={`/communities/room-chatting`}>
-                  <Button variant="ghost" size="sm" className="text-xs font-bold text-velora-textPrimary">
-                    View Hub Chat
-                  </Button>
-                </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleEnterRoom("room-chatting")}
+                  className="text-xs font-bold text-velora-textPrimary"
+                >
+                  View Hub Chat
+                </Button>
 
-                <Link href="/communities/room-sexpartner-finder">
-                  <Button variant="gold" size="sm" className="text-xs font-bold text-black shadow-gold-glow">
-                    Join Lounge
-                  </Button>
-                </Link>
+                <Button
+                  variant="gold"
+                  size="sm"
+                  onClick={() => handleEnterRoom("room-sexpartner-finder")}
+                  className="text-xs font-bold text-black shadow-gold-glow"
+                >
+                  Join Lounge
+                </Button>
               </div>
             </Card>
           ))}
         </div>
       </div>
+      {/* Registered Members Only Auth Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
+          <Card variant="goldBorder" className="w-full max-w-md p-6 sm:p-8 space-y-5 text-left bg-velora-card relative shadow-2xl border-amber-400/40">
+            <button
+              onClick={() => setShowAuthModal(false)}
+              className="absolute top-4 right-4 p-1 text-velora-textMuted hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center mx-auto text-amber-400 shadow-gold-glow">
+              <Lock className="w-8 h-8" />
+            </div>
+
+            <div className="text-center space-y-2">
+              <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40 uppercase font-mono">
+                🔒 Registered Members Only
+              </span>
+              <h3 className="text-xl font-serif font-bold text-white">
+                Member Authentication Required
+              </h3>
+              <p className="text-xs text-velora-textMuted leading-relaxed">
+                To protect member discretion and privacy, only registered & authenticated Intimo members can enter topic chatrooms, read live discussions, and view active room members.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <Link href="/login" className="w-full sm:w-1/2">
+                <Button variant="gold" size="md" className="w-full text-xs font-bold uppercase tracking-wider shadow-gold-glow text-black">
+                  Log In
+                </Button>
+              </Link>
+              <Link href="/register" className="w-full sm:w-1/2">
+                <Button variant="glass" size="md" className="w-full text-xs font-bold uppercase tracking-wider border-white/20">
+                  Register Free
+                </Button>
+              </Link>
+            </div>
+
+            <div className="pt-3 border-t border-white/10 text-center text-[10px] text-amber-300/80 font-mono flex items-center justify-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> 100% Encrypted & Anonymous Adult Community
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
