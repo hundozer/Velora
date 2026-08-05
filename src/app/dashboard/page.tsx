@@ -70,7 +70,7 @@ export interface FeedPost {
     location: string;
   };
   type: "ALBUM" | "VIDEO" | "DATING_AD" | "TEXT";
-  title: string;
+  title?: string;
   description: string;
   category: string;
   region: string;
@@ -315,7 +315,7 @@ export default function DashboardPage() {
     }
 
     setFeedInteractionsModal({
-      title: post.title,
+      title: post.title || "Post Interactions",
       type,
       users: usersList,
     });
@@ -388,7 +388,6 @@ export default function DashboardPage() {
         location: profile?.location || [profile?.city, profile?.country].filter(Boolean).join(", ") || "",
       },
       type: "TEXT",
-      title: "Intimate Thoughts & Update",
       category: "Personal Post",
       region: profile?.city || profile?.country || "",
       createdAt: "Just now",
@@ -593,7 +592,7 @@ export default function DashboardPage() {
 
                   {/* Title & Category Badges */}
                   <div className="space-y-2">
-                    <h3 className="text-base font-serif font-bold text-amber-300">{post.title}</h3>
+                    {post.title && <h3 className="text-base font-serif font-bold text-amber-300">{post.title}</h3>}
 
                     <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase font-mono">
                       <span className="px-2.5 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/40">
@@ -617,7 +616,7 @@ export default function DashboardPage() {
                         return (
                           <div
                             key={idx}
-                            onClick={() => setActivePhotoModal({ photos: post.photos!, title: post.title, index: idx })}
+                            onClick={() => setActivePhotoModal({ photos: post.photos!, title: post.title || "Photo Album", index: idx })}
                             className="h-44 rounded-xl bg-black border border-white/10 relative overflow-hidden group cursor-pointer"
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
