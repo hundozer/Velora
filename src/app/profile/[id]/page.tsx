@@ -200,9 +200,9 @@ export default function SingleProfilePage() {
       monetization: "FREE",
       category: "Man",
       topics: ["Erotic Art", "Details", "Soft Erotica"],
-      views: 2910,
+      views: 3,
       comments: 2,
-      likes: 129,
+      likes: 3,
       status: "On web",
       createdAt: "Dec 31, 2025",
       commentsList: [
@@ -219,6 +219,29 @@ export default function SingleProfilePage() {
           authorAvatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=150&q=80",
           text: "Very aesthetic shots, super classy aesthetic.",
           createdAt: "5 hours ago",
+        },
+      ],
+      viewersList: [
+        {
+          id: "v-1",
+          name: "Elena V.",
+          avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+          isVerified: true,
+          votedAt: "2 hours ago",
+        },
+        {
+          id: "v-2",
+          name: "Marco & Sofia",
+          avatarUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=150&q=80",
+          isVerified: true,
+          votedAt: "5 hours ago",
+        },
+        {
+          id: "v-3",
+          name: "Sophia K.",
+          avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80",
+          isVerified: true,
+          votedAt: "Yesterday",
         },
       ],
       votersList: [
@@ -260,9 +283,9 @@ export default function SingleProfilePage() {
       creditsPrice: 10,
       category: "Couple",
       topics: ["Outdoor Sex", "Sex in Public", "VIP Lifestyle"],
-      views: 4180,
+      views: 2,
       comments: 1,
-      likes: 310,
+      likes: 2,
       status: "On web",
       createdAt: "Oct 15, 2025",
       commentsList: [
@@ -272,6 +295,22 @@ export default function SingleProfilePage() {
           authorAvatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80",
           text: "Worth every credit, amazing villa shoot!",
           createdAt: "1 day ago",
+        },
+      ],
+      viewersList: [
+        {
+          id: "v-4",
+          name: "Sophia K.",
+          avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80",
+          isVerified: true,
+          votedAt: "1 day ago",
+        },
+        {
+          id: "v-5",
+          name: "Lucas & Mia",
+          avatarUrl: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=150&q=80",
+          isVerified: true,
+          votedAt: "3 days ago",
         },
       ],
       votersList: [
@@ -307,11 +346,18 @@ export default function SingleProfilePage() {
       commentPermission: "ANYONE",
       votingPermission: "ANYONE",
       topics: ["VIP Lifestyle", "Outdoor Sex", "Soft Erotica"],
-      views: 1290,
-      comments: 18,
-      likes: 142,
+      views: 2,
+      comments: 0,
+      likes: 1,
       status: "On web",
       createdAt: "Dec 31, 2025",
+      viewersList: [
+        { id: "v-1", name: "Elena V.", avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80", isVerified: true, votedAt: "4 hours ago" },
+        { id: "v-4", name: "Sophia K.", avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80", isVerified: true, votedAt: "1 day ago" },
+      ],
+      votersList: [
+        { id: "v-1", name: "Elena V.", avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80", isVerified: true, votedAt: "4 hours ago" },
+      ],
     },
     {
       id: "v2",
@@ -326,11 +372,20 @@ export default function SingleProfilePage() {
       commentPermission: "VERIFIED",
       votingPermission: "ANYONE",
       topics: ["VIP Lifestyle", "Fetish", "Details"],
-      views: 2410,
-      comments: 34,
-      likes: 289,
+      views: 3,
+      comments: 0,
+      likes: 2,
       status: "On web",
       createdAt: "Oct 28, 2025",
+      viewersList: [
+        { id: "v-2", name: "Marco & Sofia", avatarUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=150&q=80", isVerified: true, votedAt: "2 hours ago" },
+        { id: "v-3", name: "Sophia K.", avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80", isVerified: true, votedAt: "5 hours ago" },
+        { id: "v-5", name: "Lucas & Mia", avatarUrl: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=150&q=80", isVerified: true, votedAt: "1 day ago" },
+      ],
+      votersList: [
+        { id: "v-2", name: "Marco & Sofia", avatarUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=150&q=80", isVerified: true, votedAt: "2 hours ago" },
+        { id: "v-3", name: "Sophia K.", avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80", isVerified: true, votedAt: "5 hours ago" },
+      ],
     },
   ]);
 
@@ -466,12 +521,34 @@ export default function SingleProfilePage() {
   const [videoCommentInput, setVideoCommentInput] = useState("");
 
   const openAlbumViewer = (alb: UserPhotoAlbumItem) => {
-    setActiveViewerAlbum(alb);
+    const myId = currentUser?.id || "me";
+    const myName = currentProfile?.displayName || currentUser?.username || "Prince Charming";
+    const myAvatar = currentProfile?.avatarUrl || currentUser?.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d";
+
+    let currentViewers = alb.viewersList || [];
+    if (!currentViewers.some((v) => v.id === myId || v.name === myName)) {
+      currentViewers = [{ id: myId, name: myName, avatarUrl: myAvatar, isVerified: true, votedAt: "Just now" }, ...currentViewers];
+    }
+
+    const updatedAlb = { ...alb, viewersList: currentViewers, views: currentViewers.length };
+    setUserPhotoAlbums((prev) => prev.map((a) => (a.id === alb.id ? updatedAlb : a)));
+    setActiveViewerAlbum(updatedAlb);
     setActivePhotoIndex(0);
   };
 
   const openVideoViewer = (vid: UserVideoItem) => {
-    setActiveViewerVideo(vid);
+    const myId = currentUser?.id || "me";
+    const myName = currentProfile?.displayName || currentUser?.username || "Prince Charming";
+    const myAvatar = currentProfile?.avatarUrl || currentUser?.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d";
+
+    let currentViewers = vid.viewersList || [];
+    if (!currentViewers.some((v) => v.id === myId || v.name === myName)) {
+      currentViewers = [{ id: myId, name: myName, avatarUrl: myAvatar, isVerified: true, votedAt: "Just now" }, ...currentViewers];
+    }
+
+    const updatedVid = { ...vid, viewersList: currentViewers, views: currentViewers.length };
+    setUserVideos((prev) => prev.map((v) => (v.id === vid.id ? updatedVid : v)));
+    setActiveViewerVideo(updatedVid);
   };
 
   const handleToggleVideoVisibility = (videoId: string, e: React.MouseEvent) => {
@@ -1358,9 +1435,32 @@ export default function SingleProfilePage() {
                       {/* Video Footer Metrics & Searchable Topics */}
                       <div className="p-3.5 space-y-2.5 text-xs bg-white/5">
                         <div className="flex items-center justify-between text-[11px] text-velora-textMuted font-mono">
-                          <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-velora-gold" /> {vid.views} Views</span>
-                          <span className="flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5 text-blue-400" /> {vid.comments} Comments</span>
-                          <span className="flex items-center gap-1"><ThumbsUp className="w-3.5 h-3.5 text-emerald-400" /> {vid.likes} Likes</span>
+                          <button
+                            type="button"
+                            onClick={(e) => openInteractionsModal("VIEWS", vid.title, vid.viewersList || [], e)}
+                            className="flex items-center gap-1 hover:text-amber-300 transition-colors font-bold cursor-pointer"
+                            title="Click to see list of members who viewed this video"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-velora-gold" /> {vid.viewersList?.length || 0} Views
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => openInteractionsModal("COMMENTS", vid.title, (vid.commentsList || []).map((c) => ({ id: c.id, name: c.authorName, avatarUrl: c.authorAvatar, votedAt: c.createdAt, commentText: c.text })), e)}
+                            className="flex items-center gap-1 hover:text-amber-300 transition-colors font-bold cursor-pointer"
+                            title="Click to see list of comments and members"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5 text-blue-400" /> {vid.commentsList?.length || 0} Comments
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => openInteractionsModal("LIKES", vid.title, vid.votersList || [], e)}
+                            className="flex items-center gap-1 text-emerald-400 font-bold hover:underline hover:text-amber-300 transition-colors cursor-pointer"
+                            title="Click to see list of members who liked this video"
+                          >
+                            <ThumbsUp className={`w-3.5 h-3.5 ${vid.hasUserVoted ? "fill-emerald-400" : ""}`} /> {vid.votersList?.length || 0} Likes
+                          </button>
                         </div>
 
                         {/* Searchable Topics */}
@@ -2224,9 +2324,24 @@ export default function SingleProfilePage() {
             <div className="p-5 space-y-3 text-left">
               <div className="flex items-center justify-between text-xs text-velora-textMuted font-mono">
                 <span className="text-emerald-400 font-bold">Status: {activeViewerVideo.status}</span>
-                <div className="flex items-center gap-4">
-                  <span className="flex items-center gap-1"><Eye className="w-4 h-4 text-amber-400" /> {activeViewerVideo.views} Views</span>
-                  <span className="flex items-center gap-1"><ThumbsUp className="w-4 h-4 text-emerald-400" /> {activeViewerVideo.likes} Likes</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={(e) => openInteractionsModal("VIEWS", activeViewerVideo.title, activeViewerVideo.viewersList || [], e)}
+                    className="flex items-center gap-1 hover:text-amber-300 transition-colors font-bold cursor-pointer"
+                    title="Click to see list of members who viewed this video"
+                  >
+                    <Eye className="w-4 h-4 text-amber-400" /> {activeViewerVideo.viewersList?.length || 0} Views
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => openInteractionsModal("LIKES", activeViewerVideo.title, activeViewerVideo.votersList || [], e)}
+                    className="flex items-center gap-1 text-emerald-400 font-bold hover:underline hover:text-amber-300 transition-colors cursor-pointer"
+                    title="Click to see list of members who liked this video"
+                  >
+                    <ThumbsUp className={`w-4 h-4 ${activeViewerVideo.hasUserVoted ? "fill-emerald-400" : ""}`} /> {activeViewerVideo.votersList?.length || 0} Likes
+                  </button>
                 </div>
               </div>
 
