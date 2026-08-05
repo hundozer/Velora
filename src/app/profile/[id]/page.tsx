@@ -339,6 +339,26 @@ export default function SingleProfilePage() {
     },
   ]);
 
+  // Load & Persist Photo Albums
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && currentUser?.email) {
+      const emailKey = currentUser.email.toLowerCase().trim();
+      const saved = localStorage.getItem(`intimo_user_albums_${emailKey}`);
+      if (saved) {
+        try {
+          setUserPhotoAlbums(JSON.parse(saved));
+        } catch (e) {}
+      }
+    }
+  }, [currentUser?.email]);
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && currentUser?.email) {
+      const emailKey = currentUser.email.toLowerCase().trim();
+      localStorage.setItem(`intimo_user_albums_${emailKey}`, JSON.stringify(userPhotoAlbums));
+    }
+  }, [userPhotoAlbums, currentUser?.email]);
+
   // Rich Videos List
   const [userVideos, setUserVideos] = useState<UserVideoItem[]>([
     {
@@ -396,6 +416,26 @@ export default function SingleProfilePage() {
     },
   ]);
 
+  // Load & Persist Videos
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && currentUser?.email) {
+      const emailKey = currentUser.email.toLowerCase().trim();
+      const saved = localStorage.getItem(`intimo_user_videos_${emailKey}`);
+      if (saved) {
+        try {
+          setUserVideos(JSON.parse(saved));
+        } catch (e) {}
+      }
+    }
+  }, [currentUser?.email]);
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && currentUser?.email) {
+      const emailKey = currentUser.email.toLowerCase().trim();
+      localStorage.setItem(`intimo_user_videos_${emailKey}`, JSON.stringify(userVideos));
+    }
+  }, [userVideos, currentUser?.email]);
+
   // Dating Ads List
   const [userDatingAds, setUserDatingAds] = useState<{ id: string; title: string; category: string; description: string; date: string }[]>([
     {
@@ -413,6 +453,26 @@ export default function SingleProfilePage() {
       date: "Active • Posted 5 days ago",
     },
   ]);
+
+  // Load & Persist Profile Dating Ads
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && currentUser?.email) {
+      const emailKey = currentUser.email.toLowerCase().trim();
+      const saved = localStorage.getItem(`intimo_user_ads_${emailKey}`);
+      if (saved) {
+        try {
+          setUserDatingAds(JSON.parse(saved));
+        } catch (e) {}
+      }
+    }
+  }, [currentUser?.email]);
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && currentUser?.email) {
+      const emailKey = currentUser.email.toLowerCase().trim();
+      localStorage.setItem(`intimo_user_ads_${emailKey}`, JSON.stringify(userDatingAds));
+    }
+  }, [userDatingAds, currentUser?.email]);
 
   const avatarInputRef = React.useRef<HTMLInputElement>(null);
   const coverInputRef = React.useRef<HTMLInputElement>(null);

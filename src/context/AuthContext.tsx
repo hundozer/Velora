@@ -122,8 +122,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (typeof window !== "undefined") {
       localStorage.setItem("intimo_active_user", JSON.stringify(newUser));
       localStorage.setItem("intimo_active_profile", JSON.stringify(newProfile));
-      if (newUser.email && newProfile.displayName) {
-        localStorage.setItem(`intimo_nickname_${newUser.email.toLowerCase()}`, newProfile.displayName);
+      if (newUser.email) {
+        const emailKey = newUser.email.toLowerCase().trim();
+        localStorage.setItem(`intimo_account_user_${emailKey}`, JSON.stringify(newUser));
+        localStorage.setItem(`intimo_account_profile_${emailKey}`, JSON.stringify(newProfile));
+        if (newProfile.displayName) {
+          localStorage.setItem(`intimo_nickname_${emailKey}`, newProfile.displayName);
+        }
       }
     }
   };
@@ -151,6 +156,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         success: false,
         message: "Email verification required. Please click the confirmation link sent to your email before signing in.",
       };
+    }
+
+    const emailKey = email.toLowerCase().trim();
+
+    // Restore saved account user & profile if previously modified & saved in localStorage!
+    if (typeof window !== "undefined") {
+      const savedUserStr = localStorage.getItem(`intimo_account_user_${emailKey}`);
+      const savedProfileStr = localStorage.getItem(`intimo_account_profile_${emailKey}`);
+
+      if (savedUserStr && savedProfileStr) {
+        try {
+          const restoredUser: User = JSON.parse(savedUserStr);
+          const restoredProfile: Profile = JSON.parse(savedProfileStr);
+          updateUserProfile(restoredUser, restoredProfile);
+          return { success: true };
+        } catch (e) {
+          console.error("Failed to parse saved account profile:", e);
+        }
+      }
     }
 
     const newUser: User = {
@@ -195,7 +219,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isOnline: true,
       compatibilityScore: 90,
       avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
-      coverPhotoUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+      coverPhotoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=1200&q=80",
       galleryImages: [],
     };
 

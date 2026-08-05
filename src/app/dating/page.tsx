@@ -226,7 +226,27 @@ export default function DatingMarketplacePage() {
   if (!user) {
     return <BehindTheDoorLanding />;
   }
-  const [adsList, setAdsList] = useState<DatingAdItem[]>(INITIAL_ADS);
+  const [adsList, setAdsList] = useState<DatingAdItem[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("intimo_all_dating_ads");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error("Failed to parse saved dating ads:", e);
+        }
+      }
+    }
+    return INITIAL_ADS;
+  });
+
+  // Save dating ads list to localStorage whenever updated
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("intimo_all_dating_ads", JSON.stringify(adsList));
+    }
+  }, [adsList]);
+
   const [selectedCategory, setSelectedCategory] = useState("Show all categories");
   const [selectedCountry, setSelectedCountry] = useState("All Countries");
   const [selectedRegion, setSelectedRegion] = useState("All Cities / Regions");
