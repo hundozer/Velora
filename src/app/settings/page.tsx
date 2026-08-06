@@ -127,7 +127,7 @@ export default function SettingsPage() {
         console.error("API call to delete account failed:", err);
       }
       setDeleteModalOpen(false);
-      logoutWithAuth0();
+      logoutWithAuth0("/goodbye");
     }
   };
 

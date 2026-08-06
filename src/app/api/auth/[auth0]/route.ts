@@ -51,7 +51,13 @@ export async function GET(request: Request, { params }: { params: { auth0: strin
     // Redirect to Auth0 Logout endpoint
     const logoutUrl = new URL(`${AUTH0_CONFIG.domain}/v2/logout`);
     logoutUrl.searchParams.set("client_id", AUTH0_CONFIG.clientId);
-    logoutUrl.searchParams.set("returnTo", logoutReturnUrl);
+    
+    const customReturnTo = url.searchParams.get("returnTo");
+    const resolvedReturnUrl = customReturnTo 
+      ? `${currentOrigin}${customReturnTo}` 
+      : logoutReturnUrl;
+      
+    logoutUrl.searchParams.set("returnTo", resolvedReturnUrl);
 
     auditLogger.logEvent({
       actorId: "USER",

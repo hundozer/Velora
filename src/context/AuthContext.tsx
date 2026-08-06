@@ -24,7 +24,7 @@ interface AuthContextType {
   switchRole: (newRole: UserRole) => void;
   login: (email: string, role?: UserRole) => Promise<{ success: boolean; message?: string }>;
   loginWithAuth0: (screenHint?: string) => void;
-  logoutWithAuth0: () => void;
+  logoutWithAuth0: (returnTo?: string) => void;
   register: (data: Partial<User> & { displayName: string }) => { success: boolean; pendingVerification: boolean; email: string };
   updateUserProfile: (newUser: User, newProfile: Profile) => void;
   logout: () => void;
@@ -313,10 +313,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logoutWithAuth0 = () => {
+  const logoutWithAuth0 = (returnTo?: string) => {
     logout();
     if (typeof window !== "undefined") {
-      window.location.href = "/api/auth/logout";
+      const target = returnTo ? `/api/auth/logout?returnTo=${encodeURIComponent(returnTo)}` : "/api/auth/logout";
+      window.location.href = target;
     }
   };
 
