@@ -87,14 +87,24 @@ function VerifyEmailContent() {
     setMessage("Verification token missing. Please check your email inbox for the confirmation link.");
   }, [token, user, cookieActive]);
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (!email) return;
     setResending(true);
-    setTimeout(() => {
-      EmailVerificationService.resendToken(email);
-      setResendSuccess(true);
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (res.ok) {
+        setResendSuccess(true);
+      } else {
+        console.error("Resend verification email failed:", await res.text());
+      }
+    } catch (err) {
+      console.error("Resend verification email failed:", err);
+    } finally {
       setResending(false);
-    }, 800);
+    }
   };
 
   return (
