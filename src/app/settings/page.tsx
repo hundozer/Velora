@@ -12,7 +12,6 @@ import { SUPPORTED_LANGUAGES } from "@/lib/i18n";
 import { SUPPORTED_CURRENCIES } from "@/lib/currency/CurrencyService";
 import { UserSafetySettings, LanguageCode, CurrencyCode } from "@/types";
 import { useAuth } from "@/context/AuthContext";
-import { deleteProfileByAuthId } from "@/lib/supabase/profileService";
 import {
   Settings,
   Shield,
@@ -115,7 +114,15 @@ export default function SettingsPage() {
 
   const handleDeleteAccount = async () => {
     if (user) {
-      await deleteProfileByAuthId(user.id);
+      try {
+        await fetch("/api/auth/delete-account", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ auth0UserId: user.id }),
+        });
+      } catch (err) {
+        console.error("API call to delete account failed:", err);
+      }
       setDeleteModalOpen(false);
       logoutWithAuth0();
     }
