@@ -4,6 +4,7 @@ import { JwtValidatorService } from "@/lib/auth0/tokenValidator";
 import { UserSynchronizationService } from "@/lib/auth0/userSync";
 import { DestinationRouterService } from "@/lib/auth/destinationRouter";
 import { auditLogger } from "@/lib/auth/auditLogger";
+import { getProfileByEmail } from "@/lib/supabase/profileService";
 
 /**
  * Enterprise Auth0 Identity Provider Route Handler for Next.js App Router
@@ -127,10 +128,13 @@ export async function GET(request: Request, { params }: { params: { auth0: strin
         email_verified: auth0Payload.email_verified ?? true,
       });
 
-      const isSignUp = url.searchParams.get("screen_hint") === "signup";
-      if (!isSignUp) {
+      // Check if this user already completed onboarding by looking for their profile in Supabase
+      const { data: supabaseProfile } = await getProfileByEmail(syncedUser.email);
+      if (supabaseProfile) {
         UserSynchronizationService.markProfileCompleted(syncedUser.id);
         syncedUser.profile_completed = true;
+      } else {
+        syncedUser.profile_completed = false;
       }
 
       const destinationPath = DestinationRouterService.getDestinationUrl(syncedUser);
