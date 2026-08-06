@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "No active session cookie found" }, { status: 401 });
     }
 
-    const cookieUserData = JSON.parse(cookieUserDataVal);
+    const cookieUserData = JSON.parse(decodeURIComponent(cookieUserDataVal));
     const auth0UserId = cookieUserData.auth0_user_id;
     const email = cookieUserData.email;
 

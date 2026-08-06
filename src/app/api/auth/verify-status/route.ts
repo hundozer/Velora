@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const cookieUserData = JSON.parse(cookieUserDataVal);
+    const cookieUserData = JSON.parse(decodeURIComponent(cookieUserDataVal));
     const userId = cookieUserData.id;
     const auth0UserId = cookieUserData.auth0_user_id;
     const email = cookieUserData.email;
