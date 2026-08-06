@@ -123,7 +123,7 @@ export async function GET(request: Request, { params }: { params: { auth0: strin
         auth0Payload = {
           sub: `auth0|user_${Date.now()}`,
           email: "member@intimo.live",
-          email_verified: true,
+          email_verified: false,
         };
       }
 
@@ -131,7 +131,7 @@ export async function GET(request: Request, { params }: { params: { auth0: strin
       const syncedUser = UserSynchronizationService.syncAuth0User({
         sub: auth0Payload.sub,
         email: auth0Payload.email || "member@intimo.live",
-        email_verified: auth0Payload.email_verified ?? true,
+        email_verified: auth0Payload.email_verified === true,
       });
 
       // Check if this user already completed onboarding by looking for their profile in Supabase
