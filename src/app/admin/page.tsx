@@ -1,23 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Tabs } from "@/components/ui/Tabs";
+import { useAuth } from "@/context/AuthContext";
+import { userStore } from "@/lib/auth0/userStore";
+import { LANGUAGES } from "@/context/LanguageContext";
 import {
-  MOCK_VERIFICATION_REQUESTS,
-  MOCK_REPORTS,
-  MOCK_MODERATION_LOGS,
-  MOCK_CREATOR_APPLICATIONS,
-  MOCK_PAYOUT_REQUESTS,
-  MOCK_REFUND_REQUESTS,
   MOCK_LIVE_STREAMS,
   MOCK_COMMUNITIES,
-  MOCK_EVENTS,
 } from "@/lib/mockData";
-import { LANGUAGES } from "@/context/LanguageContext";
-import { userStore } from "@/lib/auth0/userStore";
 import {
   VerificationRequest,
   ReportItem,
@@ -27,13 +22,10 @@ import {
   RefundItem,
   LiveStream,
   CommunityItem,
-  VeloraEvent,
 } from "@/types";
 import {
   ShieldCheck,
   ShieldAlert,
-  FileCheck,
-  UserCheck,
   Check,
   X,
   Eye,
@@ -50,65 +42,263 @@ import {
   Receipt,
   Radio,
   Globe,
-  Calendar,
   BarChart3,
   TrendingUp,
   Activity,
   Languages as LanguagesIcon,
   CheckCircle2,
+  ShieldX,
+  Plus,
+  AlertOctagon,
+  Flame,
+  Key,
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
+  const { user, role, switchRole } = useAuth();
   const [activeTab, setActiveTab] = useState("VERIFICATIONS");
-  const [verificationRequests, setVerificationRequests] = useState(userStore.getVerificationRequests());
-  const [rejectionModalTarget, setRejectionModalTarget] = useState<string | null>(null);
-  const [rejectionReasonInput, setRejectionReasonInput] = useState("");
-  const [zoomPhotoUrl, setZoomPhotoUrl] = useState<string | null>(null);
 
-  const [verifications, setVerifications] = useState<VerificationRequest[]>(MOCK_VERIFICATION_REQUESTS);
-  const [reports, setReports] = useState<ReportItem[]>(MOCK_REPORTS);
-  const [creatorApps, setCreatorApps] = useState<CreatorApplication[]>(MOCK_CREATOR_APPLICATIONS);
-  const [payouts, setPayouts] = useState<PayoutRequest[]>(MOCK_PAYOUT_REQUESTS);
-  const [refunds, setRefunds] = useState<RefundItem[]>(MOCK_REFUND_REQUESTS);
+  // Load state from userStore
+  const [verificationRequests, setVerificationRequests] = useState<any[]>([]);
+  const [reports, setReports] = useState<ReportItem[]>([]);
+  const [creatorApps, setCreatorApps] = useState<CreatorApplication[]>([]);
+  const [payouts, setPayouts] = useState<PayoutRequest[]>([]);
+  const [refunds, setRefunds] = useState<RefundItem[]>([]);
+  const [logs, setLogs] = useState<ModerationLog[]>([]);
+
+  // Local streams & communities
   const [streams, setStreams] = useState<LiveStream[]>(MOCK_LIVE_STREAMS);
   const [communities, setCommunities] = useState<CommunityItem[]>(MOCK_COMMUNITIES);
-  const [events, setEvents] = useState<VeloraEvent[]>(MOCK_EVENTS);
-  const [logs, setLogs] = useState<ModerationLog[]>(MOCK_MODERATION_LOGS);
 
-  const handleApproveVerification = (id: string) => {
+  // Modals & inputs
+  const [rejectionModalTarget, setRejectionModalTarget] = useState<string | null>(null);
+  const [rejectionReasonInput, setRejectionReasonInput] = useState("");
+  const [reportModalTarget, setReportModalTarget] = useState<ReportItem | null>(null);
+  const [reportActionReason, setReportActionReason] = useState("");
+  const [zoomPhotoUrl, setZoomPhotoUrl] = useState<string | null>(null);
+
+  // Load data from userStore on mount and when changes happen
+  const refreshData = () => {
+    setVerificationRequests(userStore.getVerificationRequests());
+    setReports(userStore.getReports());
+    setCreatorApps(userStore.getCreatorApplications());
+    setPayouts(userStore.getPayoutRequests());
+    setRefunds(userStore.getRefundRequests());
+    setLogs(userStore.getModerationLogs());
+  };
+
+  useEffect(() => {
+    refreshData();
+  }, []);
+
+  // --- ACTIONS ---
+
+  // Identity Verification
+  const handleApproveVerification = (id: string, name: string) => {
     userStore.approveVerification(id);
-    setVerificationRequests([...userStore.getVerificationRequests()]);
+    userStore.addModerationLog({
+      adminUsername: user?.username || "admin_compliance",
+      targetUsername: name,
+      action: "WARN_USER", // mapping placeholder
+      reason: "Identity photo verification approved and Level 3 biometric badge issued.",
+    });
+    refreshData();
   };
 
   const handleRejectVerification = (id: string) => {
     if (!rejectionReasonInput.trim()) return;
+    const req = verificationRequests.find((r) => r.id === id);
     userStore.rejectVerification(id, rejectionReasonInput.trim());
-    setVerificationRequests([...userStore.getVerificationRequests()]);
+    userStore.addModerationLog({
+      adminUsername: user?.username || "admin_compliance",
+      targetUsername: req?.userName || "unknown_member",
+      action: "WARN_USER",
+      reason: `Identity photo verification rejected: ${rejectionReasonInput.trim()}`,
+    });
     setRejectionModalTarget(null);
     setRejectionReasonInput("");
+    refreshData();
   };
 
-  const handleSuspendStream = (streamId: string, title: string) => {
+  // Creator Applications
+  const handleApproveCreatorApp = (id: string, username: string) => {
+    userStore.approveCreatorApplication(id);
+    userStore.addModerationLog({
+      adminUsername: user?.username || "admin_onboarding",
+      targetUsername: username,
+      action: "WARN_USER",
+      reason: "Creator Onboarding application approved. Upgraded account role to VERIFIED_CREATOR.",
+    });
+    refreshData();
+  };
+
+  const handleRejectCreatorApp = (id: string, username: string) => {
+    userStore.rejectCreatorApplication(id);
+    userStore.addModerationLog({
+      adminUsername: user?.username || "admin_onboarding",
+      targetUsername: username,
+      action: "WARN_USER",
+      reason: "Creator Onboarding application rejected due to incomplete banking details or classification guidelines.",
+    });
+    refreshData();
+  };
+
+  // Compliance Reports
+  const handleResolveReport = (report: ReportItem, actionType: any, reason: string) => {
+    if (!reason.trim()) return;
+    
+    // Resolve report in store
+    userStore.updateReportStatus(report.id, "RESOLVED");
+
+    // Add moderation log
+    userStore.addModerationLog({
+      adminUsername: user?.username || "admin_compliance",
+      targetUsername: report.reportedUsername,
+      action: actionType,
+      reason: `${report.reason} report resolved: ${reason.trim()}`,
+    });
+
+    setReportModalTarget(null);
+    setReportActionReason("");
+    refreshData();
+  };
+
+  const handleDismissReport = (id: string, reportedUsername: string) => {
+    userStore.updateReportStatus(id, "DISMISSED");
+    userStore.addModerationLog({
+      adminUsername: user?.username || "admin_compliance",
+      targetUsername: reportedUsername,
+      action: "REMOVE_CONTENT",
+      reason: "Compliance report dismissed after administrative review.",
+    });
+    refreshData();
+  };
+
+  // Payouts
+  const handleApprovePayout = (id: string, username: string, amount: number) => {
+    userStore.approvePayout(id);
+    userStore.addModerationLog({
+      adminUsername: user?.username || "admin_finance",
+      targetUsername: username,
+      action: "WARN_USER",
+      reason: `Creator payout request of $${amount.toFixed(2)} approved for processing.`,
+    });
+    refreshData();
+  };
+
+  const handleRejectPayout = (id: string, username: string) => {
+    userStore.rejectPayout(id);
+    userStore.addModerationLog({
+      adminUsername: user?.username || "admin_finance",
+      targetUsername: username,
+      action: "WARN_USER",
+      reason: `Creator payout request rejected. Placed earnings on standard security hold.`,
+    });
+    refreshData();
+  };
+
+  // Refunds
+  const handleApproveRefund = (id: string, username: string, amount: number, product: string) => {
+    userStore.approveRefund(id);
+    userStore.addModerationLog({
+      adminUsername: user?.username || "admin_finance",
+      targetUsername: username,
+      action: "WARN_USER",
+      reason: `Approved refund of $${amount.toFixed(2)} for product: ${product}.`,
+    });
+    refreshData();
+  };
+
+  const handleRejectRefund = (id: string, username: string, product: string) => {
+    userStore.rejectRefund(id);
+    userStore.addModerationLog({
+      adminUsername: user?.username || "admin_finance",
+      targetUsername: username,
+      action: "WARN_USER",
+      reason: `Rejected refund request for product: ${product}.`,
+    });
+    refreshData();
+  };
+
+  // Streams
+  const handleSuspendStream = (streamId: string, title: string, host: string) => {
     setStreams(streams.map((s) => (s.id === streamId ? { ...s, status: "SUSPENDED" } : s)));
-
-    const newLog: ModerationLog = {
-      id: "log-" + Date.now(),
-      adminUsername: "admin_compliance",
-      targetUsername: title,
+    userStore.addModerationLog({
+      adminUsername: user?.username || "admin_compliance",
+      targetUsername: host,
       action: "SUSPEND_LIVE_STREAM",
-      reason: "Emergency live stream suspension enforced by compliance desk.",
-      timestamp: "Just now",
-    };
-    setLogs([newLog, ...logs]);
+      reason: `Emergency compliance suspension of live stream: "${title}".`,
+    });
+    refreshData();
   };
 
-  const handleApprovePayout = (id: string) => {
-    setPayouts(payouts.map((p) => (p.id === id ? { ...p, status: "APPROVED" } : p)));
+  // Communities
+  const handleDeleteCommunityPost = (postId: string, communitySlug: string) => {
+    // Audit log
+    userStore.addModerationLog({
+      adminUsername: user?.username || "admin_compliance",
+      targetUsername: `Community: ${communitySlug}`,
+      action: "REMOVE_COMMUNITY_POST",
+      reason: `Administrative removal of discussion post #${postId} due to safety report.`,
+    });
+    refreshData();
   };
 
-  const handleRejectPayout = (id: string) => {
-    setPayouts(payouts.map((p) => (p.id === id ? { ...p, status: "REJECTED" } : p)));
-  };
+  // ── ROLE GATE & LOCK SCREEN ──
+  const isAdminAuthorized = role === "ADMIN";
+
+  if (!isAdminAuthorized) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-20 text-center">
+        <Card variant="goldBorder" className="p-8 space-y-6 bg-velora-card/60 backdrop-blur-md shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-velora-gold/5 rounded-full blur-2xl" />
+          <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center animate-pulse">
+            <Lock className="w-8 h-8 text-velora-gold" />
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-2xl font-serif font-bold text-white tracking-wide">
+              Access Restriction Gate
+            </h2>
+            <p className="text-xs text-velora-textMuted max-w-sm mx-auto leading-relaxed">
+              You are attempting to access the Administrative Governance Portal. This route requires elevated credentials (e.g. `SYSTEM_ADMIN` or `CONTENT_MODERATOR`).
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-left space-y-1.5">
+            <span className="text-[10px] font-bold text-velora-gold uppercase tracking-wider block">
+              Identity Management status
+            </span>
+            <div className="flex justify-between text-xs text-velora-textSecondary">
+              <span>Current Account Email:</span>
+              <span className="text-white font-mono">{user?.email || "anonymous@intimo.live"}</span>
+            </div>
+            <div className="flex justify-between text-xs text-velora-textSecondary">
+              <span>Assigned RBAC Role:</span>
+              <span className="text-red-400 font-bold font-mono">{role}</span>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <Button
+              variant="gold"
+              size="md"
+              className="w-full font-bold uppercase tracking-wider shadow-gold-glow flex items-center justify-center gap-2"
+              onClick={() => switchRole("ADMIN")}
+            >
+              <Key className="w-4 h-4 text-black" />
+              Simulate Login as System Admin
+            </Button>
+            <Link href="/dashboard" className="block text-xs text-velora-textMuted hover:text-velora-gold underline">
+              Return to Dashboard
+            </Link>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // --- RENDERING TABS ---
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-left">
@@ -117,21 +307,25 @@ export default function AdminDashboardPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Badge type="admin" label="Administrator Portal" />
+            <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" /> Authorized Sandbox Session
+            </span>
           </div>
           <h1 className="text-3xl font-serif font-bold text-velora-textPrimary flex items-center gap-3">
             <ShieldCheck className="w-8 h-8 text-emerald-400" />
             Identity Verification & Governance Desk
           </h1>
           <p className="text-xs text-velora-textSecondary mt-1">
-            Review member verification selfies, issue biometric badges, audit platform metrics, and approve payouts.
+            Review member verification selfies, process creator applications, resolve user reports, supervise streams, and authorize payments.
           </p>
         </div>
 
         <Tabs
           tabs={[
             { id: "VERIFICATIONS", label: "Verification Queue", count: verificationRequests.filter((r) => r.status === "PENDING").length },
-            { id: "FINANCES", label: "Financial Desk", count: payouts.filter((p) => p.status === "PENDING").length },
-            { id: "TRANSLATIONS", label: "i18n Translation Desk", count: 6 },
+            { id: "REPORTS", label: "Reports Queue", count: reports.filter((r) => r.status === "PENDING" || r.status === "INVESTIGATING").length },
+            { id: "CREATORS", label: "Creator Application Queue", count: creatorApps.filter((a) => a.status === "PENDING").length },
+            { id: "FINANCES", label: "Financial & Refund Desk", count: payouts.filter((p) => p.status === "PENDING").length + refunds.filter((r) => r.status === "PENDING").length },
             { id: "COMMUNITIES", label: "Community Desk", count: communities.length },
             { id: "STREAMS", label: "Live Supervision", count: streams.filter((s) => s.status === "LIVE").length },
             { id: "AUDIT", label: "Audit Log", count: logs.length },
@@ -147,16 +341,20 @@ export default function AdminDashboardPage() {
           <span className="text-xs font-semibold text-velora-gold uppercase tracking-wider block">
             Platform Gross Volume
           </span>
-          <span className="text-3xl font-serif font-bold text-velora-textPrimary">$18,450.00</span>
+          <span className="text-3xl font-serif font-bold text-velora-textPrimary">
+            ${(18450.00 + payouts.filter(p => p.status === "APPROVED").reduce((acc, curr) => acc + curr.amount, 0)).toFixed(2)}
+          </span>
           <span className="text-[11px] text-emerald-400 font-mono">+18.4% this month</span>
         </Card>
 
         <Card variant="glass" className="p-6 space-y-2">
           <span className="text-xs font-semibold text-velora-textMuted uppercase tracking-wider block">
-            i18n Supported Languages
+            Active Reports Queue
           </span>
-          <span className="text-3xl font-serif font-bold text-amber-300">6 Locales</span>
-          <span className="text-[11px] text-emerald-400 font-mono">100% Dictionary Coverage</span>
+          <span className="text-3xl font-serif font-bold text-red-400">
+            {reports.filter((r) => r.status === "PENDING").length} Tickets
+          </span>
+          <span className="text-[11px] text-red-300 font-mono">1 Hour Response Target</span>
         </Card>
 
         <Card variant="glass" className="p-6 space-y-2">
@@ -233,7 +431,6 @@ export default function AdminDashboardPage() {
                     </span>
                   </div>
 
-                  {/* Verification Selfie & Paper Check Box */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs font-semibold text-velora-textSecondary">
                       <span>Verification Selfie & Handwritten Paper Note:</span>
@@ -288,7 +485,7 @@ export default function AdminDashboardPage() {
                       <Button
                         variant="gold"
                         size="md"
-                        onClick={() => handleApproveVerification(req.id)}
+                        onClick={() => handleApproveVerification(req.id, req.userName)}
                         className="w-1/2 text-xs font-bold uppercase tracking-wider shadow-gold-glow bg-emerald-500/20 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30"
                       >
                         <ShieldCheck className="w-4 h-4 mr-1 text-emerald-400" /> Approve & Issue Badge
@@ -306,223 +503,314 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* TRANSLATIONS TAB */}
-      {activeTab === "TRANSLATIONS" && (
-        <div className="space-y-8">
-          <h2 className="text-xl font-serif font-bold text-velora-textPrimary flex items-center gap-2">
-            <LanguagesIcon className="w-5 h-5 text-velora-gold" />
-            i18n Translation Management & Dictionary Coverage Desk
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {LANGUAGES.map((lang) => (
-              <Card key={lang.code} variant="glass" className="p-6 space-y-3 text-left">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{lang.flag}</span>
-                    <h3 className="text-base font-bold text-velora-textPrimary">{lang.nativeName} ({lang.code.toUpperCase()})</h3>
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                    100% Complete
-                  </span>
-                </div>
-                <p className="text-xs text-velora-textMuted">Resource File: /locales/{lang.code}/common.json</p>
-                <div className="flex items-center justify-between text-xs font-mono text-velora-textSecondary pt-2 border-t border-white/10">
-                  <span className="flex items-center gap-1 text-emerald-400">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> 0 Missing Keys
-                  </span>
-                  <span className="text-velora-gold">Synced</span>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ANALYTICS TAB */}
-      {activeTab === "ANALYTICS" && (
-        <div className="space-y-8">
-          <h2 className="text-xl font-serif font-bold text-velora-textPrimary flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-velora-gold" />
-            Operational & Marketplace Performance Analytics (Non-AI Traditional Metrics)
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card variant="glass" className="p-6 space-y-4 text-left">
-              <h3 className="text-sm font-bold text-velora-textPrimary flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-emerald-400" />
-                User Registrations & Growth Trajectory
-              </h3>
-              <div className="h-40 flex items-end justify-between gap-2 pt-4 border-b border-white/10">
-                {[
-                  { month: "Jan", count: 3200 },
-                  { month: "Feb", count: 4800 },
-                  { month: "Mar", count: 6200 },
-                  { month: "Apr", count: 8100 },
-                  { month: "May", count: 9900 },
-                  { month: "Jun", count: 12480 },
-                ].map((bar) => (
-                  <div key={bar.month} className="flex-1 flex flex-col items-center gap-1">
-                    <div
-                      style={{ height: `${(bar.count / 13000) * 100}%` }}
-                      className="w-full bg-gold-gradient rounded-t-lg shadow-gold-glow min-h-[10px]"
-                    />
-                    <span className="text-[10px] font-mono text-velora-textMuted">{bar.month}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-velora-textMuted">
-                Net growth rate: +26% month-over-month driven by high referral conversion.
-              </p>
-            </Card>
-
-            <Card variant="glass" className="p-6 space-y-4 text-left">
-              <h3 className="text-sm font-bold text-velora-textPrimary flex items-center gap-2">
-                <Activity className="w-4 h-4 text-purple-300" />
-                Marketplace Activity & Search Breakdown
-              </h3>
-              <ul className="space-y-3 text-xs text-velora-textSecondary">
-                <li className="flex items-center justify-between p-2.5 glass-panel rounded-xl">
-                  <span>Transparent Rule-Based Discovery Searches</span>
-                  <span className="font-mono font-bold text-velora-gold">142,100</span>
-                </li>
-                <li className="flex items-center justify-between p-2.5 glass-panel rounded-xl">
-                  <span>Rich Profile Page Views</span>
-                  <span className="font-mono font-bold text-amber-300">284,500</span>
-                </li>
-                <li className="flex items-center justify-between p-2.5 glass-panel rounded-xl">
-                  <span>Pay-Per-View Content Unlocks</span>
-                  <span className="font-mono font-bold text-emerald-400">1,840</span>
-                </li>
-              </ul>
-            </Card>
-          </div>
-        </div>
-      )}
-
-      {/* COMMUNITIES TAB */}
-      {activeTab === "COMMUNITIES" && (
-        <div className="space-y-8">
-          <div className="space-y-4">
-            <h2 className="text-xl font-serif font-bold text-velora-textPrimary flex items-center gap-2">
-              <Globe className="w-5 h-5 text-velora-gold" />
-              Community & Private Group Governance
+      {/* REPORTS TAB */}
+      {activeTab === "REPORTS" && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
+              <ShieldAlert className="w-6 h-6 text-red-400" />
+              Security & Compliance Report Queue ({reports.filter((r) => r.status === "PENDING" || r.status === "INVESTIGATING").length} Open)
             </h2>
+            <p className="text-xs text-velora-textMuted">
+              Review and act on members flagging violations regarding underage suspicion, harassment, fake profiles, and fraud.
+            </p>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {communities.map((c) => (
-                <Card key={c.id} variant="glass" className="p-6 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-base font-bold text-velora-textPrimary">{c.name}</h3>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-velora-gold/20 text-velora-gold">
-                      {c.type}
-                    </span>
+          {reports.length === 0 ? (
+            <Card variant="glass" className="p-8 text-center text-xs text-velora-textMuted italic">
+              No compliance reports logged yet.
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {reports.map((rep) => (
+                <Card
+                  key={rep.id}
+                  variant={rep.reason.includes("Underage") ? "goldBorder" : "glass"}
+                  className={`p-6 text-left relative overflow-hidden ${
+                    rep.status === "RESOLVED"
+                      ? "opacity-60 border-emerald-500/20"
+                      : rep.status === "DISMISSED"
+                      ? "opacity-40"
+                      : ""
+                  }`}
+                >
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-white/10 pb-4">
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          rep.reason.includes("Underage")
+                            ? "bg-red-500/20 text-red-400 border border-red-500/40"
+                            : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                        }`}>
+                          {rep.reason}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                          rep.status === "PENDING"
+                            ? "bg-white/10 text-white"
+                            : rep.status === "INVESTIGATING"
+                            ? "bg-blue-500/20 text-blue-300 border border-blue-500/40 animate-pulse"
+                            : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                        }`}>
+                          {rep.status}
+                        </span>
+                      </div>
+                      <h3 className="text-base font-bold text-white mt-2">
+                        Reported User: <span className="text-velora-gold">@{rep.reportedUsername}</span> ({rep.reportedUserRole})
+                      </h3>
+                      <p className="text-xs text-velora-textSecondary mt-1">
+                        Submitted by: <span className="text-slate-300">@{rep.reporterUsername}</span> • {rep.submittedAt}
+                      </p>
+                    </div>
+
+                    {rep.evidenceUrl && (
+                      <button
+                        onClick={() => setZoomPhotoUrl(rep.evidenceUrl || null)}
+                        className="flex items-center gap-1 text-[11px] text-amber-300 hover:underline border border-amber-500/20 bg-amber-500/5 px-2.5 py-1 rounded-xl"
+                      >
+                        <Eye className="w-3.5 h-3.5" /> View Chat Evidence Screenshot
+                      </button>
+                    )}
                   </div>
-                  <p className="text-xs text-velora-textMuted line-clamp-2">{c.description}</p>
-                  <div className="flex items-center justify-between text-xs font-mono text-velora-textSecondary pt-2 border-t border-white/10">
-                    <span>{c.membersCount} Members • {c.postsCount} Discussions</span>
-                    <span className="text-emerald-400">Compliant</span>
+
+                  <div className="py-4 space-y-2">
+                    <p className="text-xs text-velora-textMuted uppercase font-semibold tracking-wider">Report Details:</p>
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/5 text-xs text-white leading-relaxed italic">
+                      &quot;{rep.details}&quot;
+                    </div>
                   </div>
+
+                  {rep.status !== "RESOLVED" && rep.status !== "DISMISSED" && (
+                    <div className="flex items-center gap-3 pt-3 border-t border-white/10 flex-wrap">
+                      <Button
+                        variant="glass"
+                        size="sm"
+                        onClick={() => handleDismissReport(rep.id, rep.reportedUsername)}
+                        className="text-xs border-white/15 text-velora-textSecondary hover:bg-white/10"
+                      >
+                        Dismiss / Archive Report
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => setReportModalTarget(rep)}
+                        className="text-xs font-bold uppercase tracking-wider ml-auto"
+                      >
+                        <AlertOctagon className="w-4 h-4 mr-1 text-red-400" /> Take Compliance Action
+                      </Button>
+                    </div>
+                  )}
                 </Card>
               ))}
             </div>
-          </div>
+          )}
         </div>
       )}
 
-      {/* STREAMS TAB */}
-      {activeTab === "STREAMS" && (
+      {/* CREATOR APPLICATION QUEUE */}
+      {activeTab === "CREATORS" && (
         <div className="space-y-6">
-          <h2 className="text-xl font-serif font-bold text-velora-textPrimary flex items-center gap-2">
-            <Radio className="w-5 h-5 text-red-400" />
-            Live Stream Supervision & Moderation
-          </h2>
+          <div>
+            <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
+              <Crown className="w-6 h-6 text-velora-gold" />
+              Creator Applications Queue ({creatorApps.filter((a) => a.status === "PENDING").length} Pending)
+            </h2>
+            <p className="text-xs text-velora-textMuted">
+              Review requests from standard members looking to upgrade to full commercial Creator Accounts.
+            </p>
+          </div>
 
-          <div className="space-y-4">
-            {streams.map((s) => (
-              <Card key={s.id} variant="glass" className="p-6 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-bold text-velora-textPrimary">{s.title}</h3>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                        s.status === "LIVE" ? "bg-red-500/20 text-red-400 animate-pulse" : "bg-white/10 text-velora-textMuted"
-                      }`}>
-                        {s.status}
-                      </span>
+          {creatorApps.length === 0 ? (
+            <Card variant="glass" className="p-8 text-center text-xs text-velora-textMuted italic">
+              No creator applications submitted yet.
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {creatorApps.map((app) => (
+                <Card
+                  key={app.id}
+                  variant="goldBorder"
+                  className={`p-6 space-y-4 text-left ${app.status !== "PENDING" ? "opacity-60" : ""}`}
+                >
+                  <div className="flex items-start justify-between border-b border-white/10 pb-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-white">@{app.user.username}</h3>
+                      <p className="text-xs text-velora-textMuted">{app.user.email}</p>
+                      <p className="text-[10px] text-amber-300 font-mono mt-0.5">Submitted {app.submittedAt}</p>
                     </div>
-                    <p className="text-xs text-velora-textMuted mt-0.5">
-                      Host: {s.creatorName} • Category: {s.category} • Viewers: {s.currentViewersCount}
-                    </p>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase ${
+                      app.status === "PENDING"
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                        : app.status === "VERIFIED"
+                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                        : "bg-red-500/20 text-red-300 border border-red-500/40"
+                    }`}>
+                      {app.status}
+                    </span>
                   </div>
 
-                  {s.status === "LIVE" && (
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      className="text-xs font-bold gap-2"
-                      onClick={() => handleSuspendStream(s.id, s.title)}
-                    >
-                      <Ban className="w-4 h-4" /> Emergency Suspend Stream
-                    </Button>
+                  <div className="space-y-2 text-xs">
+                    <div>
+                      <span className="font-semibold text-velora-textSecondary block uppercase tracking-wider text-[10px]">Proposed Categories:</span>
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {app.categories.map((c) => (
+                          <span key={c} className="px-2 py-0.5 bg-white/5 rounded-full text-white text-[10px]">
+                            {c}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="pt-2">
+                      <span className="font-semibold text-velora-textSecondary block uppercase tracking-wider text-[10px]">Monthly Subscription Price:</span>
+                      <span className="text-velora-gold font-bold font-serif text-sm">${app.proposedMonthlyPrice} / month</span>
+                    </div>
+                    <div className="pt-2">
+                      <span className="font-semibold text-velora-textSecondary block uppercase tracking-wider text-[10px]">Creator Bio:</span>
+                      <p className="p-3 bg-white/5 rounded-xl border border-white/5 italic text-white mt-1">
+                        &quot;{app.bio}&quot;
+                      </p>
+                    </div>
+                    <div className="pt-2">
+                      <span className="font-semibold text-velora-textSecondary block uppercase tracking-wider text-[10px]">Payout Method:</span>
+                      <span className="font-mono text-white bg-slate-800 px-2 py-0.5 rounded-md text-[10px]">{app.payoutMethod}: {app.payoutDetails}</span>
+                    </div>
+                  </div>
+
+                  {app.status === "PENDING" && (
+                    <div className="flex items-center gap-3 pt-3 border-t border-white/10">
+                      <Button
+                        variant="glass"
+                        size="sm"
+                        onClick={() => handleRejectCreatorApp(app.id, app.user.username)}
+                        className="w-1/2 text-xs text-red-400 border-red-500/20 hover:bg-red-500/10"
+                      >
+                        Reject Application
+                      </Button>
+                      <Button
+                        variant="gold"
+                        size="sm"
+                        onClick={() => handleApproveCreatorApp(app.id, app.user.username)}
+                        className="w-1/2 text-xs font-bold uppercase bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30"
+                      >
+                        Approve Creator
+                      </Button>
+                    </div>
                   )}
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* FINANCES TAB */}
+      {/* FINANCES & REFUND DESK */}
       {activeTab === "FINANCES" && (
         <div className="space-y-8">
+          {/* PAYOUT REQUESTS */}
           <div className="space-y-4">
-            <h2 className="text-xl font-serif font-bold text-velora-textPrimary flex items-center gap-2">
-              <ArrowUpRight className="w-5 h-5 text-amber-400" />
-              Creator Payout Request Approvals Desk
+            <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
+              <DollarSign className="w-6 h-6 text-emerald-400" />
+              Creator Payout Request Approvals Queue ({payouts.filter((p) => p.status === "PENDING").length} Pending)
             </h2>
 
             <div className="space-y-3">
               {payouts.map((p) => (
-                <Card key={p.id} variant="glass" className="p-6 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-3">
+                <Card key={p.id} variant="glass" className="p-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="text-base font-bold text-velora-textPrimary">Creator: @{p.username}</h3>
+                        <h3 className="text-base font-bold text-white">Creator: @{p.username}</h3>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                           p.status === "PENDING"
                             ? "bg-amber-500/20 text-amber-300"
                             : p.status === "APPROVED"
-                            ? "bg-emerald-500/20 text-emerald-300"
-                            : "bg-red-500/20 text-red-300"
+                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                            : "bg-red-500/20 text-red-300 border border-red-500/40"
                         }`}>
                           {p.status}
                         </span>
                       </div>
-                      <p className="text-xs text-velora-textMuted mt-0.5">
+                      <p className="text-xs text-velora-textMuted mt-1">
                         Requested: {p.requestedAt} • Method: {p.payoutMethod} ({p.payoutDetails})
                       </p>
                     </div>
 
                     <div className="flex items-center gap-4">
-                      <span className="text-xl font-serif font-bold text-velora-gold">${p.amount.toFixed(2)}</span>
+                      <span className="text-2xl font-serif font-bold text-velora-gold">${p.amount.toFixed(2)}</span>
                       {p.status === "PENDING" && (
                         <div className="flex items-center gap-2">
                           <Button
-                            variant="danger"
+                            variant="glass"
                             size="sm"
-                            className="text-xs"
-                            onClick={() => handleRejectPayout(p.id)}
+                            className="text-xs border-red-500/20 text-red-400 hover:bg-red-500/10"
+                            onClick={() => handleRejectPayout(p.id, p.username)}
                           >
                             Reject Payout
                           </Button>
                           <Button
                             variant="gold"
                             size="sm"
-                            className="text-xs font-bold"
-                            onClick={() => handleApprovePayout(p.id)}
+                            className="text-xs font-bold bg-emerald-500/20 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30"
+                            onClick={() => handleApprovePayout(p.id, p.username, p.amount)}
                           >
                             Approve Payout
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* REFUND REQUESTS */}
+          <div className="space-y-4 pt-6 border-t border-white/10">
+            <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
+              <Receipt className="w-6 h-6 text-amber-300" />
+              Customer Refund Requests Queue ({refunds.filter((r) => r.status === "PENDING").length} Pending)
+            </h2>
+
+            <div className="space-y-3">
+              {refunds.map((ref) => (
+                <Card key={ref.id} variant="glass" className="p-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-bold text-white">Refund for: @{ref.username}</h3>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                          ref.status === "PENDING"
+                            ? "bg-amber-500/20 text-amber-300"
+                            : ref.status === "APPROVED"
+                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                            : "bg-red-500/20 text-red-300 border border-red-500/40"
+                        }`}>
+                          {ref.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-white font-medium">Product: {ref.productTitle}</p>
+                      <p className="text-xs text-velora-textMuted italic">&quot;{ref.reason}&quot;</p>
+                      <p className="text-[10px] text-slate-400 font-mono mt-0.5">Requested {ref.requestedAt}</p>
+                    </div>
+
+                    <div className="flex items-center gap-4 shrink-0">
+                      <span className="text-2xl font-serif font-bold text-white">${ref.amount.toFixed(2)}</span>
+                      {ref.status === "PENDING" && (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="glass"
+                            size="sm"
+                            className="text-xs border-red-500/20 text-red-400 hover:bg-red-500/10"
+                            onClick={() => handleRejectRefund(ref.id, ref.username, ref.productTitle)}
+                          >
+                            Deny Refund
+                          </Button>
+                          <Button
+                            variant="gold"
+                            size="sm"
+                            className="text-xs font-bold uppercase"
+                            onClick={() => handleApproveRefund(ref.id, ref.username, ref.amount, ref.productTitle)}
+                          >
+                            Approve Refund
                           </Button>
                         </div>
                       )}
@@ -535,10 +823,99 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
+      {/* COMMUNITIES TAB */}
+      {activeTab === "COMMUNITIES" && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
+              <Globe className="w-5 h-5 text-velora-gold" />
+              Community & Private Group Governance
+            </h2>
+            <p className="text-xs text-velora-textMuted">
+              Monitor active community salons and moderation flags for inappropriate discussion topics.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {communities.map((c) => (
+              <Card key={c.id} variant="glass" className="p-6 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-bold text-white">{c.name}</h3>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-velora-gold/20 text-velora-gold">
+                    {c.type}
+                  </span>
+                </div>
+                <p className="text-xs text-velora-textMuted line-clamp-2">{c.description}</p>
+                <div className="flex items-center justify-between text-xs font-mono text-velora-textSecondary pt-3 border-t border-white/10">
+                  <span>{c.membersCount} Members • {c.postsCount} Discussions</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-emerald-400">Compliant</span>
+                    <button
+                      onClick={() => handleDeleteCommunityPost("post-active", c.slug)}
+                      className="text-red-400 hover:text-red-300 hover:underline"
+                    >
+                      Audit Posts
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* STREAMS TAB */}
+      {activeTab === "STREAMS" && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
+              <Radio className="w-5 h-5 text-red-400 animate-pulse" />
+              Live Stream Supervision & Moderation
+            </h2>
+            <p className="text-xs text-velora-textMuted">
+              Real-time WebRTC broadcast supervision desk. Suspend streams violating explicit safety guidelines.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {streams.map((s) => (
+              <Card key={s.id} variant="glass" className="p-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-bold text-white">{s.title}</h3>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                        s.status === "LIVE" ? "bg-red-500/20 text-red-400 animate-pulse border border-red-500/30" : "bg-white/10 text-velora-textMuted"
+                      }`}>
+                        {s.status}
+                      </span>
+                    </div>
+                    <p className="text-xs text-velora-textMuted mt-1">
+                      Host: {s.creatorName} • Category: {s.category} • Viewers: {s.currentViewersCount}
+                    </p>
+                  </div>
+
+                  {s.status === "LIVE" && (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      className="text-xs font-bold gap-2"
+                      onClick={() => handleSuspendStream(s.id, s.title, s.creatorName)}
+                    >
+                      <Ban className="w-4 h-4" /> Emergency Suspend Stream
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* AUDIT LOG TAB */}
       {activeTab === "AUDIT" && (
         <div className="space-y-6">
-          <h2 className="text-xl font-serif font-bold text-velora-textPrimary">
+          <h2 className="text-xl font-serif font-bold text-white">
             Moderation Action Audit Log
           </h2>
 
@@ -551,25 +928,94 @@ export default function AdminDashboardPage() {
                     <th className="py-2">Admin</th>
                     <th className="py-2">Target</th>
                     <th className="py-2">Enforced Action</th>
-                    <th className="py-2">Reason</th>
+                    <th className="py-2">Reason / Details</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {logs.map((log) => (
-                    <tr key={log.id}>
+                    <tr key={log.id} className="hover:bg-white/5 transition-colors">
                       <td className="py-3 font-mono text-[11px]">{log.timestamp}</td>
                       <td className="py-3 font-bold text-velora-gold">@{log.adminUsername}</td>
-                      <td className="py-3 text-velora-textPrimary font-semibold">{log.targetUsername}</td>
+                      <td className="py-3 text-white font-semibold">{log.targetUsername}</td>
                       <td className="py-3">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          log.action === "BAN_USER_PERMANENT"
+                            ? "bg-red-500/25 text-red-300 border border-red-500/35"
+                            : log.action === "SUSPEND_LIVE_STREAM"
+                            ? "bg-amber-500/25 text-amber-300 border border-amber-500/35"
+                            : "bg-blue-500/25 text-blue-300 border border-blue-500/35"
+                        }`}>
                           {log.action}
                         </span>
                       </td>
-                      <td className="py-3">{log.reason}</td>
+                      <td className="py-3 text-slate-300">{log.reason}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Compliance Action Modal */}
+      {reportModalTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <Card variant="goldBorder" className="w-full max-w-md p-6 space-y-4 text-left bg-velora-card relative shadow-2xl">
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-red-400" /> Enforce Compliance: @{reportModalTarget.reportedUsername}
+            </h3>
+            <p className="text-xs text-velora-textMuted">
+              Select the administrative action to resolve this ticket. A detailed reason is required.
+            </p>
+
+            <textarea
+              value={reportActionReason}
+              onChange={(e) => setReportActionReason(e.target.value)}
+              rows={3}
+              placeholder="e.g. Account suspended for 7 days due to phishing link solicitation in private chats."
+              className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white focus:outline-none focus:border-red-400 resize-none"
+            />
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <Button
+                variant="glass"
+                size="sm"
+                onClick={() => handleResolveReport(reportModalTarget, "WARN_USER", reportActionReason)}
+                className="text-xs border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
+              >
+                Issue Warning
+              </Button>
+              <Button
+                variant="glass"
+                size="sm"
+                onClick={() => handleResolveReport(reportModalTarget, "SUSPEND_ACCOUNT_7_DAYS", reportActionReason)}
+                className="text-xs border-amber-500/30 text-amber-300 hover:bg-amber-500/10"
+              >
+                Suspend User
+              </Button>
+              <Button
+                variant="glass"
+                size="sm"
+                onClick={() => handleResolveReport(reportModalTarget, "BAN_USER_PERMANENT", reportActionReason)}
+                className="text-xs border-red-500/30 text-red-400 hover:bg-red-500/10 col-span-2"
+              >
+                Permanent IP Ban
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-3 pt-3 border-t border-white/10">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setReportModalTarget(null);
+                  setReportActionReason("");
+                }}
+                className="w-full text-xs text-velora-textSecondary"
+              >
+                Cancel
+              </Button>
             </div>
           </Card>
         </div>

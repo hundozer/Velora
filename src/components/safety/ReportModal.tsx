@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { ShieldAlert, Upload, CheckCircle2, AlertTriangle, FileText } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { userStore } from "@/lib/auth0/userStore";
 
 interface ReportModalProps {
   isOpen: boolean;
@@ -16,12 +18,33 @@ export const ReportModal: React.FC<ReportModalProps> = ({
   onClose,
   targetUsername = "user",
 }) => {
+  const { user } = useAuth();
   const [reason, setReason] = useState("HARASSMENT");
   const [details, setDetails] = useState("");
   const [evidenceUploaded, setEvidenceUploaded] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = () => {
+    const reasonLabels: Record<string, string> = {
+      UNDERAGE_SUSPICION: "Underage Suspicion (Strict Priority)",
+      HARASSMENT: "Harassment or Non-consensual Language",
+      FAKE_PROFILE: "Fake Profile / Impersonation",
+      SPAM_SOLICITATION: "Spam or Automated Solicitation",
+      SCAM_BEHAVIOUR: "Scam Behaviour or Financial Fraud",
+      NON_CONSENTUAL_CONTENT: "Non-consensual Content Sharing",
+      OFFSITE_PAYMENT: "Offsite Unverified Payment Request",
+      OTHER: "Other Compliance Issue",
+    };
+
+    userStore.submitReport({
+      reporterUsername: user?.username || "anonymous_member",
+      reportedUsername: targetUsername,
+      reportedUserRole: "MEMBER",
+      reason: reasonLabels[reason] || reason,
+      details: details || "No details provided.",
+      evidenceUrl: evidenceUploaded ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80" : undefined,
+    });
+
     setSubmitted(true);
   };
 
