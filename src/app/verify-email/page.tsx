@@ -22,6 +22,14 @@ function VerifyEmailContent() {
   const [resendSuccess, setResendSuccess] = useState(false);
   const [waitingForPoll, setWaitingForPoll] = useState(false);
 
+  const [cookieActive, setCookieActive] = useState(false);
+
+  useEffect(() => {
+    if (typeof document !== "undefined" && document.cookie.includes("intimo_user_data=")) {
+      setCookieActive(true);
+    }
+  }, []);
+
   useEffect(() => {
     // Case 1: Checking explicit token verification link
     if (token) {
@@ -67,11 +75,17 @@ function VerifyEmailContent() {
       return () => clearInterval(pollInterval);
     }
 
-    // Case 3: Token missing and no active user session
+    // Case 3: Token missing, check if session is restoring
+    if (cookieActive && !user) {
+      setLoading(true);
+      return;
+    }
+
+    // Case 4: Token missing and no active user session
     setLoading(false);
     setSuccess(false);
     setMessage("Verification token missing. Please check your email inbox for the confirmation link.");
-  }, [token, user]);
+  }, [token, user, cookieActive]);
 
   const handleResend = () => {
     if (!email) return;
