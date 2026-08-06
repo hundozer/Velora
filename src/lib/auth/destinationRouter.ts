@@ -6,7 +6,12 @@ export class DestinationRouterService {
    * Ensures new registrants complete /onboarding, creators visit /creator-studio, and active members land on /dashboard.
    */
   public static getDestinationUrl(user: UserAccountModel): string {
-    // 1. Check if user profile onboarding is incomplete
+    // 1. Redirect to verify-email if user email is unverified
+    if (!user.email_verified) {
+      return "/verify-email";
+    }
+
+    // 2. Check if user profile onboarding is incomplete
     if (!user.profile_completed) {
       return "/onboarding";
     }

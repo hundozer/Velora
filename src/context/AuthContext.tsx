@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { User, UserRole, Profile } from "@/types";
 import { EmailVerificationService } from "@/lib/auth/emailVerification";
 import { EmailNotificationService } from "@/lib/notifications/emailService";
@@ -99,8 +100,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 username: effectiveName,
                 role: "MEMBER",
                 memberTier: "PREMIUM",
-                verificationStatus: "VERIFIED",
-                verificationLevel: "LEVEL_3_PROFILE_BIOMETRIC",
+                verificationStatus: cookieUserData.email_verified ? "PENDING" : "UNVERIFIED",
+                verificationLevel: "LEVEL_1_EMAIL",
                 createdAt: new Date().toISOString().split("T")[0],
                 avatarUrl: cookieUserData.avatarUrl,
               };
@@ -148,6 +149,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error("Failed to restore session state:", err);
     }
   }, []);
+
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // Route Guard: Kick unverified users to verify-email page
+  useEffect(() => {
+    if (user && user.verificationStatus === "UNVERIFIED") {
+      const allowedPaths = ["/verify-email", "/login", "/register", "/"];
+      if (!allowedPaths.includes(pathname)) {
+        console.log(`Redirecting unverified user to /verify-email from ${pathname}`);
+        router.replace("/verify-email");
+      }
+    }
+  }, [user, pathname, router]);
 
   // ── Age Verification ───────────────────────────────────
   const confirmAge = () => {
