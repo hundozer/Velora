@@ -242,3 +242,12 @@ export async function updateProfile(profileId: string, updates: Partial<ProfileR
   if (error || !data) return { data: null, error };
   return { data: data as ProfileRow, error: null };
 }
+
+export async function deleteProfileByAuthId(authId: string) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .delete()
+    .eq("auth_id", authId);
+
+  return { data, error };
+}

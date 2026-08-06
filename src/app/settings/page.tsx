@@ -12,6 +12,7 @@ import { SUPPORTED_LANGUAGES } from "@/lib/i18n";
 import { SUPPORTED_CURRENCIES } from "@/lib/currency/CurrencyService";
 import { UserSafetySettings, LanguageCode, CurrencyCode } from "@/types";
 import { useAuth } from "@/context/AuthContext";
+import { deleteProfileByAuthId } from "@/lib/supabase/profileService";
 import {
   Settings,
   Shield,
@@ -34,7 +35,7 @@ import {
 } from "lucide-react";
 
 export default function SettingsPage() {
-  const { user, profile, updateUserProfile, logout } = useAuth();
+  const { user, profile, updateUserProfile, logout, logoutWithAuth0 } = useAuth();
   const [nickname, setNickname] = useState(profile?.displayName || user?.username || "");
   const [safety, setSafety] = useState<UserSafetySettings>(MOCK_SAFETY_SETTINGS);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>("en");
@@ -110,6 +111,14 @@ export default function SettingsPage() {
 
     setExportSuccess(true);
     setTimeout(() => setExportSuccess(false), 3000);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (user) {
+      await deleteProfileByAuthId(user.id);
+      setDeleteModalOpen(false);
+      logoutWithAuth0();
+    }
   };
 
   return (
@@ -375,7 +384,7 @@ export default function SettingsPage() {
             <Button variant="ghost" className="w-1/2 text-xs" onClick={() => setDeleteModalOpen(false)}>
               Cancel
             </Button>
-            <Button variant="danger" className="w-1/2 text-xs font-bold uppercase tracking-wider" onClick={() => setDeleteModalOpen(false)}>
+            <Button variant="danger" className="w-1/2 text-xs font-bold uppercase tracking-wider" onClick={handleDeleteAccount}>
               Confirm Permanent Erasure
             </Button>
           </div>
