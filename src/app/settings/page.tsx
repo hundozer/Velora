@@ -118,7 +118,10 @@ export default function SettingsPage() {
         await fetch("/api/auth/delete-account", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ auth0UserId: user.id }),
+          body: JSON.stringify({ 
+            auth0UserId: user.id,
+            email: user.email
+          }),
         });
       } catch (err) {
         console.error("API call to delete account failed:", err);
