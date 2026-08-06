@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/context/AuthContext";
 import { EmailVerificationService } from "@/lib/auth/emailVerification";
 import { CheckCircle2, AlertTriangle, ArrowRight, ShieldCheck, Mail, RefreshCw } from "lucide-react";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+  const { user } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
@@ -18,25 +20,58 @@ function VerifyEmailContent() {
   const [email, setEmail] = useState("");
   const [resending, setResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
+  const [waitingForPoll, setWaitingForPoll] = useState(false);
 
   useEffect(() => {
-    if (!token) {
-      setLoading(false);
-      setSuccess(false);
-      setMessage("Verification token missing. Please use the confirmation link sent to your email.");
-      return;
+    // Case 1: Checking explicit token verification link
+    if (token) {
+      const timer = setTimeout(() => {
+        const result = EmailVerificationService.verifyToken(token);
+        setSuccess(result.success);
+        setMessage(result.message);
+        if (result.email) setEmail(result.email);
+        setLoading(false);
+      }, 1000);
+
+      return () => clearTimeout(timer);
     }
 
-    const timer = setTimeout(() => {
-      const result = EmailVerificationService.verifyToken(token);
-      setSuccess(result.success);
-      setMessage(result.message);
-      if (result.email) setEmail(result.email);
+    // Case 2: Waiting for email verification polling (Background sync)
+    if (!token && user && user.verificationStatus === "UNVERIFIED") {
       setLoading(false);
-    }, 1000);
+      setWaitingForPoll(true);
+      setEmail(user.email);
 
-    return () => clearTimeout(timer);
-  }, [token]);
+      console.log("Starting background verification polling for user session...");
+      const pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch("/api/auth/verify-status");
+          if (res.ok) {
+            const data = await res.json();
+            if (data.verified) {
+              clearInterval(pollInterval);
+              setSuccess(true);
+              setMessage("Email address verified! Proceeding to onboarding...");
+              setWaitingForPoll(false);
+              // Force page redirect after 1.5 seconds so context can update routing
+              setTimeout(() => {
+                window.location.href = "/onboarding";
+              }, 1500);
+            }
+          }
+        } catch (err) {
+          console.error("Error polling verification status:", err);
+        }
+      }, 2000);
+
+      return () => clearInterval(pollInterval);
+    }
+
+    // Case 3: Token missing and no active user session
+    setLoading(false);
+    setSuccess(false);
+    setMessage("Verification token missing. Please check your email inbox for the confirmation link.");
+  }, [token, user]);
 
   const handleResend = () => {
     if (!email) return;
@@ -86,6 +121,56 @@ function VerifyEmailContent() {
                 <span>Sign In to Intimo</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
+            </Link>
+          </div>
+        ) : waitingForPoll ? (
+          <div className="py-4 space-y-5">
+            <div className="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 text-velora-gold flex items-center justify-center mx-auto animate-pulse">
+              <Mail className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-2xl font-serif font-bold text-velora-textPrimary">
+                Confirm Your Email Address 📩
+              </h2>
+              <p className="text-xs text-velora-textSecondary leading-relaxed max-w-sm mx-auto">
+                We sent a confirmation link to your inbox. Please check your email client and verify your account.
+              </p>
+            </div>
+
+            <div className="p-4 glass-panel rounded-2xl border border-white/10 text-left text-xs space-y-1 font-mono">
+              <span className="text-velora-textMuted block text-[10px] uppercase font-bold tracking-wider">Unverified Email Account:</span>
+              <span className="text-white font-bold">{email}</span>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 py-2 text-xs text-velora-gold font-bold font-mono">
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              <span>Waiting for confirmation...</span>
+            </div>
+
+            <p className="text-[10px] text-velora-textMuted max-w-xs mx-auto leading-normal">
+              Once you click the link inside your email, this window will automatically proceed to your profile setup.
+            </p>
+
+            {resendSuccess ? (
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/40 text-xs text-emerald-300">
+                Fresh verification link sent! Check your inbox.
+              </div>
+            ) : (
+              <Button
+                variant="gold"
+                size="sm"
+                className="w-full text-xs font-bold gap-2 shadow-gold-glow"
+                onClick={handleResend}
+                disabled={resending}
+              >
+                <Mail className="w-4 h-4 text-black" />
+                <span>{resending ? "Sending..." : "Resend Confirmation Email"}</span>
+              </Button>
+            )}
+
+            <Link href="/login" className="block text-xs text-velora-textMuted hover:text-velora-gold pt-2 underline">
+              Return to Sign In
             </Link>
           </div>
         ) : (
