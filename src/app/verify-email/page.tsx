@@ -53,7 +53,7 @@ function VerifyEmailContent() {
       console.log("Starting background verification polling for user session...");
       const pollInterval = setInterval(async () => {
         try {
-          const res = await fetch("/api/auth/verify-status");
+          const res = await fetch(`/api/auth/verify-status?t=${Date.now()}`, { cache: "no-store" });
           if (res.ok) {
             const data = await res.json();
             if (data.verified) {

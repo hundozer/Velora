@@ -161,6 +161,7 @@ export async function GET(request: Request, { params }: { params: { auth0: strin
       });
       response.cookies.set("intimo_user_data", JSON.stringify({
         id: syncedUser.id,
+        auth0_user_id: syncedUser.auth0_user_id,
         email: syncedUser.email,
         username: auth0Payload.nickname || auth0Payload.name || syncedUser.email.split("@")[0],
         avatarUrl: auth0Payload.picture || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
