@@ -12,7 +12,11 @@ import { CheckCircle2, AlertTriangle, ArrowRight, ShieldCheck, Mail, RefreshCw }
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  const { user } = useAuth();
+  const { user, logoutWithAuth0 } = useAuth();
+
+  const handleLogout = () => {
+    logoutWithAuth0("/login");
+  };
 
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
@@ -193,9 +197,12 @@ function VerifyEmailContent() {
               </Button>
             )}
 
-            <Link href="/login" className="block text-xs text-velora-textMuted hover:text-velora-gold pt-2 underline">
+            <button
+              onClick={handleLogout}
+              className="block text-xs text-velora-textMuted hover:text-velora-gold pt-2 underline mx-auto bg-transparent border-0 cursor-pointer"
+            >
               Return to Sign In
-            </Link>
+            </button>
           </div>
         ) : (
           <div className="py-4 space-y-5">
@@ -229,9 +236,12 @@ function VerifyEmailContent() {
               </Button>
             )}
 
-            <Link href="/login" className="block text-xs text-velora-textMuted hover:text-velora-gold pt-2">
+            <button
+              onClick={handleLogout}
+              className="block text-xs text-velora-textMuted hover:text-velora-gold pt-2 underline mx-auto bg-transparent border-0 cursor-pointer"
+            >
               Return to Sign In
-            </Link>
+            </button>
           </div>
         )}
       </Card>
