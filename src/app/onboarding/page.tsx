@@ -693,6 +693,18 @@ export default function OnboardingWizardPage() {
               <Compass className="w-4 h-4" />
               <span>{submitting ? "Creating Profile..." : "Start Exploring Members"}</span>
             </Button>
+            {(!dateOfBirth || displayName.trim().length < 2) && (
+              <p className="text-xs text-amber-300" role="alert">
+                {!dateOfBirth && displayName.trim().length < 2
+                  ? "A nickname and date of birth are required. Go back to complete them."
+                  : !dateOfBirth
+                    ? "A date of birth is required. Go back to complete it."
+                    : "A nickname of at least two characters is required. Go back to complete it."}
+              </p>
+            )}
+            <Button variant="ghost" className="w-full text-xs" onClick={() => setStep(5)} disabled={submitting}>
+              Back to profile details
+            </Button>
             {submitError && <p className="text-xs text-red-400" role="alert">{submitError}</p>}
           </div>
         )}
