@@ -27,6 +27,11 @@ export async function getVerifiedIdentity(req?: NextRequest): Promise<VerifiedId
     mfaAuthenticated:
       (Array.isArray(user.amr) && user.amr.some((method) => method === "mfa" || method === "otp")) ||
       (typeof user.acr === "string" && user.acr.toLowerCase().includes("mfa")),
-    authenticatedAt: typeof user.auth_time === "number" ? user.auth_time : undefined,
+    authenticatedAt:
+      typeof user.auth_time === "number"
+        ? user.auth_time
+        : typeof session.internal?.createdAt === "number"
+          ? session.internal.createdAt
+          : undefined,
   };
 }
