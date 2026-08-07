@@ -214,6 +214,28 @@ class InMemoryUserStore implements IUserStore {
     ];
   }
 
+  private saveToLocalStorage(key: string, data: any) {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(`intimo_store_${key}`, JSON.stringify(data));
+      } catch (err) {
+        console.error(`Failed to save ${key} to localStorage:`, err);
+      }
+    }
+  }
+
+  private loadFromLocalStorage<T>(key: string, fallback: T): T {
+    if (typeof window !== "undefined") {
+      try {
+        const item = localStorage.getItem(`intimo_store_${key}`);
+        return item ? JSON.parse(item) : fallback;
+      } catch (err) {
+        console.error(`Failed to load ${key} from localStorage:`, err);
+      }
+    }
+    return fallback;
+  }
+
   public findByAuth0Id(auth0UserId: string): UserAccountModel | undefined {
     return this.usersByAuth0Id.get(auth0UserId);
   }
@@ -248,6 +270,7 @@ class InMemoryUserStore implements IUserStore {
   // ── Verifications ──
   public submitVerificationRequest(req: IdentityVerificationRequest): IdentityVerificationRequest {
     this.verificationRequests.set(req.id, req);
+    this.saveToLocalStorage("verification_requests", Array.from(this.verificationRequests.values()));
 
     const user = this.findById(req.userId);
     if (user) {
@@ -263,6 +286,8 @@ class InMemoryUserStore implements IUserStore {
   }
 
   public getVerificationRequests(): IdentityVerificationRequest[] {
+    const list = this.loadFromLocalStorage<IdentityVerificationRequest[]>("verification_requests", []);
+    list.forEach((r) => this.verificationRequests.set(r.id, r));
     return Array.from(this.verificationRequests.values());
   }
 
@@ -272,6 +297,7 @@ class InMemoryUserStore implements IUserStore {
 
     req.status = "APPROVED";
     req.reviewedAt = new Date().toISOString();
+    this.saveToLocalStorage("verification_requests", Array.from(this.verificationRequests.values()));
 
     const user = this.findById(req.userId);
     if (user) {
@@ -292,6 +318,7 @@ class InMemoryUserStore implements IUserStore {
     req.status = "REJECTED";
     req.reviewedAt = new Date().toISOString();
     req.rejectionReason = reason;
+    this.saveToLocalStorage("verification_requests", Array.from(this.verificationRequests.values()));
 
     const user = this.findById(req.userId);
     if (user) {
@@ -307,6 +334,8 @@ class InMemoryUserStore implements IUserStore {
 
   // ── Compliance Reports ──
   public getReports(): ReportItem[] {
+    const list = this.loadFromLocalStorage<ReportItem[]>("reports", []);
+    list.forEach((r) => this.reports.set(r.id, r));
     return Array.from(this.reports.values());
   }
 
@@ -318,6 +347,7 @@ class InMemoryUserStore implements IUserStore {
       submittedAt: "Just now",
     };
     this.reports.set(newReport.id, newReport);
+    this.saveToLocalStorage("reports", Array.from(this.reports.values()));
     return newReport;
   }
 
@@ -325,16 +355,20 @@ class InMemoryUserStore implements IUserStore {
     const report = this.reports.get(reportId);
     if (!report) return false;
     report.status = status;
+    this.saveToLocalStorage("reports", Array.from(this.reports.values()));
     return true;
   }
 
   // ── Creator Applications ──
   public getCreatorApplications(): CreatorApplication[] {
+    const list = this.loadFromLocalStorage<CreatorApplication[]>("creator_applications", []);
+    list.forEach((app) => this.creatorApplications.set(app.id, app));
     return Array.from(this.creatorApplications.values());
   }
 
   public submitCreatorApplication(app: CreatorApplication): CreatorApplication {
     this.creatorApplications.set(app.id, app);
+    this.saveToLocalStorage("creator_applications", Array.from(this.creatorApplications.values()));
     return app;
   }
 
@@ -342,6 +376,7 @@ class InMemoryUserStore implements IUserStore {
     const app = this.creatorApplications.get(appId);
     if (!app) return false;
     app.status = "VERIFIED";
+    this.saveToLocalStorage("creator_applications", Array.from(this.creatorApplications.values()));
 
     const user = this.findById(app.user.id);
     if (user) {
@@ -358,6 +393,7 @@ class InMemoryUserStore implements IUserStore {
     const app = this.creatorApplications.get(appId);
     if (!app) return false;
     app.status = "REJECTED";
+    this.saveToLocalStorage("creator_applications", Array.from(this.creatorApplications.values()));
 
     const user = this.findById(app.user.id);
     if (user) {
@@ -371,6 +407,8 @@ class InMemoryUserStore implements IUserStore {
 
   // ── Payouts ──
   public getPayoutRequests(): PayoutRequest[] {
+    const list = this.loadFromLocalStorage<PayoutRequest[]>("payout_requests", []);
+    list.forEach((p) => this.payoutRequests.set(p.id, p));
     return Array.from(this.payoutRequests.values());
   }
 
@@ -378,6 +416,7 @@ class InMemoryUserStore implements IUserStore {
     const req = this.payoutRequests.get(payoutId);
     if (!req) return false;
     req.status = "APPROVED";
+    this.saveToLocalStorage("payout_requests", Array.from(this.payoutRequests.values()));
     return true;
   }
 
@@ -385,11 +424,14 @@ class InMemoryUserStore implements IUserStore {
     const req = this.payoutRequests.get(payoutId);
     if (!req) return false;
     req.status = "REJECTED";
+    this.saveToLocalStorage("payout_requests", Array.from(this.payoutRequests.values()));
     return true;
   }
 
   // ── Refunds ──
   public getRefundRequests(): RefundItem[] {
+    const list = this.loadFromLocalStorage<RefundItem[]>("refund_requests", []);
+    list.forEach((r) => this.refundRequests.set(r.id, r));
     return Array.from(this.refundRequests.values());
   }
 
@@ -397,6 +439,7 @@ class InMemoryUserStore implements IUserStore {
     const req = this.refundRequests.get(refundId);
     if (!req) return false;
     req.status = "APPROVED";
+    this.saveToLocalStorage("refund_requests", Array.from(this.refundRequests.values()));
     return true;
   }
 
@@ -404,11 +447,18 @@ class InMemoryUserStore implements IUserStore {
     const req = this.refundRequests.get(refundId);
     if (!req) return false;
     req.status = "REJECTED";
+    this.saveToLocalStorage("refund_requests", Array.from(this.refundRequests.values()));
     return true;
   }
 
   // ── Moderation Audit Logs ──
   public getModerationLogs(): ModerationLog[] {
+    const list = this.loadFromLocalStorage<ModerationLog[]>("moderation_logs", []);
+    list.forEach((l) => {
+      if (!this.moderationLogs.some((existing) => existing.id === l.id)) {
+        this.moderationLogs.push(l);
+      }
+    });
     return this.moderationLogs;
   }
 
@@ -419,6 +469,7 @@ class InMemoryUserStore implements IUserStore {
       timestamp: "Just now",
     };
     this.moderationLogs = [newLog, ...this.moderationLogs];
+    this.saveToLocalStorage("moderation_logs", this.moderationLogs);
     return newLog;
   }
 }
