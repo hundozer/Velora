@@ -20,8 +20,8 @@ export default function OnboardingWizardPage() {
   const [selectedInterests, setSelectedInterests] = useState<string[]>(["Friends with Benefits", "Casual Chatting"]);
   const [gender, setGender] = useState("FEMALE");
   const [sexualOrientation, setSexualOrientation] = useState("BISEXUAL");
-  const [country, setCountry] = useState("");
-  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("Czech Republic");
+  const [city, setCity] = useState("Prague");
   const [headline, setHeadline] = useState("");
   const [expressedCreatorIntent, setExpressedCreatorIntent] = useState(true);
 
