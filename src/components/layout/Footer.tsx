@@ -22,7 +22,7 @@ export const Footer: React.FC = () => {
               </span>
             </div>
             <p className="text-xs text-velora-textSecondary leading-relaxed max-w-md">
-              Intimo is an exclusive private social marketplace crafted for discerning adults. Built on principles of privacy, consent, safety, and modern social discovery.
+              Intimo is a free adults-only social discovery platform built around privacy, consent, safety, and transparent discovery.
             </p>
             <div className="flex items-center gap-6 pt-2">
               <div className="flex items-center gap-1.5 text-xs text-velora-gold font-medium">
@@ -31,11 +31,11 @@ export const Footer: React.FC = () => {
               </div>
               <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
                 <Lock className="w-4 h-4" />
-                End-to-End Encrypted
+                Secure Sessions
               </div>
               <div className="flex items-center gap-1.5 text-xs text-purple-300 font-medium">
                 <EyeOff className="w-4 h-4" />
-                Discreet Billing
+                Privacy Center
               </div>
             </div>
           </div>
@@ -76,23 +76,23 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-2.5 text-xs text-velora-textSecondary">
               <li>
-                <Link href="/safety" className="hover:text-velora-textPrimary transition-colors">
-                  2257 Record-Keeping
+                <Link href="/legal/privacy-policy" className="hover:text-velora-textPrimary transition-colors">
+                  Privacy Policy (Draft)
                 </Link>
               </li>
               <li>
-                <Link href="/safety" className="hover:text-velora-textPrimary transition-colors">
-                  GDPR & Privacy Policy
+                <Link href="/legal/terms" className="hover:text-velora-textPrimary transition-colors">
+                  Terms of Service (Draft)
                 </Link>
               </li>
               <li>
-                <Link href="/safety" className="hover:text-velora-textPrimary transition-colors">
-                  Terms of Service
+                <Link href="/legal/cookie-policy" className="hover:text-velora-textPrimary transition-colors">
+                  Cookie Policy (Draft)
                 </Link>
               </li>
               <li>
-                <Link href="/safety" className="hover:text-velora-textPrimary transition-colors">
-                  Content Moderation Guidelines
+                <Link href="/legal/moderation" className="hover:text-velora-textPrimary transition-colors">
+                  Moderation & Appeals (Draft)
                 </Link>
               </li>
             </ul>

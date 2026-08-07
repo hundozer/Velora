@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { LOCATION_DATA } from "@/lib/locationData";
 import { useAuth } from "@/context/AuthContext";
-import { UserSynchronizationService } from "@/lib/auth0/userSync";
 import { User as UserType, UserRole, Profile as ProfileType } from "@/types";
 import { Sparkles, ArrowRight, CheckCircle2, Heart, ShieldCheck, Compass, User, Users, Crown, Camera, Flame } from "lucide-react";
 
@@ -23,7 +22,9 @@ export default function OnboardingWizardPage() {
   const [country, setCountry] = useState("Czech Republic");
   const [city, setCity] = useState("Prague");
   const [headline, setHeadline] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [expressedCreatorIntent, setExpressedCreatorIntent] = useState(true);
+  const [explicitSensitiveDataConsent, setExplicitSensitiveDataConsent] = useState(false);
 
   // Optional Intimate Preferences & Sex Hobbies
   const [pubicHairGrooming, setPubicHairGrooming] = useState<string>("Trimmed");
@@ -70,10 +71,14 @@ export default function OnboardingWizardPage() {
 
   const { user, updateUserProfile } = useAuth();
   const [displayName, setDisplayName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
-  const handleFinish = () => {
-    const userId = user?.id || `usr-${Date.now()}`;
-    const userEmail = user?.email || "member@intimo.live";
+  const handleFinish = async () => {
+    setSubmitting(true);
+    setSubmitError("");
+    const userId = user?.id || "";
+    const userEmail = user?.email || "";
     const userRole: UserRole = profileType === "CREATOR" ? "CREATOR" : profileType === "COUPLE" ? "COUPLE" : "MEMBER";
     const finalName = displayName.trim() || userEmail.split("@")[0] || "Intimo Member";
     const finalCity = city.trim();
@@ -85,9 +90,9 @@ export default function OnboardingWizardPage() {
       email: userEmail,
       username: finalName.toLowerCase().replace(/\s+/g, "_"),
       role: userRole,
-      memberTier: "PREMIUM",
+      memberTier: "FREE",
       verificationStatus: "VERIFIED",
-      verificationLevel: "LEVEL_3_PROFILE_BIOMETRIC",
+      verificationLevel: "LEVEL_1_EMAIL",
       createdAt: new Date().toISOString().split("T")[0],
       avatarUrl: avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
     };
@@ -96,8 +101,8 @@ export default function OnboardingWizardPage() {
       id: `prof-${Date.now()}`,
       userId: userId,
       displayName: finalName,
-      dateOfBirth: "1998-05-15",
-      age: 26,
+      dateOfBirth,
+      age: 18,
       gender: gender as any,
       sexualOrientation: sexualOrientation as any,
       country: finalCountry,
@@ -134,12 +139,38 @@ export default function OnboardingWizardPage() {
       })),
     };
 
-    updateUserProfile(newUser, newProfile);
-    UserSynchronizationService.markProfileCompleted(userId);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("intimo_profile_completed", "true");
+    try {
+      const response = await fetch("/api/profile/me", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profileType, displayName: finalName, dateOfBirth, gender, sexualOrientation,
+          country: finalCountry, city: finalCity, headline, interests: selectedInterests,
+          hobbies: selectedSexHobbies, positions: selectedPositions, pubicHairGrooming,
+          piercing, tattoo, avatarUrl: avatarUrl.startsWith("https://") ? avatarUrl : undefined,
+          expressedCreatorIntent,
+          explicitSensitiveDataConsent,
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Profile creation failed");
+      const created = payload.profile;
+      newUser.id = created.auth_id;
+      newUser.email = created.email;
+      newUser.role = created.role;
+      newUser.memberTier = created.member_tier;
+      newUser.verificationLevel = created.verification_level;
+      newProfile.id = created.id;
+      newProfile.userId = created.auth_id;
+      newProfile.age = created.age;
+      updateUserProfile(newUser, newProfile);
+      router.push("/dashboard");
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Profile creation failed");
+    } finally {
+      setSubmitting(false);
     }
-    router.push("/dashboard");
   };
 
   return (
@@ -200,45 +231,11 @@ export default function OnboardingWizardPage() {
               <div className="p-4 rounded-2xl border border-amber-400/40 bg-amber-500/10 space-y-4 text-left">
                 <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
                   <Sparkles className="w-4 h-4 text-amber-400" />
-                  Creator Registration Coming Soon — Express Your Intent
+                  Free Creator Mode
                 </div>
                 <p className="text-xs text-velora-textSecondary leading-relaxed">
-                  Full creator monetization tools are currently in pre-launch. Expressing your creator intent now grants you priority early access and a 0% platform fee during our launch window.
+                  Creator profiles, free content, followers, communities and free live experiences remain part of the MVP. Charging users, tips and payouts are disabled.
                 </p>
-
-                {/* 5-Step Visual Process Infographic */}
-                <div className="space-y-2 pt-1">
-                  <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
-                    How Becoming a Creator Works:
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
-                    <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center space-y-1">
-                      <div className="w-6 h-6 rounded-full bg-amber-400/20 text-amber-300 font-bold text-[10px] flex items-center justify-center mx-auto border border-amber-400/40">1</div>
-                      <div className="text-[11px] font-bold text-white">1. Register</div>
-                      <div className="text-[9px] text-velora-textMuted leading-tight">Pre-register profile & intent</div>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center space-y-1">
-                      <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-300 font-bold text-[10px] flex items-center justify-center mx-auto border border-purple-500/40">2</div>
-                      <div className="text-[11px] font-bold text-white">2. Get Verified</div>
-                      <div className="text-[9px] text-velora-textMuted leading-tight">Selfie photo biometric badge</div>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center space-y-1">
-                      <div className="w-6 h-6 rounded-full bg-sky-500/20 text-sky-300 font-bold text-[10px] flex items-center justify-center mx-auto border border-sky-500/40">3</div>
-                      <div className="text-[11px] font-bold text-white">3. Upload</div>
-                      <div className="text-[9px] text-velora-textMuted leading-tight">Photo, 4K video & live salons</div>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center space-y-1">
-                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-[10px] flex items-center justify-center mx-auto border border-emerald-500/40">4</div>
-                      <div className="text-[11px] font-bold text-white">4. Users Buy</div>
-                      <div className="text-[9px] text-velora-textMuted leading-tight">Subscriptions & PPV media</div>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-black/50 border border-amber-400/40 text-center space-y-1">
-                      <div className="w-6 h-6 rounded-full bg-amber-400 text-black font-bold text-[10px] flex items-center justify-center mx-auto shadow-gold-glow">5</div>
-                      <div className="text-[11px] font-bold text-amber-300">5. Get Paid</div>
-                      <div className="text-[9px] text-velora-textMuted leading-tight">Direct payouts to your bank</div>
-                    </div>
-                  </div>
-                </div>
 
                 <label className="flex items-center gap-2 pt-2 cursor-pointer border-t border-white/10">
                   <input
@@ -248,7 +245,7 @@ export default function OnboardingWizardPage() {
                     className="w-4 h-4 accent-amber-400 rounded cursor-pointer"
                   />
                   <span className="text-xs text-amber-200 font-bold">
-                    Pre-register my Creator Intent for priority early access notification
+                    Enable free Creator Mode for this profile
                   </span>
                 </label>
               </div>
@@ -379,6 +376,19 @@ export default function OnboardingWizardPage() {
                   <option value="FLUID">Fluid / Open</option>
                 </select>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-1">
+                Date of Birth (18+ required)
+              </label>
+              <Input
+                type="date"
+                value={dateOfBirth}
+                onChange={(e) => setDateOfBirth(e.target.value)}
+                max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split("T")[0]}
+                required
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -661,15 +671,29 @@ export default function OnboardingWizardPage() {
               Welcome to Intimo. Start exploring open-minded adults nearby, viewing private profiles, and connecting.
             </p>
 
+            <label className="flex items-start gap-3 p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-left cursor-pointer">
+              <input
+                type="checkbox"
+                checked={explicitSensitiveDataConsent}
+                onChange={(event) => setExplicitSensitiveDataConsent(event.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-emerald-400"
+              />
+              <span className="text-xs text-velora-textSecondary leading-relaxed">
+                I explicitly consent to Intimo processing the sexual orientation and intimate preferences I provide to operate my profile and discovery. This is separate from accepting general terms. I can withdraw this consent in the Privacy Center; withdrawal may limit these features.
+              </span>
+            </label>
+
             <Button
               variant="gold"
               size="lg"
               className="w-full text-xs font-bold uppercase tracking-wider py-3.5 shadow-gold-glow flex items-center justify-center gap-2"
               onClick={handleFinish}
+              disabled={submitting || !dateOfBirth || displayName.trim().length < 2 || !explicitSensitiveDataConsent}
             >
               <Compass className="w-4 h-4" />
-              <span>Start Exploring Members</span>
+              <span>{submitting ? "Creating Profile..." : "Start Exploring Members"}</span>
             </Button>
+            {submitError && <p className="text-xs text-red-400" role="alert">{submitError}</p>}
           </div>
         )}
       </Card>

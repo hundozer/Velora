@@ -9,8 +9,7 @@ import { Modal } from "@/components/ui/Modal";
 import { VerificationWizard } from "@/components/verification/VerificationWizard";
 import { MOCK_SAFETY_SETTINGS } from "@/lib/mockData";
 import { SUPPORTED_LANGUAGES } from "@/lib/i18n";
-import { SUPPORTED_CURRENCIES } from "@/lib/currency/CurrencyService";
-import { UserSafetySettings, LanguageCode, CurrencyCode } from "@/types";
+import { UserSafetySettings, LanguageCode } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import {
   Settings,
@@ -25,7 +24,6 @@ import {
   Sliders,
   UserCheck,
   Globe,
-  DollarSign,
   Download,
   Trash2,
   LogOut,
@@ -38,7 +36,15 @@ export default function SettingsPage() {
   const [nickname, setNickname] = useState(profile?.displayName || user?.username || "");
   const [safety, setSafety] = useState<UserSafetySettings>(MOCK_SAFETY_SETTINGS);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>("en");
-  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>("USD");
+  const [privacy, setPrivacy] = useState({
+    profileVisibility: "MEMBERS_ONLY",
+    sensitiveFieldsVisibility: "PRIVATE",
+    locationPrecision: "CITY",
+    messagePermission: "MEMBERS_ONLY",
+    showOnlineStatus: false,
+    showDistance: true,
+  });
+  const [sensitiveConsentGranted, setSensitiveConsentGranted] = useState(false);
   const [blockedUsers, setBlockedUsers] = useState([
     { id: "usr-blk-1", username: "spammer_bot_99", blockedAt: "Yesterday" },
     { id: "usr-blk-2", username: "unwanted_contact", blockedAt: "3 days ago" },
@@ -79,7 +85,26 @@ export default function SettingsPage() {
     setBlockedUsers(blockedUsers.filter((u) => u.id !== id));
   };
 
-  const handleSave = () => {
+  React.useEffect(() => {
+    Promise.all([
+      fetch("/api/privacy/settings", { credentials: "same-origin" }).then((response) => response.ok ? response.json() : null),
+      fetch("/api/privacy/consents", { credentials: "same-origin" }).then((response) => response.ok ? response.json() : null),
+    ]).then(([settingsPayload, consentPayload]) => {
+      const settings = settingsPayload?.settings;
+      if (settings) setPrivacy({
+        profileVisibility: settings.profile_visibility || "MEMBERS_ONLY",
+        sensitiveFieldsVisibility: settings.sensitive_fields_visibility || "PRIVATE",
+        locationPrecision: settings.location_precision || "CITY",
+        messagePermission: settings.message_permission || "MEMBERS_ONLY",
+        showOnlineStatus: settings.show_online_status === true,
+        showDistance: settings.show_distance === true,
+      });
+      const latest = consentPayload?.consents?.find((item: any) => item.consent_type === "SPECIAL_CATEGORY_PROFILE");
+      setSensitiveConsentGranted(latest?.consent_status === "GRANTED");
+    }).catch(() => undefined);
+  }, []);
+
+  const handleSave = async () => {
     if (user && profile && nickname.trim()) {
       const updatedUser = {
         ...user,
@@ -91,49 +116,56 @@ export default function SettingsPage() {
       };
       updateUserProfile(updatedUser, updatedProfile);
     }
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+    const response = await fetch("/api/privacy/settings", {
+      method: "PUT", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(privacy),
+    });
+    if (response.ok) {
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    }
   };
 
-  const handleExportGdprData = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
-      user: { username: "elena_vance", email: "elena@velora.club", role: "CREATOR" },
-      profile: { displayName: "Elena Vance", city: "Monte Carlo", country: "Monaco" },
-      gdprExportDate: new Date().toISOString(),
-    }));
+  const handleExportGdprData = async () => {
+    const response = await fetch("/api/privacy/export", { credentials: "same-origin" });
+    if (!response.ok) return;
+    const blob = await response.blob();
     const downloadAnchor = document.createElement("a");
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "velora_gdpr_data_export.json");
+    downloadAnchor.href = URL.createObjectURL(blob);
+    downloadAnchor.download = `intimo-data-export-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
+    URL.revokeObjectURL(downloadAnchor.href);
 
     setExportSuccess(true);
     setTimeout(() => setExportSuccess(false), 3000);
   };
 
+  const updateSensitiveConsent = async (granted: boolean) => {
+    const response = await fetch("/api/privacy/consents", {
+      method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ consentType: "SPECIAL_CATEGORY_PROFILE", granted }),
+    });
+    if (response.ok) setSensitiveConsentGranted(granted);
+  };
+
   const handleDeleteAccount = async () => {
     if (user) {
       try {
-        await fetch("/api/auth/delete-account", {
+        const response = await fetch("/api/auth/delete-account", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            auth0UserId: user.id,
-            email: user.email
-          }),
+          body: JSON.stringify({ confirmation: "DELETE" }),
         });
+        if (!response.ok) throw new Error("Account deletion was not completed");
       } catch (err) {
         console.error("API call to delete account failed:", err);
       }
       setDeleteModalOpen(false);
       
-      // Clear session cookies locally
-      document.cookie = "intimo_session_active=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      document.cookie = "intimo_user_data=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      
-      // Redirect directly to /goodbye to avoid Auth0 returnTo whitelisting error
-      window.location.href = "/goodbye";
+      // The SDK clears its httpOnly session and validates the return target.
+      window.location.href = "/auth/logout?returnTo=%2Fgoodbye";
     }
   };
 
@@ -148,7 +180,7 @@ export default function SettingsPage() {
               Privacy, Safety & Regional Settings
             </h1>
             <p className="text-xs text-velora-textSecondary mt-1">
-              Manage messaging permissions, GDPR data privacy, push notifications, language, and currency.
+              Manage messaging permissions, privacy rights, consent, language, and safety controls.
             </p>
           </div>
         </div>
@@ -249,10 +281,10 @@ export default function SettingsPage() {
       <Card variant="glass" className="p-6 space-y-6">
         <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
           <Globe className="w-4 h-4 text-velora-gold" />
-          Language & Currency Localization
+          Language
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
               Display Language
@@ -270,22 +302,35 @@ export default function SettingsPage() {
             </select>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
-              Preferred Payment Currency
+        </div>
+      </Card>
+
+      <Card variant="glass" className="p-6 space-y-5">
+        <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
+          <EyeOff className="w-4 h-4 text-emerald-400" /> Privacy Center
+        </h2>
+        <p className="text-xs text-velora-textSecondary">Sensitive profile fields default to private. Exact coordinates are never shown through public profile APIs.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[
+            ["Profile visibility", "profileVisibility", ["EVERYONE", "MEMBERS_ONLY", "MATCHING_USERS", "APPROVED_USERS", "PRIVATE"]],
+            ["Sensitive fields", "sensitiveFieldsVisibility", ["EVERYONE", "MEMBERS_ONLY", "MATCHING_USERS", "APPROVED_USERS", "PRIVATE"]],
+            ["Location display", "locationPrecision", ["HIDDEN", "CITY", "APPROXIMATE_DISTANCE"]],
+            ["Who may message", "messagePermission", ["EVERYONE", "MEMBERS_ONLY", "MATCHING_USERS", "APPROVED_USERS", "PRIVATE"]],
+          ].map(([label, key, options]) => (
+            <label key={key as string} className="text-xs text-velora-textSecondary">
+              <span className="block mb-2 font-semibold">{label as string}</span>
+              <select value={(privacy as any)[key as string]} onChange={(event) => setPrivacy({ ...privacy, [key as string]: event.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white">
+                {(options as string[]).map((option) => <option key={option} value={option} className="bg-velora-card">{option.replaceAll("_", " ")}</option>)}
+              </select>
             </label>
-            <select
-              value={selectedCurrency}
-              onChange={(e) => setSelectedCurrency(e.target.value as CurrencyCode)}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
-            >
-              {SUPPORTED_CURRENCIES.map((curr) => (
-                <option key={curr.code} value={curr.code} className="bg-velora-card text-white">
-                  {curr.symbol} {curr.code} - {curr.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          ))}
+        </div>
+        <label className="flex items-center justify-between p-3 glass-panel rounded-xl text-xs"><span>Show online status</span><input type="checkbox" checked={privacy.showOnlineStatus} onChange={(event) => setPrivacy({ ...privacy, showOnlineStatus: event.target.checked })} /></label>
+        <label className="flex items-center justify-between p-3 glass-panel rounded-xl text-xs"><span>Show approximate distance</span><input type="checkbox" checked={privacy.showDistance} onChange={(event) => setPrivacy({ ...privacy, showDistance: event.target.checked })} /></label>
+        <div className="p-4 border border-emerald-500/30 rounded-xl space-y-3">
+          <p className="text-xs font-bold">Explicit sensitive-data consent</p>
+          <p className="text-[11px] text-velora-textMuted">Controls processing of sexual orientation and intimate preferences for your profile and discovery. Withdrawal may make these features unavailable; it does not replace a deletion request.</p>
+          <Button variant="glass" size="sm" onClick={() => updateSensitiveConsent(!sensitiveConsentGranted)}>{sensitiveConsentGranted ? "Withdraw consent" : "Grant consent"}</Button>
         </div>
       </Card>
 
@@ -337,7 +382,7 @@ export default function SettingsPage() {
             <div>
               <h4 className="text-xs font-bold text-velora-textPrimary">Export Personal Data Archive (GDPR Art. 20)</h4>
               <p className="text-[11px] text-velora-textMuted mt-0.5">
-                Download a complete JSON export of your profile, messages, transactions, and media history.
+                Download a server-generated JSON export of your profile, messages, connections, consent history, and dating ads.
               </p>
             </div>
             <Button
@@ -371,7 +416,7 @@ export default function SettingsPage() {
             <div>
               <h4 className="text-xs font-bold text-red-400">Permanently Delete Intimo Account (GDPR Right to be Forgotten)</h4>
               <p className="text-[11px] text-velora-textMuted mt-0.5">
-                Permanently purge all profile data, messages, wallet records, and media vaults.
+                Start permanent deletion of your profile data, messages, and media, subject to documented safety/legal retention exceptions.
               </p>
             </div>
             <Button
@@ -392,7 +437,7 @@ export default function SettingsPage() {
           <div className="p-4 bg-red-500/10 border border-red-500/40 rounded-2xl flex items-center gap-3">
             <AlertTriangle className="w-6 h-6 text-red-400 shrink-0" />
             <p className="text-xs text-red-300 leading-relaxed">
-              This action is permanent and cannot be undone. All your profile media, messages, wallet balances, and subscriptions will be permanently purged.
+              This action is permanent and cannot be undone. Your profile, messages, and media will be deleted or anonymized through the documented deletion workflow, subject to legitimate safety or legal retention duties.
             </p>
           </div>
 

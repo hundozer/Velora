@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ProfileCard } from "@/components/discovery/ProfileCard";
 import { SearchBar } from "@/components/discovery/SearchBar";
 import { FilterSidebar, FilterState } from "@/components/discovery/FilterSidebar";
@@ -8,7 +8,7 @@ import { MapView } from "@/components/discovery/MapView";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { MOCK_PROFILES, MOCK_LIVE_STREAMS } from "@/lib/mockData";
+import { MOCK_LIVE_STREAMS } from "@/lib/mockData";
 import { Profile } from "@/types";
 import { useTranslation } from "@/context/LanguageContext";
 import Link from "next/link";
@@ -38,6 +38,8 @@ export default function DiscoveryMarketplacePage() {
   const [viewMode, setViewMode] = useState<"GRID" | "LIST" | "MAP">("GRID");
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [discoveryProfiles, setDiscoveryProfiles] = useState<Profile[]>([]);
+  const [discoveryError, setDiscoveryError] = useState("");
 
 
   // Sidebar Filter State
@@ -60,13 +62,18 @@ export default function DiscoveryMarketplacePage() {
     sortBy: "NEWEST",
   });
 
-  const allProfiles = React.useMemo(() => {
-    if (currentUserProfile) {
-      const exists = MOCK_PROFILES.some((p) => p.id === currentUserProfile.id || p.displayName === currentUserProfile.displayName);
-      return exists ? MOCK_PROFILES : [currentUserProfile, ...MOCK_PROFILES];
-    }
-    return MOCK_PROFILES;
-  }, [currentUserProfile]);
+  useEffect(() => {
+    if (!user) return;
+    fetch("/api/discovery/profiles", { cache: "no-store", credentials: "same-origin" })
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "Discovery unavailable");
+        setDiscoveryProfiles(Array.isArray(payload.profiles) ? payload.profiles : []);
+      })
+      .catch((error) => setDiscoveryError(error instanceof Error ? error.message : "Discovery unavailable"));
+  }, [user]);
+
+  const allProfiles = React.useMemo(() => discoveryProfiles, [discoveryProfiles]);
 
   // Filter profiles based on all filter parameters
   const filteredProfiles = allProfiles.filter((p) => {
@@ -228,6 +235,7 @@ export default function DiscoveryMarketplacePage() {
 
       {/* FULL-WIDTH PROFILES GRID / LIST / MAP SECTION DIRECTLY BELOW SEARCH BAR */}
       <div>
+        {discoveryError && <p className="text-xs text-red-400 mb-3" role="alert">{discoveryError}</p>}
         {filteredProfiles.length === 0 ? (
           <Card variant="glass" className="p-12 text-center space-y-4">
             <Sparkles className="w-12 h-12 text-velora-gold mx-auto" />
@@ -298,7 +306,7 @@ export default function DiscoveryMarketplacePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            {MOCK_PROFILES.filter((p) => p.categories && p.categories.length > 0).map((creator) => (
+            {allProfiles.filter((p) => p.categories && p.categories.length > 0).map((creator) => (
               <div key={creator.id} className="flex items-center justify-between p-3 rounded-2xl glass-panel">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full border border-amber-400 overflow-hidden bg-velora-card shrink-0">
@@ -307,7 +315,7 @@ export default function DiscoveryMarketplacePage() {
                   </div>
                   <div className="text-left min-w-0">
                     <h4 className="text-xs font-bold text-velora-textPrimary truncate">{creator.displayName}</h4>
-                    <span className="text-[10px] text-amber-300 font-mono">${creator.monthlySubscriptionPrice}/mo</span>
+                    <span className="text-[10px] text-emerald-300 font-mono">Free creator profile</span>
                   </div>
                 </div>
 

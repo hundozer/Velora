@@ -26,8 +26,8 @@ export interface ApiSecurityResult {
 /**
  * Validates server-side Auth0 JWT Bearer Token and synchronizes user
  */
-export function validateAuth0BearerToken(bearerHeader: string | undefined): ApiSecurityResult {
-  const jwtCheck = JwtValidatorService.validateAuth0Token(bearerHeader);
+export async function validateAuth0BearerToken(bearerHeader: string | undefined): Promise<ApiSecurityResult> {
+  const jwtCheck = await JwtValidatorService.validateAuth0Token(bearerHeader);
 
   if (!jwtCheck.isValid || !jwtCheck.payload) {
     return {

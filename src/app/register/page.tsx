@@ -9,7 +9,7 @@ export default function RegisterPage() {
   useEffect(() => {
     // Automatically redirect to Auth0 Registration
     const timer = setTimeout(() => {
-      window.location.href = "/api/auth/login?screen_hint=signup";
+      window.location.href = "/auth/login?screen_hint=signup";
     }, 1200);
     return () => clearTimeout(timer);
   }, []);
@@ -44,7 +44,7 @@ export default function RegisterPage() {
           </div>
 
           <a
-            href="/api/auth/login?screen_hint=signup"
+            href="/auth/login?screen_hint=signup"
             className="block w-full"
           >
             <Button variant="gold" size="lg" className="w-full text-xs font-bold uppercase tracking-wider shadow-gold-glow flex items-center justify-center gap-2">

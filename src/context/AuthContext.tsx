@@ -27,6 +27,8 @@ interface AuthContextType {
   logoutWithAuth0: (returnTo?: string) => void;
   register: (data: Partial<User> & { displayName: string }) => { success: boolean; pendingVerification: boolean; email: string };
   updateUserProfile: (newUser: User, newProfile: Profile) => void;
+  impersonateUser: (targetUser: User, targetProfile: Profile) => void;
+  stopImpersonating: () => void;
   logout: () => void;
 }
 
@@ -99,7 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 email: cookieUserData.email,
                 username: effectiveName,
                 role: "MEMBER",
-                memberTier: "PREMIUM",
+                memberTier: "FREE",
                 verificationStatus: cookieUserData.email_verified ? "PENDING" : "UNVERIFIED",
                 verificationLevel: "LEVEL_1_EMAIL",
                 createdAt: new Date().toISOString().split("T")[0],
@@ -150,6 +152,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  // Reconcile all cached display state against the verified server session.
+  // localStorage and legacy cookies never grant identity or privileged roles.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/auth/session", { cache: "no-store", credentials: "same-origin" })
+      .then(async (response) => {
+        if (cancelled) return;
+        if (response.status === 401) {
+          setUser(null);
+          setProfile(null);
+          setRole("MEMBER");
+          localStorage.removeItem("intimo_active_user");
+          localStorage.removeItem("intimo_active_profile");
+          return;
+        }
+        if (!response.ok) return;
+        const session = await response.json();
+        if (!session?.provisioned || !session?.actor?.email) return;
+
+        const profileResponse = await fetch("/api/profile/me", { cache: "no-store", credentials: "same-origin" });
+        if (!profileResponse.ok) return;
+        const payload = await profileResponse.json();
+        const data = payload.profile as ProfileRow;
+        if (cancelled || !data) return;
+        const freshUser = { ...dbRowToUser(data), id: session.actor.id, role: session.actor.role as UserRole };
+        const freshProfile = { ...dbRowToProfile(data), userId: session.actor.id };
+        setUser(freshUser);
+        setProfile(freshProfile);
+        setRole(session.actor.role as UserRole);
+        localStorage.setItem("intimo_active_user", JSON.stringify(freshUser));
+        localStorage.setItem("intimo_active_profile", JSON.stringify(freshProfile));
+      })
+      .catch(() => {
+        // Preserve the current display while the server is unavailable, but never
+        // use it for API or admin authorization.
+      });
+    return () => { cancelled = true; };
+  }, []);
+
   const pathname = usePathname();
   const router = useRouter();
 
@@ -184,17 +225,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem("intimo_active_profile", JSON.stringify(newProfile));
     }
 
-    // Persist to Supabase (async, fire-and-forget)
-    if (newUser.email) {
-      const dbRow = profileToDbRow(newUser.id, newUser.email, newProfile, newUser);
-      upsertProfile(newUser.id, newUser.email, dbRow).catch((err) => {
-        console.error("Failed to sync profile to Supabase:", err);
-      });
-    }
+    // Persist through the authenticated owner-only server boundary. Identity,
+    // role, tier, and verification fields are deliberately not sent.
+    fetch("/api/profile/me", {
+      method: "PUT",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile: newProfile }),
+    }).catch((err) => console.error("Failed to sync profile:", err));
   }, []);
 
   // ── Switch Role ────────────────────────────────────────
   const switchRole = (newRole: UserRole) => {
+    if (newRole === "ADMIN") {
+      console.warn("Administrative roles are server-authorized and cannot be selected in the browser.");
+      return;
+    }
     setRole(newRole);
     if (user && profile) {
       const updatedUser: User = { ...user, role: newRole };
@@ -236,7 +282,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       display_name: displayName,
       username: displayName,
       role: selectedRole,
-      member_tier: "PREMIUM",
+      member_tier: "FREE",
       verification_status: "VERIFIED",
       verification_level: "LEVEL_3_PROFILE_BIOMETRIC",
     };
@@ -258,7 +304,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email,
         username: displayName,
         role: selectedRole,
-        memberTier: "PREMIUM",
+        memberTier: "FREE",
         verificationStatus: "VERIFIED",
         verificationLevel: "LEVEL_3_PROFILE_BIOMETRIC",
         createdAt: new Date().toISOString().split("T")[0],
@@ -308,7 +354,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // ── Auth0 Login/Logout ─────────────────────────────────
   const loginWithAuth0 = (screenHint?: string) => {
     if (typeof window !== "undefined") {
-      const targetUrl = screenHint ? `/api/auth/login?screen_hint=${screenHint}` : "/api/auth/login";
+      const targetUrl = screenHint ? `/auth/login?screen_hint=${screenHint}` : "/auth/login";
       window.location.href = targetUrl;
     }
   };
@@ -316,7 +362,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logoutWithAuth0 = (returnTo?: string) => {
     logout();
     if (typeof window !== "undefined") {
-      const target = returnTo ? `/api/auth/logout?returnTo=${encodeURIComponent(returnTo)}` : "/api/auth/logout";
+      const target = returnTo ? `/auth/logout?returnTo=${encodeURIComponent(returnTo)}` : "/auth/logout";
       window.location.href = target;
     }
   };
@@ -339,6 +385,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   };
 
+  const impersonateUser = (targetUser: User, targetProfile: Profile) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("intimo_original_admin_user", JSON.stringify(user));
+      localStorage.setItem("intimo_original_admin_profile", JSON.stringify(profile));
+      localStorage.setItem("intimo_active_user", JSON.stringify(targetUser));
+      localStorage.setItem("intimo_active_profile", JSON.stringify(targetProfile));
+    }
+    setUser(targetUser);
+    setProfile(targetProfile);
+    if (targetUser.role) {
+      setRole(targetUser.role);
+    }
+  };
+
+  const stopImpersonating = () => {
+    if (typeof window !== "undefined") {
+      const originalUserStr = localStorage.getItem("intimo_original_admin_user");
+      const originalProfileStr = localStorage.getItem("intimo_original_admin_profile");
+      if (originalUserStr && originalProfileStr) {
+        const originalUser = JSON.parse(originalUserStr);
+        const originalProfile = JSON.parse(originalProfileStr);
+        setUser(originalUser);
+        setProfile(originalProfile);
+        if (originalUser.role) {
+          setRole(originalUser.role);
+        }
+        localStorage.setItem("intimo_active_user", originalUserStr);
+        localStorage.setItem("intimo_active_profile", originalProfileStr);
+      }
+      localStorage.removeItem("intimo_original_admin_user");
+      localStorage.removeItem("intimo_original_admin_profile");
+    }
+  };
+
   // ── Logout ─────────────────────────────────────────────
   const logout = () => {
     setUser(null);
@@ -346,6 +426,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (typeof window !== "undefined") {
       localStorage.removeItem("intimo_active_user");
       localStorage.removeItem("intimo_active_profile");
+      localStorage.removeItem("intimo_original_admin_user");
+      localStorage.removeItem("intimo_original_admin_profile");
     }
   };
 
@@ -363,6 +445,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logoutWithAuth0,
         register,
         updateUserProfile,
+        impersonateUser,
+        stopImpersonating,
         logout,
       }}
     >

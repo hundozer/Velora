@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand, HeadObjectCommand, S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID || "";
@@ -24,6 +24,7 @@ const r2Client = isR2Configured
 export interface PresignedUploadParams {
   fileName: string;
   fileType: string;
+  fileSize: number;
   folder?: "photos" | "videos" | "avatars" | "covers" | "general";
 }
 
@@ -40,6 +41,7 @@ export interface PresignedUploadResponse {
 export async function getPresignedUploadUrl({
   fileName,
   fileType,
+  fileSize,
   folder = "general",
 }: PresignedUploadParams): Promise<PresignedUploadResponse> {
   const sanitizedName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_").toLowerCase();
@@ -65,6 +67,7 @@ export async function getPresignedUploadUrl({
     Bucket: bucketName,
     Key: objectKey,
     ContentType: fileType,
+    ContentLength: fileSize,
   });
 
   // Presigned URL valid for 15 minutes (900 seconds)
@@ -80,4 +83,16 @@ export async function getPresignedUploadUrl({
     objectKey,
     isMock: false,
   };
+}
+
+export async function getPresignedDownloadUrl(objectKey: string): Promise<string> {
+  if (!isR2Configured || !r2Client) throw new Error("Private media storage is unavailable");
+  const command = new GetObjectCommand({ Bucket: bucketName, Key: objectKey });
+  return getSignedUrl(r2Client, command, { expiresIn: 300 });
+}
+
+export async function inspectStoredObject(objectKey: string) {
+  if (!isR2Configured || !r2Client) return null;
+  const result = await r2Client.send(new HeadObjectCommand({ Bucket: bucketName, Key: objectKey }));
+  return { byteSize: result.ContentLength ?? 0, mimeType: result.ContentType ?? "" };
 }

@@ -21,18 +21,24 @@ export interface Auth0EnvironmentConfig {
   };
 }
 
-const BASE_URL = process.env.AUTH0_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-const DOMAIN = process.env.AUTH0_ISSUER_BASE_URL || "https://intimo.eu.auth0.com";
+function required(name: string): string {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`Missing required server environment variable: ${name}`);
+  return value;
+}
+
+const BASE_URL = process.env.AUTH0_BASE_URL || process.env.APP_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const DOMAIN = required("AUTH0_ISSUER_BASE_URL").replace(/\/$/, "");
 
 export const AUTH0_CONFIG: Auth0EnvironmentConfig = {
   domain: DOMAIN,
-  clientId: process.env.AUTH0_CLIENT_ID || "2wfjGUy76NmH8rdoxXxqg8CrbchkutTl",
-  clientSecret: process.env.AUTH0_CLIENT_SECRET || "pLz9jWA2wxZszV6AzQpYzVX7GkL-7uSdELBAsskUD8RyjznX-aSDuX9i91cooW0F",
-  secret: process.env.AUTH0_SECRET || "velora_long_session_secret_cookie_key_32bytes!",
+  clientId: required("AUTH0_CLIENT_ID"),
+  clientSecret: required("AUTH0_CLIENT_SECRET"),
+  secret: required("AUTH0_SECRET"),
   baseUrl: BASE_URL,
   issuer: DOMAIN.endsWith("/") ? DOMAIN : `${DOMAIN}/`,
-  audience: process.env.AUTH0_AUDIENCE || "https://api.intimo.club",
-  callbackUrl: `${BASE_URL}/api/auth/callback`,
+  audience: process.env.AUTH0_AUDIENCE,
+  callbackUrl: `${BASE_URL}/auth/callback`,
   logoutUrl: `${BASE_URL}/login`,
   allowedOrigins: [
     BASE_URL,

@@ -91,10 +91,10 @@ async function runAuth0ResendVerificationSuite() {
   // ----------------------------------------------------
   // TEST 4: JWT Token Security Validation
   // ----------------------------------------------------
-  const invalidJwt = JwtValidatorService.validateAuth0Token("Bearer invalid.fake.token");
+  const invalidJwt = await JwtValidatorService.validateAuth0Token("Bearer invalid.fake.token");
   assert(invalidJwt.isValid === false, "4.1 Malformed/fake JWT token rejected");
 
-  const missingJwt = JwtValidatorService.validateAuth0Token(undefined);
+  const missingJwt = await JwtValidatorService.validateAuth0Token(undefined);
   assert(missingJwt.isValid === false && missingJwt.statusCode === 401, "4.2 Missing Authorization header rejected with 401");
 
   // ----------------------------------------------------

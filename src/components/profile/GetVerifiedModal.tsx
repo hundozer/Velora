@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { uploadFileToR2 } from "@/lib/storage/clientUpload";
+import { requestParticipantDeclaration, uploadFileToR2 } from "@/lib/storage/clientUpload";
 import {
   ShieldCheck,
   Camera,
@@ -79,7 +79,7 @@ export function GetVerifiedModal({
         setUploadProgress(10);
         const result = await uploadFileToR2(selectedFile, "general", (percent) => {
           setUploadProgress(percent);
-        });
+        }, requestParticipantDeclaration());
         finalPhotoUrl = result.publicUrl;
       }
 

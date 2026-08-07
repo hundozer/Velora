@@ -8,7 +8,7 @@ import {
   X,
   Video,
   CheckCircle2,
-  Image,
+  Image as ImageIcon,
   Smile,
   Mic,
   Plus,
@@ -383,7 +383,7 @@ export function FloatingChatWidget({ chatUser, onClose }: FloatingChatWidgetProp
               className="p-1 text-velora-textMuted hover:text-blue-400 transition-colors"
               title="Upload Image"
             >
-              <Image className="w-4 h-4" />
+              <ImageIcon className="w-4 h-4" />
             </button>
             <button
               type="button"

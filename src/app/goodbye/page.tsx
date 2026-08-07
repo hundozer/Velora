@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -16,9 +17,11 @@ export default function GoodbyePage() {
       <Card variant="goldBorder" className="w-full max-w-lg p-8 relative z-10 space-y-6 text-center bg-velora-card/60 backdrop-blur-md shadow-2xl">
         {/* Golden Broken Heart Render Image */}
         <div className="relative w-48 h-48 mx-auto rounded-full overflow-hidden border border-velora-gold/30 shadow-2xl bg-black flex items-center justify-center group">
-          <img 
+          <Image
             src="/goodbye.jpg" 
             alt="Goodbye" 
+            width={192}
+            height={192}
             className="w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 ease-out scale-105 group-hover:scale-100"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -40,7 +43,7 @@ export default function GoodbyePage() {
         <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-left text-xs text-velora-textMuted space-y-2 leading-relaxed font-mono">
           <div className="flex items-start gap-2 text-[11px]">
             <Heart className="w-4 h-4 text-velora-gold shrink-0 mt-0.5" />
-            <span>All your profiles, private media albums, messages, and wallet credits have been permanently wiped from our server vaults.</span>
+            <span>Your account deletion request was accepted. Profile data, messages, and media follow the documented deletion/anonymization workflow and any legitimate safety or legal retention duties.</span>
           </div>
           <div className="flex items-start gap-2 text-[11px]">
             <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />

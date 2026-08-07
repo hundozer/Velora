@@ -1,9 +1,10 @@
+import { createRemoteJWKSet, jwtVerify } from "jose";
 import { AUTH0_CONFIG } from "./config";
 
 export interface Auth0TokenPayload {
   sub: string;
-  email: string;
-  email_verified: boolean;
+  email?: string;
+  email_verified?: boolean;
   name?: string;
   nickname?: string;
   picture?: string;
@@ -11,7 +12,7 @@ export interface Auth0TokenPayload {
   aud: string | string[];
   iat: number;
   exp: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface JwtValidationResult {
@@ -21,82 +22,30 @@ export interface JwtValidationResult {
   payload?: Auth0TokenPayload;
 }
 
+const jwks = createRemoteJWKSet(new URL(".well-known/jwks.json", AUTH0_CONFIG.issuer));
+
 export class JwtValidatorService {
-  /**
-   * Validates server-side Auth0 JWT Bearer Tokens
-   */
-  public static validateAuth0Token(authHeader: string | undefined): JwtValidationResult {
-    if (!authHeader) {
-      return {
-        isValid: false,
-        statusCode: 401,
-        message: "Missing Authorization header",
-      };
+  public static async validateAuth0Token(authHeader: string | undefined): Promise<JwtValidationResult> {
+    if (!authHeader?.startsWith("Bearer ")) {
+      return { isValid: false, statusCode: 401, message: "Missing or invalid Authorization header" };
     }
-
-    if (!authHeader.startsWith("Bearer ")) {
-      return {
-        isValid: false,
-        statusCode: 401,
-        message: "Invalid Authorization header scheme. Expected Bearer token.",
-      };
-    }
-
-    const token = authHeader.substring(7).trim();
-    if (!token) {
-      return {
-        isValid: false,
-        statusCode: 401,
-        message: "Empty Bearer token string",
-      };
-    }
-
-    const parts = token.split(".");
-    if (parts.length !== 3) {
-      return {
-        isValid: false,
-        statusCode: 401,
-        message: "Malformed JWT token structure",
-      };
+    const token = authHeader.slice(7).trim();
+    if (!token || !AUTH0_CONFIG.audience) {
+      return { isValid: false, statusCode: 401, message: "Bearer token validation is not configured" };
     }
 
     try {
-      const payloadJson = Buffer.from(parts[1], "base64url").toString("utf-8");
-      const payload: Auth0TokenPayload = JSON.parse(payloadJson);
-
-      const now = Math.floor(Date.now() / 1000);
-      if (payload.exp && payload.exp < now) {
-        return {
-          isValid: false,
-          statusCode: 401,
-          message: "JWT token has expired",
-        };
+      const { payload } = await jwtVerify(token, jwks, {
+        issuer: AUTH0_CONFIG.issuer,
+        audience: AUTH0_CONFIG.audience,
+        algorithms: ["RS256"],
+      });
+      if (typeof payload.sub !== "string" || !payload.sub) {
+        return { isValid: false, statusCode: 401, message: "Token subject is missing" };
       }
-
-      const expectedIssuer = AUTH0_CONFIG.domain.endsWith("/")
-        ? AUTH0_CONFIG.domain
-        : `${AUTH0_CONFIG.domain}/`;
-      
-      if (payload.iss && !payload.iss.startsWith(AUTH0_CONFIG.domain) && payload.iss !== expectedIssuer) {
-        return {
-          isValid: false,
-          statusCode: 401,
-          message: `Invalid token issuer: ${payload.iss}`,
-        };
-      }
-
-      return {
-        isValid: true,
-        statusCode: 200,
-        message: "Auth0 JWT token successfully validated",
-        payload,
-      };
-    } catch (err: any) {
-      return {
-        isValid: false,
-        statusCode: 401,
-        message: `JWT parsing error: ${err.message}`,
-      };
+      return { isValid: true, statusCode: 200, message: "Auth0 bearer token verified", payload: payload as Auth0TokenPayload };
+    } catch {
+      return { isValid: false, statusCode: 401, message: "Bearer token validation failed" };
     }
   }
 }

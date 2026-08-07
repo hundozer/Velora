@@ -74,7 +74,7 @@ export default function LoginPage() {
         {/* Primary Auth0 Sign In Box */}
         <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/[0.08] backdrop-blur-xl shadow-2xl space-y-6">
           <a
-            href="/api/auth/login"
+            href="/auth/login"
             className="group relative block w-full overflow-hidden rounded-2xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
           >
             <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-velora-gold via-velora-amber to-velora-gold opacity-100" />
@@ -88,7 +88,7 @@ export default function LoginPage() {
           </a>
 
           <a
-            href="/api/auth/login?screen_hint=signup"
+            href="/auth/login?screen_hint=signup"
             className="group relative block w-full overflow-hidden rounded-2xl transition-all duration-300 border border-white/10 hover:border-velora-gold/40 hover:bg-white/[0.04]"
           >
             <div className="py-3.5 px-6 flex items-center justify-center gap-2 text-velora-textPrimary font-semibold text-xs uppercase tracking-widest">

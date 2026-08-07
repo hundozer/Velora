@@ -29,7 +29,6 @@ import {
   FileImage,
   Flame,
   Search,
-  Crown,
 } from "lucide-react";
 
 interface ChatWindowProps {
@@ -57,49 +56,28 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     },
   ]);
 
-  // Load chat messages from localStorage if available
+  // Load durable messages through the authenticated participant boundary.
   useEffect(() => {
-    if (typeof window === "undefined" || !activeConversation) return;
+    if (!activeConversation) return;
     const participantId = activeConversation.participant.id || activeConversation.participant.userId;
-    const storageKey = `intimo_chat_${participantId}`;
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const formatted: Message[] = parsed.map((item: any) => ({
-            id: item.id || `m-${Date.now()}`,
-            conversationId: activeConversation.id,
-            senderId: item.isSelf ? "user-current" : participantId,
-            senderName: item.isSelf ? "You" : activeConversation.participant.displayName,
-            senderAvatar: item.isSelf
-              ? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=800&q=80"
-              : activeConversation.participant.avatarUrl,
-            content: item.text || item.content || "",
-            status: item.status || "READ",
-            createdAt: item.timestamp || item.createdAt || "Recently",
-          }));
-          setMessages(formatted);
-          return;
-        }
-      } catch (e) {
-        console.error("Failed to parse saved chat thread:", e);
-      }
-    }
-
-    // Default fallback messages
-    setMessages([
-      {
-        id: "m-1",
-        conversationId: activeConversation.id,
-        senderId: activeConversation.participant.userId,
-        senderName: activeConversation.participant.displayName,
-        senderAvatar: activeConversation.participant.avatarUrl,
-        content: activeConversation.lastMessage?.content || "Hello! Glad to connect on Intimo.",
-        status: "READ",
-        createdAt: activeConversation.lastMessage?.createdAt || "10:30 AM",
-      },
-    ]);
+    let active = true;
+    fetch(`/api/messages?peerId=${encodeURIComponent(participantId)}`, { credentials: "same-origin" })
+      .then(async (response) => response.ok ? response.json() : Promise.reject(new Error("Messages unavailable")))
+      .then((payload) => {
+        if (!active) return;
+        setMessages((payload.messages || []).map((item: any) => ({
+          id: item.id,
+          conversationId: item.conversation_id,
+          senderId: item.sender_id === participantId ? participantId : "user-current",
+          senderName: item.sender_id === participantId ? activeConversation.participant.displayName : "You",
+          senderAvatar: item.sender_id === participantId ? activeConversation.participant.avatarUrl : "",
+          content: item.content,
+          status: item.status,
+          createdAt: new Date(item.created_at).toLocaleString(),
+        })));
+      })
+      .catch(() => { if (active) setMessages([]); });
+    return () => { active = false; };
   }, [activeConversation]);
 
   const [inputMessage, setInputMessage] = useState("");
@@ -109,12 +87,20 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const [blockModalOpen, setBlockModalOpen] = useState(false);
   const [showProfilePreview, setShowProfilePreview] = useState(false);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
+
+    const participantId = activeConversation.participant.id || activeConversation.participant.userId;
+    const response = await fetch("/api/messages", {
+      method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ receiverId: participantId, content: inputMessage.trim() }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) return;
 
     const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     const newMsg: Message = {
-      id: "m-" + Date.now(),
+      id: payload.message?.id || "m-" + Date.now(),
       conversationId: activeConversation.id,
       senderId: "user-current",
       senderName: "You",
@@ -130,45 +116,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     const updated = [...messages, newMsg];
     setMessages(updated);
     setInputMessage("");
-
-    // Sync to local storage intimo_chat_${participantId}
-    if (typeof window !== "undefined") {
-      const participantId = activeConversation.participant.id || activeConversation.participant.userId;
-      const storageKey = `intimo_chat_${participantId}`;
-      const chatWidgetFormat = updated.map((m) => ({
-        id: m.id,
-        senderId: m.senderId,
-        text: m.content,
-        timestamp: m.createdAt,
-        isSelf: m.senderId === "user-current",
-        status: m.status,
-      }));
-      localStorage.setItem(storageKey, JSON.stringify(chatWidgetFormat));
-
-      // Sync to central intimo_all_conversations
-      try {
-        const raw = localStorage.getItem("intimo_all_conversations");
-        let convs = raw ? JSON.parse(raw) : conversations;
-        const idx = convs.findIndex((c: any) => c.id === activeConversation.id || c.participant?.id === participantId);
-        if (idx >= 0) {
-          convs[idx].lastMessage = {
-            id: newMsg.id,
-            conversationId: activeConversation.id,
-            senderId: "user-current",
-            senderName: "You",
-            senderAvatar: "",
-            content: newMsg.content,
-            status: "SENT",
-            createdAt: nowTime,
-          };
-          convs[idx].updatedAt = nowTime;
-        }
-        localStorage.setItem("intimo_all_conversations", JSON.stringify(convs));
-        window.dispatchEvent(new Event("intimo_conversations_updated"));
-      } catch (e) {
-        console.error(e);
-      }
-    }
 
     // Delivery transition after 1s
     setTimeout(() => {
@@ -254,9 +201,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                       <span className="text-[10px] text-pink-400 font-bold shrink-0">{genderSymbol}</span>
                       {c.participant.verified && (
                         <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 fill-blue-400/20 shrink-0" />
-                      )}
-                      {(c.participant as any).isVIP && (
-                        <Crown className="w-3 h-3 text-amber-400 fill-amber-400/20 shrink-0" />
                       )}
                     </div>
                     <span className="text-[9px] font-mono text-velora-textMuted shrink-0 ml-1">
@@ -432,6 +376,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         isOpen={reportModalOpen}
         onClose={() => setReportModalOpen(false)}
         targetUsername={activeConversation.participant.displayName}
+        targetProfileId={activeConversation.participant.id || activeConversation.participant.userId}
+        contentType="MESSAGE"
       />
 
       {/* User Block Modal */}
@@ -444,7 +390,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             <Button variant="ghost" className="w-1/3 text-xs" onClick={() => setBlockModalOpen(false)}>
               Cancel
             </Button>
-            <Button variant="danger" className="w-2/3 text-xs font-bold" onClick={() => setBlockModalOpen(false)}>
+            <Button variant="danger" className="w-2/3 text-xs font-bold" onClick={async () => {
+              const targetProfileId = activeConversation.participant.id || activeConversation.participant.userId;
+              const response = await fetch("/api/blocks", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ targetProfileId }) });
+              if (response.ok) setBlockModalOpen(false);
+            }}>
               Confirm Block
             </Button>
           </div>

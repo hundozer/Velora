@@ -6,6 +6,11 @@ export class DestinationRouterService {
    * Ensures new registrants complete /onboarding, creators visit /creator-studio, and active members land on /dashboard.
    */
   public static getDestinationUrl(user: UserAccountModel): string {
+    // 0. Redirect admins straight to /admin
+    if ((user.role as any) === "ADMIN" || user.role === "SYSTEM_ADMIN" || user.role === "FINANCE_ADMIN") {
+      return "/admin";
+    }
+
     // 1. Redirect to verify-email if user email is unverified
     if (!user.email_verified) {
       return "/verify-email";

@@ -127,7 +127,7 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
               </div>
               <div className="text-xs">
                 <span className="font-bold text-velora-textPrimary block">Level 4: Creator Verified</span>
-                <p className="text-velora-textMuted text-[11px] mt-0.5">Monetization & payout verification</p>
+                <p className="text-velora-textMuted text-[11px] mt-0.5">Enhanced identity review for trusted creator publishing</p>
               </div>
             </div>
           </div>

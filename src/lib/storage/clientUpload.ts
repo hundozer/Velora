@@ -5,7 +5,26 @@ export interface UploadProgressCallback {
 export interface DirectUploadResult {
   publicUrl: string;
   objectKey: string;
+  mediaId: string;
   isMock: boolean;
+}
+
+export interface ParticipantDeclaration {
+  containsOtherIdentifiableParticipants: boolean;
+  allParticipantsAdults: boolean;
+  recordingConsented: boolean;
+  publicationConsented: boolean;
+}
+
+export function requestParticipantDeclaration(): ParticipantDeclaration {
+  const containsOthers = window.confirm("Does this upload show any other identifiable person besides you? Select OK for yes or Cancel for no.");
+  const accepted = window.confirm(
+    containsOthers
+      ? "Confirm that every identifiable participant is 18 or older and consented to both recording and publication on Intimo."
+      : "Confirm that you are 18 or older and consent to this upload being stored and published according to the visibility you choose."
+  );
+  if (!accepted) throw new Error("Upload cancelled: participant declaration was not accepted");
+  return { containsOtherIdentifiableParticipants: containsOthers, allParticipantsAdults: true, recordingConsented: true, publicationConsented: true };
 }
 
 /**
@@ -15,8 +34,10 @@ export interface DirectUploadResult {
 export async function uploadFileToR2(
   file: File,
   folder: "photos" | "videos" | "avatars" | "covers" | "general" = "general",
-  onProgress?: UploadProgressCallback
+  onProgress?: UploadProgressCallback,
+  participantDeclaration?: ParticipantDeclaration
 ): Promise<DirectUploadResult> {
+  if (!participantDeclaration) throw new Error("Participant declaration is required before upload");
   // 1. Request presigned upload URL from API
   const response = await fetch("/api/media/presign-upload", {
     method: "POST",
@@ -26,7 +47,10 @@ export async function uploadFileToR2(
     body: JSON.stringify({
       fileName: file.name,
       fileType: file.type || "application/octet-stream",
+      fileSize: file.size,
       folder,
+      visibility: folder === "avatars" || folder === "covers" ? "PUBLIC" : "PRIVATE",
+      participantDeclaration,
     }),
   });
 
@@ -35,7 +59,7 @@ export async function uploadFileToR2(
     throw new Error(errorData?.error || `Upload initiation failed (${response.status})`);
   }
 
-  const { uploadUrl, publicUrl, objectKey, isMock } = await response.json();
+  const { uploadUrl, publicUrl, objectKey, mediaId, isMock } = await response.json();
 
   // 2. Handle Mock mode (Development without R2 credentials)
   if (isMock) {
@@ -52,6 +76,7 @@ export async function uploadFileToR2(
             resolve({
               publicUrl: (reader.result as string) || publicUrl,
               objectKey,
+              mediaId,
               isMock: true,
             });
           };
@@ -78,11 +103,12 @@ export async function uploadFileToR2(
 
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
-        resolve({
-          publicUrl,
-          objectKey,
-          isMock: false,
-        });
+        fetch(`/api/media/${encodeURIComponent(mediaId)}/complete`, { method: "POST" })
+          .then(async (finalizeResponse) => {
+            if (!finalizeResponse.ok) throw new Error((await finalizeResponse.json().catch(() => ({})))?.error || "Upload verification failed");
+            resolve({ publicUrl, objectKey, mediaId, isMock: false });
+          })
+          .catch(reject);
       } else {
         reject(new Error(`Cloudflare R2 Upload failed with status ${xhr.status}`));
       }

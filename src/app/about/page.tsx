@@ -38,7 +38,7 @@ export default function AboutPage() {
             Discretion & Stealth Controls
           </h2>
           <p className="text-xs text-velora-textSecondary leading-relaxed">
-            Your privacy is our standard. Enjoy custom location fuzzing, stealth online modes, screenshot protection, and discreet financial billing.
+            Your privacy is our standard. Use city-level location, visibility controls, message permissions, blocking, reporting, consent management, and data-rights tools.
           </p>
         </Card>
       </div>

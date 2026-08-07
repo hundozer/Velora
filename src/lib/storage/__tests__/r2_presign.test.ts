@@ -10,6 +10,7 @@ async function runR2Tests() {
     const photoResult = await getPresignedUploadUrl({
       fileName: "exclusive_villa_photo.png",
       fileType: "image/png",
+      fileSize: 1024,
       folder: "photos",
     });
 
@@ -27,6 +28,7 @@ async function runR2Tests() {
     const videoResult = await getPresignedUploadUrl({
       fileName: "yacht_sunset_4k_teaser.mp4",
       fileType: "video/mp4",
+      fileSize: 4096,
       folder: "videos",
     });
 

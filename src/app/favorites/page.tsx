@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { MOCK_PROFILES } from "@/lib/mockData";
+import { Profile } from "@/types";
 import { Heart, MapPin, MessageSquare } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -13,12 +13,17 @@ import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding"
 
 export default function FavoritesPage() {
   const { user } = useAuth();
+  const [favorites, setFavorites] = React.useState<Profile[]>([]);
+
+  React.useEffect(() => {
+    fetch("/api/connections?type=favorite", { credentials: "same-origin" }).then(async (response) => response.ok ? response.json() : Promise.reject()).then((payload) => {
+      setFavorites((payload.connections || []).map((item: any) => item.profile).filter(Boolean));
+    }).catch(() => setFavorites([]));
+  }, []);
 
   if (!user) {
     return <BehindTheDoorLanding />;
   }
-
-  const favorites = MOCK_PROFILES.slice(0, 2);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-left">

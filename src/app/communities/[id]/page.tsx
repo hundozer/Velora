@@ -27,7 +27,9 @@ import {
   Lock,
   User,
   Heart,
+  Ban,
   X,
+  Clock,
 } from "lucide-react";
 
 export default function SingleCommunityChatroomPage() {
@@ -50,6 +52,7 @@ export default function SingleCommunityChatroomPage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [genderFilter, setGenderFilter] = useState<string>("ALL");
   const [selectedMember, setSelectedMember] = useState<ChatMember | null>(null);
+  const [isCooldownActive, setIsCooldownActive] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatBottomRef = useRef<HTMLDivElement>(null);
@@ -67,6 +70,7 @@ export default function SingleCommunityChatroomPage() {
         const stored = localStorage.getItem(`intimo_chat_messages_${found.id}`);
         setMessages(stored ? JSON.parse(stored) : []);
         sessionStorage.setItem("active_room_id", found.id);
+        setIsCooldownActive(localStorage.getItem(`intimo_room_cooldown_${found.id}`) === "true");
       } else {
         setMessages([]);
       }
@@ -126,6 +130,11 @@ export default function SingleCommunityChatroomPage() {
     };
   }, [rawId, user, profile]);
 
+  // Auto-scroll chat to bottom. Hooks must run before any conditional return.
+  useEffect(() => {
+    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   // If user is not authenticated or not logged in, block entry to chatroom
   if (!user) {
     return (
@@ -167,11 +176,6 @@ export default function SingleCommunityChatroomPage() {
       </div>
     );
   }
-
-  // Auto-scroll chat to bottom
-  useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -395,50 +399,59 @@ export default function SingleCommunityChatroomPage() {
 
             {/* Message Composer Area */}
             <form onSubmit={handleSendMessage} className="p-3 bg-black/80 border-t border-white/10 space-y-2 shrink-0">
-              {photoPreview && (
-                <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/10 w-fit">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photoPreview} alt="Preview" className="w-12 h-12 rounded-lg object-cover" />
-                  <button type="button" onClick={() => setPhotoPreview(null)} className="p-1 text-velora-textMuted hover:text-white">
-                    <X className="w-4 h-4" />
-                  </button>
+              {isCooldownActive ? (
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 font-sans flex items-center justify-center gap-2 py-3">
+                  <Clock className="w-4 h-4 text-amber-400 animate-pulse" />
+                  <span>This chatroom is currently in administrative cooldown (Read-Only mode active).</span>
                 </div>
+              ) : (
+                <>
+                  {photoPreview && (
+                    <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 border border-white/10 w-fit">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={photoPreview} alt="Preview" className="w-12 h-12 rounded-lg object-cover" />
+                      <button type="button" onClick={() => setPhotoPreview(null)} className="p-1 text-velora-textMuted hover:text-white">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handlePhotoSelect}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="p-2.5 rounded-xl border border-white/10 bg-white/5 text-velora-textMuted hover:text-white hover:border-amber-400/40 transition-colors"
+                      title="Attach Photo"
+                    >
+                      <ImageIcon className="w-4 h-4" />
+                    </button>
+
+                    <Input
+                      type="text"
+                      placeholder={`Share a message in #${currentRoom.name}...`}
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      className="flex-1 text-xs bg-white/5 border-white/10 text-white placeholder:text-velora-textMuted"
+                    />
+
+                    <Button
+                      type="submit"
+                      variant="gold"
+                      size="sm"
+                      className="text-xs font-bold uppercase tracking-wider gap-1.5 shadow-gold-glow shrink-0 text-black"
+                    >
+                      <Send className="w-3.5 h-3.5" /> Send
+                    </Button>
+                  </div>
+                </>
               )}
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handlePhotoSelect}
-                  accept="image/*"
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-2.5 rounded-xl border border-white/10 bg-white/5 text-velora-textMuted hover:text-white hover:border-amber-400/40 transition-colors"
-                  title="Attach Photo"
-                >
-                  <ImageIcon className="w-4 h-4" />
-                </button>
-
-                <Input
-                  type="text"
-                  placeholder={`Share a message in #${currentRoom.name}...`}
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  className="flex-1 text-xs bg-white/5 border-white/10 text-white placeholder:text-velora-textMuted"
-                />
-
-                <Button
-                  type="submit"
-                  variant="gold"
-                  size="sm"
-                  className="text-xs font-bold uppercase tracking-wider gap-1.5 shadow-gold-glow shrink-0 text-black"
-                >
-                  <Send className="w-3.5 h-3.5" /> Send
-                </Button>
-              </div>
             </form>
           </Card>
         </div>

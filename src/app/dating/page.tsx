@@ -220,72 +220,25 @@ const INITIAL_ADS: DatingAdItem[] = [
 ];
 
 import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
-import { getAllActiveAds, createAd, deleteAd } from "@/lib/supabase/datingAdService";
 
 function DatingMarketplaceContent() {
   const { user, profile } = useAuth();
   const searchParams = useSearchParams();
 
-  // Lazy load local ads first so newly created ads are never lost on mount
-  const [adsList, setAdsList] = useState<DatingAdItem[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("intimo_all_dating_ads");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
-          }
-        } catch (e) {
-          console.error("Failed to parse local dating ads:", e);
-        }
-      }
-    }
-    return INITIAL_ADS;
-  });
+  const [adsList, setAdsList] = useState<DatingAdItem[]>([]);
 
   const [isLoadingAds, setIsLoadingAds] = useState(true);
 
-  // Helper function to safely read and merge local ads
-  const syncLocalAds = React.useCallback(() => {
-    if (typeof window === "undefined") return;
-    const saved = localStorage.getItem("intimo_all_dating_ads");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setAdsList((prev) => {
-            const map = new Map<string, DatingAdItem>();
-            // Add freshly created local ads first
-            parsed.forEach((ad: DatingAdItem) => map.set(ad.id, ad));
-            // Keep existing ads if not present in map
-            prev.forEach((ad: DatingAdItem) => {
-              if (!map.has(ad.id)) {
-                map.set(ad.id, ad);
-              }
-            });
-            return Array.from(map.values());
-          });
-        }
-      } catch (e) {
-        console.error("Failed to parse local dating ads:", e);
-      }
-    }
-  }, []);
+  const syncLocalAds = React.useCallback(() => {}, []);
 
-  // Fetch live dating ads from Supabase on mount & merge with local ads
+  // Fetch durable dating ads through the authenticated server boundary.
   React.useEffect(() => {
     async function loadAds() {
       try {
-        const { data, error } = await getAllActiveAds();
-        if (data && data.length > 0) {
-          setAdsList((prev) => {
-            const map = new Map<string, DatingAdItem>();
-            prev.forEach((ad) => map.set(ad.id, ad));
-            data.forEach((ad) => map.set(ad.id, ad));
-            return Array.from(map.values());
-          });
-        }
+        const response = await fetch("/api/dating-ads", { cache: "no-store", credentials: "same-origin" });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "Dating ads unavailable");
+        setAdsList(Array.isArray(payload.ads) ? payload.ads : []);
       } catch (e) {
         console.error("Failed to load dating ads from Supabase:", e);
       } finally {
@@ -442,14 +395,6 @@ function DatingMarketplaceContent() {
       };
     }
 
-    const isUserVip = (profile as any)?.tier === "VIP" || (profile as any)?.membershipTier === "VIP" || user?.role === "ADMIN";
-    if (ad.requireVip && !isUserVip) {
-      return {
-        canReply: false,
-        reason: "Replies restricted by creator: Only users who have bought a VIP membership can reply to this ad.",
-      };
-    }
-
     const hasMediaAlbums = Boolean(
       ((profile as any)?.albums && (profile as any).albums.length > 0) ||
       ((profile as any)?.videos && (profile as any).videos.length > 0) ||
@@ -485,14 +430,9 @@ function DatingMarketplaceContent() {
     });
   };
 
-  const handleDeleteAd = (id: string) => {
-    setAdsList((prev) => {
-      const updated = prev.filter((ad) => ad.id !== id);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("intimo_all_dating_ads", JSON.stringify(updated));
-      }
-      return updated;
-    });
+  const handleDeleteAd = async (id: string) => {
+    const response = await fetch(`/api/dating-ads/${encodeURIComponent(id)}`, { method: "DELETE", credentials: "same-origin" });
+    if (response.ok) setAdsList((prev) => prev.filter((ad) => ad.id !== id));
   };
 
   const handleToggleSaveAd = (id: string) => {
@@ -920,11 +860,6 @@ function DatingMarketplaceContent() {
                   {ad.requireVerified && (
                     <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
                       ✓ Verified Only
-                    </span>
-                  )}
-                  {ad.requireVip && (
-                    <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30 font-bold">
-                      ⭐ VIP Only
                     </span>
                   )}
                 </div>

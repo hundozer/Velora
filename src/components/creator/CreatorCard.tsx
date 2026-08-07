@@ -53,12 +53,10 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({ creator }) => {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-velora-bg via-transparent to-transparent opacity-80" />
 
-        {/* Creator Badge & Price Tag */}
+        {/* Creator badge */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
           <Badge type="custom" label="Level 4 Creator" className="bg-amber-500/20 text-amber-300 border-amber-500/40" />
-          <span className="px-3 py-1 rounded-full text-xs font-bold font-serif bg-velora-card/90 text-velora-gold border border-velora-gold/40 shadow-gold-glow">
-            ${creator.monthlySubscriptionPrice || 19.99} / mo
-          </span>
+          <span className="px-3 py-1 rounded-full text-xs font-bold font-serif bg-velora-card/90 text-emerald-300 border border-emerald-500/40">Free</span>
         </div>
       </div>
 
@@ -132,11 +130,11 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({ creator }) => {
           </div>
         </div>
 
-        {/* Subscribe Action CTA */}
+        {/* Free creator profile CTA */}
         <Link href={`/profile/${creator.id}`}>
           <Button variant="gold" size="sm" className="w-full text-xs font-bold uppercase tracking-wider gap-2">
             <Crown className="w-4 h-4" />
-            Subscribe ${creator.monthlySubscriptionPrice || 19.99} / mo
+            View Creator Profile
           </Button>
         </Link>
       </div>

@@ -191,10 +191,8 @@ export const MediaManager: React.FC<MediaManagerProps> = ({
                   className="w-full bg-velora-card border border-white/10 rounded-xl p-2.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
                 >
                   <option value="PUBLIC">Public (Visible to Everyone)</option>
-                  <option value="PRIVATE_MEMBERS">Members Only (Requires Login)</option>
-                  <option value="FAVORITES_ONLY">Favorites Only (Saved Contacts)</option>
-                  <option value="SUBSCRIBERS_ONLY">Subscribers Only (Paid Tier)</option>
-                  <option value="PAID_PER_VIEW">Pay-Per-View Unlock</option>
+                  <option value="PRIVATE_MEMBERS">Members Only</option>
+                  <option value="FAVORITES_ONLY">Approved/Favorite Users</option>
                 </select>
               </div>
 

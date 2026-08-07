@@ -13,6 +13,7 @@ import { TrustLevel } from "./trustLevels";
  */
 export interface UserAccountModel {
   id: string;
+  [key: string]: any; // Allow dynamic mock properties (e.g. username, walletBalance, etc.)
   auth0_user_id?: string; // Auth0 Identity Provider Subject ID (e.g. auth0|65a987...)
   authProviderId: string; // Internal Auth Gateway UUID
   email: string;
@@ -34,6 +35,7 @@ export interface UserAccountModel {
   preferredLanguage?: string; // Alias for backward compatibility
   profile_completed: boolean; // Indicates if user has completed mandatory onboarding
   trustLevel?: TrustLevel;
+  verificationLevel?: string; // Added for verification level overrides
   lastLoginIp?: string;
   last_login?: string;
   lastLoginAt?: string;

@@ -6,23 +6,24 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { MobileNavigation } from "@/components/layout/MobileNavigation";
 import { AgeVerificationModal } from "@/components/common/AgeVerificationModal";
+import { CookieConsent } from "@/components/privacy/CookieConsent";
 
 export const metadata: Metadata = {
-  title: "Intimo | Private Verified Adult Social Marketplace",
+  title: "Intimo | Adults-Only Social Discovery",
   description:
-    "Intimo is a private, verified adult social platform combining modern dating UX, private communities, creator economy, and verified adult networking.",
+    "Intimo is a free adults-only social discovery platform for consenting adults seeking compatible social, casual, dating and erotic experiences.",
   metadataBase: new URL("https://intimo.live"),
   keywords: [
     "private social club",
-    "adult social marketplace",
+    "adult social discovery",
     "verified adult network",
-    "creator monetization",
+    "free creator profiles",
     "discreet dating",
     "intimo live",
   ],
   openGraph: {
     title: "Intimo — Private Members Club After Dark",
-    description: "Private verified adult social marketplace and creator network.",
+    description: "Free adults-only social discovery and creator community.",
     url: "https://intimo.live",
     siteName: "Intimo",
     type: "website",
@@ -43,6 +44,7 @@ export default function RootLayout({
           <AuthProvider>
             <Navbar />
             <AgeVerificationModal />
+            <CookieConsent />
             <main className="flex-1 w-full">{children}</main>
             <GlobalFloatingChatManager />
             <MobileNavigation />

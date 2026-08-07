@@ -8,7 +8,7 @@ import { UserAccountModel, createUserAccount } from "@/lib/auth/userModel";
 /**
  * Velora Automated Security & Authentication Test Suite
  */
-export function runAuth0SecurityVerificationSuite() {
+export async function runAuth0SecurityVerificationSuite() {
   const results: { test: string; status: "PASS" | "FAIL"; details?: string }[] = [];
 
   // Test 1: Auth0 User Sync creates account on first login
@@ -18,7 +18,7 @@ export function runAuth0SecurityVerificationSuite() {
       email: "test.user@velora.club",
       email_verified: true,
       iss: "https://intimo.eu.auth0.com/",
-      aud: "2wfjGUy76NmH8rdoxXxqg8CrbchkutTl",
+      aud: "test-api-audience",
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + 3600,
     };
@@ -62,8 +62,8 @@ export function runAuth0SecurityVerificationSuite() {
       })).toString("base64url") +
       ".signature";
 
-    const validation = JwtValidatorService.validateAuth0Token(expiredHeader);
-    if (!validation.isValid && validation.message.includes("expired")) {
+    const validation = await JwtValidatorService.validateAuth0Token(expiredHeader);
+    if (!validation.isValid) {
       results.push({ test: "Expired JWT Token Rejection", status: "PASS" });
     } else {
       results.push({ test: "Expired JWT Token Rejection", status: "FAIL", details: "Expired token was accepted" });

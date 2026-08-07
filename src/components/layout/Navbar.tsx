@@ -12,15 +12,13 @@ import {
   Compass,
   Sparkles,
   Users,
-  Calendar,
   MessageSquare,
   Bell,
   ChevronDown,
   User,
   Settings,
   LogOut,
-  Wallet,
-  Image,
+  Image as ImageIcon,
   Video,
   Megaphone,
   Heart,
@@ -125,18 +123,6 @@ export const Navbar: React.FC = () => {
             >
               <Users className="w-4 h-4 text-velora-gold" />
               {t("nav.communities")}
-            </Link>
-
-            <Link
-              href="/events"
-              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-                pathname.startsWith("/events")
-                  ? "bg-white/10 text-velora-gold border border-velora-gold/30"
-                  : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
-              }`}
-            >
-              <Calendar className="w-4 h-4 text-amber-400" />
-              {t("nav.events")}
             </Link>
 
             <Link
@@ -267,7 +253,7 @@ export const Navbar: React.FC = () => {
                     href={`/profile/${profile?.id || "me"}?tab=PHOTOS`}
                     className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl font-medium"
                   >
-                    <Image className="w-4 h-4 text-amber-300" />
+                    <ImageIcon className="w-4 h-4 text-amber-300" />
                     My Photos
                   </Link>
 
@@ -285,14 +271,6 @@ export const Navbar: React.FC = () => {
                   >
                     <Megaphone className="w-4 h-4 text-rose-400" />
                     My Dating Ads
-                  </Link>
-
-                  <Link
-                    href="/wallet"
-                    className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl"
-                  >
-                    <Wallet className="w-4 h-4 text-amber-400" />
-                    Wallet & Credits
                   </Link>
 
                   <Link
@@ -317,13 +295,13 @@ export const Navbar: React.FC = () => {
             /* CLEAN & HIGH-CONVERTING GUEST CTAS */
             <div className="flex items-center gap-3">
               <a
-                href="/api/auth/login"
+                href="/auth/login"
                 className="px-4 py-2 rounded-full border border-velora-gold/40 text-velora-gold font-bold text-xs uppercase tracking-wider hover:bg-velora-gold/10 transition-all"
               >
                 {t("auth.login")}
               </a>
               <a
-                href="/api/auth/login?screen_hint=signup"
+                href="/auth/login?screen_hint=signup"
                 className="px-6 py-2.5 rounded-full bg-gold-gradient text-velora-bg font-serif font-bold text-xs uppercase tracking-wider shadow-gold-glow hover:scale-105 transition-all"
               >
                 Join Intimo

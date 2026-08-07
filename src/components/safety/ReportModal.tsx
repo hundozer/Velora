@@ -3,55 +3,50 @@
 import React, { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { ShieldAlert, Upload, CheckCircle2, AlertTriangle, FileText } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { userStore } from "@/lib/auth0/userStore";
+import { ShieldAlert, CheckCircle2 } from "lucide-react";
 
 interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   targetUsername?: string;
+  targetProfileId?: string;
+  contentType?: "PROFILE" | "PHOTO" | "VIDEO" | "MESSAGE" | "POST" | "COMMENT" | "COMMUNITY" | "EVENT" | "LIVESTREAM";
+  contentId?: string;
 }
 
 export const ReportModal: React.FC<ReportModalProps> = ({
   isOpen,
   onClose,
   targetUsername = "user",
+  targetProfileId,
+  contentType = "PROFILE",
+  contentId,
 }) => {
-  const { user } = useAuth();
   const [reason, setReason] = useState("HARASSMENT");
   const [details, setDetails] = useState("");
-  const [evidenceUploaded, setEvidenceUploaded] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [referenceId, setReferenceId] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
-  const handleSubmit = () => {
-    const reasonLabels: Record<string, string> = {
-      UNDERAGE_SUSPICION: "Underage Suspicion (Strict Priority)",
-      HARASSMENT: "Harassment or Non-consensual Language",
-      FAKE_PROFILE: "Fake Profile / Impersonation",
-      SPAM_SOLICITATION: "Spam or Automated Solicitation",
-      SCAM_BEHAVIOUR: "Scam Behaviour or Financial Fraud",
-      NON_CONSENTUAL_CONTENT: "Non-consensual Content Sharing",
-      OFFSITE_PAYMENT: "Offsite Unverified Payment Request",
-      OTHER: "Other Compliance Issue",
-    };
-
-    userStore.submitReport({
-      reporterUsername: user?.username || "anonymous_member",
-      reportedUsername: targetUsername,
-      reportedUserRole: "MEMBER",
-      reason: reasonLabels[reason] || reason,
-      details: details || "No details provided.",
-      evidenceUrl: evidenceUploaded ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80" : undefined,
+  const handleSubmit = async () => {
+    setSubmitError("");
+    const response = await fetch("/api/reports", {
+      method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reportedUserId: targetProfileId, contentType, contentId, reason, description: details }),
     });
-
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setSubmitError(payload.error || "Report submission failed");
+      return;
+    }
+    setReferenceId(payload.report?.id || "");
     setSubmitted(true);
   };
 
   const resetAndClose = () => {
     setSubmitted(false);
     setDetails("");
-    setEvidenceUploaded(false);
+    setSubmitError("");
     onClose();
   };
 
@@ -64,7 +59,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             Report Submitted & Logged
           </h3>
           <p className="text-xs text-velora-textMuted leading-relaxed glass-panel p-4 rounded-2xl">
-            Your report regarding <strong>@{targetUsername}</strong> has been logged in our Compliance Queue (Ref ID: #REP-{Math.floor(Math.random() * 90000 + 10000)}). Our moderation team will investigate within 1 hour.
+            Your report regarding <strong>@{targetUsername}</strong> has been logged for review. Reference: {referenceId || "available in your report history"}. Critical safety reports are escalated automatically; response times depend on risk and available evidence.
           </p>
           <Button variant="gold" size="sm" className="w-full font-bold uppercase" onClick={resetAndClose}>
             Close Window
@@ -91,14 +86,19 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               onChange={(e) => setReason(e.target.value)}
               className="w-full bg-velora-card border border-white/10 rounded-2xl p-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
             >
-              <option value="UNDERAGE_SUSPICION">Underage Suspicion (Strict Priority)</option>
-              <option value="HARASSMENT">Harassment or Non-consensual Language</option>
-              <option value="FAKE_PROFILE">Fake Profile / Impersonation</option>
-              <option value="SPAM_SOLICITATION">Spam or Automated Solicitation</option>
-              <option value="SCAM_BEHAVIOUR">Scam Behaviour or Financial Fraud</option>
-              <option value="NON_CONSENTUAL_CONTENT">Non-consensual Content Sharing</option>
-              <option value="OFFSITE_PAYMENT">Offsite Unverified Payment Request</option>
-              <option value="OTHER">Other Compliance Issue</option>
+              <option value="SUSPECTED_MINOR">Suspected minor (critical)</option>
+              <option value="NON_CONSENSUAL_INTIMATE_CONTENT">Non-consensual intimate content (critical)</option>
+              <option value="HARASSMENT">Harassment</option>
+              <option value="THREATS">Threats</option>
+              <option value="IMPERSONATION">Impersonation</option>
+              <option value="SCAM_FRAUD">Scam or fraud</option>
+              <option value="ILLEGAL_CONTENT">Illegal content</option>
+              <option value="EXPLOITATION_TRAFFICKING">Exploitation or trafficking concern (critical)</option>
+              <option value="COPYRIGHT_INFRINGEMENT">Copyright infringement</option>
+              <option value="PRIVACY_VIOLATION">Privacy violation</option>
+              <option value="PROHIBITED_COMMERCIAL_SEXUAL_SERVICES">Prohibited commercial sexual services</option>
+              <option value="SPAM">Spam</option>
+              <option value="OTHER">Other</option>
             </select>
           </div>
 
@@ -115,20 +115,8 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             />
           </div>
 
-          {/* Evidence Upload Placeholder */}
-          <div className="p-4 glass-panel rounded-2xl border border-dashed border-white/20 text-center space-y-2">
-            <Upload className="w-5 h-5 text-velora-gold mx-auto" />
-            <p className="text-xs font-bold text-velora-textPrimary">Attach Screenshot or Chat Evidence</p>
-            <p className="text-[10px] text-velora-textMuted">JPG, PNG, PDF up to 10MB</p>
-            <Button
-              variant="glass"
-              size="sm"
-              className="text-[10px] border-white/10 mt-1"
-              onClick={() => setEvidenceUploaded(true)}
-            >
-              {evidenceUploaded ? "Evidence File Attached ✓" : "Upload File"}
-            </Button>
-          </div>
+          <p className="text-[11px] text-velora-textMuted">Do not upload or redistribute illegal material. Moderators can preserve existing platform content by its reference. Additional evidence may be requested securely.</p>
+          {submitError && <p className="text-xs text-red-400" role="alert">{submitError}</p>}
 
           <div className="flex gap-3 pt-2">
             <Button variant="ghost" className="w-1/3 text-xs" onClick={resetAndClose}>
@@ -138,6 +126,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               variant="danger"
               className="w-2/3 text-xs font-bold uppercase tracking-wider"
               onClick={handleSubmit}
+              disabled={details.trim().length < 10}
             >
               Submit Moderation Report
             </Button>

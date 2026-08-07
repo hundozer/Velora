@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AUTH0_SECRET: 0000000000000000000000000000000000000000000000000000000000000000
+      AUTH0_BASE_URL: http://localhost:3000
+      APP_BASE_URL: http://localhost:3000
+      AUTH0_ISSUER_BASE_URL: https://example.auth0.com
+      AUTH0_CLIENT_ID: ci-build-placeholder
+      AUTH0_CLIENT_SECRET: ci-build-placeholder
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build

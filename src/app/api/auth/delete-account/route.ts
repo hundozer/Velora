@@ -1,133 +1,60 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AUTH0_CONFIG } from "@/lib/auth0/config";
-import { deleteProfileByAuthId } from "@/lib/supabase/profileService";
+import { getVerifiedIdentity } from "@/lib/auth0/serverSession";
+import { managementRequest } from "@/lib/auth0/management";
+import { getServerSupabase } from "@/lib/supabase/server";
 import { auditLogger } from "@/lib/auth/auditLogger";
-import { supabase } from "@/lib/supabase/client";
+import { checkRateLimit } from "@/lib/security/rateLimiter";
 
 export async function POST(req: NextRequest) {
+  const identity = await getVerifiedIdentity(req);
+  if (!identity) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+
+  const rate = checkRateLimit(`delete-account:${identity.sub}`, 3, 60 * 60);
+  if (!rate.allowed) {
+    return NextResponse.json({ error: "Too many deletion attempts" }, { status: 429, headers: { "Retry-After": String(rate.resetInSeconds) } });
+  }
+
+  let confirmation: unknown;
   try {
-    const { auth0UserId, email } = await req.json();
+    const body = await req.json();
+    confirmation = body?.confirmation;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
-    if (!auth0UserId) {
-      return NextResponse.json({ error: "auth0UserId is required" }, { status: 400 });
+  if (confirmation !== "DELETE") {
+    return NextResponse.json({ error: "Type DELETE to confirm permanent account deletion" }, { status: 400 });
+  }
+
+  try {
+    const supabase = getServerSupabase();
+    if (!supabase) return NextResponse.json({ error: "Deletion service unavailable" }, { status: 503 });
+    const requestedAt = new Date().toISOString();
+    const { data: profile, error: profileError } = await supabase.from("profiles").update({ account_lifecycle_status: "DELETION_REQUESTED", deletion_requested_at: requestedAt, public_profile_visibility: false, profile_visibility: "PRIVATE", allow_direct_messages: false, updated_at: requestedAt }).eq("auth_id", identity.sub).select("id").maybeSingle();
+    if (profileError || !profile) throw new Error("Deletion lifecycle could not be started");
+    const { error: requestError } = await supabase.from("privacy_requests").insert({ profile_id: profile.id, request_type: "DELETION", status: "IN_PROGRESS", requested_at: requestedAt, notes: "Self-service deletion; identity deactivation initiated" });
+    if (requestError) throw new Error("Deletion request could not be recorded");
+
+    const auth0Response = await managementRequest(`/users/${encodeURIComponent(identity.sub)}`, { method: "DELETE" });
+    if (!auth0Response.ok && auth0Response.status !== 404) {
+      throw new Error(`Auth0 user deletion failed (${auth0Response.status})`);
     }
 
-    console.log(`Starting account deletion workflow for identifier: ${auth0UserId} (email: ${email || "none"})`);
-
-    // 1. Attempt to obtain Auth0 Management API Token
-    let auth0Deleted = false;
-    let auth0Error = null;
-    let targetAuth0Id = auth0UserId;
-
-    try {
-      const issuer = AUTH0_CONFIG.issuer.endsWith("/") ? AUTH0_CONFIG.issuer.slice(0, -1) : AUTH0_CONFIG.issuer;
-      const tokenRes = await fetch(`${issuer}/oauth/token`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          grant_type: "client_credentials",
-          client_id: AUTH0_CONFIG.clientId,
-          client_secret: AUTH0_CONFIG.clientSecret,
-          audience: `${issuer}/api/v2/`,
-        }),
-      });
-
-      if (tokenRes.ok) {
-        const tokenData = await tokenRes.json();
-        const mToken = tokenData.access_token;
-
-        // 1.1 Resolve the target Auth0 User ID if the input is an internal database ID
-        if (!targetAuth0Id.startsWith("auth0|")) {
-          console.log(`Identifier '${targetAuth0Id}' is not an Auth0 ID. Resolving...`);
-          let searchEmail = email;
-
-          if (!searchEmail) {
-            // Query Supabase as a fallback to locate the email
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("email")
-              .eq("auth_id", auth0UserId)
-              .single();
-            searchEmail = profile?.email;
-          }
-
-          if (searchEmail) {
-            console.log(`Querying Auth0 for user matching email: ${searchEmail}`);
-            const searchRes = await fetch(`${issuer}/api/v2/users-by-email?email=${encodeURIComponent(searchEmail)}`, {
-              headers: {
-                Authorization: `Bearer ${mToken}`,
-              },
-            });
-
-            if (searchRes.ok) {
-              const users = await searchRes.json();
-              if (users && users.length > 0) {
-                targetAuth0Id = users[0].user_id;
-                console.log(`Successfully resolved internal ID to Auth0 ID: ${targetAuth0Id}`);
-              } else {
-                console.warn(`No user matching email '${searchEmail}' was found in Auth0`);
-              }
-            } else {
-              console.error(`Auth0 users-by-email lookup failed: ${await searchRes.text()}`);
-            }
-          }
-        }
-
-        // 2. Call Auth0 Management API to Delete the User
-        if (targetAuth0Id.startsWith("auth0|")) {
-          console.log(`Sending delete request to Auth0 for ID: ${targetAuth0Id}`);
-          const deleteRes = await fetch(`${issuer}/api/v2/users/${encodeURIComponent(targetAuth0Id)}`, {
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${mToken}`,
-            },
-          });
-
-          if (deleteRes.ok || deleteRes.status === 404) {
-            auth0Deleted = true;
-            console.log(`Successfully deleted user ${targetAuth0Id} from Auth0 (or user didn't exist)`);
-          } else {
-            const deleteErrorText = await deleteRes.text();
-            auth0Error = `Auth0 delete call failed: ${deleteErrorText}`;
-            console.error(auth0Error);
-          }
-        } else {
-          auth0Error = `Could not resolve a valid Auth0 ID to delete. Target ID remained: ${targetAuth0Id}`;
-          console.error(auth0Error);
-        }
-      } else {
-        const tokenErrorText = await tokenRes.text();
-        auth0Error = `Failed to get Management API token: ${tokenErrorText}`;
-        console.error(auth0Error);
-      }
-    } catch (e: any) {
-      auth0Error = `Exception during Auth0 deletion: ${e.message}`;
-      console.error(auth0Error);
-    }
-
-    // 3. Delete from Supabase profiles table using all possible IDs
-    await deleteProfileByAuthId(auth0UserId);
-    if (targetAuth0Id !== auth0UserId) {
-      await deleteProfileByAuthId(targetAuth0Id);
-    }
+    const deactivatedAt = new Date().toISOString();
+    const { error } = await supabase.from("profiles").update({ account_lifecycle_status: "DEACTIVATED", deactivated_at: deactivatedAt, updated_at: deactivatedAt }).eq("id", profile.id).eq("auth_id", identity.sub);
+    if (error) throw new Error("Profile deactivation failed");
 
     auditLogger.logEvent({
-      actorId: auth0UserId,
+      actorId: identity.sub,
       actorRole: "MEMBER",
       action: "GDPR_DELETE_ACCOUNT",
-      status: auth0Deleted ? "SUCCESS" : "ERROR",
-      details: { auth0UserId, targetAuth0Id, email, auth0Deleted, auth0Error },
+      status: "SUCCESS",
+      details: { selfService: true, lifecycleStatus: "DEACTIVATED", hardDeletionPending: true },
     });
-
-    return NextResponse.json({
-      success: true,
-      auth0Deleted,
-      message: auth0Deleted 
-        ? "Account permanently deleted from identity provider and database." 
-        : `Profile deleted from database. Please sign in (rather than sign up) if you connect again. Details: ${auth0Error}`
-    });
-  } catch (err: any) {
-    console.error("Error in delete-account API:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    auditLogger.logEvent({ actorId: identity.sub, actorRole: "MEMBER", action: "GDPR_DELETE_ACCOUNT", status: "ERROR" });
+    console.error("Account deletion failed", error);
+    return NextResponse.json({ error: "Account deletion could not be completed" }, { status: 502 });
   }
 }

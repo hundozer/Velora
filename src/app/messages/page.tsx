@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChatWindow } from "@/components/chat/ChatWindow";
-import { MOCK_CONVERSATIONS } from "@/lib/mockData";
 import { Conversation } from "@/types";
 
 import { useAuth } from "@/context/AuthContext";
@@ -14,59 +13,64 @@ function MessagesContent() {
   const searchParams = useSearchParams();
   const targetUserId = searchParams.get("user");
 
-  const [conversations, setConversations] = useState<Conversation[]>(() => {
-    if (typeof window !== "undefined") {
-      const raw = localStorage.getItem("intimo_all_conversations");
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        } catch (e) {
-          console.error("Failed to parse saved conversations:", e);
-        }
-      }
-    }
-    return MOCK_CONVERSATIONS;
-  });
-
-  const [activeConv, setActiveConv] = useState<Conversation>(() => conversations[0] || MOCK_CONVERSATIONS[0]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeConv, setActiveConv] = useState<Conversation | null>(null);
 
   const syncConversations = useCallback(() => {
-    if (typeof window === "undefined") return;
-    const raw = localStorage.getItem("intimo_all_conversations");
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setConversations(parsed);
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    }
+    fetch("/api/messages", { credentials: "same-origin" }).then(async (response) => response.ok ? response.json() : Promise.reject()).then((payload) => {
+      const next = Array.isArray(payload.conversations) ? payload.conversations : [];
+      setConversations(next);
+      setActiveConv((current) => next.find((item: Conversation) => item.id === current?.id) || next[0] || null);
+    }).catch(() => setConversations([]));
   }, []);
 
   useEffect(() => {
     syncConversations();
-    window.addEventListener("intimo_conversations_updated", syncConversations);
-    return () => {
-      window.removeEventListener("intimo_conversations_updated", syncConversations);
-    };
+    const timer = window.setInterval(syncConversations, 15_000);
+    return () => window.clearInterval(timer);
   }, [syncConversations]);
 
   // Handle target user query param (e.g. /messages?user=prof-1)
   useEffect(() => {
-    if (!targetUserId || conversations.length === 0) return;
+    if (!targetUserId) return;
     const found = conversations.find(
       (c) => c.participant.id === targetUserId || c.participant.userId === targetUserId
     );
     if (found) {
       setActiveConv(found);
+      return;
     }
+    fetch(`/api/profiles/${encodeURIComponent(targetUserId)}`, { credentials: "same-origin" })
+      .then(async (response) => response.ok ? response.json() : Promise.reject())
+      .then((payload) => {
+        const profile = payload.profile;
+        const started = {
+          id: [profile.id, "current"].sort().join(":"),
+          participant: profile,
+          lastMessage: {
+            id: `new-${profile.id}`,
+            conversationId: `new-${profile.id}`,
+            senderId: profile.id,
+            senderName: profile.displayName,
+            senderAvatar: profile.avatarUrl || "",
+            content: "Start a conversation",
+            status: "READ",
+            createdAt: new Date().toISOString(),
+          },
+          unreadCount: 0,
+          updatedAt: new Date().toISOString(),
+        } as Conversation;
+        setConversations((current) => current.some((item) => item.participant.id === profile.id) ? current : [started, ...current]);
+        setActiveConv(started);
+      }).catch(() => undefined);
   }, [targetUserId, conversations]);
 
   if (!user) {
     return <BehindTheDoorLanding />;
+  }
+
+  if (!activeConv) {
+    return <div className="max-w-4xl mx-auto px-4 py-16 text-center text-sm text-velora-textMuted">No conversations yet. Open a member profile and choose Message to start one.</div>;
   }
 
   return (

@@ -139,7 +139,7 @@ export function BehindTheDoorLanding() {
             <div>
               <h3 className="text-lg font-serif font-bold text-white">Active Dating Ads Feed</h3>
               <p className="text-xs text-velora-textMuted leading-relaxed mt-2">
-                Post text dating ads with photo attachments. Enforce strict reply rules (Gender target, VIP status, Media uploaded, Verified badge) so only qualified members can respond.
+                Post text dating ads with photo attachments. Use gender, age, media and verification reply preferences without paid access tiers.
               </p>
             </div>
             <div className="pt-2 text-[11px] font-mono text-rose-300 font-bold flex items-center gap-1.5">
@@ -203,11 +203,11 @@ export function BehindTheDoorLanding() {
             <div>
               <h3 className="text-lg font-serif font-bold text-white">Creator Pre-Registration</h3>
               <p className="text-xs text-velora-textMuted leading-relaxed mt-2">
-                Pre-register as a creator to monetize adult content, receive tips, set subscription tiers, and broadcast live salon events across Central Europe.
+                Create a free creator profile, publish free content, build followers, and participate in communities as durable creator tools become available.
               </p>
             </div>
             <div className="pt-2 text-[11px] font-mono text-amber-300 font-bold flex items-center gap-1.5">
-              <Globe className="w-3.5 h-3.5 text-amber-400" /> Phase 2 Monetization & Payouts
+              <Globe className="w-3.5 h-3.5 text-amber-400" /> Free Phase 1 Community
             </div>
           </Card>
         </div>

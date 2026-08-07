@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -12,7 +12,7 @@ import { userStore } from "@/lib/auth0/userStore";
 import { MOCK_PROFILES, MOCK_CREATOR_ALBUMS } from "@/lib/mockData";
 import { useAuth } from "@/context/AuthContext";
 import { Profile } from "@/types";
-import { uploadFileToR2 } from "@/lib/storage/clientUpload";
+import { requestParticipantDeclaration, uploadFileToR2 } from "@/lib/storage/clientUpload";
 import { Input } from "@/components/ui/Input";
 import {
   MapPin,
@@ -30,7 +30,7 @@ import {
   Crown,
   LogOut,
   Camera,
-  Image,
+  Image as ImageIcon,
   Video,
   Megaphone,
   Plus,
@@ -48,7 +48,6 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
-import { connectionStore } from "@/lib/social/connectionStore";
 import { visitorStore } from "@/lib/social/visitorStore";
 import { notificationStore } from "@/lib/notifications/notificationStore";
 import { getAlbumsByOwner, createAlbum, getVideosByOwner, createVideo } from "@/lib/supabase/mediaService";
@@ -163,7 +162,8 @@ import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding"
 export default function SingleProfilePage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const { logout, user: currentUser, profile: currentProfile, updateUserProfile } = useAuth();
+  const router = useRouter();
+  const { logout, user: currentUser, profile: currentProfile, updateUserProfile, impersonateUser } = useAuth();
   const profileId = (params?.id as string) || "me";
   const tabQuery = searchParams.get("tab");
 
@@ -175,7 +175,27 @@ export default function SingleProfilePage() {
     (currentUser?.id && profileId === currentUser.id) ||
     (currentProfile?.userId && profileId === currentProfile.userId);
 
-  const profile = isSelf && currentProfile ? currentProfile : (MOCK_PROFILES.find((p) => p.id === profileId) || MOCK_PROFILES[0]);
+  const [remoteProfile, setRemoteProfile] = useState<Profile | null>(null);
+  const [remoteProfileLoading, setRemoteProfileLoading] = useState(!isSelf);
+  const [remoteProfileError, setRemoteProfileError] = useState("");
+  const profile = isSelf && currentProfile ? currentProfile : (remoteProfile || MOCK_PROFILES[0]);
+
+  useEffect(() => {
+    if (isSelf || !currentUser) {
+      setRemoteProfileLoading(false);
+      return;
+    }
+    setRemoteProfileLoading(true);
+    setRemoteProfileError("");
+    fetch(`/api/profiles/${encodeURIComponent(profileId)}`, { cache: "no-store", credentials: "same-origin" })
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "Profile unavailable");
+        setRemoteProfile(payload.profile);
+      })
+      .catch((error) => setRemoteProfileError(error instanceof Error ? error.message : "Profile unavailable"))
+      .finally(() => setRemoteProfileLoading(false));
+  }, [currentUser, isSelf, profileId]);
 
   const [isFavorited, setIsFavorited] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -285,8 +305,7 @@ export default function SingleProfilePage() {
         profile.avatarUrl,
         "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=800&q=80",
       ],
-      monetization: "CREDITS",
-      creditsPrice: 10,
+      monetization: "FREE",
       category: "Couple",
       topics: ["Outdoor Sex", "Sex in Public", "VIP Lifestyle"],
       views: 2,
@@ -345,7 +364,7 @@ export default function SingleProfilePage() {
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
         try {
-          setUserPhotoAlbums(JSON.parse(cached));
+          setUserPhotoAlbums(JSON.parse(cached).map((album: UserPhotoAlbumItem) => ({ ...album, monetization: "FREE", creditsPrice: undefined })));
         } catch (e) {}
       }
 
@@ -358,8 +377,8 @@ export default function SingleProfilePage() {
             coverUrl: row.cover_url || profile.avatarUrl,
             photoCount: row.photo_count || (row.photos ? row.photos.length : 1),
             photos: row.photos || [profile.avatarUrl],
-            monetization: row.monetization as any,
-            creditsPrice: row.credits_price || undefined,
+            monetization: "FREE",
+            creditsPrice: undefined,
             category: row.category || "General",
             topics: row.topics || [],
             views: row.views || 0,
@@ -372,7 +391,7 @@ export default function SingleProfilePage() {
         }
       });
     }
-  }, [profile?.id]);
+  }, [profile?.id, profile.avatarUrl]);
 
   // Sync photo albums state to localStorage whenever modified (e.g. comments, likes added)
   React.useEffect(() => {
@@ -415,8 +434,7 @@ export default function SingleProfilePage() {
       duration: "2:45",
       thumbnail: profile.avatarUrl,
       videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-      monetization: "CREDITS",
-      creditsPrice: 5,
+      monetization: "FREE",
       category: "Woman",
       commentPermission: "VERIFIED",
       votingPermission: "ANYONE",
@@ -445,7 +463,7 @@ export default function SingleProfilePage() {
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
         try {
-          setUserVideos(JSON.parse(cached));
+          setUserVideos(JSON.parse(cached).map((video: UserVideoItem) => ({ ...video, monetization: "FREE", creditsPrice: undefined })));
         } catch (e) {}
       }
 
@@ -458,8 +476,8 @@ export default function SingleProfilePage() {
             duration: row.duration || "1:30",
             thumbnail: row.thumbnail_url || profile.avatarUrl,
             videoUrl: row.video_url || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-            monetization: row.monetization as any,
-            creditsPrice: row.credits_price || undefined,
+            monetization: "FREE",
+            creditsPrice: undefined,
             category: row.category || "General",
             commentPermission: row.comment_permission as any,
             votingPermission: row.voting_permission as any,
@@ -474,7 +492,7 @@ export default function SingleProfilePage() {
         }
       });
     }
-  }, [profile?.id]);
+  }, [profile?.id, profile.avatarUrl]);
 
   // Sync userVideos state to localStorage whenever modified (e.g. comments, likes added)
   React.useEffect(() => {
@@ -624,32 +642,38 @@ export default function SingleProfilePage() {
   };
 
   // Social Follow & Friend Connections State
-  const [isFollowing, setIsFollowing] = useState(connectionStore.isFollowing(profile.id));
-  const [friendStatus, setFriendStatus] = useState(connectionStore.getFriendStatus(profile.id));
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
-    setIsFollowing(connectionStore.isFollowing(profile.id));
-    setFriendStatus(connectionStore.getFriendStatus(profile.id));
-    const unsubscribe = connectionStore.subscribe(() => {
-      setIsFollowing(connectionStore.isFollowing(profile.id));
-      setFriendStatus(connectionStore.getFriendStatus(profile.id));
-    });
-    return unsubscribe;
+    Promise.all(["follow", "favorite"].map((type) => fetch(`/api/connections?type=${type}`, { credentials: "same-origin" }).then(async (response) => response.ok ? response.json() : ({ connections: [] })))).then(([following, favorites]) => {
+      setIsFollowing(following.connections.some((item: any) => item.followed_id === profile.id));
+      setIsFavorite(favorites.connections.some((item: any) => item.followed_id === profile.id));
+    }).catch(() => undefined);
   }, [profile.id]);
 
-  const handleToggleFollow = () => {
-    const updated = connectionStore.toggleFollow(profile.id);
-    setIsFollowing(updated);
+  const handleToggleFollow = async () => {
+    const response = await fetch(isFollowing ? `/api/connections?targetProfileId=${encodeURIComponent(profile.id)}&type=follow` : "/api/connections", {
+      method: isFollowing ? "DELETE" : "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+      body: isFollowing ? undefined : JSON.stringify({ targetProfileId: profile.id, type: "follow" }),
+    });
+    if (response.ok) setIsFollowing(!isFollowing);
   };
 
-  const handleToggleFriend = () => {
-    const updatedStatus = connectionStore.toggleFriendRequest(profile.id);
-    setFriendStatus(updatedStatus);
+  const handleToggleFavorite = async () => {
+    const response = await fetch(isFavorite ? `/api/connections?targetProfileId=${encodeURIComponent(profile.id)}&type=favorite` : "/api/connections", {
+      method: isFavorite ? "DELETE" : "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+      body: isFavorite ? undefined : JSON.stringify({ targetProfileId: profile.id, type: "favorite" }),
+    });
+    if (response.ok) setIsFavorite(!isFavorite);
   };
 
   // Record Profile Visit Effect
   useEffect(() => {
     if (!isSelf && profile && currentUser) {
+      const isGhost = typeof window !== "undefined" && localStorage.getItem("intimo_admin_ghost_mode") === "true";
+      if (isGhost) return; // Bypassed by Admin Ghost Mode
+
       visitorStore.recordProfileVisit({
         userId: currentUser.id,
         name: currentProfile?.displayName || currentUser.username || "Member",
@@ -868,9 +892,10 @@ export default function SingleProfilePage() {
         setUploadingProgress(5);
 
         try {
+          const declaration = requestParticipantDeclaration();
           const result = await uploadFileToR2(file, targetFolder, (percent) => {
             setUploadingProgress(percent);
-          });
+          }, declaration);
           setModalPreviews((prev) => [...prev, result.publicUrl]);
         } catch (err: any) {
           console.error("Cloudflare R2 Direct Upload Error:", err);
@@ -908,8 +933,8 @@ export default function SingleProfilePage() {
                   title: pubTitle,
                   description: pubDescription,
                   thumbnail: modalPreviews[0] || v.thumbnail,
-                  monetization: pubMonetization,
-                  creditsPrice: pubMonetization === "CREDITS" ? pubCreditsPrice : undefined,
+                  monetization: "FREE",
+                  creditsPrice: undefined,
                   category: pubCategory,
                   commentPermission: pubCommentSetting,
                   votingPermission: pubVotingSetting,
@@ -926,8 +951,8 @@ export default function SingleProfilePage() {
           duration: "1:30",
           thumbnail: modalPreviews[0] || profile.avatarUrl,
           videoUrl: modalPreviews[0] || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-          monetization: pubMonetization,
-          creditsPrice: pubMonetization === "CREDITS" ? pubCreditsPrice : undefined,
+          monetization: "FREE",
+          creditsPrice: undefined,
           category: pubCategory,
           commentPermission: pubCommentSetting,
           votingPermission: pubVotingSetting,
@@ -947,8 +972,8 @@ export default function SingleProfilePage() {
           video_url: modalPreviews[0] || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
           thumbnail_url: modalPreviews[0] || profile.avatarUrl,
           duration: "1:30",
-          monetization: pubMonetization,
-          credits_price: pubMonetization === "CREDITS" ? pubCreditsPrice : null,
+          monetization: "FREE",
+          credits_price: null,
           category: pubCategory,
           comment_permission: pubCommentSetting,
           voting_permission: pubVotingSetting,
@@ -971,8 +996,8 @@ export default function SingleProfilePage() {
                   coverUrl: modalPreviews[0] || a.coverUrl,
                   photos: modalPreviews.length > 0 ? modalPreviews : a.photos,
                   photoCount: modalPreviews.length > 0 ? modalPreviews.length : a.photoCount,
-                  monetization: pubMonetization,
-                  creditsPrice: pubMonetization === "CREDITS" ? pubCreditsPrice : undefined,
+                  monetization: "FREE",
+                  creditsPrice: undefined,
                   category: pubCategory,
                   topics: pubSelectedTopics.length > 0 ? pubSelectedTopics : a.topics,
                 }
@@ -987,8 +1012,8 @@ export default function SingleProfilePage() {
           coverUrl: modalPreviews[0] || profile.avatarUrl,
           photoCount: modalPreviews.length > 0 ? modalPreviews.length : 1,
           photos: modalPreviews.length > 0 ? modalPreviews : [profile.avatarUrl],
-          monetization: pubMonetization,
-          creditsPrice: pubMonetization === "CREDITS" ? pubCreditsPrice : undefined,
+          monetization: "FREE",
+          creditsPrice: undefined,
           category: pubCategory,
           topics: pubSelectedTopics.length > 0 ? pubSelectedTopics : ["VIP Lifestyle"],
           views: 1,
@@ -1006,8 +1031,8 @@ export default function SingleProfilePage() {
           cover_url: modalPreviews[0] || profile.avatarUrl,
           photos: modalPreviews.length > 0 ? modalPreviews : [profile.avatarUrl],
           photo_count: modalPreviews.length > 0 ? modalPreviews.length : 1,
-          monetization: pubMonetization,
-          credits_price: pubMonetization === "CREDITS" ? pubCreditsPrice : null,
+          monetization: "FREE",
+          credits_price: null,
           category: pubCategory,
           topics: pubSelectedTopics.length > 0 ? pubSelectedTopics : ["VIP Lifestyle"],
           views: 1,
@@ -1109,7 +1134,7 @@ export default function SingleProfilePage() {
       try {
         setUploadingProgress(10);
         setUploadingFileName("Avatar Photo");
-        const result = await uploadFileToR2(file, "avatars", (percent) => setUploadingProgress(percent));
+        const result = await uploadFileToR2(file, "avatars", (percent) => setUploadingProgress(percent), requestParticipantDeclaration());
         const updatedUser = { ...currentUser, avatarUrl: result.publicUrl };
         const updatedProfile = { ...currentProfile, avatarUrl: result.publicUrl };
         updateUserProfile(updatedUser, updatedProfile);
@@ -1128,7 +1153,7 @@ export default function SingleProfilePage() {
       try {
         setUploadingProgress(10);
         setUploadingFileName("Cover Photo");
-        const result = await uploadFileToR2(file, "covers", (percent) => setUploadingProgress(percent));
+        const result = await uploadFileToR2(file, "covers", (percent) => setUploadingProgress(percent), requestParticipantDeclaration());
         const updatedProfile = { ...currentProfile, coverPhotoUrl: result.publicUrl };
         updateUserProfile(currentUser, updatedProfile);
       } catch (err) {
@@ -1142,6 +1167,14 @@ export default function SingleProfilePage() {
 
   if (!currentUser) {
     return <BehindTheDoorLanding />;
+  }
+
+  if (!isSelf && remoteProfileLoading) {
+    return <div className="max-w-4xl mx-auto px-4 py-16 text-center text-sm text-velora-textMuted">Loading member profile…</div>;
+  }
+
+  if (!isSelf && (remoteProfileError || !remoteProfile)) {
+    return <div className="max-w-4xl mx-auto px-4 py-16 text-center text-sm text-red-400">{remoteProfileError || "Profile not found"}</div>;
   }
 
   return (
@@ -1283,25 +1316,19 @@ export default function SingleProfilePage() {
                     )}
                   </Button>
 
-                  {/* Add Friend Button */}
+                  {/* Favorite Button */}
                   <Button
                     variant="glass"
                     size="lg"
-                    onClick={handleToggleFriend}
+                    onClick={handleToggleFavorite}
                     className={`text-xs font-bold uppercase tracking-wider gap-2 border-white/20 ${
-                      friendStatus === "FRIEND"
+                      isFavorite
                         ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
-                        : friendStatus === "PENDING"
-                        ? "border-amber-400/40 bg-amber-400/20 text-amber-300"
                         : "hover:border-amber-400/40"
                     }`}
                   >
-                    <Users className="w-4 h-4 text-velora-gold" />
-                    {friendStatus === "FRIEND"
-                      ? "Mutual Friends 🤝"
-                      : friendStatus === "PENDING"
-                      ? "Request Sent ⏳"
-                      : "Add Friend"}
+                    <Heart className={`w-4 h-4 text-velora-gold ${isFavorite ? "fill-velora-gold" : ""}`} />
+                    {isFavorite ? "Favorited" : "Add Favorite"}
                   </Button>
 
                   {/* Message Button */}
@@ -1332,6 +1359,34 @@ export default function SingleProfilePage() {
                   >
                     <MessageSquare className="w-4 h-4 text-velora-gold" /> Message
                   </Button>
+
+                  {/* Admin Impersonation Trigger */}
+                  {currentUser?.role === "ADMIN" && (
+                    <Button
+                      variant="gold"
+                      size="lg"
+                      className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow bg-amber-400 text-black hover:bg-white transition-all"
+                      onClick={() => {
+                        const targetUser = {
+                          id: profile.userId,
+                          username: profile.displayName,
+                          email: profile.displayName.toLowerCase().replace(/\s+/g, "") + "@intimo.live",
+                          role: "MEMBER",
+                          verificationStatus: profile.verified ? "IDENTITY_VERIFIED" : "NONE",
+                        };
+                        impersonateUser(targetUser as any, profile as any);
+                        userStore.addModerationLog({
+                          adminUsername: currentUser.username || "admin_compliance",
+                          targetUsername: profile.displayName,
+                          action: "WARN_USER",
+                          reason: `Initiated administrative session impersonation for user: ${profile.displayName} from profile page context.`,
+                        });
+                        router.push("/dashboard");
+                      }}
+                    >
+                      <Crown className="w-4 h-4 text-black animate-pulse" /> Impersonate
+                    </Button>
+                  )}
                 </div>
               )}
 
@@ -1392,7 +1447,7 @@ export default function SingleProfilePage() {
                   mediaTab === "PHOTOS" ? "bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm font-bold" : "text-velora-textMuted hover:text-white"
                 }`}
               >
-                <Image className="w-4 h-4" />
+                <ImageIcon className="w-4 h-4" />
                 <span>Photos ({userPhotoAlbums.length})</span>
               </button>
 
@@ -2091,12 +2146,12 @@ export default function SingleProfilePage() {
                 )}
               </div>
 
-              {/* Type Selector (Free vs For Credits) */}
+              {/* Free MVP access */}
               <div className="space-y-2">
                 <label className="block text-xs font-bold uppercase tracking-wider text-velora-textSecondary">
-                  Monetization Model & Access
+                  Content Access
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   <button
                     type="button"
                     onClick={() => setPubMonetization("FREE")}
@@ -2113,39 +2168,8 @@ export default function SingleProfilePage() {
                     </div>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setPubMonetization("CREDITS")}
-                    className={`p-3.5 rounded-2xl border text-left flex items-center gap-3 transition-all ${
-                      pubMonetization === "CREDITS" ? "border-amber-400 bg-amber-400/10 text-white" : "border-white/10 bg-white/5 text-velora-textMuted hover:text-white"
-                    }`}
-                  >
-                    <div className="w-4 h-4 rounded-full border-2 border-amber-400 flex items-center justify-center">
-                      {pubMonetization === "CREDITS" && <div className="w-2 h-2 rounded-full bg-amber-400" />}
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold flex items-center gap-1">
-                        {publisherType === "VIDEO" ? "Video - For Credits" : "Album - For Credits"} <Coins className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
-                      </p>
-                      <p className="text-[10px] opacity-75">Requires credit unlock</p>
-                    </div>
-                  </button>
                 </div>
               </div>
-
-              {pubMonetization === "CREDITS" && (
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-velora-textSecondary">Unlock Credit Price (Coins)</label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={100}
-                    value={pubCreditsPrice}
-                    onChange={(e) => setPubCreditsPrice(Number(e.target.value))}
-                    className="w-full text-xs font-mono"
-                  />
-                </div>
-              )}
 
               {/* Title & Description */}
               <div className="space-y-3">
@@ -2888,6 +2912,7 @@ export default function SingleProfilePage() {
         isOpen={reportModalOpen}
         onClose={() => setReportModalOpen(false)}
         targetUsername={profile.displayName}
+        targetProfileId={profile.id}
       />
     </div>
   );

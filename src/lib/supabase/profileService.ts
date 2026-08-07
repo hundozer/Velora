@@ -55,6 +55,12 @@ export interface ProfileRow {
   gallery_images: any[];
   created_at: string;
   updated_at: string;
+  age_verification_status?: string;
+  age_verified_at?: string | null;
+  age_verification_method?: string | null;
+  profile_visibility?: string;
+  sensitive_fields_visibility?: string;
+  message_permission?: string;
 }
 
 // ── Converters ─────────────────────────────────────────────

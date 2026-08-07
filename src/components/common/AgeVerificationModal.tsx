@@ -27,6 +27,9 @@ export const AgeVerificationModal: React.FC = () => {
           <p className="text-xs text-velora-textSecondary mt-2 leading-relaxed">
             Intimo is a private, verified adult social platform for consenting adults aged 18 and older.
           </p>
+          <p className="text-[11px] text-amber-300 mt-2 leading-relaxed">
+            This declaration is an initial access gate, not stronger age verification. Some explicit-content features remain unavailable until appropriate age assurance is implemented.
+          </p>
         </div>
 
         <div className="glass-panel p-4 rounded-2xl text-left space-y-3 text-xs text-velora-textSecondary">
