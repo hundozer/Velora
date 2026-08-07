@@ -10,7 +10,13 @@ export interface VerifiedIdentity {
 }
 
 export async function getVerifiedIdentity(req?: NextRequest): Promise<VerifiedIdentity | null> {
-  const session = req ? await auth0.getSession(req) : await auth0.getSession();
+  // In the App Router, Auth0 reads the cryptographically protected session from
+  // Next's request context. Passing a Vercel alias request to getSession(req)
+  // triggers SDK host/domain checks that can reject valid Preview sessions.
+  // Keep the parameter for callers that also use it for local authorization,
+  // but do not make identity verification depend on the deployment hostname.
+  void req;
+  const session = await auth0.getSession();
   const user = session?.user;
   if (!user || typeof user.sub !== "string" || user.sub.length === 0) return null;
 
