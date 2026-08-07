@@ -60,7 +60,7 @@ export const DEFAULT_COMMUNITY_CHATROOMS: CommunityChatroom[] = [
       },
       {
         id: "usr-102",
-        displayName: "Zsolt & Partner",
+        displayName: "Mateo & Partner",
         avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80",
         gender: "COUPLE",
         genderSymbol: "👫",
@@ -158,7 +158,7 @@ export const DEFAULT_COMMUNITY_CHATROOMS: CommunityChatroom[] = [
       {
         id: "msg-2",
         senderId: "usr-102",
-        senderName: "Zsolt & Partner",
+        senderName: "Mateo & Partner",
         senderAvatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80",
         senderGender: "COUPLE",
         senderGenderSymbol: "👫",

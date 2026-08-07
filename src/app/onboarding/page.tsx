@@ -260,7 +260,7 @@ export default function OnboardingWizardPage() {
               </label>
               <Input
                 type="text"
-                placeholder="e.g. Zsolt, Monaco Host, Valerie Night"
+                placeholder="e.g. Lucas, Monaco Host, Valerie Night"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 className="w-full text-xs"

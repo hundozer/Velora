@@ -235,7 +235,7 @@ export default function SettingsPage() {
               type="text"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              placeholder="Enter your nickname (e.g. Zsolt, Prince Charming, Valerie)"
+              placeholder="Enter your nickname (e.g. Lucas, Prince Charming, Valerie)"
               className="w-full text-xs"
             />
             <p className="text-[10px] text-velora-textMuted mt-1.5">
