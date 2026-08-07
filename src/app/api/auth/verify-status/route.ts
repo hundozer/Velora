@@ -54,6 +54,7 @@ export async function GET(req: NextRequest) {
       console.log(`Auth0 ID not found in cookie for ${email}. Searching by email...`);
       const searchRes = await fetch(`${issuer}/api/v2/users-by-email?email=${encodeURIComponent(email)}`, {
         headers: { Authorization: `Bearer ${mToken}` },
+        cache: "no-store",
       });
 
       if (searchRes.ok) {
@@ -76,6 +77,7 @@ export async function GET(req: NextRequest) {
       headers: {
         Authorization: `Bearer ${mToken}`,
       },
+      cache: "no-store",
     });
 
     if (!userRes.ok) {

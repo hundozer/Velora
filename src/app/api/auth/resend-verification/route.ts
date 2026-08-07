@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
       console.log(`Auth0 ID not found in cookie for resend. Searching by email: ${email}`);
       const searchRes = await fetch(`${issuer}/api/v2/users-by-email?email=${encodeURIComponent(email)}`, {
         headers: { Authorization: `Bearer ${mToken}` },
+        cache: "no-store",
       });
 
       if (searchRes.ok) {
