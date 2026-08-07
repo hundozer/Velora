@@ -46,6 +46,7 @@ export function requestParticipantDeclaration(): Promise<ParticipantDeclaration>
     const peopleStep = dialog.querySelector<HTMLElement>('[data-step="people"]')!;
     const consentStep = dialog.querySelector<HTMLElement>('[data-step="consent"]')!;
     const consentCopy = dialog.querySelector<HTMLElement>("[data-consent-copy]")!;
+    consentStep.style.display = "none";
     const finish = (error?: Error) => {
       dialog.close();
       dialog.remove();
@@ -57,8 +58,8 @@ export function requestParticipantDeclaration(): Promise<ParticipantDeclaration>
       if (!button) return;
       if (button.value === "cancel") return finish(new Error("Upload cancelled"));
       if (button.value === "back") {
-        consentStep.hidden = true;
-        peopleStep.hidden = false;
+        consentStep.style.display = "none";
+        peopleStep.style.display = "grid";
         return;
       }
       if (button.value === "only-me" || button.value === "others") {
@@ -66,8 +67,8 @@ export function requestParticipantDeclaration(): Promise<ParticipantDeclaration>
         consentCopy.textContent = containsOthers
           ? "I confirm that every identifiable participant is 18 or older and consented to both the recording and its publication on Intimo."
           : "I confirm that I am 18 or older and consent to this upload being stored and shown according to the visibility I choose.";
-        peopleStep.hidden = true;
-        consentStep.hidden = false;
+        peopleStep.style.display = "none";
+        consentStep.style.display = "block";
         return;
       }
       if (button.value === "confirm") {
