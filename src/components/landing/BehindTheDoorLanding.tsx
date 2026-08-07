@@ -56,7 +56,7 @@ export function BehindTheDoorLanding() {
 
           {/* Primary Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 max-w-md mx-auto">
-            <Link href="/register" className="w-full sm:w-1/2">
+            <Link href="/auth/login?screen_hint=signup" className="w-full sm:w-1/2">
               <Button
                 variant="gold"
                 size="lg"
@@ -67,7 +67,7 @@ export function BehindTheDoorLanding() {
               </Button>
             </Link>
 
-            <Link href="/login" className="w-full sm:w-1/2">
+            <Link href="/auth/login" className="w-full sm:w-1/2">
               <Button
                 variant="glass"
                 size="lg"
@@ -230,12 +230,12 @@ export function BehindTheDoorLanding() {
           </div>
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
-            <Link href="/register" className="w-full sm:w-1/2">
+            <Link href="/auth/login?screen_hint=signup" className="w-full sm:w-1/2">
               <Button variant="gold" size="lg" className="w-full text-xs font-bold uppercase tracking-wider shadow-gold-glow text-black">
                 Register Free Account
               </Button>
             </Link>
-            <Link href="/login" className="w-full sm:w-1/2">
+            <Link href="/auth/login" className="w-full sm:w-1/2">
               <Button variant="glass" size="lg" className="w-full text-xs font-bold uppercase tracking-wider border-white/20">
                 Log In Now
               </Button>
