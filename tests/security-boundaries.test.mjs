@@ -260,3 +260,10 @@ test("production member surfaces do not inject fabricated profiles, feeds, relat
   assert.match(connections, /new Set\(\)/);
   assert.match(visitors, /visitors: ProfileVisitor\[\] = \[\]/);
 });
+
+test("legacy admin route cannot mount browser authority or fabricated operational data", async () => {
+  const page = await read("src/app/admin/page.tsx");
+  const center = await read("src/components/admin/AdminCommandCenter.tsx");
+  assert.doesNotMatch(page, /localStorage|userStore|MOCK_|impersonate|wallet|payout/i);
+  assert.doesNotMatch(center, /\["\/admin\/communities"|\["\/admin\/events"|\["\/admin\/live"/);
+});
