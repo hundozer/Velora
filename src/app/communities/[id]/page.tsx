@@ -61,7 +61,15 @@ export default function SingleCommunityChatroomPage() {
     );
     if (found) {
       setCurrentRoom(found);
-      setMessages(found.messages);
+
+      // Load persistent messages from localStorage if available, otherwise default to empty
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem(`intimo_chat_messages_${found.id}`);
+        setMessages(stored ? JSON.parse(stored) : []);
+        sessionStorage.setItem("active_room_id", found.id);
+      } else {
+        setMessages([]);
+      }
 
       let roomMembers = [...found.members];
       // Automatically include current logged in user in room members if not already listed
@@ -110,6 +118,12 @@ export default function SingleCommunityChatroomPage() {
       }
       setMembers(roomMembers);
     }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("active_room_id");
+      }
+    };
   }, [rawId, user, profile]);
 
   // If user is not authenticated or not logged in, block entry to chatroom
@@ -198,7 +212,13 @@ export default function SingleCommunityChatroomPage() {
       createdAt: "Just now",
     };
 
-    setMessages((prev) => [...prev, newMsg]);
+    setMessages((prev) => {
+      const updated = [...prev, newMsg];
+      if (typeof window !== "undefined") {
+        localStorage.setItem(`intimo_chat_messages_${currentRoom.id}`, JSON.stringify(updated));
+      }
+      return updated;
+    });
     setInputMessage("");
     setPhotoPreview(null);
   };

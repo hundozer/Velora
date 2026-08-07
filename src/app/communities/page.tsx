@@ -31,6 +31,13 @@ export default function CommunitiesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingRoomSlug, setPendingRoomSlug] = useState<string | null>(null);
+  const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      setActiveRoomId(sessionStorage.getItem("active_room_id"));
+    }
+  }, []);
 
   const handleEnterRoom = (slug: string) => {
     if (!user) {
@@ -90,7 +97,7 @@ export default function CommunitiesPage() {
             Default Topic Chatrooms
           </h2>
           <span className="text-xs text-amber-400 font-mono font-bold">
-            5 Live Rooms Active
+            {user && activeRoomId ? 1 : 0} {user && activeRoomId ? "Live Room Active" : "Live Rooms Active"}
           </span>
         </div>
 
@@ -110,7 +117,7 @@ export default function CommunitiesPage() {
 
                   <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                    {room.members.length} Members Online
+                    {user && activeRoomId === room.id ? 1 : 0} {user && activeRoomId === room.id ? "Member Online" : "Members Online"}
                   </span>
                 </div>
 
