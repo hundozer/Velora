@@ -27,7 +27,8 @@ test("media presigning requires identity and enforces size and type allowlists",
   assert.match(source, /fileSize > maxBytes/);
   assert.match(source, /NODE_ENV === "production" && !isR2Configured/);
   assert.match(source, /content_participant_declarations/);
-  assert.match(source, /visibility !== "PUBLIC"/);
+  assert.match(source, /publicUrl: `\/api\/media\/\$\{media\.id\}`/);
+  assert.doesNotMatch(source, /publicUrl: presigned\.publicUrl/);
 });
 
 test("production auth middleware has a fail-closed response", async () => {

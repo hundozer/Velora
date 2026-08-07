@@ -53,9 +53,10 @@ export async function POST(req: NextRequest) {
       await supabase.from("media_objects").delete().eq("id", media.id).eq("owner_id", actor.actor.profileId);
       return NextResponse.json({ error: "Participant declaration could not be recorded" }, { status: 502 });
     }
-    const privateMedia = visibility !== "PUBLIC" || !["avatars", "covers"].includes(folder);
     auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "MEDIA_UPLOAD_PRESIGNED", resourceId: media.id, resourceType: "MEDIA", status: "SUCCESS", details: { fileType, fileSize, folder, visibility } });
-    return NextResponse.json({ success: true, uploadUrl: presigned.uploadUrl, objectKey: presigned.objectKey, mediaId: media.id, publicUrl: privateMedia ? `/api/media/${media.id}` : presigned.publicUrl, isMock: presigned.isMock });
+    // The R2 bucket remains private. Even PUBLIC/MEMBERS_ONLY application
+    // visibility is enforced by Intimo before issuing a short-lived R2 GET URL.
+    return NextResponse.json({ success: true, uploadUrl: presigned.uploadUrl, objectKey: presigned.objectKey, mediaId: media.id, publicUrl: `/api/media/${media.id}`, isMock: presigned.isMock });
   } catch (error) {
     console.error("Presigned URL generation failed", error);
     return NextResponse.json({ error: "Failed to generate upload URL" }, { status: 500 });
