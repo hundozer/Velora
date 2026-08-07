@@ -17,7 +17,7 @@ export default function OnboardingWizardPage() {
 
   // Form State
   const [profileType, setProfileType] = useState<"SINGLE" | "COUPLE" | "CREATOR" | "LIFESTYLE">("SINGLE");
-  const [selectedInterests, setSelectedInterests] = useState<string[]>(["Casual Encounters", "Chemistry & Dating"]);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>(["Friends with Benefits", "Casual Chatting"]);
   const [gender, setGender] = useState("FEMALE");
   const [sexualOrientation, setSexualOrientation] = useState("BISEXUAL");
   const [country, setCountry] = useState("");
@@ -106,7 +106,7 @@ export default function OnboardingWizardPage() {
       languages: ["English"],
       headline: headline || "Private Intimo Member Profile",
       bio: headline || "Discreet, open-minded member exploring connections on Intimo.",
-      interests: selectedInterests.length ? selectedInterests : ["Casual Encounters"],
+      interests: selectedInterests.length ? selectedInterests : ["Friends with Benefits"],
       lifestyleTags: ["Discreet", "Luxury Lifestyle"],
       hobbies: selectedSexHobbies,
       relationshipStatus: "SINGLE",
@@ -293,12 +293,12 @@ export default function OnboardingWizardPage() {
 
             <div className="grid grid-cols-2 gap-3 pt-2">
               {[
-                "Casual Encounters",
-                "Chemistry & Attraction",
-                "Social & Dining Salons",
-                "Travel Partner",
-                "Couples Networking",
-                "Exclusive Creator Salons",
+                "Friends with Benefits",
+                "Couple Encounters",
+                "Threesomes",
+                "BDSM Encounter",
+                "Casual Chatting",
+                "Videochat",
               ].map((item) => {
                 const isSelected = selectedInterests.includes(item);
                 return (
