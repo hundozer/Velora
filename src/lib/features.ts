@@ -15,6 +15,8 @@ export const MONETIZATION_DISABLED_ROUTES = [
 // ownership boundaries are implemented. Creator profiles themselves remain on.
 export const MVP_SAFETY_DISABLED_ROUTES = [
   "/creator-studio",
+  "/creators",
+  "/communities",
   "/events",
   "/live",
   "/referrals",

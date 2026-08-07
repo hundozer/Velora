@@ -244,3 +244,19 @@ test("God Mode is a short-lived, MFA-backed, audited SUPER_ADMIN elevation witho
   assert.match(migration, /revoke all on table public\.admin_assignments/);
   assert.doesNotMatch(god + session, /master password|bypass URL|hardcoded.*email/i);
 });
+
+test("production member surfaces do not inject fabricated profiles, feeds, relationships, or visitors", async () => {
+  const dashboard = await read("src/app/dashboard/page.tsx");
+  const profile = await read("src/app/profile/[id]/page.tsx");
+  const search = await read("src/components/discovery/SearchBar.tsx");
+  const features = await read("src/lib/features.ts");
+  const connections = await read("src/lib/social/connectionStore.ts");
+  const visitors = await read("src/lib/social/visitorStore.ts");
+  assert.doesNotMatch(dashboard, /MOCK_PROFILES|INITIAL_FEED_POSTS|RECENT_VISITORS|localStorage/);
+  assert.doesNotMatch(profile, /MOCK_PROFILES\[0\]/);
+  assert.doesNotMatch(search, /MOCK_PROFILES/);
+  assert.match(features, /"\/creators"/);
+  assert.match(features, /"\/communities"/);
+  assert.match(connections, /new Set\(\)/);
+  assert.match(visitors, /visitors: ProfileVisitor\[\] = \[\]/);
+});

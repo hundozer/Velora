@@ -8,7 +8,6 @@ import { MapView } from "@/components/discovery/MapView";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { MOCK_LIVE_STREAMS } from "@/lib/mockData";
 import { Profile } from "@/types";
 import { useTranslation } from "@/context/LanguageContext";
 import Link from "next/link";

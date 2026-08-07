@@ -1,6 +1,6 @@
 class ConnectionStore {
-  private followedUserIds: Set<string> = new Set(["prof-1", "prof-2"]); // Seed initial followed users
-  private friendUserIds: Set<string> = new Set(["prof-2"]); // Seed initial mutual friends
+  private followedUserIds: Set<string> = new Set();
+  private friendUserIds: Set<string> = new Set();
   private pendingFriendRequests: Set<string> = new Set();
   private listeners: (() => void)[] = [];
 

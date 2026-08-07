@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/Button";
 import { ReportModal } from "@/components/safety/ReportModal";
 import { GetVerifiedModal } from "@/components/profile/GetVerifiedModal";
 import { userStore } from "@/lib/auth0/userStore";
-import { MOCK_PROFILES, MOCK_CREATOR_ALBUMS } from "@/lib/mockData";
 import { useAuth } from "@/context/AuthContext";
 import { Profile } from "@/types";
 import { requestParticipantDeclaration, uploadFileToR2 } from "@/lib/storage/clientUpload";
@@ -52,6 +51,14 @@ import { visitorStore } from "@/lib/social/visitorStore";
 import { notificationStore } from "@/lib/notifications/notificationStore";
 import { getAlbumsByOwner, createAlbum, getVideosByOwner, createVideo } from "@/lib/supabase/mediaService";
 import { getAdsByAuthor } from "@/lib/supabase/datingAdService";
+
+const EMPTY_PROFILE = {
+  id: "", userId: "", displayName: "", age: 18, gender: "OTHER", sexualOrientation: "QUEER",
+  country: "", city: "", location: "", languages: [], bio: "", interests: [], lifestyleTags: [], hobbies: [],
+  relationshipStatus: "SINGLE", lookingFor: [], isCoupleProfile: false, publicProfileVisibility: false,
+  photoVisibilityDefault: "PRIVATE_MEMBERS", locationPrecision: "CITY", showOnlineStatus: false, showDistance: false,
+  allowDirectMessages: false, requireVerificationToMessage: true, verified: false, isOnline: false, avatarUrl: "", galleryImages: [],
+} as Profile;
 
 const AMATERI_TOPICS = [
   "Anal",
@@ -178,7 +185,7 @@ export default function SingleProfilePage() {
   const [remoteProfile, setRemoteProfile] = useState<Profile | null>(null);
   const [remoteProfileLoading, setRemoteProfileLoading] = useState(!isSelf);
   const [remoteProfileError, setRemoteProfileError] = useState("");
-  const profile = isSelf && currentProfile ? currentProfile : (remoteProfile || MOCK_PROFILES[0]);
+  const profile = (isSelf ? currentProfile : remoteProfile) || EMPTY_PROFILE;
 
   useEffect(() => {
     if (isSelf || !currentUser) {
