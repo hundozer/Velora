@@ -892,7 +892,7 @@ export default function SingleProfilePage() {
         setUploadingProgress(5);
 
         try {
-          const declaration = requestParticipantDeclaration();
+          const declaration = await requestParticipantDeclaration();
           const result = await uploadFileToR2(file, targetFolder, (percent) => {
             setUploadingProgress(percent);
           }, declaration);
@@ -1134,7 +1134,7 @@ export default function SingleProfilePage() {
       try {
         setUploadingProgress(10);
         setUploadingFileName("Avatar Photo");
-        const result = await uploadFileToR2(file, "avatars", (percent) => setUploadingProgress(percent), requestParticipantDeclaration());
+        const result = await uploadFileToR2(file, "avatars", (percent) => setUploadingProgress(percent), await requestParticipantDeclaration());
         const updatedUser = { ...currentUser, avatarUrl: result.publicUrl };
         const updatedProfile = { ...currentProfile, avatarUrl: result.publicUrl };
         updateUserProfile(updatedUser, updatedProfile);
@@ -1153,7 +1153,7 @@ export default function SingleProfilePage() {
       try {
         setUploadingProgress(10);
         setUploadingFileName("Cover Photo");
-        const result = await uploadFileToR2(file, "covers", (percent) => setUploadingProgress(percent), requestParticipantDeclaration());
+        const result = await uploadFileToR2(file, "covers", (percent) => setUploadingProgress(percent), await requestParticipantDeclaration());
         const updatedProfile = { ...currentProfile, coverPhotoUrl: result.publicUrl };
         updateUserProfile(currentUser, updatedProfile);
       } catch (err) {

@@ -79,7 +79,7 @@ export function GetVerifiedModal({
         setUploadProgress(10);
         const result = await uploadFileToR2(selectedFile, "general", (percent) => {
           setUploadProgress(percent);
-        }, requestParticipantDeclaration());
+        }, await requestParticipantDeclaration());
         finalPhotoUrl = result.publicUrl;
       }
 

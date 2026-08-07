@@ -16,15 +16,72 @@ export interface ParticipantDeclaration {
   publicationConsented: boolean;
 }
 
-export function requestParticipantDeclaration(): ParticipantDeclaration {
-  const containsOthers = window.confirm("Does this upload show any other identifiable person besides you? Select OK for yes or Cancel for no.");
-  const accepted = window.confirm(
-    containsOthers
-      ? "Confirm that every identifiable participant is 18 or older and consented to both recording and publication on Intimo."
-      : "Confirm that you are 18 or older and consent to this upload being stored and published according to the visibility you choose."
-  );
-  if (!accepted) throw new Error("Upload cancelled: participant declaration was not accepted");
-  return { containsOtherIdentifiableParticipants: containsOthers, allParticipantsAdults: true, recordingConsented: true, publicationConsented: true };
+export function requestParticipantDeclaration(): Promise<ParticipantDeclaration> {
+  return new Promise((resolve, reject) => {
+    const dialog = document.createElement("dialog");
+    dialog.setAttribute("aria-labelledby", "participant-declaration-title");
+    Object.assign(dialog.style, {
+      maxWidth: "560px", width: "calc(100% - 32px)", border: "1px solid #d6ad3c",
+      borderRadius: "16px", padding: "24px", background: "#111722", color: "#f7f8fb",
+      boxShadow: "0 24px 80px rgba(0,0,0,.65)", fontFamily: "inherit",
+    });
+    dialog.innerHTML = `
+      <h2 id="participant-declaration-title" style="margin:0 0 12px;font-size:24px">Who is visible in this upload?</h2>
+      <p style="margin:0 0 20px;color:#c3cad7;line-height:1.5">Choose one option. This is required to protect everyone shown in uploaded media.</p>
+      <div data-step="people" style="display:grid;gap:12px">
+        <button value="only-me" style="padding:14px;text-align:left;font-weight:700">Only me is identifiable</button>
+        <button value="others" style="padding:14px;text-align:left;font-weight:700">Other identifiable people are visible</button>
+        <button value="cancel" style="padding:12px">Cancel upload</button>
+      </div>
+      <div data-step="consent" hidden>
+        <p data-consent-copy style="color:#c3cad7;line-height:1.5"></p>
+        <div style="display:grid;gap:12px">
+          <button value="confirm" style="padding:14px;font-weight:700;background:#d6ad3c;color:#111722">I confirm and continue uploading</button>
+          <button value="back" style="padding:12px">Go back and change my answer</button>
+          <button value="cancel" style="padding:12px">Cancel upload</button>
+        </div>
+      </div>`;
+
+    let containsOthers = false;
+    const peopleStep = dialog.querySelector<HTMLElement>('[data-step="people"]')!;
+    const consentStep = dialog.querySelector<HTMLElement>('[data-step="consent"]')!;
+    const consentCopy = dialog.querySelector<HTMLElement>("[data-consent-copy]")!;
+    const finish = (error?: Error) => {
+      dialog.close();
+      dialog.remove();
+      if (error) reject(error);
+    };
+
+    dialog.addEventListener("click", (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>("button");
+      if (!button) return;
+      if (button.value === "cancel") return finish(new Error("Upload cancelled"));
+      if (button.value === "back") {
+        consentStep.hidden = true;
+        peopleStep.hidden = false;
+        return;
+      }
+      if (button.value === "only-me" || button.value === "others") {
+        containsOthers = button.value === "others";
+        consentCopy.textContent = containsOthers
+          ? "I confirm that every identifiable participant is 18 or older and consented to both the recording and its publication on Intimo."
+          : "I confirm that I am 18 or older and consent to this upload being stored and shown according to the visibility I choose.";
+        peopleStep.hidden = true;
+        consentStep.hidden = false;
+        return;
+      }
+      if (button.value === "confirm") {
+        resolve({ containsOtherIdentifiableParticipants: containsOthers, allParticipantsAdults: true, recordingConsented: true, publicationConsented: true });
+        finish();
+      }
+    });
+    dialog.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      finish(new Error("Upload cancelled"));
+    });
+    document.body.appendChild(dialog);
+    dialog.showModal();
+  });
 }
 
 /**
