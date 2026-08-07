@@ -127,7 +127,13 @@ export default function SettingsPage() {
         console.error("API call to delete account failed:", err);
       }
       setDeleteModalOpen(false);
-      logoutWithAuth0("/goodbye");
+      
+      // Clear session cookies locally
+      document.cookie = "intimo_session_active=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = "intimo_user_data=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      
+      // Redirect directly to /goodbye to avoid Auth0 returnTo whitelisting error
+      window.location.href = "/goodbye";
     }
   };
 
