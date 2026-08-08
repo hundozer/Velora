@@ -217,7 +217,7 @@ export default function SingleProfilePage() {
   }, [tabQuery]);
 
   // Rich Photo Albums
-  const [userPhotoAlbums, setUserPhotoAlbums] = useState<UserPhotoAlbumItem[]>([
+  const [userPhotoAlbums, setUserPhotoAlbums] = useState<UserPhotoAlbumItem[]>(process.env.NODE_ENV === "development" ? [
     {
       id: "alb-1",
       title: "Monaco Luxury Villa Portfolio",
@@ -362,11 +362,11 @@ export default function SingleProfilePage() {
         },
       ],
     },
-  ]);
+  ] : []);
 
   // Load & Persist Photo Albums
   React.useEffect(() => {
-    if (typeof window !== "undefined" && profile?.id) {
+    if (process.env.NODE_ENV === "development" && typeof window !== "undefined" && profile?.id) {
       const cacheKey = `intimo_user_albums_${profile.id}`;
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
@@ -402,13 +402,13 @@ export default function SingleProfilePage() {
 
   // Sync photo albums state to localStorage whenever modified (e.g. comments, likes added)
   React.useEffect(() => {
-    if (typeof window !== "undefined" && profile?.id && userPhotoAlbums.length > 0) {
+    if (process.env.NODE_ENV === "development" && typeof window !== "undefined" && profile?.id && userPhotoAlbums.length > 0) {
       localStorage.setItem(`intimo_user_albums_${profile.id}`, JSON.stringify(userPhotoAlbums));
     }
   }, [userPhotoAlbums, profile?.id]);
 
   // Rich Videos List
-  const [userVideos, setUserVideos] = useState<UserVideoItem[]>([
+  const [userVideos, setUserVideos] = useState<UserVideoItem[]>(process.env.NODE_ENV === "development" ? [
     {
       id: "v1",
       title: "Private Riviera Yacht Teaser",
@@ -461,11 +461,11 @@ export default function SingleProfilePage() {
         { id: "v-3", name: "Sophia K.", avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80", isVerified: true, votedAt: "5 hours ago" },
       ],
     },
-  ]);
+  ] : []);
 
   // Load Videos from Supabase & Local Cache
   React.useEffect(() => {
-    if (typeof window !== "undefined" && profile?.id) {
+    if (process.env.NODE_ENV === "development" && typeof window !== "undefined" && profile?.id) {
       const cacheKey = `intimo_user_videos_${profile.id}`;
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
@@ -482,7 +482,7 @@ export default function SingleProfilePage() {
             description: row.description || "",
             duration: row.duration || "1:30",
             thumbnail: row.thumbnail_url || profile.avatarUrl,
-            videoUrl: row.video_url || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+            videoUrl: row.video_url || "",
             monetization: "FREE",
             creditsPrice: undefined,
             category: row.category || "General",
@@ -503,13 +503,13 @@ export default function SingleProfilePage() {
 
   // Sync userVideos state to localStorage whenever modified (e.g. comments, likes added)
   React.useEffect(() => {
-    if (typeof window !== "undefined" && profile?.id && userVideos.length > 0) {
+    if (process.env.NODE_ENV === "development" && typeof window !== "undefined" && profile?.id && userVideos.length > 0) {
       localStorage.setItem(`intimo_user_videos_${profile.id}`, JSON.stringify(userVideos));
     }
   }, [userVideos, profile?.id]);
 
   // Dating Ads List
-  const [userDatingAds, setUserDatingAds] = useState<{ id: string; title: string; category: string; description: string; date: string }[]>([
+  const [userDatingAds, setUserDatingAds] = useState<{ id: string; title: string; category: string; description: string; date: string }[]>(process.env.NODE_ENV === "development" ? [
     {
       id: "ad-1",
       title: "Discreet Fine Dining & Champagne Evening",
@@ -524,11 +524,11 @@ export default function SingleProfilePage() {
       description: "Seeking a fun, attractive companion to join for a weekend cruise along the Côte d'Azur.",
       date: "Active • Posted 5 days ago",
     },
-  ]);
+  ] : []);
 
   // Load & Persist Profile Dating Ads
   React.useEffect(() => {
-    if (typeof window !== "undefined" && currentUser?.email) {
+    if (process.env.NODE_ENV === "development" && typeof window !== "undefined" && currentUser?.email) {
       const emailKey = currentUser.email.toLowerCase().trim();
       const saved = localStorage.getItem(`intimo_user_ads_${emailKey}`);
       if (saved) {
@@ -540,7 +540,7 @@ export default function SingleProfilePage() {
   }, [currentUser?.email]);
 
   React.useEffect(() => {
-    if (typeof window !== "undefined" && currentUser?.email) {
+    if (process.env.NODE_ENV === "development" && typeof window !== "undefined" && currentUser?.email) {
       const emailKey = currentUser.email.toLowerCase().trim();
       localStorage.setItem(`intimo_user_ads_${emailKey}`, JSON.stringify(userDatingAds));
     }

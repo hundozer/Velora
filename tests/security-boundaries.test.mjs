@@ -267,3 +267,12 @@ test("legacy admin route cannot mount browser authority or fabricated operationa
   assert.doesNotMatch(page, /localStorage|userStore|MOCK_|impersonate|wallet|payout/i);
   assert.doesNotMatch(center, /\["\/admin\/communities"|\["\/admin\/events"|\["\/admin\/live"/);
 });
+
+test("legacy profile gallery fixtures and browser caches are development-only", async () => {
+  const profile = await read("src/app/profile/[id]/page.tsx");
+  assert.match(profile, /useState<UserPhotoAlbumItem\[\]>\(process\.env\.NODE_ENV === "development" \? \[/);
+  assert.match(profile, /useState<UserVideoItem\[\]>\(process\.env\.NODE_ENV === "development" \? \[/);
+  assert.match(profile, /useState<\{ id: string; title: string; category: string; description: string; date: string \}\[\]>\(process\.env\.NODE_ENV === "development" \? \[/);
+  assert.match(profile, /process\.env\.NODE_ENV === "development" && typeof window !== "undefined"/);
+  assert.doesNotMatch(profile, /videoUrl: row\.video_url \|\| "https:\/\/commondatastorage/);
+});
