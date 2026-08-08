@@ -249,6 +249,21 @@ test("dating ads derive authorship and deletion ownership from the server actor"
   assert.match(collection, /require_vip: false/);
 });
 
+test("dating-ad reply requirements are enforced by the server, not browser claims", async () => {
+  const messages = await read("src/app/api/messages/route.ts");
+  const dating = await read("src/app/dating/page.tsx");
+  const messagesPage = await read("src/app/messages/page.tsx");
+  assert.match(dating, /datingAd=.*encodeURIComponent\(ad\.id\)/);
+  assert.match(messagesPage, /searchParams\.get\("datingAd"\)/);
+  assert.match(messages, /dating_ads/);
+  assert.match(messages, /ad\.author_id !== receiverId/);
+  assert.match(messages, /allowed_reply_genders/);
+  assert.match(messages, /date_of_birth/);
+  assert.match(messages, /require_verified/);
+  assert.match(messages, /require_media/);
+  assert.match(messages, /moderation_status", "APPROVED"/);
+});
+
 test("free MVP centrally disables and server-blocks monetization routes", async () => {
   const features = await read("src/lib/features.ts");
   const middleware = await read("src/middleware.ts");

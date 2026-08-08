@@ -31,6 +31,7 @@ interface ChatWindowProps {
   onSelectConversation: (conv: Conversation) => void;
   onLoadOlderConversations?: () => void;
   loadingOlderConversations?: boolean;
+  datingAdId?: string | null;
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({
@@ -39,11 +40,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onSelectConversation,
   onLoadOlderConversations,
   loadingOlderConversations = false,
+  datingAdId = null,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loadingOlder, setLoadingOlder] = useState(false);
+  const [sendError, setSendError] = useState("");
 
   // Load durable messages through the authenticated participant boundary.
   useEffect(() => {
@@ -91,14 +94,18 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
+    setSendError("");
 
     const participantId = activeConversation.participant.id || activeConversation.participant.userId;
     const response = await fetch("/api/messages", {
       method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ receiverId: participantId, content: inputMessage.trim() }),
+      body: JSON.stringify({ receiverId: participantId, content: inputMessage.trim(), datingAdId }),
     });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok) return;
+    if (!response.ok) {
+      setSendError(typeof payload.error === "string" ? payload.error : "Message could not be sent.");
+      return;
+    }
 
     const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     const newMsg: Message = {
@@ -318,6 +325,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
         {/* Text messaging only until attachments have a moderated durable lifecycle. */}
         <div className="p-4 border-t border-white/10 bg-velora-card/60 space-y-2">
+          {datingAdId && <p className="text-[11px] text-amber-300">Replying to a dating ad. Its audience requirements are checked securely when you send.</p>}
+          {sendError && <p role="alert" className="text-[11px] text-rose-300">{sendError}</p>}
           <div className="flex items-center gap-3">
             <input
               type="text"

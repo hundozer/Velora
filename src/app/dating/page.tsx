@@ -613,7 +613,7 @@ function DatingMarketplaceContent() {
                                size="sm"
                                className="text-xs font-bold uppercase gap-1.5 shadow-gold-glow"
                                onClick={() => {
-                                 window.location.assign(`/messages?user=${encodeURIComponent(ad.authorId)}`);
+                                 window.location.assign(`/messages?user=${encodeURIComponent(ad.authorId)}&datingAd=${encodeURIComponent(ad.id)}`);
                                }}
                              >
                                <MessageSquare className="w-3.5 h-3.5" /> Reply to Ad

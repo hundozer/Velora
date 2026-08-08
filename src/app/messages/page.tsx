@@ -12,6 +12,7 @@ function MessagesContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const targetUserId = searchParams.get("user") || searchParams.get("peerId");
+  const targetDatingAdId = searchParams.get("datingAd");
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConv, setActiveConv] = useState<Conversation | null>(null);
@@ -100,6 +101,7 @@ function MessagesContent() {
         onSelectConversation={setActiveConv}
         onLoadOlderConversations={nextConversationCursor ? loadOlderConversations : undefined}
         loadingOlderConversations={loadingOlderConversations}
+        datingAdId={activeConv.participant.id === targetUserId ? targetDatingAdId : null}
       />
     </div>
   );

@@ -13,6 +13,25 @@ function conversationId(first: string, second: string) {
   return [first, second].sort().join(":");
 }
 
+function profileReplySymbol(gender: unknown, isCouple: unknown) {
+  if (isCouple === true || String(gender || "").toUpperCase().startsWith("COUPLE")) return "👫";
+  const value = String(gender || "").toUpperCase();
+  if (value.includes("TRANS") || value.includes("NON_BINARY")) return "⚧";
+  if (value.includes("FEMALE") || value === "WOMAN") return "♀";
+  if (value.includes("MALE") || value === "MAN") return "♂";
+  return null;
+}
+
+function ageFromDateOfBirth(value: unknown) {
+  if (typeof value !== "string") return null;
+  const birth = new Date(`${value.slice(0, 10)}T00:00:00Z`);
+  if (Number.isNaN(birth.getTime())) return null;
+  const now = new Date();
+  let age = now.getUTCFullYear() - birth.getUTCFullYear();
+  if (now.getUTCMonth() < birth.getUTCMonth() || (now.getUTCMonth() === birth.getUTCMonth() && now.getUTCDate() < birth.getUTCDate())) age -= 1;
+  return age;
+}
+
 async function blocked(supabase: ReturnType<typeof getServerSupabase>, first: string, second: string) {
   if (!supabase) return true;
   const { data, error } = await supabase.from("user_blocks").select("id").or(`and(blocker_id.eq.${first},blocked_profile_id.eq.${second}),and(blocker_id.eq.${second},blocked_profile_id.eq.${first})`).limit(1).maybeSingle();
@@ -83,20 +102,38 @@ export async function POST(req: NextRequest) {
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const receiverId = typeof body.receiverId === "string" ? body.receiverId : "";
   const content = typeof body.content === "string" ? body.content.trim() : "";
+  const datingAdId = typeof body.datingAdId === "string" ? body.datingAdId : null;
   if (!UUID.test(receiverId) || receiverId === actor.actor.profileId || content.length < 1 || content.length > 4_000) return NextResponse.json({ error: "Invalid message" }, { status: 400 });
+  if (datingAdId && !UUID.test(datingAdId)) return NextResponse.json({ error: "Invalid dating ad context" }, { status: 400 });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Messaging unavailable" }, { status: 503 });
   if (await blocked(supabase, actor.actor.profileId, receiverId)) return NextResponse.json({ error: "Messaging is not allowed between these profiles" }, { status: 403 });
   const { data: recipient } = await supabase.from("profiles").select("id,display_name,message_permission,allow_direct_messages,require_verification_to_message").eq("id", receiverId).eq("account_status", "ACTIVE").maybeSingle();
   if (!recipient || recipient.allow_direct_messages === false || recipient.message_permission === "PRIVATE") return NextResponse.json({ error: "Recipient is not accepting messages" }, { status: 403 });
-  const { data: sender } = await supabase.from("profiles").select("display_name,avatar_url,verification_level,verification_status").eq("id", actor.actor.profileId).single();
+  const { data: sender } = await supabase.from("profiles").select("display_name,avatar_url,verification_level,verification_status,gender,is_couple_profile,date_of_birth").eq("id", actor.actor.profileId).single();
   if (!sender) return NextResponse.json({ error: "Sender profile unavailable" }, { status: 502 });
   const verifiedSender = sender.verification_status === "VERIFIED" || ["LEVEL_3_PROFILE_BIOMETRIC", "LEVEL_4_CREATOR"].includes(sender.verification_level || "");
   if ((recipient.require_verification_to_message === true || recipient.message_permission === "VERIFIED_ONLY") && !verifiedSender) return NextResponse.json({ error: "Recipient accepts messages from verified members only" }, { status: 403 });
+  if (datingAdId) {
+    const { data: ad, error: adError } = await supabase.from("dating_ads").select("id,author_id,status,allowed_reply_genders,min_age,max_age,require_media,require_verified").eq("id", datingAdId).maybeSingle();
+    if (adError) return NextResponse.json({ error: "Dating ad eligibility could not be checked" }, { status: 502 });
+    if (!ad || ad.status !== "active" || ad.author_id !== receiverId) return NextResponse.json({ error: "Dating ad is no longer available" }, { status: 404 });
+    const replySymbol = profileReplySymbol(sender.gender, sender.is_couple_profile);
+    const allowed = Array.isArray(ad.allowed_reply_genders) ? ad.allowed_reply_genders : [];
+    if (!replySymbol || (allowed.length > 0 && !allowed.includes(replySymbol))) return NextResponse.json({ error: "Your profile does not match this ad's allowed reply profiles" }, { status: 403 });
+    const senderAge = ageFromDateOfBirth(sender.date_of_birth);
+    if (senderAge === null || senderAge < Number(ad.min_age) || senderAge > Number(ad.max_age)) return NextResponse.json({ error: "Your profile does not match this ad's age range" }, { status: 403 });
+    if (ad.require_verified === true && !verifiedSender) return NextResponse.json({ error: "This dating ad accepts verified members only" }, { status: 403 });
+    if (ad.require_media === true) {
+      const { data: media, error: mediaError } = await supabase.from("media_objects").select("id").eq("owner_id", actor.actor.profileId).eq("upload_status", "AVAILABLE").eq("moderation_status", "APPROVED").limit(1).maybeSingle();
+      if (mediaError) return NextResponse.json({ error: "Dating ad media eligibility could not be checked" }, { status: 502 });
+      if (!media) return NextResponse.json({ error: "This dating ad accepts replies from members with approved profile media only" }, { status: 403 });
+    }
+  }
   const row = { conversation_id: conversationId(actor.actor.profileId, receiverId), sender_id: actor.actor.profileId, receiver_id: receiverId, sender_name: sender.display_name, sender_avatar: sender.avatar_url, content, media_url: null, attachment_type: null, is_disappearing: false, is_opened: false, status: "SENT", is_locked: false, unlock_price: null, is_unlocked: true };
   const { data, error } = await supabase.from("direct_messages").insert(row).select("id,conversation_id,sender_id,receiver_id,content,status,created_at").single();
   if (error || !data) return NextResponse.json({ error: "Message could not be sent" }, { status: 502 });
-  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "MESSAGE_SEND", resourceType: "MESSAGE", resourceId: data.id, outcome: "SUCCESS", metadata: { receiverId } });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "MESSAGE_SEND", resourceType: "MESSAGE", resourceId: data.id, outcome: "SUCCESS", metadata: { receiverId, datingAdId } });
   if (!audited) return NextResponse.json({ error: "Message sent but audit recording failed; contact support" }, { status: 503 });
   await supabase.from("notifications").insert({ user_id: receiverId, type: "NEW_MESSAGE", title: "New message", message: `${sender.display_name} sent you a message.`, actor_name: sender.display_name, actor_avatar: sender.avatar_url, target_link: `/messages?peerId=${actor.actor.profileId}`, is_read: false });
   auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "MESSAGE_SEND", resourceId: data.id, resourceType: "MESSAGE", status: "SUCCESS" });

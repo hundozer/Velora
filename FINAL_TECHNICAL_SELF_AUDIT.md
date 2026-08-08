@@ -14,7 +14,7 @@ Scope: repository implementation and preview/staging readiness. This is not lega
 | Public profiles/community | PASS for MVP scope | Explicit-public active profiles only; canonical responsive profile, safe serializer, deterministic pagination and owner-scoped approved media/albums |
 | Public media | PARTIAL | Requires signed adult declaration, public visibility, completed upload, READY processing, approval and active public owner; staging migration, scanning and video processor remain |
 | Public/member search | PASS for MVP | Anonymous search exposes only minimized explicit-public people, approved public media/albums and active public-author dating ads; signed-in search adds block-aware member records and approved posts; deterministic ranking; no AI |
-| Dating interactions | PASS for current MVP | Owner-derived creation/deletion/reactivation with durable audit; durable save; reply enters participant-authorized messages; unsupported local-only attachment input removed |
+| Dating interactions | PASS for current MVP | Owner-derived creation/deletion/reactivation with durable audit; durable save; reply enters participant-authorized messages and server-enforces the ad's gender, age, verification and approved-media requirements; unsupported local-only attachment input removed |
 | Messaging | PARTIAL | Durable participant/block/recipient-preference checks, verified-sender enforcement, bounded message and conversation history, durable send/read audits, real unread state and safe notification navigation; fabricated messages and simulated receipts removed; attachments deliberately disabled; staging E2E remains |
 | Follows/blocks/saves/comments/notifications | PASS for implemented lifecycle | Server-owned database state, durable mutation audits, same-origin notification targets, real event sources, and atomic blocks that remove relationships in both directions; staging migration required |
 | Identity verification | PARTIAL | Private owner-submitted evidence, durable queue, MFA/granular admin signed access and audit; stronger age-assurance provider remains external |
@@ -27,7 +27,7 @@ Scope: repository implementation and preview/staging readiness. This is not lega
 
 ## Verification evidence
 
-- `npm run test`: 50 security boundary tests pass.
+- `npm run test`: 51 security boundary tests pass.
 - `npm run typecheck`: pass.
 - `npm run lint`: pass with no warnings.
 - `npm run build`: pass; Auth0 SDK emits a known non-fatal dynamic-dependency warning.
