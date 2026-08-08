@@ -81,4 +81,9 @@ This is an engineering audit, not legal approval. The initial recommendation is 
 | Communities | HIDDEN_FOR_MVP required |
 | Events/live/referrals | HIDDEN_FOR_MVP |
 | Payments/subscriptions/tips/wallet | HIDDEN_FOR_MVP |
+# 2026-08-08 public-community direction update
+
+The product direction now permits anonymous community discovery. This does **not** convert every member-visible field or media object into public data. The first implementation slice introduces dedicated minimized public APIs, a content-first home, a paginated People directory, and a guest public-profile summary. See `ROUTE_ACCESS_MATRIX.md` and `PRODUCT_IMPLEMENTATION_MATRIX.md`.
+
+Public explicit media remains unavailable until each object has durable visibility, moderation approval, participant/consent evidence, safe delivery, and the required age/legal controls. The launch recommendation therefore remains **NO-GO** while the complete master hardening program is unfinished.
 

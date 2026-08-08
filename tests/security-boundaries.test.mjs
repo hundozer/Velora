@@ -109,6 +109,20 @@ test("member profile pages load through the authenticated visibility boundary", 
   assert.match(page, /fetch\(`\/api\/profiles\/\$\{encodeURIComponent\(profileId\)\}`/);
 });
 
+test("anonymous community discovery is explicit-public-only and excludes sensitive profile fields", async () => {
+  const collection = await read("src/app/api/public/community/route.ts");
+  const item = await read("src/app/api/public/profiles/[id]/route.ts");
+  const serializer = await read("src/lib/supabase/publicCommunity.ts");
+  assert.match(collection, /\.eq\("profile_visibility", "EVERYONE"\)/);
+  assert.match(collection, /\.eq\("public_profile_visibility", true\)/);
+  assert.match(collection, /\.eq\("account_status", "ACTIVE"\)/);
+  assert.match(collection, /\.eq\("discovery_disabled", false\)/);
+  assert.match(collection, /\.range\(offset, offset \+ limit - 1\)/);
+  assert.match(item, /toAnonymousPublicProfile/);
+  assert.doesNotMatch(serializer, /sexual_orientation|interests|lifestyle_tags|looking_for|email|auth_id|gallery_images/);
+  assert.doesNotMatch(serializer, /avatar_url|cover_photo_url|date_of_birth/);
+});
+
 test("onboarding records declared age separately from stronger verification and requires explicit consent", async () => {
   const route = await read("src/app/api/profile/me/route.ts");
   const onboarding = await read("src/app/onboarding/page.tsx");
@@ -156,9 +170,12 @@ test("free MVP centrally disables and server-blocks monetization routes", async 
 
 test("active dating ads cannot advertise commercial sexual services or require VIP", async () => {
   const createPage = await read("src/app/dating/create/page.tsx");
+  const browsePage = await read("src/app/dating/page.tsx");
   const collection = await read("src/app/api/dating-ads/route.ts");
   assert.doesNotMatch(createPage, /offering services|Erotic services|Incall apartments|S\/M studios/i);
   assert.doesNotMatch(createPage, /Require VIP Membership/);
+  assert.match(browsePage, /process\.env\.NODE_ENV === "development" \? \[/);
+  assert.match(browsePage, /return <PublicDatingBrowse \/>/);
   assert.match(collection, /require_vip: false/);
 });
 

@@ -61,6 +61,9 @@ export interface ProfileRow {
   profile_visibility?: string;
   sensitive_fields_visibility?: string;
   message_permission?: string;
+  account_status?: string;
+  discovery_disabled?: boolean;
+  last_active_at?: string | null;
 }
 
 // ── Converters ─────────────────────────────────────────────

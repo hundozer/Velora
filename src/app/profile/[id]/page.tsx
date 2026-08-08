@@ -164,7 +164,7 @@ interface UserPhotoAlbumItem {
   hasUserVoted?: boolean;
 }
 
-import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
+import { PublicProfileView } from "@/components/community/PublicProfileView";
 
 export default function SingleProfilePage() {
   const params = useParams();
@@ -1173,7 +1173,7 @@ export default function SingleProfilePage() {
   };
 
   if (!currentUser) {
-    return <BehindTheDoorLanding />;
+    return <PublicProfileView profileId={profileId} />;
   }
 
   if (!isSelf && remoteProfileLoading) {

@@ -43,7 +43,7 @@ export const Navbar: React.FC = () => {
     <header className="sticky top-0 z-40 w-full glass-panel border-b border-white/10 bg-velora-bg/85 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         {/* Brand Logo */}
-        <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-3 group shrink-0">
+        <Link href="/" className="flex items-center gap-3 group shrink-0">
           <div className="w-10 h-10 rounded-full bg-gold-gradient p-[1px] shadow-gold-glow flex items-center justify-center">
             <div className="w-full h-full bg-velora-bg rounded-full flex items-center justify-center group-hover:bg-velora-bg/80 transition-colors">
               <span className="font-serif font-bold text-lg text-velora-gold">I</span>
@@ -59,20 +59,18 @@ export const Navbar: React.FC = () => {
           </div>
         </Link>
 
-        {/* Navigation Links: Dual-State (Authenticated vs Unauthenticated) */}
-        {user ? (
-          /* AUTHENTICATED MEMBER NAVIGATION */
-          <nav className="hidden lg:flex items-center gap-1">
+        {/* Stable public navigation; member-only destinations are additive. */}
+          <nav className="hidden lg:flex items-center gap-1" aria-label="Primary navigation">
             <Link
-              href="/dashboard"
+              href="/"
               className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-                pathname === "/dashboard"
+                pathname === "/"
                   ? "bg-white/10 text-velora-gold border border-velora-gold/30"
                   : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
               }`}
             >
               <Compass className="w-4 h-4 text-amber-400" />
-              {t("nav.feed")}
+              Home
             </Link>
 
             <Link
@@ -88,17 +86,18 @@ export const Navbar: React.FC = () => {
             </Link>
 
             <Link
-              href="/discovery"
+              href="/people"
               className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-                pathname === "/discovery"
+                pathname === "/people"
                   ? "bg-white/10 text-velora-gold border border-velora-gold/30"
                   : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
               }`}
             >
-              <Compass className="w-4 h-4" />
-              {t("nav.discover")}
+              <User className="w-4 h-4" />
+              People
             </Link>
 
+            {user && (
             <Link
               href="/messages"
               className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
@@ -110,14 +109,8 @@ export const Navbar: React.FC = () => {
               <MessageSquare className="w-4 h-4" />
               {t("nav.messages")}
             </Link>
+            )}
           </nav>
-        ) : (
-          /* UNAUTHENTICATED GUEST BRAND TAG */
-          <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-amber-300/80 uppercase tracking-widest">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-            <span>High-Discretion Members Sanctuary</span>
-          </div>
-        )}
 
         {/* Right Section: Language Selector & Auth / Avatar Controls */}
         <div className="flex items-center gap-4 shrink-0">
@@ -193,12 +186,14 @@ export const Navbar: React.FC = () => {
                 className="flex items-center gap-2.5 p-1 rounded-full hover:bg-white/5 transition-colors"
               >
                 <div className="w-10 h-10 rounded-full border-2 border-velora-gold/50 overflow-hidden bg-velora-card">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={profile?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80"}
-                    alt="User Avatar"
-                    className="w-full h-full object-cover"
-                  />
+                  {profile?.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={profile.avatarUrl} alt="User avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="w-full h-full flex items-center justify-center text-sm font-bold text-velora-gold" aria-label="Profile without an avatar">
+                      {(profile?.displayName || user.username || "I").slice(0, 1).toUpperCase()}
+                    </span>
+                  )}
                 </div>
               </button>
 

@@ -73,25 +73,12 @@ const DATING_CATEGORIES = [
   "Man seeking couple",
   "Couple seeking man",
   "Lovers asylums",
-  "Woman offering services",
-  "Man offering services",
-  "Couple offering services",
-  "Strip-tease",
-  "Photographing - offer",
-  "Jobs in the erotic industry - offer",
-  "Market - offer",
-  "Incall apartments and clubs",
-  "Photographing - request",
-  "Jobs in the erotic industry - request",
-  "Market - request",
-  "Erotic services",
   "Transgender seeking",
-  "Transgender offering services",
-  "Massage/Sauna",
-  "S/M studios",
 ];
 
-const INITIAL_ADS: DatingAdItem[] = [
+// Explicit development fixture retained only for manual layout work. It is not
+// read by production state and can never appear as platform data.
+const INITIAL_ADS: DatingAdItem[] = process.env.NODE_ENV === "development" ? [
   {
     id: "ad-101",
     authorId: "usr-1",
@@ -217,9 +204,9 @@ const INITIAL_ADS: DatingAdItem[] = [
     daysLeft: 0,
     saved: false,
   },
-];
+] : [];
 
-import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
+import { PublicDatingBrowse } from "@/components/community/PublicDatingBrowse";
 
 function DatingMarketplaceContent() {
   const { user, profile } = useAuth();
@@ -470,7 +457,7 @@ function DatingMarketplaceContent() {
   });
 
   if (!user) {
-    return <BehindTheDoorLanding />;
+    return <PublicDatingBrowse />;
   }
 
   return (
