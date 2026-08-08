@@ -3,6 +3,7 @@ import { resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
+import { appendDurableAudit } from "@/lib/auth/durableAudit";
 
 export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -27,8 +28,10 @@ export async function POST(req: NextRequest) {
   if (!UUID.test(targetProfileId) || targetProfileId === actor.actor.profileId) return NextResponse.json({ error: "Invalid block target" }, { status: 400 });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Blocking service unavailable" }, { status: 503 });
-  const { error } = await supabase.from("user_blocks").upsert({ blocker_id: actor.actor.profileId, blocked_profile_id: targetProfileId }, { onConflict: "blocker_id,blocked_profile_id" });
+  const { error } = await supabase.rpc("intimo_block_profile", { p_blocker_id: actor.actor.profileId, p_blocked_id: targetProfileId });
   if (error) return NextResponse.json({ error: "User could not be blocked" }, { status: 502 });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "USER_BLOCK", resourceType: "PROFILE", resourceId: targetProfileId, outcome: "SUCCESS", metadata: { connectionsRemoved: true } });
+  if (!audited) return NextResponse.json({ error: "Block applied but audit recording failed; contact support" }, { status: 503 });
   auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "USER_BLOCK", resourceId: targetProfileId, resourceType: "PROFILE", status: "SUCCESS" });
   return NextResponse.json({ blocked: true }, { status: 201 });
 }
@@ -42,6 +45,8 @@ export async function DELETE(req: NextRequest) {
   if (!supabase) return NextResponse.json({ error: "Blocking service unavailable" }, { status: 503 });
   const { error } = await supabase.from("user_blocks").delete().eq("blocker_id", actor.actor.profileId).eq("blocked_profile_id", targetProfileId);
   if (error) return NextResponse.json({ error: "User could not be unblocked" }, { status: 502 });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "USER_UNBLOCK", resourceType: "PROFILE", resourceId: targetProfileId, outcome: "SUCCESS" });
+  if (!audited) return NextResponse.json({ error: "Unblock applied but audit recording failed; contact support" }, { status: 503 });
   auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "USER_UNBLOCK", resourceId: targetProfileId, resourceType: "PROFILE", status: "SUCCESS" });
   return NextResponse.json({ blocked: false });
 }

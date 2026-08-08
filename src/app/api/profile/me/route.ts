@@ -5,6 +5,7 @@ import { profileToDbRow } from "@/lib/supabase/profileService";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
 import type { Profile } from "@/types";
+import { appendDurableAudit } from "@/lib/auth/durableAudit";
 
 export const dynamic = "force-dynamic";
 const MAX_BODY_BYTES = 64 * 1024;
@@ -147,6 +148,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Consent record could not be created; no profile was retained" }, { status: 502 });
   }
   auditLogger.logEvent({ actorId: identity.sub, actorRole: "MEMBER", action: "PROFILE_CREATE", resourceId: String(data.id), resourceType: "PROFILE", status: "SUCCESS", details: { creatorIntent: profileType === "CREATOR" } });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: data.id, actorAuth0Sub: identity.sub, action: "PROFILE_CREATE", resourceType: "PROFILE", resourceId: String(data.id), outcome: "SUCCESS", metadata: { creatorIntent: profileType === "CREATOR" } });
+  if (!audited) return NextResponse.json({ error: "Profile created but audit recording failed; contact support" }, { status: 503 });
   return noStore(NextResponse.json({ profile: data }, { status: 201 }));
 }
 
@@ -193,5 +196,7 @@ export async function PUT(req: NextRequest) {
   if (!data) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
   auditLogger.logEvent({ actorId: identity.sub, actorRole: "MEMBER", action: "PROFILE_UPDATE", resourceId: String(data.id), resourceType: "PROFILE", status: "SUCCESS" });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: data.id, actorAuth0Sub: identity.sub, action: "PROFILE_UPDATE", resourceType: "PROFILE", resourceId: String(data.id), outcome: "SUCCESS" });
+  if (!audited) return NextResponse.json({ error: "Profile updated but audit recording failed; contact support" }, { status: 503 });
   return noStore(NextResponse.json({ profile: data }));
 }

@@ -6,7 +6,7 @@ Last reviewed: 2026-08-08. This matrix is the application contract, not a claim 
 |---|---|---|---|---|
 | `/` | Public | Public API returns allowlisted fields only | Explicitly public, active, discoverable profiles and safe dating summaries | Implemented |
 | `/people` | Public | `/api/public/community` filters visibility/status and paginates | No email, Auth0 ID, intimate preferences, exact location, private media, or social graph | Implemented |
-| `/profile/[id]` | Public summary; richer member view | Guest uses `/api/public/profiles/[id]`; member endpoint independently authorizes | Guest summary is minimized; member view respects visibility and blocks | Implemented, richer legacy view requires further consolidation |
+| `/profile/[id]` | Public summary; richer member view | Guest uses `/api/public/profiles/[id]`; member endpoint independently authorizes; public media queries are owner-filtered and moderation-gated | Guest summary is minimized; member view respects visibility and blocks; only PUBLIC/READY/APPROVED media and albums render | Implemented canonical view |
 | `/dating` | Public browsing target; authenticated contribution | Existing write API requires authenticated adult actor | Public listing currently uses minimized summaries on home; full public page conversion pending | Partial |
 | `/photos`, `/videos`, `/albums`, `/album/[id]` | Public only for approved PUBLIC media/albums | Server moderation + visibility checks, signed delivery, active public owner, album-photo approval parity | Never expose raw private object keys, unapproved media, or private album membership | Implemented; video processing remains external |
 | `/albums/manage` | Authenticated adult owner | Owner-derived album/media CRUD, transactional ordering, R2 upload validation and durable audit | Private/no-store; public publication still requires moderator approval | Implemented; staging migration required |
@@ -32,4 +32,5 @@ Excluded: email, Auth0 subject, birth date, sexual orientation, sexual/intimate 
 - Only `ACTIVE` accounts with `discovery_disabled=false` are public.
 - Anonymous results are deterministic and paginated.
 - Blocking is enforced for authenticated member views and interactions. Public-profile behavior for blocks remains deliberately separate because anonymous viewers have no proven identity.
+- Creating a block is transactional: it inserts the block and deletes follow/favorite relationships between both profiles in both directions. The operation is durably audited.
 - Explicit media is not made public merely because the parent profile is public. Media needs its own PUBLIC visibility and APPROVED moderation state.

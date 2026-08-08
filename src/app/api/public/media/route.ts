@@ -8,7 +8,9 @@ const MAX_LIMIT = 36;
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const mediaType = url.searchParams.get("type");
+  const ownerId = url.searchParams.get("ownerId");
   if (mediaType && !["IMAGE", "VIDEO"].includes(mediaType)) return NextResponse.json({ error: "Invalid media type" }, { status: 400 });
+  if (ownerId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(ownerId)) return NextResponse.json({ error: "Invalid owner" }, { status: 400 });
   const page = Math.min(Math.max(Number(url.searchParams.get("page")) || 1, 1), 500);
   const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 18, 1), MAX_LIMIT);
   const offset = (page - 1) * limit;
@@ -28,6 +30,7 @@ export async function GET(req: NextRequest) {
     .order("id", { ascending: true })
     .range(offset, offset + limit - 1);
   if (mediaType) query = query.eq("media_type", mediaType);
+  if (ownerId) query = query.eq("owner_id", ownerId);
   const { data: rows, error, count } = await query;
   if (error) return NextResponse.json({ error: "Public media lookup failed" }, { status: 502 });
   const ownerIds = Array.from(new Set((rows || []).map((row) => row.owner_id)));

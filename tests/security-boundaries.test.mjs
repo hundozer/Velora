@@ -199,7 +199,8 @@ test("member profile pages load through the authenticated visibility boundary", 
   assert.match(route, /\["EVERYONE", "MEMBERS_ONLY"\]\.includes\(data\.profile_visibility\)/);
   assert.match(route, /isAdminActor\(actorResult\.actor\)/);
   assert.match(route, /\.eq\("id", id\)/);
-  assert.match(page, /fetch\(`\/api\/profiles\/\$\{encodeURIComponent\(profileId\)\}`/);
+  assert.match(page, /fetch\(`\/api\/profiles\/\$\{encodeURIComponent\(id\)\}`/);
+  assert.match(page, /response\.status === 401.*\/api\/public\/profiles/s);
 });
 
 test("anonymous community discovery is explicit-public-only and excludes sensitive profile fields", async () => {
@@ -390,13 +391,13 @@ test("legacy admin route cannot mount browser authority or fabricated operationa
   assert.doesNotMatch(center, /\["\/admin\/communities"|\["\/admin\/events"|\["\/admin\/live"/);
 });
 
-test("legacy profile gallery fixtures and browser caches are development-only", async () => {
+test("canonical profile has no browser media stores or development fixtures", async () => {
   const profile = await read("src/app/profile/[id]/page.tsx");
-  assert.match(profile, /useState<UserPhotoAlbumItem\[\]>\(process\.env\.NODE_ENV === "development" \? \[/);
-  assert.match(profile, /useState<UserVideoItem\[\]>\(process\.env\.NODE_ENV === "development" \? \[/);
-  assert.match(profile, /useState<\{ id: string; title: string; category: string; description: string; date: string \}\[\]>\(process\.env\.NODE_ENV === "development" \? \[/);
-  assert.match(profile, /process\.env\.NODE_ENV === "development" && typeof window !== "undefined"/);
-  assert.doesNotMatch(profile, /videoUrl: row\.video_url \|\| "https:\/\/commondatastorage/);
+  assert.doesNotMatch(profile, /localStorage|NODE_ENV|mediaService|MOCK_|INITIAL_/);
+  assert.match(profile, /api\/public\/media\?ownerId=/);
+  assert.match(profile, /api\/public\/albums\?ownerId=/);
+  assert.match(profile, /api\/connections/);
+  assert.match(profile, /api\/blocks/);
 });
 
 test("settings uses durable media uploads and exposes no fake blocked users or push controls", async () => {
@@ -525,4 +526,17 @@ test("obsolete simulated media management and gated marketing claims are not mou
   const gate = await read("src/components/landing/BehindTheDoorLanding.tsx");
   assert.doesNotMatch(gate, /100%|invite-only|Encrypted 1-on-1|live topic chatrooms/i);
   await assert.rejects(read("src/components/media/MediaManager.tsx"));
+});
+
+test("blocking is atomic, relationship-ending, and durably audited", async () => {
+  const migration = await read("supabase/migrations/20260818_transactional_blocking.sql");
+  const blocks = await read("src/app/api/blocks/route.ts");
+  const connections = await read("src/app/api/connections/route.ts");
+  const profile = await read("src/app/api/profile/me/route.ts");
+  assert.match(migration, /create or replace function public\.intimo_block_profile/);
+  assert.match(migration, /delete from public\.connections/);
+  assert.match(migration, /follower_id = p_blocked_id and followed_id = p_blocker_id/);
+  assert.match(migration, /revoke all.*anon, authenticated/);
+  assert.match(blocks, /rpc\("intimo_block_profile"/);
+  for (const route of [blocks, connections, profile]) assert.match(route, /appendDurableAudit/);
 });
