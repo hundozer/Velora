@@ -276,3 +276,11 @@ test("legacy profile gallery fixtures and browser caches are development-only", 
   assert.match(profile, /process\.env\.NODE_ENV === "development" && typeof window !== "undefined"/);
   assert.doesNotMatch(profile, /videoUrl: row\.video_url \|\| "https:\/\/commondatastorage/);
 });
+
+test("settings uses durable media uploads and exposes no fake blocked users or push controls", async () => {
+  const settings = await read("src/app/settings/page.tsx");
+  assert.match(settings, /uploadFileToR2\(file, "avatars"/);
+  assert.match(settings, /uploadFileToR2\(file, "covers"/);
+  assert.doesNotMatch(settings, /FileReader|MOCK_SAFETY_SETTINGS|spammer_bot_99|unwanted_contact/);
+  assert.doesNotMatch(settings, /Mobile Push Notification Controls|Livestream Start Notifications/);
+});

@@ -7,15 +7,14 @@ import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { VerificationWizard } from "@/components/verification/VerificationWizard";
-import { MOCK_SAFETY_SETTINGS } from "@/lib/mockData";
 import { SUPPORTED_LANGUAGES } from "@/lib/i18n";
-import { UserSafetySettings, LanguageCode } from "@/types";
+import { LanguageCode } from "@/types";
 import { useAuth } from "@/context/AuthContext";
+import { requestParticipantDeclaration, uploadFileToR2 } from "@/lib/storage/clientUpload";
 import {
   Settings,
   Shield,
   EyeOff,
-  Bell,
   Lock,
   MessageSquare,
   Ban,
@@ -34,7 +33,6 @@ import {
 export default function SettingsPage() {
   const { user, profile, updateUserProfile, logout, logoutWithAuth0 } = useAuth();
   const [nickname, setNickname] = useState(profile?.displayName || user?.username || "");
-  const [safety, setSafety] = useState<UserSafetySettings>(MOCK_SAFETY_SETTINGS);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>("en");
   const [privacy, setPrivacy] = useState({
     profileVisibility: "MEMBERS_ONLY",
@@ -45,44 +43,50 @@ export default function SettingsPage() {
     showDistance: true,
   });
   const [sensitiveConsentGranted, setSensitiveConsentGranted] = useState(false);
-  const [blockedUsers, setBlockedUsers] = useState([
-    { id: "usr-blk-1", username: "spammer_bot_99", blockedAt: "Yesterday" },
-    { id: "usr-blk-2", username: "unwanted_contact", blockedAt: "3 days ago" },
-  ]);
   const [verificationWizardOpen, setVerificationWizardOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
+  const [mediaUploadPending, setMediaUploadPending] = useState(false);
+  const [settingsError, setSettingsError] = useState("");
 
   const avatarInputRef = React.useRef<HTMLInputElement>(null);
   const coverInputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0] && user && profile) {
       const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        const url = reader.result as string;
-        updateUserProfile({ ...user, avatarUrl: url }, { ...profile, avatarUrl: url });
-      };
-      reader.readAsDataURL(file);
+      try {
+        setMediaUploadPending(true);
+        setSettingsError("");
+        const declaration = await requestParticipantDeclaration();
+        const result = await uploadFileToR2(file, "avatars", undefined, declaration);
+        await updateUserProfile({ ...user, avatarUrl: result.publicUrl }, { ...profile, avatarUrl: result.publicUrl });
+      } catch (error) {
+        setSettingsError(error instanceof Error ? error.message : "Profile photo could not be uploaded");
+      } finally {
+        setMediaUploadPending(false);
+        e.target.value = "";
+      }
     }
   };
 
-  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0] && user && profile) {
       const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        const url = reader.result as string;
-        updateUserProfile(user, { ...profile, coverPhotoUrl: url });
-      };
-      reader.readAsDataURL(file);
+      try {
+        setMediaUploadPending(true);
+        setSettingsError("");
+        const declaration = await requestParticipantDeclaration();
+        const result = await uploadFileToR2(file, "covers", undefined, declaration);
+        await updateUserProfile(user, { ...profile, coverPhotoUrl: result.publicUrl });
+      } catch (error) {
+        setSettingsError(error instanceof Error ? error.message : "Cover photo could not be uploaded");
+      } finally {
+        setMediaUploadPending(false);
+        e.target.value = "";
+      }
     }
-  };
-
-  const handleUnblock = (id: string) => {
-    setBlockedUsers(blockedUsers.filter((u) => u.id !== id));
   };
 
   React.useEffect(() => {
@@ -200,6 +204,7 @@ export default function SettingsPage() {
           <CheckCircle2 className="w-4 h-4" /> Settings updated successfully!
         </div>
       )}
+      {settingsError && <div role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-xs text-red-300">{settingsError}</div>}
 
       {/* SECTION 0: PRIVATE IDENTITY, AVATAR & BANNER */}
       <Card variant="glass" className="p-6 space-y-6">
@@ -220,7 +225,7 @@ export default function SettingsPage() {
                 <img src={profile?.avatarUrl || user?.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                 <button
                   type="button"
-                  onClick={() => avatarInputRef.current?.click()}
+                  onClick={() => !mediaUploadPending && avatarInputRef.current?.click()}
                   className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
                   title="Upload New Avatar"
                 >
@@ -230,8 +235,8 @@ export default function SettingsPage() {
               <div>
                 <p className="text-xs font-bold text-white">Profile Picture / Avatar</p>
                 <p className="text-[10px] text-velora-textMuted mb-2">Upload a custom profile photo</p>
-                <Button variant="glass" size="sm" onClick={() => avatarInputRef.current?.click()} className="text-[11px] gap-1.5">
-                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> Upload New Avatar
+                <Button variant="glass" size="sm" disabled={mediaUploadPending} onClick={() => avatarInputRef.current?.click()} className="text-[11px] gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUploadPending ? "Uploading…" : "Upload New Avatar"}
                 </Button>
               </div>
             </div>
@@ -331,42 +336,6 @@ export default function SettingsPage() {
           <p className="text-xs font-bold">Explicit sensitive-data consent</p>
           <p className="text-[11px] text-velora-textMuted">Controls processing of sexual orientation and intimate preferences for your profile and discovery. Withdrawal may make these features unavailable; it does not replace a deletion request.</p>
           <Button variant="glass" size="sm" onClick={() => updateSensitiveConsent(!sensitiveConsentGranted)}>{sensitiveConsentGranted ? "Withdraw consent" : "Grant consent"}</Button>
-        </div>
-      </Card>
-
-      {/* SECTION 2: MOBILE PUSH NOTIFICATIONS */}
-      <Card variant="glass" className="p-6 space-y-6">
-        <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
-          <Bell className="w-4 h-4 text-velora-gold" />
-          Mobile Push Notification Controls
-        </h2>
-
-        <div className="space-y-4">
-          <label className="flex items-center justify-between p-3 glass-panel rounded-2xl cursor-pointer">
-            <div>
-              <span className="text-xs font-bold text-velora-textPrimary block">Direct Message Push Alerts</span>
-              <span className="text-[11px] text-velora-textMuted">Notify when a verified member sends a message</span>
-            </div>
-            <input
-              type="checkbox"
-              checked={safety.enablePushMessages ?? true}
-              onChange={(e) => setSafety({ ...safety, enablePushMessages: e.target.checked })}
-              className="w-4 h-4 accent-velora-gold"
-            />
-          </label>
-
-          <label className="flex items-center justify-between p-3 glass-panel rounded-2xl cursor-pointer">
-            <div>
-              <span className="text-xs font-bold text-velora-textPrimary block">Livestream Start Notifications</span>
-              <span className="text-[11px] text-velora-textMuted">Notify when creators you follow go live</span>
-            </div>
-            <input
-              type="checkbox"
-              checked={safety.enablePushLivestreams ?? true}
-              onChange={(e) => setSafety({ ...safety, enablePushLivestreams: e.target.checked })}
-              className="w-4 h-4 accent-velora-gold"
-            />
-          </label>
         </div>
       </Card>
 
