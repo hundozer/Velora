@@ -106,7 +106,7 @@ Remaining CRITICAL/HIGH technical work:
 2. Integrate a privacy-preserving stronger age-assurance provider and existing-account migration before explicit-content launch.
 3. Add malware/content scanning and a real video-processing worker/provider; videos remain non-approvable until `READY`.
 4. Implement scheduled retention/deletion/export completion workers and transactional/evidentiary operational checks.
-5. Replace remaining prompt-based user and system-flag admin actions; complete responsive/accessibility and six-language coverage.
+5. Complete responsive/accessibility and six-language coverage; privileged queue, user, and system-flag actions now use explicit inline decision forms.
 6. Run two-user plus moderator browser E2E tests against the staging database and repeat the authorization/red-team audit.
 
-Checkpoint readiness: **68/100 — NO-GO** for public explicit-adult launch. The branch is suitable for continued preview/staging validation, not production promotion.
+Checkpoint readiness: **70/100 — NO-GO** for public explicit-adult launch. The branch is suitable for continued preview/staging validation, not production promotion. See `FINAL_TECHNICAL_SELF_AUDIT.md` for the latest consolidated result.

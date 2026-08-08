@@ -17,7 +17,7 @@ Snapshot: 2026-08-08, after the first public-community implementation slice.
 | Search | Unified member search across people/media/dating/posts | Authenticated, block-aware, privacy-filtered deterministic query | Canonical content tables | N/A | PASS for MVP scope; relevance weighting intentionally absent |
 | Verification | Private evidence upload and progressive UI | Owner-submitted review plus audited MFA-admin evidence access/decision | Reviews/profile/private media | Durable verification queue and signed evidence access | PARTIAL — external stronger age assurance remains owner/legal work |
 | Privacy/settings | Settings UI | Server-owned privacy API | Profile privacy fields/consents | Privacy console | PASS for current settings; ongoing route audit |
-| Admin/God Mode | Operational consoles with explicit queue decisions | Server roles, account-active check, MFA, elevation, audit | Durable admin/audit tables | N/A | PASS for secure foundation; user/settings prompt UX still pending |
+| Admin/God Mode | Operational consoles with explicit queue, user, and system-flag decisions | Server roles, account-active check, MFA, elevation, audit | Durable admin/audit tables | N/A | PASS for secure MVP foundation; responsive/accessibility polish ongoing |
 | Monetization | Inaccessible | Disabled | Legacy compatibility fields only | Feature flag disabled | PASS |
 | Mock production activity | Removed from primary surfaces | No synthetic API results | Real rows only | Real metrics | PASS for audited surfaces; repository-wide second audit pending |
 

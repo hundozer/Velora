@@ -52,7 +52,7 @@ Technical self-audit updated: 2026-08-08. Source of truth: `INTIMO_MVP_COMPLIANC
 6. Add admin MFA, durable audit logging, critical-content restriction/evidence workflow and runtime integration tests.
 7. Complete DPIA and qualified Czech/EU legal review, including AVMS/DSA/GDPR/copyright and all six localized policies.
 
-Current technical readiness: **68/100 — NO-GO** for public explicit-adult launch. The free MVP constraint and core server authorization are enforced; remaining blockers include staged migration application, stronger age assurance, media scanning/video processing, privacy retention/deletion operations, production-like E2E testing, and legal approval.
+Current technical readiness: **70/100 — NO-GO** for public explicit-adult launch. The free MVP constraint and core server authorization are enforced; remaining blockers include staged migration application, stronger age assurance, media scanning/video processing, privacy retention/deletion operations, production-like E2E testing, localization, and legal approval. See `FINAL_TECHNICAL_SELF_AUDIT.md`.
 
 ## Required end-to-end journey self-audit
 

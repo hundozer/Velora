@@ -2,16 +2,12 @@
 
 import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
-import { EmailVerificationService } from "@/lib/auth/emailVerification";
 import { CheckCircle2, AlertTriangle, ArrowRight, ShieldCheck, Mail, RefreshCw } from "lucide-react";
 
 function VerifyEmailContent() {
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token");
   const { user, logoutWithAuth0 } = useAuth();
 
   const handleLogout = () => {
@@ -26,30 +22,20 @@ function VerifyEmailContent() {
   const [resendSuccess, setResendSuccess] = useState(false);
   const [waitingForPoll, setWaitingForPoll] = useState(false);
 
-  const [cookieActive, setCookieActive] = useState(false);
-
   useEffect(() => {
-    if (typeof document !== "undefined" && document.cookie.includes("intimo_user_data=")) {
-      setCookieActive(true);
+    if (user?.verificationStatus !== "UNVERIFIED") {
+      setLoading(false);
+      if (user) {
+        setSuccess(true);
+        setEmail(user.email);
+        setMessage("Email status confirmed by the identity provider.");
+      } else {
+        setSuccess(false);
+        setMessage("Sign in to check your email verification status.");
+      }
+      return;
     }
-  }, []);
-
-  useEffect(() => {
-    // Case 1: Checking explicit token verification link
-    if (token) {
-      const timer = setTimeout(() => {
-        const result = EmailVerificationService.verifyToken(token);
-        setSuccess(result.success);
-        setMessage(result.message);
-        if (result.email) setEmail(result.email);
-        setLoading(false);
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }
-
-    // Case 2: Waiting for email verification polling (Background sync)
-    if (!token && user && user.verificationStatus === "UNVERIFIED") {
+    if (user.verificationStatus === "UNVERIFIED") {
       setLoading(false);
       setWaitingForPoll(true);
       setEmail(user.email);
@@ -78,18 +64,7 @@ function VerifyEmailContent() {
 
       return () => clearInterval(pollInterval);
     }
-
-    // Case 3: Token missing, check if session is restoring
-    if (cookieActive && !user) {
-      setLoading(true);
-      return;
-    }
-
-    // Case 4: Token missing and no active user session
-    setLoading(false);
-    setSuccess(false);
-    setMessage("Verification token missing. Please check your email inbox for the confirmation link.");
-  }, [token, user, cookieActive]);
+  }, [user]);
 
   const handleResend = async () => {
     if (!email) return;

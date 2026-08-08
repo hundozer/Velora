@@ -60,12 +60,15 @@ test("admin route is guarded by server-derived database authority", async () => 
 
 test("browser identity cannot switch roles or fabricate a fallback login", async () => {
   const source = await read("src/context/AuthContext.tsx");
+  const verifyEmail = await read("src/app/verify-email/page.tsx");
   assert.match(source, /fetch\("\/api\/auth\/session"/);
   assert.doesNotMatch(source, /switchRole|impersonateUser|stopImpersonating/);
   assert.doesNotMatch(source, /fallbackUser|LEVEL_3_PROFILE_BIOMETRIC/);
   assert.doesNotMatch(source, /intimo_user_data/);
   assert.doesNotMatch(source, /dateOfBirth: "1998-05-15"/);
   assert.doesNotMatch(source, /setUser\(parsedUser\)/);
+  assert.doesNotMatch(verifyEmail, /EmailVerificationService|intimo_user_data|verifyToken/);
+  assert.match(verifyEmail, /api\/auth\/verify-status/);
 });
 
 test("profile updates are owner-derived and strip authority fields", async () => {
@@ -375,6 +378,13 @@ test("identity verification evidence is owner-submitted, private, and admin-audi
   assert.match(evidence, /requireAdminPermission\(req, "verification:view"\)/);
   assert.match(evidence, /VERIFICATION_EVIDENCE_VIEW/);
   assert.doesNotMatch(context, /impersonateUser|fallbackUser|intimo_original_admin_user/);
+});
+
+test("privileged admin decisions use explicit inline forms, not ambiguous browser prompts", async () => {
+  const consoleSource = await read("src/components/admin/AdminCommandCenter.tsx");
+  assert.doesNotMatch(consoleSource, /window\.prompt|\balert\(/);
+  assert.match(consoleSource, /Cancel without changes/);
+  assert.match(consoleSource, /Auditable reason/);
 });
 
 test("messaging entry points use the durable message screen, not a local chat store", async () => {
