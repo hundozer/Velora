@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Messaging unavailable" }, { status: 503 });
   if (!peerId) {
-    const { data: rows, error } = await supabase.from("direct_messages").select("id,conversation_id,sender_id,receiver_id,content,status,created_at").or(`sender_id.eq.${actor.actor.profileId},receiver_id.eq.${actor.actor.profileId}`).order("created_at", { ascending: false }).limit(500);
+    const { data: rows, error } = await supabase.from("direct_messages").select("id,conversation_id,sender_id,receiver_id,content,status,is_opened,created_at").or(`sender_id.eq.${actor.actor.profileId},receiver_id.eq.${actor.actor.profileId}`).order("created_at", { ascending: false }).limit(500);
     if (error) return NextResponse.json({ error: "Conversations lookup failed" }, { status: 502 });
     const latest = new Map<string, any>();
     for (const row of rows || []) if (!latest.has(row.conversation_id)) latest.set(row.conversation_id, row);
@@ -38,7 +38,8 @@ export async function GET(req: NextRequest) {
       const id = row.sender_id === actor.actor.profileId ? row.receiver_id : row.sender_id;
       const profile = byId.get(id);
       if (!profile) return [];
-      return [{ id: row.conversation_id, participant: { id: profile.id, userId: profile.id, displayName: profile.display_name, avatarUrl: profile.avatar_url || "", location: [profile.city, profile.country].filter(Boolean).join(", "), verified: profile.verification_status === "VERIFIED", isOnline: false }, lastMessage: { id: row.id, conversationId: row.conversation_id, senderId: row.sender_id, senderName: row.sender_id === actor.actor.profileId ? "You" : profile.display_name, senderAvatar: profile.avatar_url || "", content: row.content, status: row.status, createdAt: row.created_at }, updatedAt: row.created_at, unreadCount: 0 }];
+      const unreadCount = (rows || []).filter((message) => message.conversation_id === row.conversation_id && message.receiver_id === actor.actor.profileId && message.is_opened === false).length;
+      return [{ id: row.conversation_id, participant: { id: profile.id, userId: profile.id, displayName: profile.display_name, avatarUrl: profile.avatar_url || "", location: [profile.city,profile.country].filter(Boolean).join(", "), verified: profile.verification_status === "VERIFIED", isOnline: false }, lastMessage: { id: row.id, conversationId: row.conversation_id, senderId: row.sender_id, senderName: row.sender_id === actor.actor.profileId ? "You" : profile.display_name, senderAvatar: profile.avatar_url || "", content: row.content, status: row.status, createdAt: row.created_at }, updatedAt: row.created_at, unreadCount }];
     });
     return NextResponse.json({ conversations }, { headers: { "Cache-Control": "private, no-store" } });
   }
@@ -46,6 +47,7 @@ export async function GET(req: NextRequest) {
   if (await blocked(supabase, actor.actor.profileId, peerId)) return NextResponse.json({ error: "Conversation unavailable" }, { status: 403 });
   const { data, error } = await supabase.from("direct_messages").select("id,conversation_id,sender_id,receiver_id,content,media_url,attachment_type,is_disappearing,disappear_timer_sec,is_opened,status,created_at").eq("conversation_id", conversationId(actor.actor.profileId, peerId)).order("created_at", { ascending: true }).limit(500);
   if (error) return NextResponse.json({ error: "Messages lookup failed" }, { status: 502 });
+  await supabase.from("direct_messages").update({ is_opened: true, status: "READ" }).eq("conversation_id", conversationId(actor.actor.profileId, peerId)).eq("receiver_id", actor.actor.profileId).eq("is_opened", false);
   return NextResponse.json({ messages: data || [] }, { headers: { "Cache-Control": "private, no-store" } });
 }
 
@@ -71,6 +73,7 @@ export async function POST(req: NextRequest) {
   const row = { conversation_id: conversationId(actor.actor.profileId, receiverId), sender_id: actor.actor.profileId, receiver_id: receiverId, sender_name: sender.display_name, sender_avatar: sender.avatar_url, content, media_url: null, attachment_type: null, is_disappearing: false, is_opened: false, status: "SENT", is_locked: false, unlock_price: null, is_unlocked: true };
   const { data, error } = await supabase.from("direct_messages").insert(row).select("id,conversation_id,sender_id,receiver_id,content,status,created_at").single();
   if (error || !data) return NextResponse.json({ error: "Message could not be sent" }, { status: 502 });
+  await supabase.from("notifications").insert({ user_id: receiverId, type: "NEW_MESSAGE", title: "New message", message: `${sender.display_name} sent you a message.`, actor_name: sender.display_name, actor_avatar: sender.avatar_url, target_link: `/messages?peerId=${actor.actor.profileId}`, is_read: false });
   auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "MESSAGE_SEND", resourceId: data.id, resourceType: "MESSAGE", status: "SUCCESS" });
   return NextResponse.json({ message: data }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
 }

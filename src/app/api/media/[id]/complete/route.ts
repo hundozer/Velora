@@ -26,6 +26,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
     const { error: updateError } = await supabase.from("media_objects").update({ upload_status: "AVAILABLE", updated_at: new Date().toISOString() }).eq("id", media.id).eq("owner_id", actor.actor.profileId).eq("upload_status", "PENDING");
     if (updateError) return NextResponse.json({ error: "Upload could not be finalized" }, { status: 502 });
+    await supabase.from("media_objects").update({ processing_status: media.mime_type.startsWith("video/") ? "PROCESSING" : "READY", moderation_status: "PENDING_REVIEW" }).eq("id", media.id).eq("owner_id", actor.actor.profileId);
     await supabase.from("audit_events").insert({ actor_profile_id: actor.actor.profileId, actor_auth0_sub: actor.actor.auth0Sub, action: "MEDIA_UPLOAD_COMPLETED", resource_type: "MEDIA", resource_id: media.id, outcome: "SUCCESS", metadata: { mimeType: media.mime_type, byteSize: media.byte_size } });
     return NextResponse.json({ success: true });
   } catch {

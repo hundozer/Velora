@@ -63,6 +63,9 @@ test("browser role switching cannot grant ADMIN", async () => {
   assert.match(source, /fetch\("\/api\/auth\/session"/);
   assert.match(source, /if \(newRole === "ADMIN"\)/);
   assert.match(source, /cannot be selected in the browser/);
+  assert.doesNotMatch(source, /intimo_user_data/);
+  assert.doesNotMatch(source, /dateOfBirth: "1998-05-15"/);
+  assert.doesNotMatch(source, /setUser\(parsedUser\)/);
 });
 
 test("profile updates are owner-derived and strip authority fields", async () => {
@@ -300,4 +303,44 @@ test("settings uses durable media uploads and exposes no fake blocked users or p
   assert.match(settings, /uploadFileToR2\(file, "covers"/);
   assert.doesNotMatch(settings, /FileReader|MOCK_SAFETY_SETTINGS|spammer_bot_99|unwanted_contact/);
   assert.doesNotMatch(settings, /Mobile Push Notification Controls|Livestream Start Notifications/);
+});
+
+test("client identity is restored only from the verified server session", async () => {
+  const context = await read("src/context/AuthContext.tsx");
+  assert.match(context, /fetch\("\/api\/auth\/session"/);
+  assert.doesNotMatch(context, /intimo_user_data/);
+  assert.doesNotMatch(context, /setUser\(parsedUser\)/);
+  assert.doesNotMatch(context, /dateOfBirth: "1998-05-15"/);
+});
+
+test("public media requires signed adult declaration and explicit moderation approval", async () => {
+  const declaration = await read("src/lib/auth/ageDeclaration.ts");
+  const publicFile = await read("src/app/api/public/media/[id]/route.ts");
+  const memberFile = await read("src/app/api/media/[id]/route.ts");
+  const migration = await read("supabase/migrations/20260814_public_community_content.sql");
+  assert.match(declaration, /createHmac\("sha256"/);
+  assert.match(declaration, /timingSafeEqual/);
+  assert.match(publicFile, /verifyAgeDeclarationValue/);
+  assert.match(publicFile, /\.eq\("visibility", "PUBLIC"\)/);
+  assert.match(publicFile, /\.eq\("moderation_status", "APPROVED"\)/);
+  assert.match(memberFile, /moderationStatus !== "APPROVED"/);
+  assert.match(migration, /PENDING_REVIEW/);
+  assert.match(migration, /revoke all on table public\.content_posts/);
+});
+
+test("notifications, saves, comments, and unread messages are durable and server-owned", async () => {
+  const notifications = await read("src/app/api/notifications/route.ts");
+  const notificationPage = await read("src/app/notifications/page.tsx");
+  const messages = await read("src/app/api/messages/route.ts");
+  const saves = await read("src/app/api/saved-items/route.ts");
+  const comments = await read("src/app/api/comments/route.ts");
+  assert.match(notifications, /resolveServerActor\(req\)/);
+  assert.match(notifications, /\.eq\("user_id", auth\.actor\.profileId\)/);
+  assert.doesNotMatch(notificationPage, /localStorage|notificationStore/);
+  assert.match(messages, /unreadCount =/);
+  assert.match(messages, /type: "NEW_MESSAGE"/);
+  assert.match(saves, /resolveContentTarget/);
+  assert.match(saves, /profile_id: actor\.actor\.profileId/);
+  assert.match(comments, /resolveContentTarget/);
+  assert.match(comments, /author_id: actor\.actor\.profileId/);
 });

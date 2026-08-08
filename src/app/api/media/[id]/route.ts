@@ -16,9 +16,18 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!rate.allowed) return NextResponse.json({ error: "Media access rate limit reached" }, { status: 429 });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Media service unavailable" }, { status: 503 });
-  const { data: media, error } = await supabase.from("media_objects").select("id,owner_id,object_key,visibility,upload_status").eq("id", params.id).maybeSingle();
-  if (error || !media || media.upload_status !== "AVAILABLE") return NextResponse.json({ error: "Media not found" }, { status: 404 });
+  const modern = await supabase.from("media_objects").select("id,owner_id,object_key,visibility,upload_status,moderation_status,processing_status").eq("id", params.id).maybeSingle();
+  const legacy = modern.error
+    ? await supabase.from("media_objects").select("id,owner_id,object_key,visibility,upload_status").eq("id", params.id).maybeSingle()
+    : null;
+  const media = modern.data || legacy?.data;
+  if (!media || media.upload_status !== "AVAILABLE") return NextResponse.json({ error: "Media not found" }, { status: 404 });
   const isOwner = media.owner_id === actor.actor.profileId;
+  const moderationStatus = "moderation_status" in media ? media.moderation_status : null;
+  const processingStatus = "processing_status" in media ? media.processing_status : null;
+  if (moderationStatus === "REMOVED" || (!isOwner && (moderationStatus !== "APPROVED" || processingStatus !== "READY"))) {
+    return NextResponse.json({ error: "Media not found" }, { status: 404 });
+  }
   const { data: block } = isOwner ? { data: null } : await supabase.from("user_blocks").select("id").or(`and(blocker_id.eq.${actor.actor.profileId},blocked_profile_id.eq.${media.owner_id}),and(blocker_id.eq.${media.owner_id},blocked_profile_id.eq.${actor.actor.profileId})`).limit(1).maybeSingle();
   if (block) return NextResponse.json({ error: "Media not found" }, { status: 404 });
   let allowed = isOwner || media.visibility === "PUBLIC" || media.visibility === "MEMBERS_ONLY";

@@ -40,6 +40,8 @@ export async function POST(req: NextRequest) {
   if (block) return NextResponse.json({ error: "Connection unavailable" }, { status: 403 });
   const { error } = await supabase.from("connections").upsert({ follower_id: actor.actor.profileId, followed_id: targetProfileId, connection_type: type }, { onConflict: "follower_id,followed_id,connection_type" });
   if (error) return NextResponse.json({ error: "Connection failed" }, { status: 502 });
+  const { data: sourceProfile } = await supabase.from("profiles").select("display_name,avatar_url").eq("id", actor.actor.profileId).maybeSingle();
+  if (sourceProfile) await supabase.from("notifications").insert({ user_id: targetProfileId, type: type === "follow" ? "NEW_FOLLOWER" : "FAVORITED", title: type === "follow" ? "New follower" : "Profile saved", message: `${sourceProfile.display_name} ${type === "follow" ? "followed" : "saved"} your profile.`, actor_name: sourceProfile.display_name, actor_avatar: sourceProfile.avatar_url, target_link: `/profile/${actor.actor.profileId}`, is_read: false });
   auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: type === "follow" ? "PROFILE_FOLLOW" : "PROFILE_FAVORITE", resourceId: targetProfileId, resourceType: "PROFILE", status: "SUCCESS" });
   return NextResponse.json({ connected: true, type }, { status: 201 });
 }

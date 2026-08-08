@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation, LANGUAGES, SupportedLanguage } from "@/context/LanguageContext";
 import { NotificationDrawer } from "@/components/notifications/NotificationDrawer";
-import { notificationStore } from "@/lib/notifications/notificationStore";
 import { Badge } from "@/components/ui/Badge";
 import {
   Compass,
@@ -29,15 +28,12 @@ export const Navbar: React.FC = () => {
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(notificationStore.getUnreadCount());
+  const [unreadCount, setUnreadCount] = useState(0);
 
   React.useEffect(() => {
-    setUnreadCount(notificationStore.getUnreadCount());
-    const unsubscribe = notificationStore.subscribe(() => {
-      setUnreadCount(notificationStore.getUnreadCount());
-    });
-    return unsubscribe;
-  }, []);
+    if (!user) { setUnreadCount(0); return; }
+    fetch("/api/notifications", { cache: "no-store", credentials: "same-origin" }).then((response) => response.ok ? response.json() : null).then((payload) => { if (payload) setUnreadCount(payload.unreadCount || 0); }).catch(() => {});
+  }, [user]);
 
   return (
     <header className="sticky top-0 z-40 w-full glass-panel border-b border-white/10 bg-velora-bg/85 backdrop-blur-xl">
@@ -83,6 +79,13 @@ export const Navbar: React.FC = () => {
             >
               <Heart className="w-4 h-4 text-rose-400 fill-rose-400/20" />
               Dating
+            </Link>
+
+            <Link href="/photos" className={`hidden xl:flex px-3 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all items-center gap-2 ${pathname === "/photos" ? "bg-white/10 text-velora-gold border border-velora-gold/30" : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"}`}>
+              <ImageIcon className="w-4 h-4" /> Photos
+            </Link>
+            <Link href="/videos" className={`hidden xl:flex px-3 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all items-center gap-2 ${pathname === "/videos" ? "bg-white/10 text-velora-gold border border-velora-gold/30" : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"}`}>
+              <Video className="w-4 h-4" /> Videos
             </Link>
 
             <Link
@@ -133,6 +136,7 @@ export const Navbar: React.FC = () => {
               <NotificationDrawer
                 isOpen={isNotificationsOpen}
                 onClose={() => setIsNotificationsOpen(false)}
+                onUnreadChange={setUnreadCount}
               />
             </div>
           )}

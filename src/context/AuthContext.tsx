@@ -20,7 +20,7 @@ interface AuthContextType {
   profile: Profile | null;
   role: UserRole;
   isAgeVerified: boolean;
-  confirmAge: () => void;
+  confirmAge: () => Promise<void>;
   switchRole: (newRole: UserRole) => void;
   login: (email: string, role?: UserRole) => Promise<{ success: boolean; message?: string }>;
   loginWithAuth0: (screenHint?: string) => void;
@@ -40,116 +40,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [role, setRole] = useState<UserRole>("MEMBER");
   const [isAgeVerified, setIsAgeVerified] = useState<boolean>(false);
 
-  // ── Session Restoration ────────────────────────────────
+  // Age declaration is only a low-assurance visitor gate. Identity and roles
+  // are restored exclusively by the verified server-session effect below.
   useEffect(() => {
     const savedAgeCheck = localStorage.getItem("intimo_age_verified") || localStorage.getItem("velora_age_verified");
-    if (savedAgeCheck === "true") {
-      setIsAgeVerified(true);
-    }
-
-    // Restore from localStorage cache first (fast), then validate with Supabase
-    try {
-      const savedUserStr = localStorage.getItem("intimo_active_user");
-      const savedProfileStr = localStorage.getItem("intimo_active_profile");
-      if (savedUserStr && savedProfileStr) {
-        const parsedUser = JSON.parse(savedUserStr);
-        const parsedProfile = JSON.parse(savedProfileStr);
-        setUser(parsedUser);
-        setProfile(parsedProfile);
-        if (parsedUser.role) {
-          setRole(parsedUser.role);
-        }
-
-        // Background sync: fetch latest profile from Supabase
-        if (parsedUser.email) {
-          getProfileByEmail(parsedUser.email)
-            .then(({ data }) => {
-              if (data) {
-                const freshUser = dbRowToUser(data);
-                const freshProfile = dbRowToProfile(data);
-                setUser(freshUser);
-                setProfile(freshProfile);
-                if (freshUser.role) setRole(freshUser.role as UserRole);
-                localStorage.setItem("intimo_active_user", JSON.stringify(freshUser));
-                localStorage.setItem("intimo_active_profile", JSON.stringify(freshProfile));
-              }
-            })
-            .catch((err) => console.error("Background profile sync error:", err));
-        }
-      } else if (typeof document !== "undefined" && document.cookie.includes("intimo_user_data=")) {
-        const match = document.cookie.match(/intimo_user_data=([^;]+)/);
-        if (match) {
-          const cookieUserData = JSON.parse(decodeURIComponent(match[1]));
-
-          // Try to load from Supabase first
-          getProfileByEmail(cookieUserData.email)
-            .then(({ data }) => {
-              if (data) {
-                const freshUser = dbRowToUser(data);
-                const freshProfile = dbRowToProfile(data);
-                setUser(freshUser);
-                setProfile(freshProfile);
-                localStorage.setItem("intimo_active_user", JSON.stringify(freshUser));
-                localStorage.setItem("intimo_active_profile", JSON.stringify(freshProfile));
-              } else {
-              // Fallback: create from cookie data
-              const savedNickname = localStorage.getItem(`intimo_nickname_${cookieUserData.email.toLowerCase()}`);
-              const effectiveName = savedNickname || cookieUserData.username || cookieUserData.email.split("@")[0];
-
-              const cookieUser: User = {
-                id: cookieUserData.id,
-                email: cookieUserData.email,
-                username: effectiveName,
-                role: "MEMBER",
-                memberTier: "FREE",
-                verificationStatus: cookieUserData.email_verified ? "PENDING" : "UNVERIFIED",
-                verificationLevel: "LEVEL_1_EMAIL",
-                createdAt: new Date().toISOString().split("T")[0],
-                avatarUrl: cookieUserData.avatarUrl,
-              };
-              const cookieProfile: Profile = {
-                id: `prof_${cookieUserData.id}`,
-                userId: cookieUserData.id,
-                displayName: effectiveName,
-                dateOfBirth: "1998-05-15",
-                age: 26,
-                gender: "FEMALE",
-                sexualOrientation: "BISEXUAL",
-                country: "",
-                city: "",
-                location: "",
-                languages: ["English"],
-                headline: "Intimo Member",
-                bio: "Verified Intimo Member",
-                interests: ["Private Connections"],
-                lifestyleTags: ["Discreet", "Luxury Lifestyle"],
-                hobbies: [],
-                relationshipStatus: "SINGLE",
-                lookingFor: ["Connections"],
-                isCoupleProfile: false,
-                publicProfileVisibility: true,
-                photoVisibilityDefault: "PUBLIC",
-                locationPrecision: "CITY",
-                showOnlineStatus: true,
-                showDistance: true,
-                allowDirectMessages: true,
-                requireVerificationToMessage: false,
-                verified: true,
-                isOnline: true,
-                compatibilityScore: 95,
-                avatarUrl: cookieUserData.avatarUrl,
-                coverPhotoUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
-                galleryImages: [],
-              };
-              setUser(cookieUser);
-              setProfile(cookieProfile);
-            }
-          }).catch((err) => console.error("Cookie profile sync error:", err));
-        }
-      }
-    } catch (err) {
-      console.error("Failed to restore session state:", err);
-    }
+    setIsAgeVerified(savedAgeCheck === "true");
   }, []);
 
   // Reconcile all cached display state against the verified server session.
@@ -185,8 +80,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem("intimo_active_profile", JSON.stringify(freshProfile));
       })
       .catch(() => {
-        // Preserve the current display while the server is unavailable, but never
-        // use it for API or admin authorization.
+        setUser(null);
+        setProfile(null);
+        setRole("MEMBER");
       });
     return () => { cancelled = true; };
   }, []);
@@ -206,7 +102,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user, pathname, router]);
 
   // ── Age Verification ───────────────────────────────────
-  const confirmAge = () => {
+  const confirmAge = async () => {
+    const response = await fetch("/api/access/age-declaration", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adult: true }),
+    });
+    if (!response.ok) throw new Error("Age declaration could not be recorded");
     setIsAgeVerified(true);
     localStorage.setItem("intimo_age_verified", "true");
   };

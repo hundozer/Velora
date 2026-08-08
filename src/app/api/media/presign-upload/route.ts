@@ -48,6 +48,16 @@ export async function POST(req: NextRequest) {
     const mediaType = fileType.startsWith("video/") ? "VIDEO" : "IMAGE";
     const { data: media, error: mediaError } = await supabase.from("media_objects").insert({ owner_id: actor.actor.profileId, object_key: presigned.objectKey, media_type: mediaType, mime_type: fileType, byte_size: fileSize, visibility, upload_status: "PENDING" }).select("id").single();
     if (mediaError || !media) return NextResponse.json({ error: "Media metadata could not be created" }, { status: 502 });
+    // Additive metadata from migration 20260814. Keeping this separate preserves
+    // upload compatibility while a staging environment is between migrations.
+    await supabase.from("media_objects").update({
+      processing_status: mediaType === "VIDEO" ? "UPLOADING" : "READY",
+      moderation_status: "PENDING_REVIEW",
+      title: typeof body.title === "string" ? body.title.trim().slice(0, 160) || null : null,
+      description: typeof body.description === "string" ? body.description.trim().slice(0, 4_000) || null : null,
+      category: typeof body.category === "string" ? body.category.trim().slice(0, 100) || null : null,
+      tags: Array.isArray(body.tags) ? body.tags.filter((tag: unknown): tag is string => typeof tag === "string").map((tag: string) => tag.trim().slice(0, 50)).filter(Boolean).slice(0, 20) : [],
+    }).eq("id", media.id).eq("owner_id", actor.actor.profileId);
     const { error: declarationError } = await supabase.from("content_participant_declarations").insert({ media_id: media.id, uploader_id: actor.actor.profileId, contains_other_identifiable_participants: declaration.containsOtherIdentifiableParticipants, all_participants_adults: true, recording_consented: true, publication_consented: true, declaration_version: "participant-v1-draft" });
     if (declarationError) {
       await supabase.from("media_objects").delete().eq("id", media.id).eq("owner_id", actor.actor.profileId);

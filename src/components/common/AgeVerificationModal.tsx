@@ -8,6 +8,8 @@ import { useAuth } from "@/context/AuthContext";
 
 export const AgeVerificationModal: React.FC = () => {
   const { isAgeVerified, confirmAge } = useAuth();
+  const [error, setError] = React.useState("");
+  const [submitting, setSubmitting] = React.useState(false);
 
   if (isAgeVerified) return null;
 
@@ -48,9 +50,15 @@ export const AgeVerificationModal: React.FC = () => {
             variant="gold"
             size="lg"
             className="w-full font-bold uppercase tracking-wider"
-            onClick={confirmAge}
+            disabled={submitting}
+            onClick={async () => {
+              setSubmitting(true);
+              setError("");
+              try { await confirmAge(); } catch { setError("We could not record your declaration. Please try again."); }
+              finally { setSubmitting(false); }
+            }}
           >
-            I am 18+ • Enter Intimo
+            {submitting ? "Recording declaration…" : "I am 18+ • Enter Intimo"}
           </Button>
           <a
             href="https://google.com"
@@ -59,6 +67,7 @@ export const AgeVerificationModal: React.FC = () => {
             Exit Site
           </a>
         </div>
+        {error && <p role="alert" className="text-xs text-red-400">{error}</p>}
       </div>
     </Modal>
   );
