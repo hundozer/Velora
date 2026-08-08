@@ -21,7 +21,7 @@ Technical self-audit updated: 2026-08-08. Source of truth: `INTIMO_MVP_COMPLIANC
 | CR-COOKIE-001/002 consent | PARTIAL | necessary/analytics/marketing choices; optional scripts absent | Preferences center/reopen, localization and policy approval incomplete |
 | CR-DSA-001 reporting | PARTIAL | Structured report API/UI on profiles, messages and dating ads | Approved public media and community post/comment affordances still need complete authenticated coverage |
 | CR-DSA-002 notice/action | PARTIAL | moderation cases and server-admin console | Notices, statement-of-reasons delivery and regulator workflow incomplete |
-| CR-DSA-003 immutable history | PARTIAL | append-only `moderation_events` migration | Case/event write is not transactional; migration un-applied |
+| CR-DSA-003 immutable history | PASS (technical) | Report/case-history and appeal/case-transition/history writes use single transactional database functions revoked from browser roles | Staged migration and runtime validation remain |
 | CR-DSA-004 appeals | PARTIAL | Affected-user decision history and one-time appeal UI/API | Decision notice delivery and reviewer separation require operational validation |
 | CR-SAFETY-001 participant declarations | PASS (technical) | Explicit per-upload two-step declaration, server validation, immutable declaration row | Operational review and policy wording still require launch verification |
 | CR-SAFETY-002 critical escalation | PARTIAL | critical categories and escalated queue | Automatic provisional restriction and incident runbook execution not verified |
@@ -32,7 +32,7 @@ Technical self-audit updated: 2026-08-08. Source of truth: `INTIMO_MVP_COMPLIANC
 | CR-MSG-003 attachments | PASS (disabled) | No attachment control exposed in the durable messaging path | Keep unavailable until private scanning/authorization/retention is implemented |
 | CR-SEC-001/002 authorization/security | PARTIAL | verified Auth0 session only, active-account gate, allowlists, server actor, rate/size/type limits; client role/impersonation/fallback login removed | External configuration and real-database authorization validation remain |
 | Admin security | PARTIAL | six least-privilege roles, granular server permissions, production MFA and recent-auth checks | Auth0 MFA claims and staged migration require runtime verification; role changes remain configuration-only |
-| Audit logging | PARTIAL | immutable moderation schema and durable admin-action schema | Multi-write operations need database transactions; retention jobs and production validation incomplete |
+| Audit logging | PARTIAL | Immutable moderation/admin schemas, transactional report/appeal events, and durable retention execution evidence | General security logger still needs durable SIEM delivery and production validation |
 | CR-AVMS-001 video-platform duties | LEGAL REVIEW | live/events disabled; `LEGAL_REVIEW_VIDEO_PLATFORM.md` | Counsel determination required before enabling video-sharing/live features |
 | CR-COPY-001 copyright workflow | PARTIAL | notice API and case storage | Counter-notice UI, claimant notices, repeat-infringer process and legal review incomplete |
 | Accessibility | PARTIAL | semantic components and lint | Automated axe plus keyboard/screen-reader/manual review absent |

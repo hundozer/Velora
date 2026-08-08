@@ -258,8 +258,20 @@ test("reports use structured categories and immediately escalate critical harms"
   assert.match(reports, /NON_CONSENSUAL_INTIMATE_CONTENT/);
   assert.match(reports, /EXPLOITATION_TRAFFICKING/);
   assert.match(reports, /priority === "CRITICAL" \? "ESCALATED"/);
+  assert.match(reports, /rpc\("intimo_create_report"/);
   assert.match(modal, /fetch\("\/api\/reports"/);
   assert.doesNotMatch(modal, /userStore\.submitReport/);
+});
+
+test("report and appeal case transitions are transactional and unavailable to browser roles", async () => {
+  const migration = await read("supabase/migrations/20260816_transactional_safety_actions.sql");
+  const appeal = await read("src/app/api/reports/[id]/appeal/route.ts");
+  assert.match(migration, /create or replace function public\.intimo_create_report/);
+  assert.match(migration, /insert into public\.moderation_events/);
+  assert.match(migration, /for update/);
+  assert.match(migration, /create unique index.*moderation_appeals_case_appellant/i);
+  assert.match(migration, /revoke all on function public\.intimo_create_report[\s\S]*from public,anon,authenticated/i);
+  assert.match(appeal, /rpc\("intimo_create_appeal"/);
 });
 
 test("follow and favorite operations are server-owned and block-aware", async () => {

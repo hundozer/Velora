@@ -16,9 +16,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!supabase) return NextResponse.json({ error: "Appeal service unavailable" }, { status: 503 });
   const { data: moderationCase } = await supabase.from("moderation_cases").select("id,reported_user_id,status,appeal_status,assigned_moderator").eq("id", params.id).eq("reported_user_id", actor.actor.profileId).maybeSingle();
   if (!moderationCase || !["RESOLVED", "REJECTED"].includes(moderationCase.status) || moderationCase.appeal_status !== "NONE") return NextResponse.json({ error: "This decision is not eligible for appeal" }, { status: 409 });
-  const { data, error } = await supabase.from("moderation_appeals").insert({ case_id: moderationCase.id, appellant_id: actor.actor.profileId, reason, status: "OPEN" }).select("id,status,created_at").single();
+  const { data, error } = await supabase.rpc("intimo_create_appeal", { p_case_id: moderationCase.id, p_appellant_id: actor.actor.profileId, p_reason: reason });
   if (error || !data) return NextResponse.json({ error: "Appeal could not be submitted" }, { status: 502 });
-  await supabase.from("moderation_cases").update({ status: "APPEALED", appeal_status: "OPEN", updated_at: new Date().toISOString() }).eq("id", moderationCase.id);
   auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "MODERATION_APPEAL_CREATE", resourceId: moderationCase.id, resourceType: "MODERATION_CASE", status: "SUCCESS" });
   return NextResponse.json({ appeal: data }, { status: 201 });
 }

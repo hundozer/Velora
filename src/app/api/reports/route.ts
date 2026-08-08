@@ -39,10 +39,8 @@ export async function POST(req: NextRequest) {
   const status = priority === "CRITICAL" ? "ESCALATED" : "OPEN";
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Reporting service unavailable" }, { status: 503 });
-  const { data, error } = await supabase.from("moderation_cases").insert({ reporter_id: actor.actor.profileId, reported_user_id: reportedUserId, content_type: contentType, content_id: contentId, reason, description, priority, status }).select("id,status,priority,created_at").single();
+  const { data, error } = await supabase.rpc("intimo_create_report", { p_reporter_id: actor.actor.profileId, p_reported_user_id: reportedUserId, p_content_type: contentType, p_content_id: contentId, p_reason: reason, p_description: description, p_priority: priority, p_status: status });
   if (error || !data) return NextResponse.json({ error: "Report submission failed" }, { status: 502 });
-  const { error: eventError } = await supabase.from("moderation_events").insert({ case_id: data.id, actor_profile_id: actor.actor.profileId, action: priority === "CRITICAL" ? "CRITICAL_REPORT_ESCALATED" : "REPORT_CREATED", from_status: null, to_status: status, reason });
-  if (eventError) return NextResponse.json({ error: "Report history could not be recorded" }, { status: 502 });
   auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "REPORT_CREATE", resourceId: data.id, resourceType: "MODERATION_CASE", status: "SUCCESS", details: { contentType, reason, priority } });
   return NextResponse.json({ report: data }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
 }
