@@ -262,6 +262,16 @@ test("free MVP centrally disables and server-blocks monetization routes", async 
   assert.doesNotMatch(navbar, /href="\/(membership|events|live|creator-studio|referrals)"/);
 });
 
+test("every unfinished mock community route remains centrally unreachable", async () => {
+  const features = await read("src/lib/features.ts");
+  const middleware = await read("src/middleware.ts");
+  for (const route of ["creator-studio", "creators", "communities", "events", "live", "referrals"]) {
+    assert.match(features, new RegExp(`"/${route}"`));
+  }
+  assert.match(middleware, /if \(isMvpSafetyDisabledRoute\(pathname\)\)/);
+  assert.match(middleware, /NextResponse\.redirect\(new URL\("\/discovery", request\.url\), 307\)/);
+});
+
 test("active dating ads cannot advertise commercial sexual services or require VIP", async () => {
   const createPage = await read("src/app/dating/create/page.tsx");
   const browsePage = await read("src/app/dating/page.tsx");
@@ -416,6 +426,17 @@ test("client identity is restored only from the verified server session", async 
   assert.doesNotMatch(context, /dateOfBirth: "1998-05-15"/);
 });
 
+test("Auth0 email verification synchronizes only to canonical durable profile state", async () => {
+  const route = await read("src/app/api/auth/verify-status/route.ts");
+  assert.match(route, /getVerifiedIdentity\(req\)/);
+  assert.match(route, /managementRequest/);
+  assert.match(route, /from\("profiles"\)/);
+  assert.match(route, /eq\("auth_id", identity\.sub\)/);
+  assert.match(route, /EMAIL_VERIFICATION_SYNCHRONIZED/);
+  assert.match(route, /appendDurableAudit/);
+  assert.doesNotMatch(route, /UserSynchronizationService|userStore/);
+});
+
 test("public media requires signed adult declaration and explicit moderation approval", async () => {
   const declaration = await read("src/lib/auth/ageDeclaration.ts");
   const publicFile = await read("src/app/api/public/media/[id]/route.ts");
@@ -439,6 +460,9 @@ test("notifications, saves, comments, and unread messages are durable and server
   const comments = await read("src/app/api/comments/route.ts");
   assert.match(notifications, /resolveServerActor\(req\)/);
   assert.match(notifications, /\.eq\("user_id", auth\.actor\.profileId\)/);
+  assert.match(notifications, /safeTargetLink/);
+  assert.match(notifications, /appendDurableAudit/);
+  assert.match(notifications, /NOTIFICATIONS_DELETE_ALL/);
   assert.doesNotMatch(notificationPage, /localStorage|notificationStore/);
   assert.match(messages, /unreadCount =/);
   assert.match(messages, /type: "NEW_MESSAGE"/);
@@ -514,6 +538,10 @@ test("messaging entry points use the durable message screen, not a local chat st
   assert.match(messages, /require_verification_to_message/);
   assert.match(messages, /Recipient accepts messages from verified members only/);
   assert.match(messages, /appendDurableAudit/);
+  assert.match(messages, /limit \+ 1/);
+  assert.match(messages, /nextCursor/);
+  assert.match(messages, /MESSAGES_READ/);
+  assert.match(chat, /Load older messages/);
 });
 
 test("albums use canonical media objects with owner, moderation, public privacy, and admin parity", async () => {

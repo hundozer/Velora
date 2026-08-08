@@ -23,7 +23,8 @@ export async function GET(req: NextRequest) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
-  const peerId = new URL(req.url).searchParams.get("peerId") || "";
+  const url = new URL(req.url);
+  const peerId = url.searchParams.get("peerId") || "";
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Messaging unavailable" }, { status: 503 });
   if (!peerId) {
@@ -46,10 +47,22 @@ export async function GET(req: NextRequest) {
   }
   if (!UUID.test(peerId) || peerId === actor.actor.profileId) return NextResponse.json({ error: "Invalid conversation participant" }, { status: 400 });
   if (await blocked(supabase, actor.actor.profileId, peerId)) return NextResponse.json({ error: "Conversation unavailable" }, { status: 403 });
-  const { data, error } = await supabase.from("direct_messages").select("id,conversation_id,sender_id,receiver_id,content,media_url,attachment_type,is_disappearing,disappear_timer_sec,is_opened,status,created_at").eq("conversation_id", conversationId(actor.actor.profileId, peerId)).order("created_at", { ascending: true }).limit(500);
+  const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 50, 1), 100);
+  const before = url.searchParams.get("before");
+  if (before && Number.isNaN(new Date(before).getTime())) return NextResponse.json({ error: "Invalid message cursor" }, { status: 400 });
+  let query = supabase.from("direct_messages").select("id,conversation_id,sender_id,receiver_id,content,media_url,attachment_type,is_disappearing,disappear_timer_sec,is_opened,status,created_at").eq("conversation_id", conversationId(actor.actor.profileId, peerId)).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(limit + 1);
+  if (before) query = query.lt("created_at", before);
+  const { data: newestFirst, error } = await query;
   if (error) return NextResponse.json({ error: "Messages lookup failed" }, { status: 502 });
-  await supabase.from("direct_messages").update({ is_opened: true, status: "READ" }).eq("conversation_id", conversationId(actor.actor.profileId, peerId)).eq("receiver_id", actor.actor.profileId).eq("is_opened", false);
-  return NextResponse.json({ messages: data || [] }, { headers: { "Cache-Control": "private, no-store" } });
+  const hasMore = (newestFirst || []).length > limit;
+  const page = (newestFirst || []).slice(0, limit).reverse();
+  const { data: readRows, error: readError } = await supabase.from("direct_messages").update({ is_opened: true, status: "READ" }).eq("conversation_id", conversationId(actor.actor.profileId, peerId)).eq("receiver_id", actor.actor.profileId).eq("is_opened", false).select("id");
+  if (readError) return NextResponse.json({ error: "Message read state could not be recorded" }, { status: 502 });
+  if (readRows?.length) {
+    const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "MESSAGES_READ", resourceType: "CONVERSATION", resourceId: conversationId(actor.actor.profileId, peerId), outcome: "SUCCESS", metadata: { count: readRows.length, peerId } });
+    if (!audited) return NextResponse.json({ error: "Message read state was updated but audit recording failed; contact support" }, { status: 503 });
+  }
+  return NextResponse.json({ messages: page, pagination: { limit, hasMore, nextCursor: hasMore ? page[0]?.created_at || null : null } }, { headers: { "Cache-Control": "private, no-store" } });
 }
 
 export async function POST(req: NextRequest) {

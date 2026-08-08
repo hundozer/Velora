@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
+import { appendDurableAudit } from "@/lib/auth/durableAudit";
 
 export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -13,12 +14,20 @@ async function actor(req: NextRequest) {
   return { actor: result.actor };
 }
 
+function safeTargetLink(value: unknown) {
+  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return "/notifications";
+  try {
+    const url = new URL(value, "https://intimo.live");
+    return url.origin === "https://intimo.live" ? `${url.pathname}${url.search}${url.hash}` : "/notifications";
+  } catch { return "/notifications"; }
+}
+
 export async function GET(req: NextRequest) {
   const auth = await actor(req); if ("response" in auth) return auth.response;
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Notifications unavailable" }, { status: 503 });
   const { data, error } = await db.from("notifications").select("id,type,title,message,actor_name,actor_avatar,target_link,is_read,created_at").eq("user_id", auth.actor.profileId).order("created_at", { ascending: false }).limit(100);
   if (error) return NextResponse.json({ error: "Notifications lookup failed" }, { status: 502 });
-  const notifications = (data || []).map((item) => ({ id: item.id, type: item.type, title: item.title, message: item.message, actorName: item.actor_name, actorAvatar: item.actor_avatar, targetLink: item.target_link, isRead: item.is_read, createdAt: item.created_at }));
+  const notifications = (data || []).map((item) => ({ id: item.id, type: item.type, title: item.title, message: item.message, actorName: item.actor_name, actorAvatar: item.actor_avatar, targetLink: safeTargetLink(item.target_link), isRead: item.is_read, createdAt: item.created_at }));
   return NextResponse.json({ notifications, unreadCount: notifications.filter((item) => !item.isRead).length }, { headers: { "Cache-Control": "private, no-store" } });
 }
 
@@ -33,7 +42,11 @@ export async function PATCH(req: NextRequest) {
     if (typeof input.id !== "string" || !UUID.test(input.id)) return NextResponse.json({ error: "Invalid notification" }, { status: 400 });
     query = query.eq("id", input.id);
   }
-  const { error } = await query; if (error) return NextResponse.json({ error: "Notification update failed" }, { status: 502 });
+  const { data, error } = await query.select("id"); if (error) return NextResponse.json({ error: "Notification update failed" }, { status: 502 });
+  if (data?.length) {
+    const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorAuth0Sub: auth.actor.auth0Sub, action: input.all === true ? "NOTIFICATIONS_READ_ALL" : "NOTIFICATION_READ", resourceType: "NOTIFICATION", resourceId: input.all === true ? "all" : String(input.id), outcome: "SUCCESS", metadata: { count: data.length } });
+    if (!audited) return NextResponse.json({ error: "Notifications updated but audit recording failed; contact support" }, { status: 503 });
+  }
   return NextResponse.json({ updated: true });
 }
 
@@ -44,6 +57,10 @@ export async function DELETE(req: NextRequest) {
   if (!all && (!id || !UUID.test(id))) return NextResponse.json({ error: "Invalid notification" }, { status: 400 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Notifications unavailable" }, { status: 503 });
   let query = db.from("notifications").delete().eq("user_id", auth.actor.profileId); if (!all && id) query = query.eq("id", id);
-  const { error } = await query; if (error) return NextResponse.json({ error: "Notification deletion failed" }, { status: 502 });
+  const { data, error } = await query.select("id"); if (error) return NextResponse.json({ error: "Notification deletion failed" }, { status: 502 });
+  if (data?.length) {
+    const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorAuth0Sub: auth.actor.auth0Sub, action: all ? "NOTIFICATIONS_DELETE_ALL" : "NOTIFICATION_DELETE", resourceType: "NOTIFICATION", resourceId: all ? "all" : String(id), outcome: "SUCCESS", metadata: { count: data.length } });
+    if (!audited) return NextResponse.json({ error: "Notifications deleted but audit recording failed; contact support" }, { status: 503 });
+  }
   return NextResponse.json({ deleted: true });
 }

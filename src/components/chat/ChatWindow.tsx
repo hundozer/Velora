@@ -38,6 +38,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingOlder, setLoadingOlder] = useState(false);
 
   // Load durable messages through the authenticated participant boundary.
   useEffect(() => {
@@ -58,6 +60,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           status: item.status,
           createdAt: new Date(item.created_at).toLocaleString(),
         })));
+        setNextCursor(payload.pagination?.nextCursor || null);
       })
       .catch(() => { if (active) setMessages([]); });
     return () => { active = false; };
@@ -67,6 +70,20 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [blockModalOpen, setBlockModalOpen] = useState(false);
   const [showProfilePreview, setShowProfilePreview] = useState(false);
+
+  const loadOlder = async () => {
+    if (!nextCursor || loadingOlder) return;
+    setLoadingOlder(true);
+    const participantId = activeConversation.participant.id || activeConversation.participant.userId;
+    const response = await fetch(`/api/messages?peerId=${encodeURIComponent(participantId)}&before=${encodeURIComponent(nextCursor)}`, { credentials: "same-origin", cache: "no-store" });
+    const payload = await response.json().catch(() => ({}));
+    if (response.ok) {
+      const older = (payload.messages || []).map((item: any) => ({ id: item.id, conversationId: item.conversation_id, senderId: item.sender_id === participantId ? participantId : "user-current", senderName: item.sender_id === participantId ? activeConversation.participant.displayName : "You", senderAvatar: item.sender_id === participantId ? activeConversation.participant.avatarUrl : "", content: item.content, status: item.status, createdAt: new Date(item.created_at).toLocaleString() }));
+      setMessages((current) => [...older, ...current.filter((message) => !older.some((item: Message) => item.id === message.id))]);
+      setNextCursor(payload.pagination?.nextCursor || null);
+    }
+    setLoadingOlder(false);
+  };
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -252,6 +269,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
         {/* Message Thread History */}
         <div className="flex-1 p-6 overflow-y-auto space-y-4">
+          {nextCursor && <div className="text-center"><Button variant="ghost" size="sm" onClick={() => void loadOlder()} disabled={loadingOlder}>{loadingOlder ? "Loading…" : "Load older messages"}</Button></div>}
           {messages.map((m) => {
             const isMe = m.senderId === "user-current";
             return (

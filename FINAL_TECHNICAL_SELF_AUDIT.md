@@ -15,8 +15,8 @@ Scope: repository implementation and preview/staging readiness. This is not lega
 | Public media | PARTIAL | Requires signed adult declaration, public visibility, completed upload, READY processing, approval and active public owner; staging migration, scanning and video processor remain |
 | Public/member search | PASS for MVP | Anonymous search exposes only minimized explicit-public people, approved public media/albums and active public-author dating ads; signed-in search adds block-aware member records and approved posts; deterministic ranking; no AI |
 | Dating interactions | PASS for current MVP | Owner-derived creation/deletion/reactivation with durable audit; durable save; reply enters participant-authorized messages; unsupported local-only attachment input removed |
-| Messaging | PARTIAL | Durable participant/block/recipient-preference checks, verified-sender enforcement, send audit, real history/unread state and notifications; fabricated first messages and simulated receipts removed; attachments deliberately disabled; pagination and staging E2E remain |
-| Follows/blocks/saves/comments/notifications | PASS for implemented lifecycle | Server-owned database state, durable mutation audits, real event sources, and atomic blocks that remove relationships in both directions; staging migration required |
+| Messaging | PARTIAL | Durable participant/block/recipient-preference checks, verified-sender enforcement, bounded cursor history, durable send/read audits, real unread state and notifications; fabricated messages and simulated receipts removed; attachments deliberately disabled; conversation-list pagination and staging E2E remain |
+| Follows/blocks/saves/comments/notifications | PASS for implemented lifecycle | Server-owned database state, durable mutation audits, same-origin notification targets, real event sources, and atomic blocks that remove relationships in both directions; staging migration required |
 | Identity verification | PARTIAL | Private owner-submitted evidence, durable queue, MFA/granular admin signed access and audit; stronger age-assurance provider remains external |
 | Moderation/admin/God Mode | PASS for secure foundation | Server roles, active account, MFA, short elevation, audit and explicit decision forms; real operational staffing remains owner responsibility |
 | Privacy export/deletion/retention | PARTIAL | Comprehensive owner export plus legal-hold-aware, R2-first, resumable anonymization and durable run evidence are implemented; migration/scheduling/production evidence remain |
@@ -27,13 +27,14 @@ Scope: repository implementation and preview/staging readiness. This is not lega
 
 ## Verification evidence
 
-- `npm run test`: 48 security boundary tests pass.
+- `npm run test`: 50 security boundary tests pass.
 - `npm run typecheck`: pass.
 - `npm run lint`: pass with no warnings.
 - `npm run build`: pass; Auth0 SDK emits a known non-fatal dynamic-dependency warning.
 - Repository scan found no embedded Auth0, Supabase service-role, R2 secret, or Resend key fallback.
 - Repository scan found no mounted browser impersonation or localStorage chat runtime.
-- Mock/local-only community, creator, live, event and referral surfaces remain middleware-disabled.
+- A second reachability audit found no active API or mounted MVP surface using the legacy in-memory identity store; Auth0 email verification now synchronizes only to the canonical durable profile and audit state.
+- Remaining mock/local-only community, creator, live, event, referral and monetization fixtures are confined to centrally middleware-disabled future routes or unmounted legacy modules.
 
 ## Remaining launch blockers
 

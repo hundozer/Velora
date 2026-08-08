@@ -18,6 +18,7 @@ Last reviewed: 2026-08-08. This matrix is the application contract, not a claim 
 | `/admin/*` | Assigned admin with MFA | Server layout and every API independently authorize | Private/no-store, audited | Implemented |
 | `/admin/god/*` | SUPER_ADMIN + verified email + MFA + recent Auth0 + short elevation | Server God Mode session on every API | Sensitive access is reason-bound and audited | Implemented |
 | Monetization routes (`/wallet`, `/membership`, creator commerce) | Disabled | `MONETIZATION_ENABLED=false` and route safety flags | Inaccessible | Implemented invariant |
+| Unfinished future routes (`/creator-studio`, `/creators`, `/communities`, `/events`, `/live`, `/referrals`) | Disabled | Central `MVP_SAFETY_DISABLED_ROUTES` middleware redirect | Inaccessible; fixtures cannot become user-facing | Second reachability audit verified |
 | Deferred unsafe routes (`/live`, `/events`, `/communities`, `/creators`) | Disabled for MVP | Middleware/feature flags | Inaccessible until durable safety lifecycle exists | Implemented invariant |
 
 ## Anonymous public-profile allowlist
