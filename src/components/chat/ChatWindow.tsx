@@ -29,12 +29,16 @@ interface ChatWindowProps {
   conversations: Conversation[];
   activeConversation: Conversation;
   onSelectConversation: (conv: Conversation) => void;
+  onLoadOlderConversations?: () => void;
+  loadingOlderConversations?: boolean;
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({
   conversations,
   activeConversation,
   onSelectConversation,
+  onLoadOlderConversations,
+  loadingOlderConversations = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -198,6 +202,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               </div>
             );
           })}
+          {onLoadOlderConversations && !searchQuery && (
+            <button type="button" onClick={onLoadOlderConversations} disabled={loadingOlderConversations} className="w-full rounded-xl border border-white/10 px-3 py-2 text-[11px] font-semibold text-velora-textMuted hover:border-amber-400/40 hover:text-amber-300 disabled:opacity-50">
+              {loadingOlderConversations ? "Loading older conversations…" : "Load older conversations"}
+            </button>
+          )}
         </div>
       </Card>
 

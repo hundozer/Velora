@@ -28,8 +28,15 @@ export async function GET(req: NextRequest) {
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Messaging unavailable" }, { status: 503 });
   if (!peerId) {
-    const { data: rows, error } = await supabase.from("direct_messages").select("id,conversation_id,sender_id,receiver_id,content,status,is_opened,created_at").or(`sender_id.eq.${actor.actor.profileId},receiver_id.eq.${actor.actor.profileId}`).order("created_at", { ascending: false }).limit(500);
+    const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 100, 25), 250);
+    const before = url.searchParams.get("before");
+    if (before && Number.isNaN(new Date(before).getTime())) return NextResponse.json({ error: "Invalid conversation cursor" }, { status: 400 });
+    let conversationQuery = supabase.from("direct_messages").select("id,conversation_id,sender_id,receiver_id,content,status,is_opened,created_at").or(`sender_id.eq.${actor.actor.profileId},receiver_id.eq.${actor.actor.profileId}`).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(limit + 1);
+    if (before) conversationQuery = conversationQuery.lt("created_at", before);
+    const { data: rawRows, error } = await conversationQuery;
     if (error) return NextResponse.json({ error: "Conversations lookup failed" }, { status: 502 });
+    const hasMore = (rawRows || []).length > limit;
+    const rows = (rawRows || []).slice(0, limit);
     const latest = new Map<string, any>();
     for (const row of rows || []) if (!latest.has(row.conversation_id)) latest.set(row.conversation_id, row);
     const peerIds = [...latest.values()].map((row) => row.sender_id === actor.actor.profileId ? row.receiver_id : row.sender_id);
@@ -43,7 +50,7 @@ export async function GET(req: NextRequest) {
       const unreadCount = (rows || []).filter((message) => message.conversation_id === row.conversation_id && message.receiver_id === actor.actor.profileId && message.is_opened === false).length;
       return [{ id: row.conversation_id, participant: { id: profile.id, userId: profile.id, displayName: profile.display_name, avatarUrl: profile.avatar_url || "", location: [profile.city,profile.country].filter(Boolean).join(", "), verified: profile.verification_status === "VERIFIED", isOnline: false }, lastMessage: { id: row.id, conversationId: row.conversation_id, senderId: row.sender_id, senderName: row.sender_id === actor.actor.profileId ? "You" : profile.display_name, senderAvatar: profile.avatar_url || "", content: row.content, status: row.status, createdAt: row.created_at }, updatedAt: row.created_at, unreadCount }];
     });
-    return NextResponse.json({ conversations }, { headers: { "Cache-Control": "private, no-store" } });
+    return NextResponse.json({ conversations, pagination: { limit, hasMore, nextCursor: hasMore ? rows.at(-1)?.created_at || null : null } }, { headers: { "Cache-Control": "private, no-store" } });
   }
   if (!UUID.test(peerId) || peerId === actor.actor.profileId) return NextResponse.json({ error: "Invalid conversation participant" }, { status: 400 });
   if (await blocked(supabase, actor.actor.profileId, peerId)) return NextResponse.json({ error: "Conversation unavailable" }, { status: 403 });

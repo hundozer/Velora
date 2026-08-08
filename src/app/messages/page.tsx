@@ -11,15 +11,18 @@ import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding"
 function MessagesContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
-  const targetUserId = searchParams.get("user");
+  const targetUserId = searchParams.get("user") || searchParams.get("peerId");
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConv, setActiveConv] = useState<Conversation | null>(null);
+  const [nextConversationCursor, setNextConversationCursor] = useState<string | null>(null);
+  const [loadingOlderConversations, setLoadingOlderConversations] = useState(false);
 
   const syncConversations = useCallback(() => {
     fetch("/api/messages", { credentials: "same-origin" }).then(async (response) => response.ok ? response.json() : Promise.reject()).then((payload) => {
       const next = Array.isArray(payload.conversations) ? payload.conversations : [];
       setConversations(next);
+      setNextConversationCursor(payload.pagination?.nextCursor || null);
       setActiveConv((current) => next.find((item: Conversation) => item.id === current?.id) || next[0] || null);
     }).catch(() => setConversations([]));
   }, []);
@@ -29,6 +32,22 @@ function MessagesContent() {
     const timer = window.setInterval(syncConversations, 15_000);
     return () => window.clearInterval(timer);
   }, [syncConversations]);
+
+  const loadOlderConversations = async () => {
+    if (!nextConversationCursor || loadingOlderConversations) return;
+    setLoadingOlderConversations(true);
+    const response = await fetch(`/api/messages?before=${encodeURIComponent(nextConversationCursor)}`, { credentials: "same-origin", cache: "no-store" });
+    const payload = await response.json().catch(() => ({}));
+    if (response.ok) {
+      const older = Array.isArray(payload.conversations) ? payload.conversations as Conversation[] : [];
+      setConversations((current) => {
+        const known = new Set(current.map((item) => item.id));
+        return [...current, ...older.filter((item) => !known.has(item.id))];
+      });
+      setNextConversationCursor(payload.pagination?.nextCursor || null);
+    }
+    setLoadingOlderConversations(false);
+  };
 
   // Handle target user query param (e.g. /messages?user=prof-1)
   useEffect(() => {
@@ -79,6 +98,8 @@ function MessagesContent() {
         conversations={conversations}
         activeConversation={activeConv}
         onSelectConversation={setActiveConv}
+        onLoadOlderConversations={nextConversationCursor ? loadOlderConversations : undefined}
+        loadingOlderConversations={loadingOlderConversations}
       />
     </div>
   );

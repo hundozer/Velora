@@ -278,7 +278,7 @@ test("active dating ads cannot advertise commercial sexual services or require V
   const collection = await read("src/app/api/dating-ads/route.ts");
   assert.doesNotMatch(createPage, /offering services|Erotic services|Incall apartments|S\/M studios/i);
   assert.doesNotMatch(createPage, /Require VIP Membership/);
-  assert.match(browsePage, /process\.env\.NODE_ENV === "development" \? \[/);
+  assert.doesNotMatch(browsePage, /INITIAL_ADS|images\.unsplash\.com|Prince Charming/);
   assert.match(browsePage, /return <PublicDatingBrowse \/>/);
   assert.match(collection, /require_vip: false/);
 });
@@ -530,6 +530,7 @@ test("messaging entry points use the durable message screen, not a local chat st
   const dating = await read("src/app/dating/page.tsx");
   const chat = await read("src/components/chat/ChatWindow.tsx");
   const messages = await read("src/app/api/messages/route.ts");
+  const messagesPage = await read("src/app/messages/page.tsx");
   assert.doesNotMatch(layout, /FloatingChat/);
   assert.doesNotMatch(dating, /intimo_open_chat|intimo_chat_messages/);
   assert.match(dating, /\/messages\?user=/);
@@ -542,6 +543,10 @@ test("messaging entry points use the durable message screen, not a local chat st
   assert.match(messages, /nextCursor/);
   assert.match(messages, /MESSAGES_READ/);
   assert.match(chat, /Load older messages/);
+  assert.match(messagesPage, /searchParams\.get\("user"\) \|\| searchParams\.get\("peerId"\)/);
+  assert.match(messagesPage, /loadOlderConversations/);
+  assert.match(messages, /Invalid conversation cursor/);
+  assert.match(chat, /Load older conversations/);
 });
 
 test("albums use canonical media objects with owner, moderation, public privacy, and admin parity", async () => {
