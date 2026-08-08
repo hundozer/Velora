@@ -5,7 +5,7 @@ import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
 
 export const dynamic = "force-dynamic";
-const TYPES = new Set(["PROFILE","PHOTO","VIDEO","MESSAGE","POST","COMMENT","COMMUNITY","EVENT","LIVESTREAM"]);
+const TYPES = new Set(["PROFILE","PHOTO","ALBUM","VIDEO","MESSAGE","POST","COMMENT","COMMUNITY","EVENT","LIVESTREAM"]);
 const REASONS = new Set(["SUSPECTED_MINOR","NON_CONSENSUAL_INTIMATE_CONTENT","HARASSMENT","THREATS","IMPERSONATION","SCAM_FRAUD","ILLEGAL_CONTENT","EXPLOITATION_TRAFFICKING","COPYRIGHT_INFRINGEMENT","PRIVACY_VIOLATION","PROHIBITED_COMMERCIAL_SEXUAL_SERVICES","SPAM","OTHER"]);
 const CRITICAL = new Set(["SUSPECTED_MINOR","NON_CONSENSUAL_INTIMATE_CONTENT","EXPLOITATION_TRAFFICKING"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -39,6 +39,11 @@ export async function POST(req: NextRequest) {
   const status = priority === "CRITICAL" ? "ESCALATED" : "OPEN";
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Reporting service unavailable" }, { status: 503 });
+  const duplicateSince = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  let duplicateQuery = supabase.from("moderation_cases").select("id").eq("reporter_id", actor.actor.profileId).eq("content_type", contentType).eq("reason", reason).gte("created_at", duplicateSince);
+  duplicateQuery = contentId ? duplicateQuery.eq("content_id", contentId) : duplicateQuery.is("content_id", null);
+  const { data: duplicate } = await duplicateQuery.limit(1).maybeSingle();
+  if (duplicate) return NextResponse.json({ error: "You already reported this item for the same reason recently", reportId: duplicate.id }, { status: 409 });
   const { data, error } = await supabase.rpc("intimo_create_report", { p_reporter_id: actor.actor.profileId, p_reported_user_id: reportedUserId, p_content_type: contentType, p_content_id: contentId, p_reason: reason, p_description: description, p_priority: priority, p_status: status });
   if (error || !data) return NextResponse.json({ error: "Report submission failed" }, { status: 502 });
   auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "REPORT_CREATE", resourceId: data.id, resourceType: "MODERATION_CASE", status: "SUCCESS", details: { contentType, reason, priority } });

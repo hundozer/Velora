@@ -503,3 +503,26 @@ test("messaging entry points use the durable message screen, not a local chat st
   assert.doesNotMatch(dating, /intimo_open_chat|intimo_chat_messages/);
   assert.match(dating, /\/messages\?user=/);
 });
+
+test("albums use canonical media objects with owner, moderation, public privacy, and admin parity", async () => {
+  const migration = await read("supabase/migrations/20260817_canonical_media_albums.sql");
+  const owner = await read("src/app/api/albums/route.ts");
+  const assignment = await read("src/app/api/albums/[id]/media/route.ts");
+  const publicAlbum = await read("src/app/api/public/albums/[id]/route.ts");
+  const admin = await read("src/app/api/admin/albums/route.ts");
+  assert.match(migration, /references public\.media_objects/);
+  assert.match(migration, /intimo_set_album_media/);
+  assert.match(migration, /revoke all.*anon,authenticated/);
+  assert.match(owner, /owner_id: auth\.actor\.profileId/);
+  assert.match(assignment, /p_owner_id: auth\.actor\.profileId/);
+  assert.match(publicAlbum, /eq\("moderation_status","APPROVED"\)/);
+  assert.match(publicAlbum, /eq\("visibility","PUBLIC"\)/);
+  assert.match(admin, /requireAdminPermission\(req,"content:moderate"\)/);
+  assert.match(admin, /Every photo in a public album must be public, ready, and approved first/);
+});
+
+test("obsolete simulated media management and gated marketing claims are not mounted", async () => {
+  const gate = await read("src/components/landing/BehindTheDoorLanding.tsx");
+  assert.doesNotMatch(gate, /100%|invite-only|Encrypted 1-on-1|live topic chatrooms/i);
+  await assert.rejects(read("src/components/media/MediaManager.tsx"));
+});

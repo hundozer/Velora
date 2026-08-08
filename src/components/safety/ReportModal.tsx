@@ -10,7 +10,7 @@ interface ReportModalProps {
   onClose: () => void;
   targetUsername?: string;
   targetProfileId?: string;
-  contentType?: "PROFILE" | "PHOTO" | "VIDEO" | "MESSAGE" | "POST" | "COMMENT" | "COMMUNITY" | "EVENT" | "LIVESTREAM";
+  contentType?: "PROFILE" | "PHOTO" | "ALBUM" | "VIDEO" | "MESSAGE" | "POST" | "COMMENT" | "COMMUNITY" | "EVENT" | "LIVESTREAM";
   contentId?: string;
 }
 

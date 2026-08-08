@@ -2,12 +2,12 @@
 
 import React from "react";
 import Link from "next/link";
-import { Bookmark, FileText, Flag, Heart, Image as ImageIcon, MapPin, Search, Users, Video } from "lucide-react";
+import { Bookmark, FileText, Flag, Heart, Image as ImageIcon, Images, MapPin, Search, Users, Video } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
 import { ReportModal } from "@/components/safety/ReportModal";
 
-type Results = { query: string; people: any[]; media: any[]; datingAds: any[]; posts: any[] };
+type Results = { query: string; people: any[]; media: any[]; albums: any[]; datingAds: any[]; posts: any[] };
 
 export default function SearchPage() {
   const { user } = useAuth();
@@ -28,7 +28,7 @@ export default function SearchPage() {
   }, [submitted]);
 
   if (!user) return <BehindTheDoorLanding />;
-  const total = results ? results.people.length + results.media.length + results.datingAds.length + results.posts.length : 0;
+  const total = results ? results.people.length + results.media.length + results.albums.length + results.datingAds.length + results.posts.length : 0;
   const submit = (event: React.FormEvent) => { event.preventDefault(); const cleaned = query.trim(); if (cleaned.length < 2) { setError("Enter at least two characters."); return; } setSubmitted(cleaned); };
 
   return <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -39,6 +39,7 @@ export default function SearchPage() {
     {!loading && results && <div className="mt-7 space-y-9"><p className="text-sm text-slate-400">{total} {total === 1 ? "result" : "results"} for <strong className="text-white">{results.query}</strong></p>
       <ResultSection title="People" icon={<Users className="h-5 w-5" />} empty="No matching visible members.">{results.people.map((item) => <Link key={item.id} href={`/profile/${item.id}`} className="result-card"><strong>{item.displayName}{item.age ? `, ${item.age}` : ""}</strong><span>{item.profileType === "COUPLE" ? "Couple" : "Individual"}{item.verified ? " · Verified" : ""}</span>{item.location && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{item.location}</span>}<p>{item.headline || "Member profile"}</p></Link>)}</ResultSection>
       <ResultSection title="Media" icon={<ImageIcon className="h-5 w-5" />} empty="No matching approved media.">{results.media.map((item) => <article key={item.id} className="result-card"><strong className="flex items-center gap-2">{item.type === "VIDEO" ? <Video className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />}{item.title}</strong><span>By <Link href={`/profile/${item.ownerId}`} className="text-amber-300 hover:underline">{item.ownerName}</Link>{item.category ? ` · ${item.category}` : ""}</span><p>{item.description || "Approved community media"}</p><button type="button" onClick={() => setReportTarget({ id: item.id, ownerId: item.ownerId, ownerName: item.ownerName, type: item.type === "VIDEO" ? "VIDEO" : "PHOTO" })} className="mt-auto inline-flex min-h-9 items-center gap-2 self-start text-xs text-slate-400 hover:text-rose-300"><Flag className="h-3.5 w-3.5" />Report media</button></article>)}</ResultSection>
+      <ResultSection title="Albums" icon={<Images className="h-5 w-5" />} empty="No matching approved albums.">{results.albums.map((item) => <Link key={item.id} href={`/album/${item.id}`} className="result-card"><strong>{item.title}</strong><span>By {item.ownerName}{item.category ? ` · ${item.category}` : ""}</span><p>{item.description || "Approved photo album"}</p></Link>)}</ResultSection>
       <ResultSection title="Dating ads" icon={<Heart className="h-5 w-5" />} empty="No matching active dating ads.">{results.datingAds.map((item) => <Link key={item.id} href={`/dating?ad=${item.id}`} className="result-card"><strong>{item.title}</strong><span>{item.category} · {item.ageRange}{item.location ? ` · ${item.location}` : ""}</span><p>Posted by {item.authorName}</p></Link>)}</ResultSection>
       <ResultSection title="Posts" icon={<FileText className="h-5 w-5" />} empty="No matching moderated posts.">{results.posts.map((item) => <article key={item.id} className="result-card"><strong>{item.title || "Community post"}</strong><span>{item.category || item.type} · {item.authorName}</span><p>{item.excerpt}</p><button type="button" onClick={() => setReportTarget({ id: item.id, ownerId: item.authorId, ownerName: item.authorName, type: "POST" })} className="mt-auto inline-flex min-h-9 items-center gap-2 self-start text-xs text-slate-400 hover:text-rose-300"><Flag className="h-3.5 w-3.5" />Report post</button></article>)}</ResultSection>
       <p className="flex items-center gap-2 text-xs text-slate-500"><Bookmark className="h-3.5 w-3.5" />Results are deterministic, newest-first within each category. Intimo does not use AI ranking.</p>

@@ -13,11 +13,11 @@ export default function AboutPage() {
       <div className="text-center space-y-4">
         <Badge type="verified" label="Intimo Social Philosophy" />
         <h1 className="text-4xl sm:text-5xl font-serif font-bold text-velora-textPrimary">
-          The Premier Private <br />
-          <span className="gold-gradient-text">Adult Social Club</span>
+          A Community Built for <br />
+          <span className="gold-gradient-text">Adult Social Discovery</span>
         </h1>
         <p className="text-sm text-velora-textSecondary max-w-2xl mx-auto leading-relaxed">
-          Intimo was built to redefine adult social networking—replacing outdated classifieds with a sophisticated, discreet, and private ecosystem inspired by modern social luxury.
+          Intimo is a free adults-only social community for discovering people, public media, and dating classifieds. Members choose what they share and who can interact with them.
         </p>
       </div>
 
@@ -28,7 +28,7 @@ export default function AboutPage() {
             Authenticity & Verification
           </h2>
           <p className="text-xs text-velora-textSecondary leading-relaxed">
-            Every member of Intimo completes 100% biometric and legal ID verification. We maintain a zero-tolerance policy for impersonation, underage access, or spam.
+            Adult eligibility, contact verification, and stronger identity checks are separate controls. Badges reflect completed backend verification, while reporting and moderation address suspected minors, impersonation, and abuse.
           </p>
         </Card>
 
@@ -46,7 +46,7 @@ export default function AboutPage() {
       <div className="text-center pt-8">
         <Link href="/register">
           <Button variant="gold" size="lg" className="font-bold uppercase tracking-wider gap-2">
-            Apply for Membership Access
+            Join Intimo Free
             <ArrowRight className="w-4 h-4" />
           </Button>
         </Link>

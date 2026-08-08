@@ -52,7 +52,7 @@ export const Navbar: React.FC = () => {
               Intimo
             </span>
             <span className="block text-[10px] tracking-[0.25em] text-velora-textMuted uppercase font-sans">
-              Private Social Club
+              Adult Social Community
             </span>
           </div>
         </Link>
@@ -239,7 +239,7 @@ export const Navbar: React.FC = () => {
                   </Link>
 
                   <Link
-                    href={`/profile/${profile?.id || "me"}?tab=PHOTOS`}
+                    href="/albums/manage"
                     className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl font-medium"
                   >
                     <ImageIcon className="w-4 h-4 text-amber-300" />

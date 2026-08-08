@@ -25,12 +25,15 @@ export async function GET(req: NextRequest) {
   blocked.add(actor.actor.profileId);
   const pattern = `%${q}%`;
 
-  const [profileResult, mediaResult, adResult, postResult] = await Promise.all([
+  const [profileResult, mediaResult, albumResult, adResult, postResult] = await Promise.all([
     db.from("profiles").select("id,display_name,username,avatar_url,age,country,city,headline,is_couple_profile,verification_status,verification_level")
       .eq("account_status", "ACTIVE").eq("discovery_disabled", false).in("profile_visibility", ["EVERYONE", "MEMBERS_ONLY"])
       .or(`display_name.ilike.${pattern},username.ilike.${pattern},headline.ilike.${pattern}`).order("created_at", { ascending: false }).order("id", { ascending: true }).limit(16),
     db.from("media_objects").select("id,owner_id,media_type,title,description,category,published_at,created_at")
       .eq("upload_status", "AVAILABLE").eq("processing_status", "READY").eq("moderation_status", "APPROVED").in("visibility", ["PUBLIC", "MEMBERS_ONLY"])
+      .or(`title.ilike.${pattern},description.ilike.${pattern},category.ilike.${pattern}`).order("published_at", { ascending: false, nullsFirst: false }).order("id", { ascending: true }).limit(16),
+    db.from("media_albums").select("id,owner_id,title,description,category,published_at,created_at")
+      .eq("moderation_status", "APPROVED").in("visibility", ["PUBLIC", "MEMBERS_ONLY"])
       .or(`title.ilike.${pattern},description.ilike.${pattern},category.ilike.${pattern}`).order("published_at", { ascending: false, nullsFirst: false }).order("id", { ascending: true }).limit(16),
     db.from("dating_ads").select("id,author_id,title,category,country,region,min_age,max_age,created_at,validity_days")
       .eq("status", "active").or(`title.ilike.${pattern},text.ilike.${pattern},category.ilike.${pattern},country.ilike.${pattern},region.ilike.${pattern}`).order("created_at", { ascending: false }).order("id", { ascending: true }).limit(16),
@@ -39,9 +42,10 @@ export async function GET(req: NextRequest) {
       .or(`title.ilike.${pattern},body.ilike.${pattern},category.ilike.${pattern}`).order("published_at", { ascending: false, nullsFirst: false }).order("id", { ascending: true }).limit(16),
   ]);
 
-  if (profileResult.error || mediaResult.error || adResult.error) return NextResponse.json({ error: "Search lookup failed" }, { status: 502 });
+  if (profileResult.error || mediaResult.error || albumResult.error || adResult.error) return NextResponse.json({ error: "Search lookup failed" }, { status: 502 });
   const ownerIds = Array.from(new Set([
     ...(mediaResult.data || []).map((row) => row.owner_id),
+    ...(albumResult.data || []).map((row) => row.owner_id),
     ...(adResult.data || []).map((row) => row.author_id),
     ...(postResult.data || []).map((row) => row.author_id),
   ])).filter((id) => !blocked.has(id));
@@ -53,6 +57,7 @@ export async function GET(req: NextRequest) {
     query: q,
     people: (profileResult.data || []).filter((row) => !blocked.has(row.id)).map((row) => ({ id: row.id, displayName: row.display_name || row.username || "Intimo member", avatarUrl: row.avatar_url, age: row.age, location: [row.city, row.country].filter(Boolean).join(", "), headline: row.headline, profileType: row.is_couple_profile ? "COUPLE" : "INDIVIDUAL", verified: row.verification_status === "VERIFIED" || ["LEVEL_3_PROFILE_BIOMETRIC", "LEVEL_4_CREATOR"].includes(row.verification_level || "") })),
     media: (mediaResult.data || []).filter((row) => owners.has(row.owner_id)).map((row) => ({ id: row.id, type: row.media_type, title: row.title || (row.media_type === "VIDEO" ? "Untitled video" : "Untitled photo"), description: row.description, category: row.category, ownerId: row.owner_id, ownerName: author(row.owner_id), mediaUrl: `/api/media/${row.id}`, publishedAt: row.published_at || row.created_at })),
+    albums: (albumResult.data || []).filter((row) => owners.has(row.owner_id)).map((row) => ({ id: row.id, title: row.title, description: row.description, category: row.category, ownerId: row.owner_id, ownerName: author(row.owner_id), publishedAt: row.published_at || row.created_at })),
     datingAds: (adResult.data || []).filter((row) => owners.has(row.author_id) && new Date(row.created_at).getTime() + row.validity_days * 86_400_000 > Date.now()).map((row) => ({ id: row.id, title: row.title, category: row.category, authorId: row.author_id, authorName: author(row.author_id), location: [row.region, row.country].filter(Boolean).join(", "), ageRange: `${row.min_age}–${row.max_age}`, createdAt: row.created_at })),
     posts: postResult.error ? [] : (postResult.data || []).filter((row) => owners.has(row.author_id)).map((row) => ({ id: row.id, type: row.post_type, title: row.title, excerpt: String(row.body || "").slice(0, 240), category: row.category, authorId: row.author_id, authorName: author(row.author_id), publishedAt: row.published_at || row.created_at })),
     ranking: "category_then_published_or_created_desc_then_id_asc",

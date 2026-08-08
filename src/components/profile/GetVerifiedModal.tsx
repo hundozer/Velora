@@ -126,7 +126,7 @@ export function GetVerifiedModal({
                 <h2 className="text-xl font-serif font-bold text-white">Get Biometric Verified</h2>
               </div>
               <p className="text-xs text-velora-textMuted">
-                Build 100% trust with members on Intimo. Show you are authentic and verified behind your profile.
+                Add a genuine verification signal to your Intimo profile after review. Verification reduces uncertainty, but it is never a guarantee about a person or their conduct.
               </p>
             </div>
 
@@ -164,7 +164,7 @@ export function GetVerifiedModal({
             <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-start gap-3">
               <Lock className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
               <div className="space-y-0.5">
-                <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wider">100% Private & Discreet Guarantee</h4>
+                <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wider">Private verification evidence</h4>
                 <p className="text-[11px] text-emerald-300/80 leading-relaxed">
                   Your verification photo is encrypted, stored in private storage, inspected strictly by platform administrators, and <strong>NEVER published publicly</strong> on your profile or search.
                 </p>
