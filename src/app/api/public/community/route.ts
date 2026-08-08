@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
   let profileQuery = db
     .from("profiles")
     .select(
-      "id,display_name,username,age,country,city,headline,bio,is_couple_profile,verification_status,verification_level,location_precision,show_online_status,last_active_at,created_at",
+      "id,display_name,username,age,country,city,headline,bio,is_couple_profile,verification_status,verification_level,location_precision,show_online_status,last_active_at,created_at,is_demo",
       { count: "exact" }
     )
     .eq("profile_visibility", "EVERYONE")
@@ -118,6 +118,7 @@ export async function GET(req: NextRequest) {
       },
       ranking: "created_at_desc_then_id_asc",
       privacy: "anonymous_minimized_public_records_only",
+      demoContentPresent: profiles.some((profile) => profile.isDemo),
     },
     {
       headers: {

@@ -64,6 +64,7 @@ export interface ProfileRow {
   account_status?: string;
   discovery_disabled?: boolean;
   last_active_at?: string | null;
+  is_demo?: boolean;
 }
 
 // ── Converters ─────────────────────────────────────────────

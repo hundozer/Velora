@@ -9,6 +9,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.mjs",
+    "demo:seed:staging": "node scripts/seed-staging-demo.mjs",
+    "demo:remove:staging": "node scripts/seed-staging-demo.mjs --remove",
     "check": "npm run test && npm run typecheck && npm run lint && npm run build"
   },
   "dependencies": {

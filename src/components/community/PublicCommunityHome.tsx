@@ -15,6 +15,7 @@ interface PublicProfile {
   profileType: "COUPLE" | "INDIVIDUAL";
   verified: boolean;
   recentlyActive: boolean;
+  isDemo: boolean;
 }
 interface PublicDatingAd {
   id: string;
@@ -31,6 +32,7 @@ interface CommunityResponse {
   profiles: PublicProfile[];
   datingAds: PublicDatingAd[];
   pagination: { total: number };
+  demoContentPresent: boolean;
 }
 
 function Initials({ name }: { name: string }) {
@@ -86,6 +88,7 @@ export function PublicCommunityHome() {
       </section>
 
       <main className="mx-auto max-w-7xl space-y-10 px-4 py-8 sm:px-6 lg:px-8">
+        {data?.demoContentPresent && <div role="status" className="rounded-xl border border-sky-300/30 bg-sky-300/10 px-4 py-3 text-sm text-sky-100"><strong>Staging demo content:</strong> profiles labeled Demo are fictional test records, not real members or activity.</div>}
         <section aria-labelledby="new-members">
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
@@ -102,7 +105,7 @@ export function PublicCommunityHome() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {data.profiles.map((profile) => (
                 <Link key={profile.id} href={`/profile/${profile.id}`} className="rounded-xl border border-white/10 bg-[#121620] p-5 transition hover:border-amber-300/40 hover:bg-[#151a25]">
-                  <div className="flex items-start gap-3"><Initials name={profile.displayName} /><div className="min-w-0"><div className="flex items-center gap-1.5"><h3 className="truncate font-semibold text-white">{profile.displayName}</h3>{profile.verified && <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-400" aria-label="Verified" />}</div><p className="mt-1 text-xs uppercase tracking-wide text-slate-500">{profile.profileType === "COUPLE" ? "Couple" : "Individual"}{profile.age ? ` · ${profile.age}` : ""}</p></div></div>
+                  <div className="flex items-start gap-3"><Initials name={profile.displayName} /><div className="min-w-0"><div className="flex items-center gap-1.5"><h3 className="truncate font-semibold text-white">{profile.displayName}</h3>{profile.isDemo && <span className="rounded bg-sky-300/15 px-1.5 py-0.5 text-[10px] font-bold uppercase text-sky-200">Demo</span>}{profile.verified && <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-400" aria-label="Verified" />}</div><p className="mt-1 text-xs uppercase tracking-wide text-slate-500">{profile.profileType === "COUPLE" ? "Couple" : "Individual"}{profile.age ? ` · ${profile.age}` : ""}</p></div></div>
                   {profile.location && <p className="mt-4 flex items-center gap-1.5 text-xs text-slate-400"><MapPin className="h-3.5 w-3.5" />{profile.location}</p>}
                   <p className="mt-3 line-clamp-2 text-sm leading-5 text-slate-300">{profile.headline || profile.bio || "This member has made their basic profile public."}</p>
                 </Link>

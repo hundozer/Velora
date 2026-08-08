@@ -3,6 +3,7 @@ import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { CONTENT_TARGET_TYPES, resolveContentTarget, type ContentTargetType } from "@/lib/content/targetAccess";
+import { appendDurableAudit } from "@/lib/auth/durableAudit";
 
 export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -40,6 +41,8 @@ export async function POST(req: NextRequest) {
   const access = await resolveContentTarget(actor.actor, targetType as ContentTargetType, targetId); if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
   const { data, error } = await access.db.from("saved_items").upsert({ profile_id: actor.actor.profileId, target_type: targetType, target_id: targetId }, { onConflict: "profile_id,target_type,target_id" }).select("id,target_type,target_id,created_at").single();
   if (error || !data) return NextResponse.json({ error: "Item could not be saved" }, { status: 502 });
+  const audited = await appendDurableAudit(access.db, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "CONTENT_SAVE", resourceType: targetType, resourceId: targetId, outcome: "SUCCESS" });
+  if (!audited) return NextResponse.json({ error: "Item saved but audit recording failed; contact support" }, { status: 503 });
   return NextResponse.json({ item: data }, { status: 201 });
 }
 
@@ -48,7 +51,11 @@ export async function DELETE(req: NextRequest) {
   const url = new URL(req.url); const targetType = url.searchParams.get("targetType") || ""; const targetId = url.searchParams.get("targetId") || "";
   if (!CONTENT_TARGET_TYPES.includes(targetType as ContentTargetType) || !UUID.test(targetId)) return NextResponse.json({ error: "Invalid saved item" }, { status: 400 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Saved items unavailable" }, { status: 503 });
-  const { error } = await db.from("saved_items").delete().eq("profile_id", actor.actor.profileId).eq("target_type", targetType).eq("target_id", targetId);
+  const { data, error } = await db.from("saved_items").delete().eq("profile_id", actor.actor.profileId).eq("target_type", targetType).eq("target_id", targetId).select("id");
   if (error) return NextResponse.json({ error: "Saved item could not be removed" }, { status: 502 });
+  if (data?.length) {
+    const audited = await appendDurableAudit(db, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "CONTENT_UNSAVE", resourceType: targetType, resourceId: targetId, outcome: "SUCCESS" });
+    if (!audited) return NextResponse.json({ error: "Item removed but audit recording failed; contact support" }, { status: 503 });
+  }
   return NextResponse.json({ saved: false });
 }

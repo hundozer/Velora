@@ -17,6 +17,7 @@ export type PublicProfileRow = Pick<
   | "show_online_status"
   | "last_active_at"
   | "created_at"
+  | "is_demo"
 >;
 
 export interface AnonymousPublicProfile {
@@ -33,6 +34,7 @@ export interface AnonymousPublicProfile {
   verified: boolean;
   recentlyActive: boolean;
   joinedAt: string;
+  isDemo: boolean;
 }
 
 function cleanPublicText(value: unknown, maxLength: number) {
@@ -66,5 +68,6 @@ export function toAnonymousPublicProfile(row: PublicProfileRow): AnonymousPublic
       Number.isFinite(lastActive) &&
       Date.now() - lastActive < 24 * 60 * 60 * 1000,
     joinedAt: row.created_at,
+    isDemo: row.is_demo === true,
   };
 }

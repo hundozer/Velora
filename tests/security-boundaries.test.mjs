@@ -118,6 +118,15 @@ test("media presigning requires identity and enforces size and type allowlists",
   assert.doesNotMatch(source, /publicUrl: presigned\.publicUrl/);
 });
 
+test("media completion durably audits both successful finalization and quarantine", async () => {
+  const completion = await read("src/app/api/media/[id]/complete/route.ts");
+  assert.match(completion, /appendDurableAudit/);
+  assert.match(completion, /MEDIA_UPLOAD_COMPLETED/);
+  assert.match(completion, /MEDIA_UPLOAD_QUARANTINED/);
+  assert.match(completion, /STORED_OBJECT_MISMATCH/);
+  assert.match(completion, /processingError/);
+});
+
 test("production auth middleware has a fail-closed response", async () => {
   const source = await read("src/middleware.ts");
   assert.match(source, /NODE_ENV === "production"/);
@@ -483,8 +492,12 @@ test("notifications, saves, comments, and unread messages are durable and server
   assert.match(messages, /type: "NEW_MESSAGE"/);
   assert.match(saves, /resolveContentTarget/);
   assert.match(saves, /profile_id: actor\.actor\.profileId/);
+  assert.match(saves, /CONTENT_SAVE/);
+  assert.match(saves, /CONTENT_UNSAVE/);
   assert.match(comments, /resolveContentTarget/);
   assert.match(comments, /author_id: actor\.actor\.profileId/);
+  assert.match(comments, /COMMENT_CREATE/);
+  assert.match(comments, /COMMENT_ADMIN_REMOVE/);
 });
 
 test("shared actor boundary blocks inactive accounts and unified search enforces privacy", async () => {
@@ -612,4 +625,29 @@ test("anonymous search returns only explicit public, approved, active records", 
   assert.doesNotMatch(route, /sexual_orientation|auth_id|email/);
   assert.match(page, /user \? "\/api\/search" : "\/api\/public\/search"/);
   assert.doesNotMatch(page, /if \(!user\) return <BehindTheDoorLanding/);
+});
+
+test("demo profiles are staging-only, visibly labeled, reversible, and cannot impersonate activity", async () => {
+  const seed = await read("scripts/seed-staging-demo.mjs");
+  const migration = await read("supabase/migrations/20260819_demo_content_marker.sql");
+  const publicRoute = await read("src/app/api/public/community/route.ts");
+  const home = await read("src/components/community/PublicCommunityHome.tsx");
+  const people = await read("src/app/people/page.tsx");
+  assert.match(seed, /const DEMO_COUNT = 100/);
+  assert.match(seed, /INTIMO_ENVIRONMENT.*staging/);
+  assert.match(seed, /INTIMO_STAGING_SUPABASE_PROJECT_REF/);
+  assert.match(seed, /INTIMO_PRODUCTION_SUPABASE_PROJECT_REF/);
+  assert.match(seed, /SEED_INTIMO_STAGING_DEMOS/);
+  assert.match(seed, /@intimo\.invalid/);
+  assert.match(seed, /verification_status: "UNVERIFIED"/);
+  assert.match(seed, /allow_direct_messages: false/);
+  assert.match(seed, /show_online_status: false/);
+  assert.match(seed, /is_demo: true/);
+  assert.match(seed, /delete\(\).*\.eq\("is_demo", true\).*\.like\("auth_id"/s);
+  assert.match(migration, /is_demo boolean not null default false/);
+  assert.match(publicRoute, /demoContentPresent/);
+  for (const source of [home, people]) {
+    assert.match(source, /Staging demo content/);
+    assert.match(source, /fictional/);
+  }
 });

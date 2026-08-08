@@ -3,6 +3,7 @@ import { hasAdultAccess, isAdminActor, resolveServerActor } from "@/lib/auth/ser
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { CONTENT_TARGET_TYPES, resolveContentTarget, type ContentTargetType } from "@/lib/content/targetAccess";
+import { appendDurableAudit } from "@/lib/auth/durableAudit";
 
 export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -28,6 +29,8 @@ export async function POST(req: NextRequest) {
   const access = await resolveContentTarget(actor.actor, targetType as ContentTargetType, targetId); if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
   const { data, error } = await access.db.from("content_comments").insert({ author_id: actor.actor.profileId, target_type: targetType, target_id: targetId, body: text, moderation_status: "VISIBLE" }).select("id,author_id,body,created_at").single();
   if (error || !data) return NextResponse.json({ error: "Comment could not be created" }, { status: 502 });
+  const audited = await appendDurableAudit(access.db, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "COMMENT_CREATE", resourceType: targetType, resourceId: targetId, outcome: "SUCCESS", metadata: { commentId: data.id } });
+  if (!audited) return NextResponse.json({ error: "Comment created but audit recording failed; contact support" }, { status: 503 });
   if (!access.isOwner) { const { data: author } = await access.db.from("profiles").select("display_name,avatar_url").eq("id", actor.actor.profileId).maybeSingle(); if (author) await access.db.from("notifications").insert({ user_id: access.target.ownerId, type: "NEW_COMMENT", title: "New comment", message: `${author.display_name} commented on your content.`, actor_name: author.display_name, actor_avatar: author.avatar_url, target_link: `/${targetType.toLowerCase()}/${targetId}`, is_read: false }); }
   return NextResponse.json({ comment: data }, { status: 201 });
 }
@@ -37,6 +40,8 @@ export async function DELETE(req: NextRequest) {
   const id = new URL(req.url).searchParams.get("id") || ""; if (!UUID.test(id)) return NextResponse.json({ error: "Invalid comment" }, { status: 400 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Comments unavailable" }, { status: 503 });
   let query = db.from("content_comments").delete().eq("id", id); if (!isAdminActor(actor.actor)) query = query.eq("author_id", actor.actor.profileId);
-  const { data, error } = await query.select("id").maybeSingle(); if (error) return NextResponse.json({ error: "Comment deletion failed" }, { status: 502 }); if (!data) return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+  const { data, error } = await query.select("id,author_id,target_type,target_id").maybeSingle(); if (error) return NextResponse.json({ error: "Comment deletion failed" }, { status: 502 }); if (!data) return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+  const audited = await appendDurableAudit(db, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: isAdminActor(actor.actor) && data.author_id !== actor.actor.profileId ? "COMMENT_ADMIN_REMOVE" : "COMMENT_DELETE", resourceType: data.target_type, resourceId: data.target_id, outcome: "SUCCESS", metadata: { commentId: data.id, authorId: data.author_id } });
+  if (!audited) return NextResponse.json({ error: "Comment removed but audit recording failed; contact support" }, { status: 503 });
   return NextResponse.json({ deleted: true });
 }
