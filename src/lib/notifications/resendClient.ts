@@ -61,7 +61,11 @@ export class ResendClient {
       }
     }
 
-    // Fallback to simulated outbox when RESEND_API_KEY is not configured
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Transactional email delivery is unavailable");
+    }
+
+    // Development-only simulated outbox. Never report a simulated production delivery.
     const simulatedId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     console.log(`[RESEND SIMULATED DISPATCH] Sender: ${sender} | ReplyTo: ${replyTo} | To: ${payload.to} | Subject: ${payload.subject}`);
 

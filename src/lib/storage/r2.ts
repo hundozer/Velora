@@ -1,4 +1,4 @@
-import { GetObjectCommand, HeadObjectCommand, S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID || "";
@@ -95,4 +95,10 @@ export async function inspectStoredObject(objectKey: string) {
   if (!isR2Configured || !r2Client) return null;
   const result = await r2Client.send(new HeadObjectCommand({ Bucket: bucketName, Key: objectKey }));
   return { byteSize: result.ContentLength ?? 0, mimeType: result.ContentType ?? "" };
+}
+
+export async function deleteStoredObject(objectKey: string): Promise<void> {
+  if (!isR2Configured || !r2Client) throw new Error("Private media storage is unavailable");
+  if (!objectKey || objectKey.includes("..") || objectKey.startsWith("/")) throw new Error("Invalid object key");
+  await r2Client.send(new DeleteObjectCommand({ Bucket: bucketName, Key: objectKey }));
 }

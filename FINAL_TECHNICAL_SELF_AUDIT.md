@@ -19,7 +19,7 @@ Scope: repository implementation and preview/staging readiness. This is not lega
 | Saves/comments/notifications | PASS for implemented lifecycle | Server-owned database state and real event sources; staging migration required |
 | Identity verification | PARTIAL | Private owner-submitted evidence, durable queue, MFA/granular admin signed access and audit; stronger age-assurance provider remains external |
 | Moderation/admin/God Mode | PASS for secure foundation | Server roles, active account, MFA, short elevation, audit and explicit decision forms; real operational staffing remains owner responsibility |
-| Privacy export/deletion/retention | PARTIAL | Owner-derived APIs and lifecycle schema exist; scheduled completion workers and production evidence remain |
+| Privacy export/deletion/retention | PARTIAL | Comprehensive owner export plus legal-hold-aware, R2-first, resumable anonymization and durable run evidence are implemented; migration/scheduling/production evidence remain |
 | Accessibility/responsive UX | PARTIAL | Semantic labels, explicit admin decisions, mobile navigation, lint/build pass; formal axe, keyboard and screen-reader test remains |
 | Six-language localization | FAIL | Locale framework exists, but broad English hardcoding and professional policy translation remain |
 | DPIA | LEGAL REVIEW | Technical input exists; controller/DPO/counsel must complete and approve |
@@ -27,7 +27,7 @@ Scope: repository implementation and preview/staging readiness. This is not lega
 
 ## Verification evidence
 
-- `npm run test`: 35 security boundary tests pass.
+- `npm run test`: 37 security boundary tests pass.
 - `npm run typecheck`: pass.
 - `npm run lint`: pass with no warnings.
 - `npm run build`: pass; Auth0 SDK emits a known non-fatal dynamic-dependency warning.
@@ -40,12 +40,12 @@ Scope: repository implementation and preview/staging readiness. This is not lega
 1. Apply the staged Supabase migrations to a backed-up staging project in order; verify schema, forced RLS, revoked browser grants and rollback rehearsal. No migration application is claimed here.
 2. Integrate and validate a privacy-preserving stronger age-assurance provider before explicit-content launch; migrate existing accounts safely.
 3. Add malware/content scanning and a real video-processing pipeline. Videos remain non-approvable while processing is not `READY`.
-4. Implement and operate scheduled retention, deletion/anonymization and complete export workers with auditable outcomes.
+4. Apply migration `20260815_retention_execution.sql`, configure the server-only retention scheduler secret, approve the proposed period, and validate alerts, completion notices and provider backup expiry.
 5. Complete six-language product and policy localization and the required human/legal review.
 6. Run clean two-member plus moderator browser E2E journeys against the migrated staging database, including blocked users, suspended users, expired sessions, upload approval/rejection and privacy deletion.
 
 ## Readiness
 
-MVP readiness score: **70/100**.
+MVP readiness score: **73/100**.
 
 Recommendation: **NO-GO** for a public explicit-adult production launch. **CONDITIONAL GO** only for controlled preview/staging testing with non-production data after migrations are applied. Production promotion remains prohibited until credentials are confirmed rotated, the external technical blockers above are verified, and the owner explicitly approves deployment.

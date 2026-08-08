@@ -16,7 +16,36 @@ test("account deletion derives its target from the verified session", async () =
   const source = await read("src/app/api/auth/delete-account/route.ts");
   assert.match(source, /getVerifiedIdentity\(req\)/);
   assert.match(source, /identity\.sub/);
+  assert.match(source, /account_status: "DELETION_REQUESTED"/);
+  assert.match(source, /account_status: "DEACTIVATED"/);
   assert.doesNotMatch(source, /body\?\.auth0UserId|body\?\.email/);
+});
+
+test("retention execution is secret-authenticated, legal-hold aware, durable, and removes stored media first", async () => {
+  const route = await read("src/app/api/internal/retention/run/route.ts");
+  const auth = await read("src/lib/security/cronAuth.ts");
+  const worker = await read("src/lib/privacy/retention.ts");
+  const migration = await read("supabase/migrations/20260815_retention_execution.sql");
+  assert.match(route, /isAuthorizedCronRequest\(req\)/);
+  assert.match(route, /ANONYMIZATION_IN_PROGRESS/);
+  assert.match(auth, /timingSafeEqual/);
+  assert.match(auth, /INTIMO_RETENTION_CRON_SECRET/);
+  assert.match(worker, /retention_holds/);
+  assert.match(worker, /deleteStoredObject/);
+  assert.match(worker, /account_lifecycle_status: "DELETED"/);
+  assert.match(worker, /sendPrivacyDeletionComplete/);
+  assert.match(migration, /retention_execution_events/);
+  assert.match(migration, /force row level security/i);
+});
+
+test("privacy export covers durable profile, media, interaction, safety, and rights data", async () => {
+  const route = await read("src/app/api/privacy/export/route.ts");
+  for (const table of ["media_objects", "content_posts", "content_comments", "saved_items", "content_reactions", "notifications", "moderation_cases", "moderation_appeals", "copyright_notices", "verification_reviews", "privacy_requests"]) {
+    assert.match(route, new RegExp(`from\\(\\"${table}\\"\\)`));
+  }
+  assert.match(route, /SELF_SERVICE_JSON/);
+  assert.match(route, /third-party rights are protected/);
+  assert.doesNotMatch(route, /provider_reference/);
 });
 
 test("media presigning requires identity and enforces size and type allowlists", async () => {

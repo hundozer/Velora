@@ -14,9 +14,9 @@ Technical self-audit updated: 2026-08-08. Source of truth: `INTIMO_MVP_COMPLIANC
 | CR-PRIV-002 private media | PARTIAL | `media_objects`, entitlement route, short signed downloads, explicit participant declaration | Migration un-applied; malware/content scanning and video processing provider incomplete |
 | CR-PRIV-003 public minimization | PARTIAL | `publicProfile.ts` excludes DOB/auth identifiers | Runtime verification and legacy paths need full integration tests |
 | CR-RIGHTS-001 privacy center | PARTIAL | settings Privacy Center and privacy APIs | Correction/objection/restriction workflow incomplete |
-| CR-RIGHTS-002 export | PARTIAL | authenticated export endpoint | Export does not yet cover all media, community, preference and moderation data |
-| CR-RIGHTS-003 deletion | PARTIAL | self-owned request, Auth0 delete, resumable profile lifecycle | No background erasure/anonymization worker or completion notification |
-| CR-RET-001 retention/deletion | PARTIAL | lifecycle columns and `DATA_RETENTION.md` | Scheduled jobs, legal-hold enforcement and deletion evidence absent |
+| CR-RIGHTS-002 export | PASS (technical) | Owner-derived export covers profile, consent, relationships, messages, dating, media/declarations, community interactions, notifications, submitted reports, appeals, copyright, verification and rights requests | Reports about the requester and restricted safety material require reviewed disclosure to protect third parties; staging runtime test remains |
+| CR-RIGHTS-003 deletion | PARTIAL | Self-owned request, Auth0 deletion, resumable erasure/anonymization worker and completion notice | Migration/scheduler not externally applied; provider backup expiry and operator alerting remain |
+| CR-RET-001 retention/deletion | PARTIAL | Durable runs/events, active legal holds, R2-first deletion, resumable anonymization and evidence | Retention periods need approval; migration, scheduler, monitoring and production evidence remain |
 | CR-DPIA-001 DPIA | LEGAL REVIEW | `DPIA_TECHNICAL_INPUT.md` | Owner/DPO/counsel must complete and approve before launch |
 | CR-COOKIE-001/002 consent | PARTIAL | necessary/analytics/marketing choices; optional scripts absent | Preferences center/reopen, localization and policy approval incomplete |
 | CR-DSA-001 reporting | PARTIAL | structured report API/UI | Reporting affordances are not present on every resource type |
@@ -48,11 +48,11 @@ Technical self-audit updated: 2026-08-08. Source of truth: `INTIMO_MVP_COMPLIANC
 2. Configure server-only database and R2 credentials; verify Auth0 rotation/configuration without exposing values.
 3. Select and integrate stronger, data-minimizing age assurance for explicit adult content; backfill existing accounts.
 4. Finish private-media upload completion/scanning and explicit participant confirmation.
-5. Implement deletion/retention workers and complete data export coverage.
+5. Apply and operationally validate the staged deletion/retention worker, scheduler secret, alerts and provider backup expiry.
 6. Add admin MFA, durable audit logging, critical-content restriction/evidence workflow and runtime integration tests.
 7. Complete DPIA and qualified Czech/EU legal review, including AVMS/DSA/GDPR/copyright and all six localized policies.
 
-Current technical readiness: **70/100 — NO-GO** for public explicit-adult launch. The free MVP constraint and core server authorization are enforced; remaining blockers include staged migration application, stronger age assurance, media scanning/video processing, privacy retention/deletion operations, production-like E2E testing, localization, and legal approval. See `FINAL_TECHNICAL_SELF_AUDIT.md`.
+Current technical readiness: **73/100 — NO-GO** for public explicit-adult launch. The free MVP constraint and core server authorization are enforced; remaining blockers include staged migration application and worker scheduling, stronger age assurance, media scanning/video processing, production-like E2E testing, localization, and legal approval. See `FINAL_TECHNICAL_SELF_AUDIT.md`.
 
 ## Required end-to-end journey self-audit
 

@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     const supabase = getServerSupabase();
     if (!supabase) return NextResponse.json({ error: "Deletion service unavailable" }, { status: 503 });
     const requestedAt = new Date().toISOString();
-    const { data: profile, error: profileError } = await supabase.from("profiles").update({ account_lifecycle_status: "DELETION_REQUESTED", deletion_requested_at: requestedAt, public_profile_visibility: false, profile_visibility: "PRIVATE", allow_direct_messages: false, updated_at: requestedAt }).eq("auth_id", identity.sub).select("id").maybeSingle();
+    const { data: profile, error: profileError } = await supabase.from("profiles").update({ account_status: "DELETION_REQUESTED", account_lifecycle_status: "DELETION_REQUESTED", deletion_requested_at: requestedAt, public_profile_visibility: false, profile_visibility: "PRIVATE", allow_direct_messages: false, updated_at: requestedAt }).eq("auth_id", identity.sub).select("id").maybeSingle();
     if (profileError || !profile) throw new Error("Deletion lifecycle could not be started");
     const { error: requestError } = await supabase.from("privacy_requests").insert({ profile_id: profile.id, request_type: "DELETION", status: "IN_PROGRESS", requested_at: requestedAt, notes: "Self-service deletion; identity deactivation initiated" });
     if (requestError) throw new Error("Deletion request could not be recorded");
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     }
 
     const deactivatedAt = new Date().toISOString();
-    const { error } = await supabase.from("profiles").update({ account_lifecycle_status: "DEACTIVATED", deactivated_at: deactivatedAt, updated_at: deactivatedAt }).eq("id", profile.id).eq("auth_id", identity.sub);
+    const { error } = await supabase.from("profiles").update({ account_status: "DEACTIVATED", account_lifecycle_status: "DEACTIVATED", deactivated_at: deactivatedAt, updated_at: deactivatedAt }).eq("id", profile.id).eq("auth_id", identity.sub);
     if (error) throw new Error("Profile deactivation failed");
 
     auditLogger.logEvent({
