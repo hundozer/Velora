@@ -4,6 +4,7 @@ import { resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
+import { appendDurableAudit } from "@/lib/auth/durableAudit";
 
 export const dynamic = "force-dynamic";
 
@@ -47,12 +48,15 @@ export async function GET(req: NextRequest) {
   if (failed) {
     await supabase.from("privacy_requests").update({ status: "REJECTED_WITH_REASON", completed_at: new Date().toISOString(), updated_at: new Date().toISOString(), notes: `Automated export failed in category: ${failed[0]}` }).eq("id", requestRow.id);
     auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "PRIVACY_EXPORT", resourceId: profileId, resourceType: "PROFILE", status: "ERROR", details: { category: failed[0] } });
+    await appendDurableAudit(supabase, { actorProfileId: profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "PRIVACY_EXPORT", resourceType: "PROFILE", resourceId: profileId, outcome: "ERROR", metadata: { failedCategory: failed[0] } });
     return NextResponse.json({ error: "Data export could not be completed" }, { status: 502 });
   }
   const result = Object.fromEntries(entries);
   const completedAt = new Date().toISOString();
   await supabase.from("privacy_requests").update({ status: "COMPLETED", completed_at: completedAt, updated_at: completedAt }).eq("id", requestRow.id);
   auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "PRIVACY_EXPORT", resourceId: profileId, resourceType: "PROFILE", status: "SUCCESS" });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "PRIVACY_EXPORT", resourceType: "PROFILE", resourceId: profileId, outcome: "SUCCESS", metadata: { requestId: requestRow.id } });
+  if (!audited) return NextResponse.json({ error: "Export audit evidence could not be recorded" }, { status: 502 });
   return NextResponse.json({
     generatedAt: completedAt,
     scopeNote: "Reports made about you and restricted safety records require a reviewed access request so third-party rights are protected.",

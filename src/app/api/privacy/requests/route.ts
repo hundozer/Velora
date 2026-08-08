@@ -3,6 +3,7 @@ import { resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
+import { appendDurableAudit } from "@/lib/auth/durableAudit";
 
 export const dynamic = "force-dynamic";
 const TYPES = new Set(["CORRECTION", "RESTRICTION", "OBJECTION", "ACCESS"]);
@@ -31,7 +32,8 @@ export async function POST(req: NextRequest) {
   const requestedAt = new Date(); const dueAt = new Date(requestedAt.getTime() + 30 * 24 * 60 * 60 * 1000);
   const { data, error } = await db.from("privacy_requests").insert({ profile_id: actor.actor.profileId, request_type: requestType, request_category: "MEMBER_RIGHTS_REQUEST", status: "OPEN", requested_at: requestedAt.toISOString(), due_at: dueAt.toISOString(), notes: details }).select("id,request_type,status,requested_at,due_at").single();
   if (error || !data) return NextResponse.json({ error: "Privacy request could not be recorded" }, { status: 502 });
-  await db.from("audit_events").insert({ actor_profile_id: actor.actor.profileId, actor_auth0_sub: actor.actor.auth0Sub, action: "PRIVACY_RIGHT_REQUEST_CREATED", resource_type: "PRIVACY_REQUEST", resource_id: data.id, outcome: "SUCCESS", metadata: { requestType } });
+  const audited = await appendDurableAudit(db, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "PRIVACY_RIGHT_REQUEST_CREATED", resourceType: "PRIVACY_REQUEST", resourceId: data.id, outcome: "SUCCESS", metadata: { requestType } });
+  if (!audited) return NextResponse.json({ error: "Request recorded but audit evidence failed; contact support with the request reference", requestId: data.id }, { status: 502 });
   auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "PRIVACY_RIGHT_REQUEST_CREATED", resourceId: data.id, resourceType: "PRIVACY_REQUEST", status: "SUCCESS", details: { requestType } });
   return NextResponse.json({ request: data }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
 }

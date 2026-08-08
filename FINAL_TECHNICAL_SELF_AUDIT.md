@@ -27,7 +27,7 @@ Scope: repository implementation and preview/staging readiness. This is not lega
 
 ## Verification evidence
 
-- `npm run test`: 40 security boundary tests pass.
+- `npm run test`: 43 security boundary tests pass.
 - `npm run typecheck`: pass.
 - `npm run lint`: pass with no warnings.
 - `npm run build`: pass; Auth0 SDK emits a known non-fatal dynamic-dependency warning.

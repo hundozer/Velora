@@ -14,7 +14,7 @@ export const TRUST_LEVEL_DEFINITIONS: Record<TrustLevel, TrustLevelDetails> = {
   1: {
     level: 1,
     title: "New Member",
-    description: "Registered account on Velora platform",
+    description: "Registered account on Intimo",
     requirements: ["Account created"],
     capabilities: ["Browse public directory", "View public creator profiles", "View public media"],
   },
@@ -26,8 +26,8 @@ export const TRUST_LEVEL_DEFINITIONS: Record<TrustLevel, TrustLevelDetails> = {
     capabilities: [
       "Send direct messages",
       "Join public communities",
-      "Purchase premium media",
-      "Subscribe to creators",
+      "Save and comment on approved content",
+      "Follow visible members",
     ],
   },
   3: {
@@ -44,17 +44,16 @@ export const TRUST_LEVEL_DEFINITIONS: Record<TrustLevel, TrustLevelDetails> = {
   4: {
     level: 4,
     title: "Verified Creator",
-    description: "Full identity, payout, and 2257 compliance verified",
+    description: "Identity-verified creator profile approved for the free MVP",
     requirements: [
       "Level 3 Identity verification",
-      "Payout account approval",
-      "18 U.S.C. 2257 compliance document on file",
+      "Creator profile review",
+      "Participant and publication consent controls",
     ],
     capabilities: [
-      "Publish paid media albums & videos",
-      "Host paid livestreams",
-      "Receive subscriber revenue",
-      "Request financial payouts",
+      "Publish free approved media",
+      "Maintain a visible creator profile",
+      "Use standard community interactions",
     ],
   },
 };

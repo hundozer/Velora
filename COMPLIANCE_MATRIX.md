@@ -32,11 +32,11 @@ Technical self-audit updated: 2026-08-08. Source of truth: `INTIMO_MVP_COMPLIANC
 | CR-MSG-003 attachments | PASS (disabled) | No attachment control exposed in the durable messaging path | Keep unavailable until private scanning/authorization/retention is implemented |
 | CR-SEC-001/002 authorization/security | PARTIAL | verified Auth0 session only, active-account gate, allowlists, server actor, rate/size/type limits; client role/impersonation/fallback login removed | External configuration and real-database authorization validation remain |
 | Admin security | PARTIAL | six least-privilege roles, granular server permissions, production MFA and recent-auth checks | Auth0 MFA claims and staged migration require runtime verification; role changes remain configuration-only |
-| Audit logging | PARTIAL | Immutable moderation/admin schemas, transactional report/appeal events, and durable retention execution evidence | General security logger still needs durable SIEM delivery and production validation |
+| Audit logging | PARTIAL | Immutable moderation/admin schemas, transactional report/appeal events, durable retention evidence, and durable privacy/consent/deletion audit appends | Remaining general security events need durable SIEM delivery and production validation |
 | CR-AVMS-001 video-platform duties | LEGAL REVIEW | live/events disabled; `LEGAL_REVIEW_VIDEO_PLATFORM.md` | Counsel determination required before enabling video-sharing/live features |
 | CR-COPY-001 copyright workflow | PARTIAL | notice API and case storage | Counter-notice UI, claimant notices, repeat-infringer process and legal review incomplete |
-| Accessibility | PARTIAL | semantic components and lint | Automated axe plus keyboard/screen-reader/manual review absent |
-| I18N-001 six languages | FAIL | locale scaffolding exists | Most product/compliance strings remain English; human/legal translation required |
+| Accessibility | PARTIAL | Semantic navigation, labelled controls, shared modal dialog semantics, Escape handling, focus containment/restore and lint | Automated axe plus keyboard/screen-reader/manual review remains |
+| I18N-001 six languages | PARTIAL | Six dictionaries and translated responsive primary navigation; legacy locale preference auto-migrates to Intimo | Most product/compliance strings remain English; human/legal translation required |
 | Required policy routes | PARTIAL | exact top-level routes redirect to legal drafts | Drafts are incomplete, English-only and not legally approved |
 | CR-MVP-001 free MVP | PASS (technical) | `MONETIZATION_ENABLED=false`, middleware route blocks | Dormant legacy payment code remains and must stay unreachable |
 | Free creator experience | PARTIAL | creator discovery/profile presentation is free | Creator operation data remains incomplete; no paid controls may be enabled |

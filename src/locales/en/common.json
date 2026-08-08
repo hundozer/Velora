@@ -9,18 +9,19 @@
     "messages": "Messages",
     "wallet": "Vault",
     "settings": "Settings",
-    "membership": "Inner Circle"
+    "membership": "Inner Circle",
+    "home": "Home", "people": "People", "dating": "Dating", "search": "Search"
   },
   "hero": {
     "tag": "Adults-Only Social Discovery Marketplace",
     "headline": "Meet people who are open to the same experiences.",
     "subhead": "Join a private community of verified adults looking for connections, chemistry and unforgettable experiences.",
-    "join_cta": "Join Velora",
+    "join_cta": "Join Intimo",
     "explore_cta": "Explore Members"
   },
   "auth": {
     "login": "Sign In",
-    "register": "Join Velora",
+    "register": "Join Intimo",
     "logout": "Sign Out"
   },
   "common": {

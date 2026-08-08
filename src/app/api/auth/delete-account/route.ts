@@ -4,6 +4,7 @@ import { managementRequest } from "@/lib/auth0/management";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { auditLogger } from "@/lib/auth/auditLogger";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
+import { appendDurableAudit } from "@/lib/auth/durableAudit";
 
 export async function POST(req: NextRequest) {
   const identity = await getVerifiedIdentity(req);
@@ -51,6 +52,7 @@ export async function POST(req: NextRequest) {
       status: "SUCCESS",
       details: { selfService: true, lifecycleStatus: "DEACTIVATED", hardDeletionPending: true },
     });
+    await appendDurableAudit(supabase, { actorProfileId: profile.id, actorAuth0Sub: identity.sub, action: "GDPR_DELETE_ACCOUNT", resourceType: "PROFILE", resourceId: profile.id, outcome: "SUCCESS", metadata: { lifecycleStatus: "DEACTIVATED", hardDeletionPending: true } });
     return NextResponse.json({ success: true });
   } catch (error) {
     auditLogger.logEvent({ actorId: identity.sub, actorRole: "MEMBER", action: "GDPR_DELETE_ACCOUNT", status: "ERROR" });

@@ -3,6 +3,7 @@ import { resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
+import { appendDurableAudit } from "@/lib/auth/durableAudit";
 
 export const dynamic = "force-dynamic";
 const CONSENT_VERSION = "sensitive-profile-v1-draft";
@@ -48,5 +49,7 @@ export async function POST(req: NextRequest) {
   });
   if (error) return NextResponse.json({ error: "Consent update failed" }, { status: 502 });
   auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: granted ? "CONSENT_GRANTED" : "CONSENT_WITHDRAWN", resourceType: "CONSENT", status: "SUCCESS", details: { consentType, consentVersion: CONSENT_VERSION } });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: granted ? "CONSENT_GRANTED" : "CONSENT_WITHDRAWN", resourceType: "CONSENT", resourceId: consentType, outcome: "SUCCESS", metadata: { consentVersion: CONSENT_VERSION } });
+  if (!audited) return NextResponse.json({ error: "Consent saved but audit evidence failed; contact support" }, { status: 502 });
   return noStore(NextResponse.json({ consentType, consentVersion: CONSENT_VERSION, status: granted ? "GRANTED" : "WITHDRAWN", timestamp: now }));
 }

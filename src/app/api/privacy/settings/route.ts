@@ -3,6 +3,7 @@ import { resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
+import { appendDurableAudit } from "@/lib/auth/durableAudit";
 
 export const dynamic = "force-dynamic";
 const VISIBILITY = new Set(["EVERYONE", "MEMBERS_ONLY", "MATCHING_USERS", "APPROVED_USERS", "PRIVATE"]);
@@ -43,5 +44,7 @@ export async function PUT(req: NextRequest) {
   const { data, error } = await supabase.from("profiles").update(update).eq("id", actor.actor.profileId).select("profile_visibility,sensitive_fields_visibility,location_precision,show_online_status,show_distance,message_permission").single();
   if (error) return NextResponse.json({ error: "Privacy settings update failed" }, { status: 502 });
   auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "PRIVACY_SETTINGS_UPDATE", resourceId: actor.actor.profileId, resourceType: "PROFILE", status: "SUCCESS" });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "PRIVACY_SETTINGS_UPDATE", resourceType: "PROFILE", resourceId: actor.actor.profileId, outcome: "SUCCESS" });
+  if (!audited) return NextResponse.json({ error: "Settings saved but audit evidence failed; contact support" }, { status: 502 });
   return NextResponse.json({ settings: data }, { headers: { "Cache-Control": "private, no-store" } });
 }

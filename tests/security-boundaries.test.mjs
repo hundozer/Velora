@@ -55,9 +55,42 @@ test("privacy-rights requests are owner-derived, rate-limited, durable, and audi
   assert.match(route, /privacy-request:\$\{actor\.actor\.auth0Sub\}/);
   assert.match(route, /profile_id: actor\.actor\.profileId/);
   assert.match(route, /MEMBER_RIGHTS_REQUEST/);
-  assert.match(route, /audit_events/);
+  assert.match(route, /appendDurableAudit/);
   assert.match(settings, /Exercise another privacy right/);
   assert.match(settings, /\/api\/privacy\/requests/);
+});
+
+test("privacy and consent actions append durable database audit evidence", async () => {
+  const helper = await read("src/lib/auth/durableAudit.ts");
+  for (const routePath of ["src/app/api/privacy/requests/route.ts", "src/app/api/privacy/export/route.ts", "src/app/api/privacy/consents/route.ts", "src/app/api/privacy/settings/route.ts", "src/app/api/auth/delete-account/route.ts"]) {
+    assert.match(await read(routePath), /appendDurableAudit/);
+  }
+  assert.match(helper, /from\("audit_events"\)\.insert/);
+  assert.match(helper, /metadata: event\.metadata \|\| \{\}/);
+});
+
+test("shared modal provides dialog semantics, escape handling, and keyboard focus containment", async () => {
+  const modal = await read("src/components/ui/Modal.tsx");
+  assert.match(modal, /role="dialog"/);
+  assert.match(modal, /aria-modal="true"/);
+  assert.match(modal, /event\.key === "Escape"/);
+  assert.match(modal, /event\.key !== "Tab"/);
+  assert.match(modal, /previouslyFocused\?\.focus/);
+  assert.match(modal, /aria-label="Close dialog"/);
+});
+
+test("six-language mobile navigation uses Intimo keys and migrates the legacy locale preference", async () => {
+  const context = await read("src/context/LanguageContext.tsx");
+  const mobile = await read("src/components/layout/MobileNavigation.tsx");
+  for (const locale of ["en", "cs", "hu", "ro", "sk", "de"]) {
+    const dictionary = await read(`src/locales/${locale}/common.json`);
+    assert.doesNotMatch(dictionary, /Velora/);
+    for (const key of ["home", "people", "dating", "search"]) assert.match(dictionary, new RegExp(`"${key}"`));
+  }
+  assert.match(context, /localStorage\.setItem\("intimo_lang"/);
+  assert.match(context, /localStorage\.removeItem\("velora_lang"/);
+  assert.match(mobile, /t\("nav\.home"\)/);
+  assert.match(mobile, /aria-label="Mobile navigation"/);
 });
 
 test("affected users can see eligible decisions and appeal while dating ads expose reporting", async () => {

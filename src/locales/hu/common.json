@@ -9,13 +9,14 @@
     "messages": "Üzenetek",
     "wallet": "Széf",
     "settings": "Beállítások",
-    "membership": "Tagság"
+    "membership": "Tagság",
+    "home": "Kezdőlap", "people": "Emberek", "dating": "Ismerkedés", "search": "Keresés"
   },
   "hero": {
     "tag": "Felnőtt Közösségi Felfedező Piactér",
     "headline": "Találkozz olyan emberekkel, akik ugyanazt a élményt keresik.",
     "subhead": "Csatlakozz hitelesített felnőttek privát közösségéhez, akik kapcsolatot, kémiát és felejthetetlen élményeket keresnek.",
-    "join_cta": "Csatlakozás a Velorához",
+    "join_cta": "Csatlakozás az Intimóhoz",
     "explore_cta": "Tagok Felfedezése"
   },
   "auth": {
