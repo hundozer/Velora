@@ -3,6 +3,7 @@ import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
+import { appendDurableAudit } from "@/lib/auth/durableAudit";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -23,5 +24,7 @@ export async function POST(req: NextRequest) {
   if (error || !review) return NextResponse.json({ error: "Verification submission failed" }, { status: 502 });
   await db.from("profiles").update({ verification_status: "PENDING_REVIEW" }).eq("id", actor.actor.profileId);
   auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "IDENTITY_VERIFICATION_SUBMIT", resourceId: review.id, resourceType: "VERIFICATION_REVIEW", status: "SUCCESS" });
+  const audited = await appendDurableAudit(db, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "IDENTITY_VERIFICATION_SUBMIT", resourceType: "VERIFICATION_REVIEW", resourceId: review.id, outcome: "SUCCESS", metadata: { method: "MANUAL_SELFIE_R2" } });
+  if (!audited) return NextResponse.json({ error: "Verification was submitted but its audit evidence could not be recorded", reviewId: review.id }, { status: 502 });
   return NextResponse.json({ review }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
 }

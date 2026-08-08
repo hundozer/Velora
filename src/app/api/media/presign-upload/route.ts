@@ -4,6 +4,7 @@ import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
+import { appendDurableAudit } from "@/lib/auth/durableAudit";
 
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "video/mp4", "video/quicktime", "video/webm"]);
 const ALLOWED_FOLDERS = new Set(["photos", "videos", "avatars", "covers", "general"]);
@@ -64,6 +65,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Participant declaration could not be recorded" }, { status: 502 });
     }
     auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "MEDIA_UPLOAD_PRESIGNED", resourceId: media.id, resourceType: "MEDIA", status: "SUCCESS", details: { fileType, fileSize, folder, visibility } });
+    const audited = await appendDurableAudit(supabase, {
+      actorProfileId: actor.actor.profileId,
+      actorAuth0Sub: actor.actor.auth0Sub,
+      action: "MEDIA_UPLOAD_PRESIGNED",
+      resourceType: "MEDIA",
+      resourceId: media.id,
+      outcome: "SUCCESS",
+      metadata: { mimeType: fileType, byteSize: fileSize, folder, visibility },
+    });
+    if (!audited) {
+      await supabase.from("content_participant_declarations").delete().eq("media_id", media.id).eq("uploader_id", actor.actor.profileId);
+      await supabase.from("media_objects").delete().eq("id", media.id).eq("owner_id", actor.actor.profileId);
+      return NextResponse.json({ error: "Upload authorization could not be audited" }, { status: 502 });
+    }
     // The R2 bucket remains private. Even PUBLIC/MEMBERS_ONLY application
     // visibility is enforced by Intimo before issuing a short-lived R2 GET URL.
     return NextResponse.json({ success: true, uploadUrl: presigned.uploadUrl, objectKey: presigned.objectKey, mediaId: media.id, publicUrl: `/api/media/${media.id}`, isMock: presigned.isMock });

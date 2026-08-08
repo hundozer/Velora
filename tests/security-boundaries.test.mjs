@@ -479,6 +479,16 @@ test("identity verification evidence is owner-submitted, private, and admin-audi
   assert.doesNotMatch(context, /impersonateUser|fallbackUser|intimo_original_admin_user/);
 });
 
+test("media authorization and identity verification append durable audit evidence before disclosure", async () => {
+  const presign = await read("src/app/api/media/presign-upload/route.ts");
+  const verification = await read("src/app/api/verification/route.ts");
+  const evidence = await read("src/app/api/admin/verification/[id]/evidence/route.ts");
+  for (const route of [presign, verification, evidence]) assert.match(route, /appendDurableAudit/);
+  assert.match(presign, /Upload authorization could not be audited/);
+  assert.match(evidence, /Verification evidence access could not be audited/);
+  assert.ok(evidence.indexOf("appendDurableAudit(db") < evidence.indexOf("NextResponse.redirect"));
+});
+
 test("privileged admin decisions use explicit inline forms, not ambiguous browser prompts", async () => {
   const consoleSource = await read("src/components/admin/AdminCommandCenter.tsx");
   assert.doesNotMatch(consoleSource, /window\.prompt|\balert\(/);
