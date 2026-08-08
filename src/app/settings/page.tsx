@@ -49,6 +49,14 @@ export default function SettingsPage() {
   const [exportSuccess, setExportSuccess] = useState(false);
   const [mediaUploadPending, setMediaUploadPending] = useState(false);
   const [settingsError, setSettingsError] = useState("");
+  const [rightsType, setRightsType] = useState("CORRECTION");
+  const [rightsDetails, setRightsDetails] = useState("");
+  const [rightsMessage, setRightsMessage] = useState("");
+  const [rightsPending, setRightsPending] = useState(false);
+  const [reportHistory, setReportHistory] = useState<any[]>([]);
+  const [appealCaseId, setAppealCaseId] = useState("");
+  const [appealReason, setAppealReason] = useState("");
+  const [appealMessage, setAppealMessage] = useState("");
 
   const avatarInputRef = React.useRef<HTMLInputElement>(null);
   const coverInputRef = React.useRef<HTMLInputElement>(null);
@@ -93,7 +101,8 @@ export default function SettingsPage() {
     Promise.all([
       fetch("/api/privacy/settings", { credentials: "same-origin" }).then((response) => response.ok ? response.json() : null),
       fetch("/api/privacy/consents", { credentials: "same-origin" }).then((response) => response.ok ? response.json() : null),
-    ]).then(([settingsPayload, consentPayload]) => {
+      fetch("/api/reports", { credentials: "same-origin" }).then((response) => response.ok ? response.json() : null),
+    ]).then(([settingsPayload, consentPayload, reportsPayload]) => {
       const settings = settingsPayload?.settings;
       if (settings) setPrivacy({
         profileVisibility: settings.profile_visibility || "MEMBERS_ONLY",
@@ -105,6 +114,7 @@ export default function SettingsPage() {
       });
       const latest = consentPayload?.consents?.find((item: any) => item.consent_type === "SPECIAL_CATEGORY_PROFILE");
       setSensitiveConsentGranted(latest?.consent_status === "GRANTED");
+      setReportHistory(reportsPayload?.reports || []);
     }).catch(() => undefined);
   }, []);
 
@@ -171,6 +181,24 @@ export default function SettingsPage() {
       // The SDK clears its httpOnly session and validates the return target.
       window.location.href = "/auth/logout?returnTo=%2Fgoodbye";
     }
+  };
+
+  const submitRightsRequest = async () => {
+    setRightsPending(true); setRightsMessage("");
+    const response = await fetch("/api/privacy/requests", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ requestType: rightsType, details: rightsDetails }) });
+    const payload = await response.json().catch(() => ({}));
+    setRightsPending(false);
+    if (!response.ok) { setRightsMessage(payload.error || "Privacy request could not be submitted"); return; }
+    setRightsDetails(""); setRightsMessage(`Request ${payload.request.id} was recorded.`);
+  };
+
+  const submitAppeal = async () => {
+    setAppealMessage("");
+    const response = await fetch(`/api/reports/${encodeURIComponent(appealCaseId)}/appeal`, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason: appealReason }) });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) { setAppealMessage(payload.error || "Appeal could not be submitted"); return; }
+    setReportHistory((items) => items.map((item) => item.id === appealCaseId ? { ...item, status: "APPEALED", appeal_status: "OPEN" } : item));
+    setAppealCaseId(""); setAppealReason(""); setAppealMessage(`Appeal ${payload.appeal.id} was submitted.`);
   };
 
   return (
@@ -363,6 +391,21 @@ export default function SettingsPage() {
               <Download className="w-4 h-4" /> Download Data Archive
             </Button>
           </div>
+
+          <div className="space-y-3 rounded-2xl border border-white/10 p-4">
+            <div><h4 className="text-xs font-bold text-velora-textPrimary">Exercise another privacy right</h4><p className="mt-1 text-[11px] text-velora-textMuted">Request access, correction, restriction of processing, or object to specific processing. Each request receives a durable reference and reviewed response.</p></div>
+            <label className="block text-xs text-velora-textSecondary"><span className="mb-2 block font-semibold">Right requested</span><select value={rightsType} onChange={(event) => setRightsType(event.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white"><option className="bg-velora-card" value="CORRECTION">Correct my data</option><option className="bg-velora-card" value="RESTRICTION">Restrict processing</option><option className="bg-velora-card" value="OBJECTION">Object to processing</option><option className="bg-velora-card" value="ACCESS">Reviewed access request</option></select></label>
+            <label className="block text-xs text-velora-textSecondary"><span className="mb-2 block font-semibold">What should Intimo review?</span><textarea value={rightsDetails} onChange={(event) => setRightsDetails(event.target.value)} rows={4} maxLength={4000} className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" placeholder="Describe the data or processing involved (minimum 20 characters)." /></label>
+            {rightsMessage && <p role="status" className="text-xs text-emerald-300">{rightsMessage}</p>}
+            <Button variant="glass" size="sm" disabled={rightsPending || rightsDetails.trim().length < 20} onClick={submitRightsRequest}>{rightsPending ? "Submitting…" : "Submit privacy request"}</Button>
+          </div>
+
+          {reportHistory.some((item) => item.relationship === "AFFECTED_USER") && <div className="space-y-3 rounded-2xl border border-white/10 p-4">
+            <div><h4 className="text-xs font-bold text-velora-textPrimary">Moderation decisions and appeals</h4><p className="mt-1 text-[11px] text-velora-textMuted">Eligible resolved decisions can be appealed once. Give a specific reason for independent review.</p></div>
+            {reportHistory.filter((item) => item.relationship === "AFFECTED_USER").map((item) => <div key={item.id} className="rounded-xl bg-white/5 p-3 text-xs"><div className="flex flex-wrap justify-between gap-2"><span>{item.content_type} · {item.reason.replaceAll("_", " ")}</span><strong>{item.status}</strong></div>{item.decision_reason && <p className="mt-2 text-velora-textMuted">Decision reason: {item.decision_reason}</p>}{["RESOLVED", "REJECTED"].includes(item.status) && item.appeal_status === "NONE" && <Button variant="glass" size="sm" className="mt-3" onClick={() => setAppealCaseId(item.id)}>Appeal this decision</Button>}</div>)}
+            {appealCaseId && <div className="space-y-2"><label className="block text-xs"><span className="mb-2 block font-semibold">Why should this decision be reviewed?</span><textarea value={appealReason} onChange={(event) => setAppealReason(event.target.value)} rows={4} maxLength={4000} className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" /></label><div className="flex gap-2"><Button variant="ghost" size="sm" onClick={() => { setAppealCaseId(""); setAppealReason(""); }}>Cancel appeal</Button><Button variant="glass" size="sm" disabled={appealReason.trim().length < 20} onClick={submitAppeal}>Submit appeal</Button></div></div>}
+            {appealMessage && <p role="status" className="text-xs text-emerald-300">{appealMessage}</p>}
+          </div>}
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl border border-velora-gold/30">
             <div>

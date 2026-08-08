@@ -16,9 +16,9 @@ export async function GET(req: NextRequest) {
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Reporting service unavailable" }, { status: 503 });
-  const { data, error } = await supabase.from("moderation_cases").select("id,content_type,content_id,reason,status,priority,decision,decision_reason,decision_timestamp,appeal_status,created_at").or(`reporter_id.eq.${actor.actor.profileId},reported_user_id.eq.${actor.actor.profileId}`).order("created_at", { ascending: false }).limit(200);
+  const { data, error } = await supabase.from("moderation_cases").select("id,reporter_id,reported_user_id,content_type,content_id,reason,status,priority,decision,decision_reason,decision_timestamp,appeal_status,created_at").or(`reporter_id.eq.${actor.actor.profileId},reported_user_id.eq.${actor.actor.profileId}`).order("created_at", { ascending: false }).limit(200);
   if (error) return NextResponse.json({ error: "Report history lookup failed" }, { status: 502 });
-  return NextResponse.json({ reports: data || [] }, { headers: { "Cache-Control": "private, no-store" } });
+  return NextResponse.json({ reports: (data || []).map(({ reporter_id, reported_user_id, ...item }) => ({ ...item, relationship: reported_user_id === actor.actor.profileId ? "AFFECTED_USER" : "REPORTER" })) }, { headers: { "Cache-Control": "private, no-store" } });
 }
 
 export async function POST(req: NextRequest) {

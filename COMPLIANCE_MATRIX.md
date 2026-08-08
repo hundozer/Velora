@@ -13,16 +13,16 @@ Technical self-audit updated: 2026-08-08. Source of truth: `INTIMO_MVP_COMPLIANC
 | CR-PRIV-001 field visibility | PARTIAL | profile visibility and minimized serializer | Sensitive-field controls are coarse rather than per-field |
 | CR-PRIV-002 private media | PARTIAL | `media_objects`, entitlement route, short signed downloads, explicit participant declaration | Migration un-applied; malware/content scanning and video processing provider incomplete |
 | CR-PRIV-003 public minimization | PARTIAL | `publicProfile.ts` excludes DOB/auth identifiers | Runtime verification and legacy paths need full integration tests |
-| CR-RIGHTS-001 privacy center | PARTIAL | settings Privacy Center and privacy APIs | Correction/objection/restriction workflow incomplete |
+| CR-RIGHTS-001 privacy center | PASS (technical) | Settings Privacy Center supports durable access, correction, restriction and objection requests with references, due dates, rate limits and audit events | Staging runtime test and operator response procedure remain |
 | CR-RIGHTS-002 export | PASS (technical) | Owner-derived export covers profile, consent, relationships, messages, dating, media/declarations, community interactions, notifications, submitted reports, appeals, copyright, verification and rights requests | Reports about the requester and restricted safety material require reviewed disclosure to protect third parties; staging runtime test remains |
 | CR-RIGHTS-003 deletion | PARTIAL | Self-owned request, Auth0 deletion, resumable erasure/anonymization worker and completion notice | Migration/scheduler not externally applied; provider backup expiry and operator alerting remain |
 | CR-RET-001 retention/deletion | PARTIAL | Durable runs/events, active legal holds, R2-first deletion, resumable anonymization and evidence | Retention periods need approval; migration, scheduler, monitoring and production evidence remain |
 | CR-DPIA-001 DPIA | LEGAL REVIEW | `DPIA_TECHNICAL_INPUT.md` | Owner/DPO/counsel must complete and approve before launch |
 | CR-COOKIE-001/002 consent | PARTIAL | necessary/analytics/marketing choices; optional scripts absent | Preferences center/reopen, localization and policy approval incomplete |
-| CR-DSA-001 reporting | PARTIAL | structured report API/UI | Reporting affordances are not present on every resource type |
+| CR-DSA-001 reporting | PARTIAL | Structured report API/UI on profiles, messages and dating ads | Approved public media and community post/comment affordances still need complete authenticated coverage |
 | CR-DSA-002 notice/action | PARTIAL | moderation cases and server-admin console | Notices, statement-of-reasons delivery and regulator workflow incomplete |
 | CR-DSA-003 immutable history | PARTIAL | append-only `moderation_events` migration | Case/event write is not transactional; migration un-applied |
-| CR-DSA-004 appeals | PARTIAL | appeal endpoint and statuses | User appeal UI, notice delivery and reviewer separation incomplete |
+| CR-DSA-004 appeals | PARTIAL | Affected-user decision history and one-time appeal UI/API | Decision notice delivery and reviewer separation require operational validation |
 | CR-SAFETY-001 participant declarations | PASS (technical) | Explicit per-upload two-step declaration, server validation, immutable declaration row | Operational review and policy wording still require launch verification |
 | CR-SAFETY-002 critical escalation | PARTIAL | critical categories and escalated queue | Automatic provisional restriction and incident runbook execution not verified |
 | CR-SAFETY-003 prohibited harms | PARTIAL | policy drafts/report categories | Detection, hash matching, evidence preservation and trained response operation absent |

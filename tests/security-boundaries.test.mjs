@@ -48,6 +48,31 @@ test("privacy export covers durable profile, media, interaction, safety, and rig
   assert.doesNotMatch(route, /provider_reference/);
 });
 
+test("privacy-rights requests are owner-derived, rate-limited, durable, and auditable", async () => {
+  const route = await read("src/app/api/privacy/requests/route.ts");
+  const settings = await read("src/app/settings/page.tsx");
+  assert.match(route, /resolveServerActor\(req\)/);
+  assert.match(route, /privacy-request:\$\{actor\.actor\.auth0Sub\}/);
+  assert.match(route, /profile_id: actor\.actor\.profileId/);
+  assert.match(route, /MEMBER_RIGHTS_REQUEST/);
+  assert.match(route, /audit_events/);
+  assert.match(settings, /Exercise another privacy right/);
+  assert.match(settings, /\/api\/privacy\/requests/);
+});
+
+test("affected users can see eligible decisions and appeal while dating ads expose reporting", async () => {
+  const reports = await read("src/app/api/reports/route.ts");
+  const appeal = await read("src/app/api/reports/[id]/appeal/route.ts");
+  const settings = await read("src/app/settings/page.tsx");
+  const dating = await read("src/app/dating/page.tsx");
+  assert.match(reports, /relationship: reported_user_id === actor\.actor\.profileId \? "AFFECTED_USER" : "REPORTER"/);
+  assert.match(appeal, /eq\("reported_user_id", actor\.actor\.profileId\)/);
+  assert.match(appeal, /\["RESOLVED", "REJECTED"\]/);
+  assert.match(settings, /Appeal this decision/);
+  assert.match(dating, /contentType="POST"/);
+  assert.match(dating, /Report this dating ad/);
+});
+
 test("media presigning requires identity and enforces size and type allowlists", async () => {
   const source = await read("src/app/api/media/presign-upload/route.ts");
   assert.match(source, /resolveServerActor\(req\)/);

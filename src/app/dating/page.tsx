@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
+import { ReportModal } from "@/components/safety/ReportModal";
 import { SUPPORTED_COUNTRIES } from "@/lib/data/locations";
 import {
   Heart,
@@ -31,6 +32,7 @@ import {
   History,
   Trash2,
   Lock as LockIcon,
+  Flag,
 } from "lucide-react";
 
 export interface DatingAdItem {
@@ -316,6 +318,7 @@ function DatingMarketplaceContent() {
   };
 
   const [restrictedNoticeAd, setRestrictedNoticeAd] = useState<{ ad: DatingAdItem; reason: string } | null>(null);
+  const [reportAd, setReportAd] = useState<DatingAdItem | null>(null);
 
   const handleShowAllActiveAds = () => {
     setActiveTab("browse");
@@ -727,6 +730,8 @@ function DatingMarketplaceContent() {
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
+
+                      <button type="button" onClick={() => setReportAd(ad)} className="p-2 rounded-xl border border-white/10 bg-white/5 text-velora-textMuted hover:text-rose-400 hover:border-rose-500/40 transition-colors" title="Report this dating ad" aria-label={`Report ${ad.title}`}><Flag className="h-3.5 w-3.5" /></button>
                     </>
                   ) : (
                     <>
@@ -861,6 +866,7 @@ function DatingMarketplaceContent() {
           </Card>
         </div>
       )}
+      <ReportModal isOpen={Boolean(reportAd)} onClose={() => setReportAd(null)} targetUsername={reportAd?.authorName} targetProfileId={reportAd?.authorId} contentType="POST" contentId={reportAd?.id} />
     </div>
   );
 }
