@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Message, Conversation, AttachmentType, MessageStatus } from "@/types";
+import { Message, Conversation } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -12,7 +12,6 @@ import {
   MessageSquare,
   Send,
   Lock,
-  Image as ImageIcon,
   MoreVertical,
   ShieldAlert,
   Ban,
@@ -20,14 +19,9 @@ import {
   Check,
   CheckCheck,
   Eye,
-  Clock,
-  Sparkles,
-  Heart,
   UserCheck,
   MapPin,
   X,
-  FileImage,
-  Flame,
   Search,
 } from "lucide-react";
 
@@ -43,18 +37,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onSelectConversation,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "m-1",
-      conversationId: activeConversation.id,
-      senderId: activeConversation.participant.userId,
-      senderName: activeConversation.participant.displayName,
-      senderAvatar: activeConversation.participant.avatarUrl,
-      content: activeConversation.lastMessage?.content || "Hello! Glad to connect on Intimo.",
-      status: "READ",
-      createdAt: activeConversation.lastMessage?.createdAt || "10:30 AM",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
 
   // Load durable messages through the authenticated participant boundary.
   useEffect(() => {
@@ -81,8 +64,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   }, [activeConversation]);
 
   const [inputMessage, setInputMessage] = useState("");
-  const [attachmentMode, setAttachmentMode] = useState<AttachmentType>("STANDARD_IMAGE");
-  const [isDisappearing, setIsDisappearing] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [blockModalOpen, setBlockModalOpen] = useState(false);
   const [showProfilePreview, setShowProfilePreview] = useState(false);
@@ -104,11 +85,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       conversationId: activeConversation.id,
       senderId: "user-current",
       senderName: "You",
-      senderAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=800&q=80",
+      senderAvatar: "",
       content: inputMessage.trim(),
-      attachmentType: attachmentMode,
-      isDisappearing: isDisappearing,
-      disappearTimerSec: isDisappearing ? 10 : undefined,
       status: "SENT",
       createdAt: nowTime,
     };
@@ -117,19 +95,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     setMessages(updated);
     setInputMessage("");
 
-    // Delivery transition after 1s
-    setTimeout(() => {
-      setMessages((prev) =>
-        prev.map((msg) => (msg.id === newMsg.id ? { ...msg, status: "DELIVERED" } : msg))
-      );
-    }, 1000);
-
-    // Read transition after 2.5s
-    setTimeout(() => {
-      setMessages((prev) =>
-        prev.map((msg) => (msg.id === newMsg.id ? { ...msg, status: "READ" } : msg))
-      );
-    }, 2500);
   };
 
   const filteredConversations = conversations.filter((c) =>
@@ -306,14 +271,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                       : "glass-panel text-velora-textPrimary border-white/10 rounded-tl-none"
                   }`}
                 >
-                  {/* Disappearing Media Badge if applicable */}
-                  {m.isDisappearing && (
-                    <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-amber-300 mb-1">
-                      <Flame className="w-3 h-3 text-amber-400" />
-                      Disappearing Media (View Once)
-                    </div>
-                  )}
-
                   <p>{m.content}</p>
 
                   {/* Delivery Status Indicator for sent messages */}
@@ -332,33 +289,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
         </div>
 
-        {/* Message Input Box with Attachment Options */}
+        {/* Text messaging only until attachments have a moderated durable lifecycle. */}
         <div className="p-4 border-t border-white/10 bg-velora-card/60 space-y-2">
-          {/* Options Bar */}
-          <div className="flex items-center gap-2 text-xs">
-            <button
-              onClick={() => setIsDisappearing(!isDisappearing)}
-              className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase transition-all flex items-center gap-1 ${
-                isDisappearing
-                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                  : "bg-white/5 text-velora-textMuted hover:text-white"
-              }`}
-            >
-              <Flame className="w-3 h-3 text-amber-400" />
-              {isDisappearing ? "Disappearing Mode Active" : "Standard Photo"}
-            </button>
-          </div>
-
           <div className="flex items-center gap-3">
-            <button
-              className="p-2.5 rounded-2xl glass-panel text-velora-textMuted hover:text-velora-gold transition-colors"
-              title="Attach Photo"
-            >
-              <ImageIcon className="w-5 h-5" />
-            </button>
             <input
               type="text"
-              placeholder="Write a discreet encrypted message..."
+              placeholder="Write a private message…"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}

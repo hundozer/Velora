@@ -504,9 +504,16 @@ test("privileged admin decisions use explicit inline forms, not ambiguous browse
 test("messaging entry points use the durable message screen, not a local chat store", async () => {
   const layout = await read("src/app/layout.tsx");
   const dating = await read("src/app/dating/page.tsx");
+  const chat = await read("src/components/chat/ChatWindow.tsx");
+  const messages = await read("src/app/api/messages/route.ts");
   assert.doesNotMatch(layout, /FloatingChat/);
   assert.doesNotMatch(dating, /intimo_open_chat|intimo_chat_messages/);
   assert.match(dating, /\/messages\?user=/);
+  assert.doesNotMatch(chat, /Hello! Glad to connect|images\.unsplash\.com|setTimeout|Disappearing Mode|encrypted message/i);
+  assert.match(chat, /useState<Message\[]>\(\[\]\)/);
+  assert.match(messages, /require_verification_to_message/);
+  assert.match(messages, /Recipient accepts messages from verified members only/);
+  assert.match(messages, /appendDurableAudit/);
 });
 
 test("albums use canonical media objects with owner, moderation, public privacy, and admin parity", async () => {
