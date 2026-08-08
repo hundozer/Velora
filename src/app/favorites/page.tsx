@@ -2,74 +2,26 @@
 
 import React from "react";
 import Link from "next/link";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { Profile } from "@/types";
-import { Heart, MapPin, MessageSquare } from "lucide-react";
-
+import { Bookmark, Heart, Image as ImageIcon, Megaphone, Trash2, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
 
+type SavedItem = { id: string; target_type: "PROFILE" | "MEDIA" | "POST" | "DATING_AD"; target_id: string; created_at: string; target: { type: string; id: string; title: string; subtitle?: string; description?: string; imageUrl?: string; age?: number; verified?: boolean; href: string } };
+
 export default function FavoritesPage() {
   const { user } = useAuth();
-  const [favorites, setFavorites] = React.useState<Profile[]>([]);
-
-  React.useEffect(() => {
-    fetch("/api/connections?type=favorite", { credentials: "same-origin" }).then(async (response) => response.ok ? response.json() : Promise.reject()).then((payload) => {
-      setFavorites((payload.connections || []).map((item: any) => item.profile).filter(Boolean));
-    }).catch(() => setFavorites([]));
-  }, []);
-
-  if (!user) {
-    return <BehindTheDoorLanding />;
-  }
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-left">
-      <div className="flex items-center gap-3">
-        <Heart className="w-7 h-7 text-rose-400 fill-rose-400/20" />
-        <div>
-          <h1 className="text-3xl font-serif font-bold text-velora-textPrimary">
-            Saved Favorites
-          </h1>
-          <p className="text-xs text-velora-textSecondary mt-1">
-            Your saved private profiles and creator bookmarks.
-          </p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {favorites.map((p) => (
-          <Card key={p.id} variant="glass" className="overflow-hidden space-y-4 p-5">
-            <div className="relative h-48 rounded-2xl overflow-hidden bg-velora-card">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.avatarUrl} alt={p.displayName} className="w-full h-full object-cover" />
-              <div className="absolute top-3 left-3">
-                {p.verified && <Badge type="verified" />}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-serif font-bold text-velora-textPrimary">{p.displayName}, {p.age}</h3>
-              <p className="text-xs text-velora-gold flex items-center gap-1 mt-0.5"><MapPin className="w-3 h-3" /> {p.location}</p>
-            </div>
-
-            <div className="flex gap-2 pt-2">
-              <Link href={`/profile/${p.id}`} className="flex-1">
-                <Button variant="gold" size="sm" className="w-full text-xs font-bold">
-                  View Profile
-                </Button>
-              </Link>
-              <Link href="/messages">
-                <button className="p-2.5 rounded-full glass-panel text-velora-textSecondary hover:text-velora-gold">
-                  <MessageSquare className="w-4 h-4" />
-                </button>
-              </Link>
-            </div>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
+  const [items, setItems] = React.useState<SavedItem[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState("");
+  const load = React.useCallback(() => { setLoading(true); fetch("/api/saved-items", { credentials: "same-origin", cache: "no-store" }).then(async (response) => { const payload = await response.json().catch(() => ({})); if (!response.ok) throw new Error(payload.error || "Saved items unavailable"); setItems(payload.items || []); }).catch((cause) => setError(cause.message || "Saved items unavailable")).finally(() => setLoading(false)); }, []);
+  React.useEffect(load, [load]);
+  async function remove(item: SavedItem) { setError(""); const params = new URLSearchParams({ targetType: item.target_type, targetId: item.target_id }); const response = await fetch(`/api/saved-items?${params}`, { method: "DELETE", credentials: "same-origin" }); if (response.ok) setItems((current) => current.filter((entry) => entry.id !== item.id)); else setError("That saved item could not be removed."); }
+  if (!user) return <BehindTheDoorLanding />;
+  return <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"><div className="flex items-center gap-3"><Heart className="h-7 w-7 fill-rose-400/20 text-rose-400" /><div><h1 className="font-serif text-3xl font-bold text-white">Saved items</h1><p className="mt-1 text-sm text-slate-400">Profiles, approved media, dating ads, and community posts you bookmarked.</p></div></div>
+    {error && <p role="alert" className="mt-5 rounded-lg border border-red-400/30 bg-red-400/10 p-3 text-sm text-red-100">{error}</p>}
+    {loading ? <p className="mt-8 text-sm text-slate-400">Loading saved items…</p> : items.length ? <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{items.map((item) => <article key={item.id} className="rounded-xl border border-white/10 bg-[#11151e] p-5"><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-2 text-amber-300">{icon(item.target_type)}<span className="text-xs font-semibold uppercase tracking-wider">{label(item.target_type)}</span></div><button onClick={() => remove(item)} className="rounded-lg p-2 text-slate-500 hover:bg-red-400/10 hover:text-red-300" aria-label={`Remove ${item.target.title} from saved items`}><Trash2 className="h-4 w-4" /></button></div><Link href={item.target.href} className="mt-4 block"><h2 className="font-semibold text-white">{item.target.title}{item.target.age ? `, ${item.target.age}` : ""}</h2>{item.target.subtitle && <p className="mt-1 text-xs text-amber-200">{item.target.subtitle}</p>}<p className="mt-3 line-clamp-3 text-sm leading-5 text-slate-400">{item.target.description || "Saved community item"}</p><span className="mt-4 inline-block text-xs font-semibold text-amber-300">Open item →</span></Link></article>)}</div> : <div className="mt-7 rounded-xl border border-dashed border-white/15 p-10 text-center"><Bookmark className="mx-auto h-7 w-7 text-slate-500" /><h2 className="mt-3 font-semibold text-white">Nothing saved yet</h2><p className="mt-1 text-sm text-slate-400">Use save controls on visible profiles, media, posts, or dating ads.</p></div>}
+  </main>;
 }
+
+function icon(type: SavedItem["target_type"]) { if (type === "PROFILE") return <User className="h-4 w-4" />; if (type === "MEDIA") return <ImageIcon className="h-4 w-4" />; if (type === "DATING_AD") return <Megaphone className="h-4 w-4" />; return <Bookmark className="h-4 w-4" />; }
+function label(type: SavedItem["target_type"]) { return type === "DATING_AD" ? "Dating ad" : type.toLowerCase(); }

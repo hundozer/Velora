@@ -2,13 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ReportModal } from "@/components/safety/ReportModal";
 import { GetVerifiedModal } from "@/components/profile/GetVerifiedModal";
-import { userStore } from "@/lib/auth0/userStore";
 import { useAuth } from "@/context/AuthContext";
 import { Profile } from "@/types";
 import { requestParticipantDeclaration, uploadFileToR2 } from "@/lib/storage/clientUpload";
@@ -26,7 +25,6 @@ import {
   CheckCircle2,
   Calendar,
   Eye,
-  Crown,
   LogOut,
   Camera,
   Image as ImageIcon,
@@ -47,7 +45,6 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
-import { visitorStore } from "@/lib/social/visitorStore";
 import { getAlbumsByOwner, createAlbum, getVideosByOwner, createVideo } from "@/lib/supabase/mediaService";
 import { getAdsByAuthor } from "@/lib/supabase/datingAdService";
 
@@ -168,8 +165,7 @@ import { PublicProfileView } from "@/components/community/PublicProfileView";
 export default function SingleProfilePage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const { logout, user: currentUser, profile: currentProfile, updateUserProfile, impersonateUser } = useAuth();
+  const { logout, user: currentUser, profile: currentProfile, updateUserProfile } = useAuth();
   const profileId = (params?.id as string) || "me";
   const tabQuery = searchParams.get("tab");
 
@@ -203,7 +199,6 @@ export default function SingleProfilePage() {
       .finally(() => setRemoteProfileLoading(false));
   }, [currentUser, isSelf, profileId]);
 
-  const [isFavorited, setIsFavorited] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
 
   // Interactive Media Vault Menu State (My Photos, My Videos, My Dating Ads)
@@ -652,9 +647,9 @@ export default function SingleProfilePage() {
   const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
-    Promise.all(["follow", "favorite"].map((type) => fetch(`/api/connections?type=${type}`, { credentials: "same-origin" }).then(async (response) => response.ok ? response.json() : ({ connections: [] })))).then(([following, favorites]) => {
+    Promise.all([fetch("/api/connections?type=follow", { credentials: "same-origin" }).then(async (response) => response.ok ? response.json() : ({ connections: [] })), fetch("/api/saved-items", { credentials: "same-origin" }).then(async (response) => response.ok ? response.json() : ({ items: [] }))]).then(([following, favorites]) => {
       setIsFollowing(following.connections.some((item: any) => item.followed_id === profile.id));
-      setIsFavorite(favorites.connections.some((item: any) => item.followed_id === profile.id));
+      setIsFavorite(favorites.items.some((item: any) => item.target_type === "PROFILE" && item.target_id === profile.id));
     }).catch(() => undefined);
   }, [profile.id]);
 
@@ -667,42 +662,18 @@ export default function SingleProfilePage() {
   };
 
   const handleToggleFavorite = async () => {
-    const response = await fetch(isFavorite ? `/api/connections?targetProfileId=${encodeURIComponent(profile.id)}&type=favorite` : "/api/connections", {
+    const response = await fetch(isFavorite ? `/api/saved-items?${new URLSearchParams({ targetType: "PROFILE", targetId: profile.id })}` : "/api/saved-items", {
       method: isFavorite ? "DELETE" : "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
-      body: isFavorite ? undefined : JSON.stringify({ targetProfileId: profile.id, type: "favorite" }),
+      body: isFavorite ? undefined : JSON.stringify({ targetType: "PROFILE", targetId: profile.id }),
     });
     if (response.ok) setIsFavorite(!isFavorite);
   };
 
-  // Record Profile Visit Effect
-  useEffect(() => {
-    if (!isSelf && profile && currentUser) {
-      const isGhost = typeof window !== "undefined" && localStorage.getItem("intimo_admin_ghost_mode") === "true";
-      if (isGhost) return; // Bypassed by Admin Ghost Mode
-
-      visitorStore.recordProfileVisit({
-        userId: currentUser.id,
-        name: currentProfile?.displayName || currentUser.username || "Member",
-        genderSymbol: "♂",
-        avatarUrl: currentProfile?.avatarUrl || currentUser.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
-        isVerified: true,
-      });
-    }
-  }, [isSelf, profile, currentUser, currentProfile]);
-
-  const handleVerificationSubmitted = (verificationPhotoUrl: string) => {
+  const handleVerificationSubmitted = async (verificationMediaId: string) => {
+    const response = await fetch("/api/verification", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mediaId: verificationMediaId }) });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || "Verification submission failed");
     setUserVerificationStatus("PENDING_REVIEW");
-
-    userStore.submitVerificationRequest({
-      id: `req-${Date.now()}`,
-      userId: currentUser?.id || "me",
-      userEmail: currentUser?.email || profile.displayName.toLowerCase().replace(/\s+/g, "") + "@intimo.live",
-      userName: currentProfile?.displayName || profile.displayName,
-      userAvatarUrl: currentProfile?.avatarUrl || profile.avatarUrl,
-      verificationPhotoUrl,
-      submittedAt: "Just now",
-      status: "PENDING",
-    });
   };
 
   // Media Interactions List Modal State (Viewers / Commenters / Likers)
@@ -1262,13 +1233,13 @@ export default function SingleProfilePage() {
 
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setIsFavorited(!isFavorited)}
+                onClick={handleToggleFavorite}
                 className={`p-3 rounded-full glass-panel transition-all ${
-                  isFavorited ? "text-rose-400 border-rose-500/40 bg-rose-500/10" : "text-velora-textSecondary hover:text-velora-gold"
+                  isFavorite ? "text-rose-400 border-rose-500/40 bg-rose-500/10" : "text-velora-textSecondary hover:text-velora-gold"
                 }`}
                 title="Favorite Profile"
               >
-                <Heart className={`w-5 h-5 ${isFavorited ? "fill-rose-400" : ""}`} />
+                <Heart className={`w-5 h-5 ${isFavorite ? "fill-rose-400" : ""}`} />
               </button>
 
               {isSelf ? (
@@ -1343,56 +1314,12 @@ export default function SingleProfilePage() {
                     size="lg"
                     className="text-xs font-bold uppercase tracking-wider gap-2 border-white/20 hover:border-amber-400/50"
                     onClick={() => {
-                      if (typeof window !== "undefined") {
-                        window.dispatchEvent(
-                          new CustomEvent("intimo_open_chat", {
-                            detail: {
-                              id: profile.id,
-                              displayName: profile.displayName,
-                              avatarUrl: profile.avatarUrl,
-                              genderSymbol: profile.gender === "FEMALE" ? "♀" : profile.gender === "MALE" ? "♂" : "👫",
-                              verified: profile.verified ?? true,
-                              location: profile.location || profile.city || "Prague, Czech Republic",
-                              followersCount: profile.followersCount || 8,
-                              photoCount: userPhotoAlbums.length || 12,
-                              videoCount: userVideos.length || 4,
-                              isOnline: profile.showOnlineStatus !== false && (profile.isOnline ?? false),
-                            },
-                          })
-                        );
-                      }
+                      window.location.assign(`/messages?user=${encodeURIComponent(profile.id)}`);
                     }}
                   >
                     <MessageSquare className="w-4 h-4 text-velora-gold" /> Message
                   </Button>
 
-                  {/* Admin Impersonation Trigger */}
-                  {currentUser?.role === "ADMIN" && (
-                    <Button
-                      variant="gold"
-                      size="lg"
-                      className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow bg-amber-400 text-black hover:bg-white transition-all"
-                      onClick={() => {
-                        const targetUser = {
-                          id: profile.userId,
-                          username: profile.displayName,
-                          email: profile.displayName.toLowerCase().replace(/\s+/g, "") + "@intimo.live",
-                          role: "MEMBER",
-                          verificationStatus: profile.verified ? "IDENTITY_VERIFIED" : "NONE",
-                        };
-                        impersonateUser(targetUser as any, profile as any);
-                        userStore.addModerationLog({
-                          adminUsername: currentUser.username || "admin_compliance",
-                          targetUsername: profile.displayName,
-                          action: "WARN_USER",
-                          reason: `Initiated administrative session impersonation for user: ${profile.displayName} from profile page context.`,
-                        });
-                        router.push("/dashboard");
-                      }}
-                    >
-                      <Crown className="w-4 h-4 text-black animate-pulse" /> Impersonate
-                    </Button>
-                  )}
                 </div>
               )}
 

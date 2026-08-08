@@ -21,7 +21,7 @@ interface GetVerifiedModalProps {
   onClose: () => void;
   userEmail: string;
   userName: string;
-  onVerificationSubmitted: (verificationPhotoUrl: string) => void;
+  onVerificationSubmitted: (verificationMediaId: string) => Promise<void>;
 }
 
 export function GetVerifiedModal({
@@ -73,18 +73,11 @@ export function GetVerifiedModal({
     setErrorMsg(null);
 
     try {
-      let finalPhotoUrl = previewUrl || "";
-
-      if (selectedFile) {
-        setUploadProgress(10);
-        const result = await uploadFileToR2(selectedFile, "general", (percent) => {
-          setUploadProgress(percent);
-        }, await requestParticipantDeclaration());
-        finalPhotoUrl = result.publicUrl;
-      }
-
+      if (!selectedFile) throw new Error("Select a verification image");
+      setUploadProgress(10);
+      const result = await uploadFileToR2(selectedFile, "general", (percent) => setUploadProgress(percent), await requestParticipantDeclaration());
+      await onVerificationSubmitted(result.mediaId);
       setSubmitSuccess(true);
-      onVerificationSubmitted(finalPhotoUrl);
     } catch (err: any) {
       console.error("Verification upload error:", err);
       setErrorMsg(err?.message || "Failed to upload verification photo. Please try again.");

@@ -11,14 +11,15 @@ Administrative access requires a verified Auth0 identity, a server-owned role as
 | Discovery/member profile | No | Visibility/block qualified | Own | Authorized review | Server actor + adult gate + minimized serializer |
 | Profile update | No | No other profiles | Own allowlisted fields | Separate privileged route only | Authority fields stripped |
 | Connections/blocks | No | Target validated/block-aware | Own relation | Read only when justified | Server-derived actor |
-| Messages | No | No arbitrary conversation | Participants only | Policy/legal access only | Pair-derived conversation + block checks; attachment gap |
-| Media upload/read | No | Upload after adult gate/declaration | Owner/private entitlement | Moderation entitlement when recorded | Size/type/rate limits and signed URLs; scanning incomplete |
+| Messages | No | No arbitrary conversation | Participants only | Policy/legal access only | Pair-derived conversation + block checks; attachments disabled until safely implemented |
+| Media upload/read | Approved public media after signed adult declaration | Upload after adult gate/declaration | Owner/private entitlement | Moderation/verification evidence entitlement when recorded | Size/type/rate limits, signed URLs and audited evidence views; scanning incomplete |
+| Unified search | No member-only results | Block/privacy-qualified deterministic results | Own visible records | Same visibility rules | No AI ranking or client-side authority |
 | Report/create | No | Create structured report | Reporter can view own where exposed | Assigned reviewers | Critical escalation; universal UI incomplete |
 | Moderation/copyright decision | No | Appeal/notice only | Appeal own affected case | DB-admin plus Auth0-sub allowlist | MFA and granular scopes missing; immutable events staged |
 | Monetization/payment | No | No | No | No | Centrally disabled and middleware blocked |
 | Live/events/creator studio | No | No | No | No production bypass | MVP safety-disabled |
 
-Production prerequisites: apply/review least-privilege migrations; use server-only credentials; enforce admin MFA and short sessions; add permission-scoped moderation roles; persist tamper-resistant audit events; alert on critical actions; test horizontal/vertical authorization, IDOR, blocked-user behavior, expired sessions and failure paths against a real test database.
+Production prerequisites: apply/review least-privilege migrations; use server-only credentials; validate MFA and short sessions in production; alert on critical actions; and test horizontal/vertical authorization, IDOR, blocked-user behavior, expired sessions and failure paths against a real test database.
 
 ## Administrative permissions
 

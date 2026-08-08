@@ -87,3 +87,26 @@ The product direction now permits anonymous community discovery. This does **not
 
 Public explicit media remains unavailable until each object has durable visibility, moderation approval, participant/consent evidence, safe delivery, and the required age/legal controls. The launch recommendation therefore remains **NO-GO** while the complete master hardening program is unfinished.
 
+# 2026-08-08 second implementation audit checkpoint
+
+Resolved since the initial audit:
+
+- Removed fabricated production dashboard/profile fallbacks from the primary audited surfaces and kept incomplete community/creator/live/event routes middleware-disabled.
+- Removed browser role switching, fabricated fallback login, client impersonation, the localStorage chat runtime, and the unused admin overlay.
+- Added active-account enforcement to the shared actor boundary.
+- Added approved public media galleries and safe delivery, canonical saves/comments/notifications, real unread messaging state, deterministic unified member search, durable dating saves/reactivation/replies, and owner-submitted identity verification with audited MFA-admin evidence access.
+- Replaced ambiguous prompt-based moderation/privacy/verification queue decisions with explicit inline outcome, reason, apply, and cancel controls.
+- Verification evidence remains private and is exposed only through a five-minute signed URL after granular admin permission and MFA checks.
+
+Verification evidence: 34/34 security tests, typecheck, lint, and production build pass. The Auth0 SDK continues to emit its known non-fatal dynamic-dependency build warning.
+
+Remaining CRITICAL/HIGH technical work:
+
+1. Apply and verify the staged migrations in a controlled staging database; current code intentionally fails closed where the new tables are absent.
+2. Integrate a privacy-preserving stronger age-assurance provider and existing-account migration before explicit-content launch.
+3. Add malware/content scanning and a real video-processing worker/provider; videos remain non-approvable until `READY`.
+4. Implement scheduled retention/deletion/export completion workers and transactional/evidentiary operational checks.
+5. Replace remaining prompt-based user and system-flag admin actions; complete responsive/accessibility and six-language coverage.
+6. Run two-user plus moderator browser E2E tests against the staging database and repeat the authorization/red-team audit.
+
+Checkpoint readiness: **68/100 — NO-GO** for public explicit-adult launch. The branch is suitable for continued preview/staging validation, not production promotion.

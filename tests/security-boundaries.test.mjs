@@ -58,11 +58,11 @@ test("admin route is guarded by server-derived database authority", async () => 
   assert.doesNotMatch(layout, /localStorage|sessionStorage/);
 });
 
-test("browser role switching cannot grant ADMIN", async () => {
+test("browser identity cannot switch roles or fabricate a fallback login", async () => {
   const source = await read("src/context/AuthContext.tsx");
   assert.match(source, /fetch\("\/api\/auth\/session"/);
-  assert.match(source, /if \(newRole === "ADMIN"\)/);
-  assert.match(source, /cannot be selected in the browser/);
+  assert.doesNotMatch(source, /switchRole|impersonateUser|stopImpersonating/);
+  assert.doesNotMatch(source, /fallbackUser|LEVEL_3_PROFILE_BIOMETRIC/);
   assert.doesNotMatch(source, /intimo_user_data/);
   assert.doesNotMatch(source, /dateOfBirth: "1998-05-15"/);
   assert.doesNotMatch(source, /setUser\(parsedUser\)/);
@@ -211,7 +211,7 @@ test("follow and favorite operations are server-owned and block-aware", async ()
   assert.match(route, /follower_id: actor\.actor\.profileId/);
   assert.match(route, /from\("user_blocks"\)/);
   assert.match(route, /toMemberVisibleProfile/);
-  assert.match(favorites, /fetch\("\/api\/connections\?type=favorite"/);
+  assert.match(favorites, /fetch\("\/api\/saved-items"/);
   assert.doesNotMatch(favorites, /MOCK_PROFILES/);
 });
 
@@ -343,4 +343,44 @@ test("notifications, saves, comments, and unread messages are durable and server
   assert.match(saves, /profile_id: actor\.actor\.profileId/);
   assert.match(comments, /resolveContentTarget/);
   assert.match(comments, /author_id: actor\.actor\.profileId/);
+});
+
+test("shared actor boundary blocks inactive accounts and unified search enforces privacy", async () => {
+  const actor = await read("src/lib/auth/serverActor.ts");
+  const search = await read("src/app/api/search/route.ts");
+  assert.match(actor, /accountStatus/);
+  assert.match(actor, /actor\.accountStatus === "ACTIVE"/);
+  assert.match(search, /user_blocks/);
+  assert.match(search, /account_status", "ACTIVE"/);
+  assert.match(search, /ranking: "category_then_published_or_created_desc_then_id_asc"/);
+  assert.doesNotMatch(search, /openai|anthropic|embedding|vector/i);
+});
+
+test("dating saves and reactivation use durable server APIs", async () => {
+  const page = await read("src/app/dating/page.tsx");
+  const route = await read("src/app/api/dating-ads/[id]/route.ts");
+  assert.match(page, /api\/saved-items/);
+  assert.doesNotMatch(page, /intimo_all_dating_ads/);
+  assert.match(route, /DATING_AD_REACTIVATE/);
+  assert.match(route, /eq\("author_id", actor\.actor\.profileId\)/);
+});
+
+test("identity verification evidence is owner-submitted, private, and admin-audited", async () => {
+  const submission = await read("src/app/api/verification/route.ts");
+  const evidence = await read("src/app/api/admin/verification/[id]/evidence/route.ts");
+  const context = await read("src/context/AuthContext.tsx");
+  assert.match(submission, /eq\("owner_id", actor\.actor\.profileId\)/);
+  assert.match(submission, /media\.visibility !== "PRIVATE"/);
+  assert.match(submission, /verification_type: "IDENTITY"/);
+  assert.match(evidence, /requireAdminPermission\(req, "verification:view"\)/);
+  assert.match(evidence, /VERIFICATION_EVIDENCE_VIEW/);
+  assert.doesNotMatch(context, /impersonateUser|fallbackUser|intimo_original_admin_user/);
+});
+
+test("messaging entry points use the durable message screen, not a local chat store", async () => {
+  const layout = await read("src/app/layout.tsx");
+  const dating = await read("src/app/dating/page.tsx");
+  assert.doesNotMatch(layout, /FloatingChat/);
+  assert.doesNotMatch(dating, /intimo_open_chat|intimo_chat_messages/);
+  assert.match(dating, /\/messages\?user=/);
 });

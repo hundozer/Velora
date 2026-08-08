@@ -30,8 +30,6 @@ export const metadata: Metadata = {
   },
 };
 
-import { GlobalFloatingChatManager } from "@/components/messaging/FloatingChatWidget";
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -46,7 +44,6 @@ export default function RootLayout({
             <AgeVerificationModal />
             <CookieConsent />
             <main className="flex-1 w-full">{children}</main>
-            <GlobalFloatingChatManager />
             <MobileNavigation />
             <Footer />
           </AuthProvider>

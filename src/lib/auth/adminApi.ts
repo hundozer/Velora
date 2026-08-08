@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AdminPermission, adminMfaSatisfied, hasAdminPermission } from "./adminAuthorization";
-import { resolveServerActor } from "./serverActor";
+import { isAdminActor, resolveServerActor } from "./serverActor";
 
 export async function requireAdminPermission(req: NextRequest, permission: AdminPermission) {
   const result = await resolveServerActor(req);
   if (result.status !== "authenticated") return { response: NextResponse.json({ error: "Administrator authentication required" }, { status: result.status === "unauthenticated" ? 401 : 503 }) } as const;
-  if (!result.actor.adminAuthorized || !hasAdminPermission(result.actor, permission)) return { response: NextResponse.json({ error: "Administrative permission denied" }, { status: 403 }) } as const;
+  if (!isAdminActor(result.actor) || !hasAdminPermission(result.actor, permission)) return { response: NextResponse.json({ error: "Administrative permission denied" }, { status: 403 }) } as const;
   if (!adminMfaSatisfied(result.actor)) return { response: NextResponse.json({ error: "Administrative MFA required", code: "ADMIN_MFA_REQUIRED" }, { status: 403 }) } as const;
   return { actor: result.actor } as const;
 }

@@ -16,6 +16,7 @@ export interface ServerActor {
   mfaAuthenticated: boolean;
   authenticatedAt?: number;
   emailVerified: boolean;
+  accountStatus: string;
 }
 
 export type ServerActorResult =
@@ -33,7 +34,7 @@ export async function resolveServerActor(req?: NextRequest): Promise<ServerActor
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id,auth_id,email,role,verification_status,age_verification_status")
+    .select("id,auth_id,email,role,verification_status,age_verification_status,account_status")
     .eq("auth_id", identity.sub)
     .maybeSingle();
 
@@ -83,14 +84,15 @@ export async function resolveServerActor(req?: NextRequest): Promise<ServerActor
       mfaAuthenticated: identity.mfaAuthenticated || internalMfa,
       authenticatedAt: identity.authenticatedAt,
       emailVerified: identity.emailVerified,
+      accountStatus: typeof data.account_status === "string" ? data.account_status : "RESTRICTED",
     },
   };
 }
 
 export function hasAdultAccess(actor: ServerActor): boolean {
-  return actor.ageVerificationStatus === "AGE_DECLARED" || actor.ageVerificationStatus === "AGE_VERIFIED";
+  return actor.accountStatus === "ACTIVE" && (actor.ageVerificationStatus === "AGE_DECLARED" || actor.ageVerificationStatus === "AGE_VERIFIED");
 }
 
 export function isAdminActor(actor: ServerActor): boolean {
-  return actor.adminAuthorized;
+  return actor.accountStatus === "ACTIVE" && actor.adminAuthorized;
 }

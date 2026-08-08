@@ -13,7 +13,20 @@ export async function GET(req: NextRequest) {
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Saved items unavailable" }, { status: 503 });
   const { data, error } = await db.from("saved_items").select("id,target_type,target_id,created_at").eq("profile_id", actor.actor.profileId).order("created_at", { ascending: false }).limit(200);
   if (error) return NextResponse.json({ error: "Saved items lookup failed; confirm migration 20260814 is applied" }, { status: 502 });
-  return NextResponse.json({ items: data || [] }, { headers: { "Cache-Control": "private, no-store" } });
+  const items = data || [];
+  const ids = (type: string) => items.filter((item) => item.target_type === type).map((item) => item.target_id);
+  const [profiles, media, ads, posts] = await Promise.all([
+    ids("PROFILE").length ? db.from("profiles").select("id,display_name,username,avatar_url,age,country,city,headline,verification_status,verification_level,account_status,discovery_disabled").in("id", ids("PROFILE")) : Promise.resolve({ data: [] }),
+    ids("MEDIA").length ? db.from("media_objects").select("id,owner_id,media_type,title,category,upload_status,processing_status,moderation_status").in("id", ids("MEDIA")) : Promise.resolve({ data: [] }),
+    ids("DATING_AD").length ? db.from("dating_ads").select("id,author_id,title,category,status,created_at,validity_days").in("id", ids("DATING_AD")) : Promise.resolve({ data: [] }),
+    ids("POST").length ? db.from("content_posts").select("id,author_id,title,body,category,moderation_status").in("id", ids("POST")) : Promise.resolve({ data: [] }),
+  ]);
+  const summary = new Map<string, Record<string, unknown>>();
+  for (const row of profiles.data || []) if (row.account_status === "ACTIVE" && !row.discovery_disabled) summary.set(`PROFILE:${row.id}`, { type: "PROFILE", id: row.id, title: row.display_name || row.username || "Intimo member", subtitle: [row.city, row.country].filter(Boolean).join(", "), description: row.headline, imageUrl: row.avatar_url, age: row.age, verified: row.verification_status === "VERIFIED" || ["LEVEL_3_PROFILE_BIOMETRIC", "LEVEL_4_CREATOR"].includes(row.verification_level || ""), href: `/profile/${row.id}` });
+  for (const row of media.data || []) if (row.upload_status === "AVAILABLE" && row.processing_status === "READY" && row.moderation_status === "APPROVED") summary.set(`MEDIA:${row.id}`, { type: "MEDIA", id: row.id, title: row.title || (row.media_type === "VIDEO" ? "Untitled video" : "Untitled photo"), subtitle: row.category || row.media_type, description: "Approved community media", href: row.media_type === "VIDEO" ? "/videos" : "/photos" });
+  for (const row of ads.data || []) if (row.status === "active" && new Date(row.created_at).getTime() + row.validity_days * 86_400_000 > Date.now()) summary.set(`DATING_AD:${row.id}`, { type: "DATING_AD", id: row.id, title: row.title, subtitle: row.category, description: "Active dating ad", href: `/dating?ad=${row.id}` });
+  for (const row of posts.data || []) if (row.moderation_status === "APPROVED") summary.set(`POST:${row.id}`, { type: "POST", id: row.id, title: row.title || "Community post", subtitle: row.category || "Post", description: String(row.body || "").slice(0, 180), href: "/" });
+  return NextResponse.json({ items: items.flatMap((item) => { const target = summary.get(`${item.target_type}:${item.target_id}`); return target ? [{ ...item, target }] : []; }) }, { headers: { "Cache-Control": "private, no-store" } });
 }
 
 export async function POST(req: NextRequest) {

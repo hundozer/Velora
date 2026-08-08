@@ -213,19 +213,21 @@ function DatingMarketplaceContent() {
   const searchParams = useSearchParams();
 
   const [adsList, setAdsList] = useState<DatingAdItem[]>([]);
+  const [activeTab, setActiveTab] = useState<"browse" | "my-ads">("browse");
 
   const [isLoadingAds, setIsLoadingAds] = useState(true);
-
-  const syncLocalAds = React.useCallback(() => {}, []);
 
   // Fetch durable dating ads through the authenticated server boundary.
   React.useEffect(() => {
     async function loadAds() {
       try {
-        const response = await fetch("/api/dating-ads", { cache: "no-store", credentials: "same-origin" });
+        const response = await fetch(activeTab === "my-ads" ? "/api/dating-ads?mine=true" : "/api/dating-ads", { cache: "no-store", credentials: "same-origin" });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Dating ads unavailable");
-        setAdsList(Array.isArray(payload.ads) ? payload.ads : []);
+        const savedResponse = await fetch("/api/saved-items", { cache: "no-store", credentials: "same-origin" });
+        const savedPayload = savedResponse.ok ? await savedResponse.json() : { items: [] };
+        const savedIds = new Set((savedPayload.items || []).filter((item: any) => item.target_type === "DATING_AD").map((item: any) => item.target_id));
+        setAdsList(Array.isArray(payload.ads) ? payload.ads.map((ad: DatingAdItem) => ({ ...ad, saved: savedIds.has(ad.id) })) : []);
       } catch (e) {
         console.error("Failed to load dating ads from Supabase:", e);
       } finally {
@@ -233,15 +235,14 @@ function DatingMarketplaceContent() {
       }
     }
     loadAds();
-  }, []);
+  }, [activeTab]);
 
   const [selectedCategory, setSelectedCategory] = useState("Show all categories");
   const [selectedCountry, setSelectedCountry] = useState("All Countries");
   const [selectedRegion, setSelectedRegion] = useState("All Cities / Regions");
 
-  // Read category / tab from URL searchParams & sync local storage ads on navigation/focus
+  // Read durable navigation filters from the URL.
   React.useEffect(() => {
-    syncLocalAds();
     const cat = searchParams?.get("category");
     const tab = searchParams?.get("tab");
     if (cat) {
@@ -253,14 +254,7 @@ function DatingMarketplaceContent() {
       setActiveTab("my-ads");
     }
 
-    const handleUpdate = () => syncLocalAds();
-    window.addEventListener("intimo_ads_updated", handleUpdate);
-    window.addEventListener("focus", handleUpdate);
-    return () => {
-      window.removeEventListener("intimo_ads_updated", handleUpdate);
-      window.removeEventListener("focus", handleUpdate);
-    };
-  }, [searchParams, syncLocalAds]);
+  }, [searchParams]);
 
   const [ageRange, setAgeRange] = useState<[number, number]>([18, 100]);
   const [activeFilterPill, setActiveFilterPill] = useState<string | null>(null);
@@ -321,7 +315,6 @@ function DatingMarketplaceContent() {
     }
   };
 
-  const [activeTab, setActiveTab] = useState<"browse" | "my-ads">("browse");
   const [restrictedNoticeAd, setRestrictedNoticeAd] = useState<{ ad: DatingAdItem; reason: string } | null>(null);
 
   const handleShowAllActiveAds = () => {
@@ -398,23 +391,9 @@ function DatingMarketplaceContent() {
     return { canReply: true };
   };
 
-  const handleReactivateAd = (id: string) => {
-    setAdsList((prev) => {
-      const updated = prev.map((ad) =>
-        ad.id === id
-          ? {
-              ...ad,
-              status: "active" as const,
-              daysLeft: ad.validityDays,
-              createdAt: "Just now",
-            }
-          : ad
-      );
-      if (typeof window !== "undefined") {
-        localStorage.setItem("intimo_all_dating_ads", JSON.stringify(updated));
-      }
-      return updated;
-    });
+  const handleReactivateAd = async (id: string) => {
+    const response = await fetch(`/api/dating-ads/${encodeURIComponent(id)}`, { method: "PATCH", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "REACTIVATE" }) });
+    if (response.ok) setAdsList((prev) => prev.map((ad) => ad.id === id ? { ...ad, status: "active" as const, daysLeft: ad.validityDays, createdAt: "Just now" } : ad));
   };
 
   const handleDeleteAd = async (id: string) => {
@@ -422,14 +401,11 @@ function DatingMarketplaceContent() {
     if (response.ok) setAdsList((prev) => prev.filter((ad) => ad.id !== id));
   };
 
-  const handleToggleSaveAd = (id: string) => {
-    setAdsList((prev) => {
-      const updated = prev.map((ad) => (ad.id === id ? { ...ad, saved: !ad.saved } : ad));
-      if (typeof window !== "undefined") {
-        localStorage.setItem("intimo_all_dating_ads", JSON.stringify(updated));
-      }
-      return updated;
-    });
+  const handleToggleSaveAd = async (id: string) => {
+    const current = adsList.find((ad) => ad.id === id);
+    if (!current) return;
+    const response = await fetch(current.saved ? `/api/saved-items?${new URLSearchParams({ targetType: "DATING_AD", targetId: id })}` : "/api/saved-items", current.saved ? { method: "DELETE", credentials: "same-origin" } : { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ targetType: "DATING_AD", targetId: id }) });
+    if (response.ok) setAdsList((prev) => prev.map((ad) => ad.id === id ? { ...ad, saved: !current.saved } : ad));
   };
 
   const filteredAds = adsList.filter((ad) => {
@@ -777,23 +753,7 @@ function DatingMarketplaceContent() {
                                size="sm"
                                className="text-xs font-bold uppercase gap-1.5 shadow-gold-glow"
                                onClick={() => {
-                                 if (typeof window !== "undefined") {
-                                   window.dispatchEvent(
-                                     new CustomEvent("intimo_open_chat", {
-                                       detail: {
-                                         id: ad.authorId,
-                                         displayName: ad.authorName,
-                                         avatarUrl: ad.authorAvatar,
-                                         genderSymbol: "👫",
-                                         verified: ad.isVerified ?? true,
-                                         location: ad.region || ad.country || "Prague, Czech Republic",
-                                         followersCount: 8,
-                                         photoCount: 12,
-                                         videoCount: 4,
-                                       },
-                                     })
-                                   );
-                                 }
+                                 window.location.assign(`/messages?user=${encodeURIComponent(ad.authorId)}`);
                                }}
                              >
                                <MessageSquare className="w-3.5 h-3.5" /> Reply to Ad
