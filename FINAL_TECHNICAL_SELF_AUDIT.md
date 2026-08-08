@@ -13,7 +13,7 @@ Scope: repository implementation and preview/staging readiness. This is not lega
 | Free/non-monetized MVP | PASS | `MONETIZATION_ENABLED=false`; payment, wallet, creator-studio, live/event and other unfinished routes are middleware-disabled |
 | Public profiles/community | PASS for MVP scope | Explicit-public active profiles only; canonical responsive profile, safe serializer, deterministic pagination and owner-scoped approved media/albums |
 | Public media | PARTIAL | Requires signed adult declaration, public visibility, completed upload, READY processing, approval and active public owner; staging migration, scanning and video processor remain |
-| Member search | PASS for MVP | People, approved media, active dating ads and approved posts; block/privacy enforcement; deterministic newest-first ranking; no AI |
+| Public/member search | PASS for MVP | Anonymous search exposes only minimized explicit-public people, approved public media/albums and active public-author dating ads; signed-in search adds block-aware member records and approved posts; deterministic ranking; no AI |
 | Dating interactions | PASS for current MVP | Owner-derived creation/deletion/reactivation; durable save; reply enters participant-authorized messages |
 | Messaging | PARTIAL | Durable participant/block checks, unread state and notifications; attachments deliberately disabled; pagination and staging E2E remain |
 | Follows/blocks/saves/comments/notifications | PASS for implemented lifecycle | Server-owned database state, durable mutation audits, real event sources, and atomic blocks that remove relationships in both directions; staging migration required |
@@ -27,7 +27,7 @@ Scope: repository implementation and preview/staging readiness. This is not lega
 
 ## Verification evidence
 
-- `npm run test`: 47 security boundary tests pass.
+- `npm run test`: 48 security boundary tests pass.
 - `npm run typecheck`: pass.
 - `npm run lint`: pass with no warnings.
 - `npm run build`: pass; Auth0 SDK emits a known non-fatal dynamic-dependency warning.

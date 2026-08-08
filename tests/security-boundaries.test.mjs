@@ -540,3 +540,17 @@ test("blocking is atomic, relationship-ending, and durably audited", async () =>
   assert.match(blocks, /rpc\("intimo_block_profile"/);
   for (const route of [blocks, connections, profile]) assert.match(route, /appendDurableAudit/);
 });
+
+test("anonymous search returns only explicit public, approved, active records", async () => {
+  const route = await read("src/app/api/public/search/route.ts");
+  const page = await read("src/app/search/page.tsx");
+  assert.match(route, /eq\("profile_visibility", "EVERYONE"\)/);
+  assert.match(route, /eq\("public_profile_visibility", true\)/);
+  assert.match(route, /eq\("visibility", "PUBLIC"\)/);
+  assert.match(route, /eq\("moderation_status", "APPROVED"\)/);
+  assert.match(route, /eq\("processing_status", "READY"\)/);
+  assert.match(route, /privacy: "anonymous_minimized_public_records_only"/);
+  assert.doesNotMatch(route, /sexual_orientation|auth_id|email/);
+  assert.match(page, /user \? "\/api\/search" : "\/api\/public\/search"/);
+  assert.doesNotMatch(page, /if \(!user\) return <BehindTheDoorLanding/);
+});
