@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, Suspense } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/Card";
@@ -291,21 +291,6 @@ function DatingMarketplaceContent() {
       setFormRegion(countryData.cities[1]);
     } else {
       setFormRegion("All Cities / Regions");
-    }
-  };
-
-  // Photo Attachment File
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        setPhotoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
     }
   };
 

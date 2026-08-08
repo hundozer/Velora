@@ -14,7 +14,7 @@ Scope: repository implementation and preview/staging readiness. This is not lega
 | Public profiles/community | PASS for MVP scope | Explicit-public active profiles only; canonical responsive profile, safe serializer, deterministic pagination and owner-scoped approved media/albums |
 | Public media | PARTIAL | Requires signed adult declaration, public visibility, completed upload, READY processing, approval and active public owner; staging migration, scanning and video processor remain |
 | Public/member search | PASS for MVP | Anonymous search exposes only minimized explicit-public people, approved public media/albums and active public-author dating ads; signed-in search adds block-aware member records and approved posts; deterministic ranking; no AI |
-| Dating interactions | PASS for current MVP | Owner-derived creation/deletion/reactivation; durable save; reply enters participant-authorized messages |
+| Dating interactions | PASS for current MVP | Owner-derived creation/deletion/reactivation with durable audit; durable save; reply enters participant-authorized messages; unsupported local-only attachment input removed |
 | Messaging | PARTIAL | Durable participant/block checks, unread state and notifications; attachments deliberately disabled; pagination and staging E2E remain |
 | Follows/blocks/saves/comments/notifications | PASS for implemented lifecycle | Server-owned database state, durable mutation audits, real event sources, and atomic blocks that remove relationships in both directions; staging migration required |
 | Identity verification | PARTIAL | Private owner-submitted evidence, durable queue, MFA/granular admin signed access and audit; stronger age-assurance provider remains external |

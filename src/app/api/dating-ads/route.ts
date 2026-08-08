@@ -4,6 +4,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { dbRowToDatingAd, DatingAdRow } from "@/lib/supabase/datingAdService";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
+import { appendDurableAudit } from "@/lib/auth/durableAudit";
 
 export const dynamic = "force-dynamic";
 const MAX_BODY_BYTES = 32 * 1024;
@@ -73,6 +74,8 @@ export async function POST(req: NextRequest) {
   };
   const { data, error } = await supabase.from("dating_ads").insert(row).select("*").single();
   if (error || !data) return NextResponse.json({ error: "Dating ad creation failed" }, { status: 502 });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "DATING_AD_CREATE", resourceType: "DATING_AD", resourceId: String(data.id), outcome: "SUCCESS", metadata: { validityDays, hasMedia: Boolean(row.photo_url) } });
+  if (!audited) return NextResponse.json({ error: "Dating ad created but audit recording failed; contact support" }, { status: 503 });
   auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "DATING_AD_CREATE", resourceId: String(data.id), resourceType: "DATING_AD", status: "SUCCESS" });
   return NextResponse.json({ ad: dbRowToDatingAd(data as DatingAdRow) }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
 }

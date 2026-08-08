@@ -462,10 +462,14 @@ test("shared actor boundary blocks inactive accounts and unified search enforces
 test("dating saves and reactivation use durable server APIs", async () => {
   const page = await read("src/app/dating/page.tsx");
   const route = await read("src/app/api/dating-ads/[id]/route.ts");
+  const collection = await read("src/app/api/dating-ads/route.ts");
   assert.match(page, /api\/saved-items/);
   assert.doesNotMatch(page, /intimo_all_dating_ads/);
+  assert.doesNotMatch(page, /FileReader|photoPreview|handlePhotoSelect/);
   assert.match(route, /DATING_AD_REACTIVATE/);
   assert.match(route, /eq\("author_id", actor\.actor\.profileId\)/);
+  assert.match(route, /appendDurableAudit/);
+  assert.match(collection, /appendDurableAudit/);
 });
 
 test("identity verification evidence is owner-submitted, private, and admin-audited", async () => {
