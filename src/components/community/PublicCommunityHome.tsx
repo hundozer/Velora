@@ -105,7 +105,7 @@ export function PublicCommunityHome() {
           </div>
         </section>
 
-        {(loading || data?.profiles.length) && <section aria-labelledby="new-members">
+        {(loading || Boolean(data?.profiles.length)) && <section aria-labelledby="new-members">
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
               <h2 id="new-members" className="text-xl font-bold text-white">New public members</h2>
