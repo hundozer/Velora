@@ -64,7 +64,7 @@ export default function EventsMarketplacePage() {
       attendeesCount: 1,
       ticketPrice: parseFloat(price) || 0,
       coverImageUrl: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80",
-      rules: ["Level 3 Biometric Verification Required"],
+      rules: ["Photo Verification Required"],
       isAttending: true,
     };
 

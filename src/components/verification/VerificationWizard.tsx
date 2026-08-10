@@ -57,7 +57,7 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
             Verification Submitted
           </h3>
           <p className="text-xs text-velora-textMuted leading-relaxed glass-panel p-4 rounded-2xl">
-            Your verification material for <strong>Level 3 Profile Biometric Verification</strong> has been submitted. Our compliance team will audit your document within 1 hour.
+            Your photo verification selfie has been submitted for manual review. No government identity document is required for this badge.
           </p>
           <Button variant="gold" size="sm" className="w-full font-bold uppercase" onClick={handleReset}>
             Close Window
@@ -108,8 +108,8 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
                 <UserCheck className="w-4 h-4" />
               </div>
               <div className="text-xs">
-                <span className="font-bold text-velora-textPrimary block">Level 3: Biometric 18+ Adult</span>
-                <p className="text-velora-textMuted text-[11px] mt-0.5">Passport/ID + selfie date note check</p>
+                <span className="font-bold text-velora-textPrimary block">Level 3: Photo Verified</span>
+                <p className="text-velora-textMuted text-[11px] mt-0.5">Selfie with Intimo, username and current date</p>
               </div>
             </div>
 
@@ -136,24 +136,16 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
           {step === 1 && (
             <div className="space-y-4 pt-2 border-t border-white/10">
               <h4 className="text-sm font-serif font-bold text-velora-textPrimary">
-                18+ Legal Biometric Verification Submission
+                Photo verification submission
               </h4>
               <p className="text-xs text-velora-textMuted">
-                Upload your official government photo ID and a selfie holding a handwritten note with today's date.
+                Upload one selfie while holding a handwritten note showing Intimo, your username, and today&apos;s date.
               </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="p-4 glass-panel rounded-2xl border border-dashed border-white/20 text-center space-y-2">
                   <Upload className="w-5 h-5 text-velora-gold mx-auto" />
-                  <p className="text-xs font-bold text-velora-textPrimary">Upload Passport / ID Front</p>
-                  <Button variant="glass" size="sm" className="text-[10px] border-white/10">
-                    Select ID Image
-                  </Button>
-                </div>
-
-                <div className="p-4 glass-panel rounded-2xl border border-dashed border-white/20 text-center space-y-2">
-                  <Upload className="w-5 h-5 text-velora-gold mx-auto" />
-                  <p className="text-xs font-bold text-velora-textPrimary">Upload Selfie with Date Note</p>
+                  <p className="text-xs font-bold text-velora-textPrimary">Upload verification selfie</p>
                   <Button variant="glass" size="sm" className="text-[10px] border-white/10">
                     Select Selfie Image
                   </Button>

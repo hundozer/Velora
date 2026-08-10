@@ -33,8 +33,8 @@ export const TRUST_LEVEL_DEFINITIONS: Record<TrustLevel, TrustLevelDetails> = {
   3: {
     level: 3,
     title: "Identity Verified Member",
-    description: "Biometric identity verification completed",
-    requirements: ["Government ID + Biometric selfie check"],
+    description: "Manual photo verification completed",
+    requirements: ["Selfie with Intimo, username and current date"],
     capabilities: [
       "Access verified-only private spaces",
       "Join restricted communities",

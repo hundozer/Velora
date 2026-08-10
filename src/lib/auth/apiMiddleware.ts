@@ -102,7 +102,7 @@ export async function validateApiRequest(
     return {
       authorized: false,
       statusCode: 403,
-      message: "Biometric Identity Verification required for this feature.",
+      message: "Photo verification is required for this feature.",
     };
   }
 

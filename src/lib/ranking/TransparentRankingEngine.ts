@@ -14,7 +14,7 @@ export class TransparentRankingEngine {
       reasons.push("Level 4 Creator Verified (+30)");
     } else if (profile.verificationLevel === "LEVEL_3_PROFILE_BIOMETRIC") {
       score += 25;
-      reasons.push("Level 3 Biometric Verified (+25)");
+      reasons.push("Photo Verified (+25)");
     } else if (profile.verified) {
       score += 15;
       reasons.push("Verified Member (+15)");

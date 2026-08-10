@@ -105,7 +105,7 @@ export function GetVerifiedModal({
             <div className="space-y-2">
               <h3 className="text-xl font-serif font-bold text-white">Verification Photo Submitted!</h3>
               <p className="text-xs text-velora-textMuted max-w-md mx-auto leading-relaxed">
-                Your identity verification request is now under review by platform administration. Manual verification typically takes under 24 hours.
+                Your photo verification request is now under manual review. The badge confirms only that an administrator approved the required selfie and handwritten note.
               </p>
             </div>
 
@@ -123,7 +123,7 @@ export function GetVerifiedModal({
             <div className="space-y-2 border-b border-white/10 pb-4">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-6 h-6 text-velora-gold fill-amber-400/20" />
-                <h2 className="text-xl font-serif font-bold text-white">Get Biometric Verified</h2>
+                <h2 className="text-xl font-serif font-bold text-white">Get Photo Verified</h2>
               </div>
               <p className="text-xs text-velora-textMuted">
                 Add a genuine verification signal to your Intimo profile after review. Verification reduces uncertainty, but it is never a guarantee about a person or their conduct.
@@ -140,7 +140,7 @@ export function GetVerifiedModal({
                 <div className="flex items-start gap-2.5">
                   <span className="w-5 h-5 rounded-full bg-amber-400/20 text-amber-300 font-bold text-[11px] flex items-center justify-center shrink-0">1</span>
                   <p>
-                    Take a piece of paper and write <strong className="text-white font-mono bg-black/40 px-1.5 py-0.5 rounded border border-white/10">INTIMO</strong> and today&apos;s date (<strong className="text-amber-300 font-mono">{todayDateString}</strong>) in clear handwriting.
+                    Take a piece of paper and clearly write <strong className="text-white font-mono bg-black/40 px-1.5 py-0.5 rounded border border-white/10">INTIMO</strong>, your username <strong className="text-white font-mono">{userName}</strong>, and today&apos;s date (<strong className="text-amber-300 font-mono">{todayDateString}</strong>).
                   </p>
                 </div>
 
@@ -154,7 +154,7 @@ export function GetVerifiedModal({
                 <div className="flex items-start gap-2.5">
                   <span className="w-5 h-5 rounded-full bg-amber-400/20 text-amber-300 font-bold text-[11px] flex items-center justify-center shrink-0">3</span>
                   <p>
-                    Upload the photo below. Our admin team will manually inspect it and issue your <strong className="text-emerald-300">Biometric Verified Badge</strong>.
+                    Upload the photo below. An administrator will manually inspect it and may issue a <strong className="text-emerald-300">Photo Verified badge</strong>. This is not government-ID or biometric verification.
                   </p>
                 </div>
               </div>

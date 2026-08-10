@@ -116,7 +116,7 @@ export function CreatorPreRegistrationModal({
                     2
                   </div>
                   <div className="text-xs font-bold text-white">2. Get Verified</div>
-                  <p className="text-[10px] text-velora-textMuted leading-tight">Selfie photo biometric badge</p>
+                  <p className="text-[10px] text-velora-textMuted leading-tight">Manually reviewed Photo Verified badge</p>
                 </div>
 
                 {/* Step 3 */}

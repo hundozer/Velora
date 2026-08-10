@@ -176,7 +176,7 @@ export default function CreatorStudioPage() {
             <div className="p-3 rounded-2xl bg-black/50 border border-purple-500/30 text-center space-y-1 relative group hover:border-purple-400 transition-all">
               <div className="w-7 h-7 rounded-full bg-purple-500/20 text-purple-300 font-bold text-xs flex items-center justify-center mx-auto border border-purple-500/40">2</div>
               <div className="text-xs font-bold text-white">2. Get Verified</div>
-              <div className="text-[10px] text-velora-textMuted leading-tight">Selfie photo biometric badge</div>
+              <div className="text-[10px] text-velora-textMuted leading-tight">Manually reviewed Photo Verified badge</div>
             </div>
 
             <div className="p-3 rounded-2xl bg-black/50 border border-sky-500/30 text-center space-y-1 relative group hover:border-sky-400 transition-all">
