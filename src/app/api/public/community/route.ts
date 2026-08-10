@@ -36,7 +36,13 @@ export async function GET(req: NextRequest) {
   const offset = (page - 1) * limit;
   const search = (url.searchParams.get("q") || "").trim().slice(0, 80);
   const country = (url.searchParams.get("country") || "").trim().slice(0, 80);
+  const city = (url.searchParams.get("city") || "").trim().slice(0, 80);
   const profileType = url.searchParams.get("profileType");
+  const gender = url.searchParams.get("gender");
+  const minAge = positiveInteger(url.searchParams.get("minAge"), 18, 100);
+  const maxAge = positiveInteger(url.searchParams.get("maxAge"), 100, 100);
+  const verifiedOnly = url.searchParams.get("verified") === "true";
+  const recentlyActiveOnly = url.searchParams.get("recentlyActive") === "true";
 
   const db = getServerSupabase();
   if (!db) return NextResponse.json({ error: "Public community is temporarily unavailable" }, { status: 503 });
@@ -44,7 +50,7 @@ export async function GET(req: NextRequest) {
   let profileQuery = db
     .from("profiles")
     .select(
-      "id,display_name,username,age,country,city,headline,bio,is_couple_profile,verification_status,verification_level,location_precision,show_online_status,last_active_at,created_at,is_demo",
+      "id,display_name,username,age,country,city,headline,bio,is_couple_profile,verification_status,verification_level,location_precision,show_online_status,last_active_at,created_at",
       { count: "exact" }
     )
     .eq("profile_visibility", "EVERYONE")
@@ -56,8 +62,13 @@ export async function GET(req: NextRequest) {
     .range(offset, offset + limit - 1);
 
   if (country) profileQuery = profileQuery.ilike("country", country);
+  if (city) profileQuery = profileQuery.ilike("city", `%${city.replace(/[%_,()]/g, "")}%`);
   if (profileType === "COUPLE") profileQuery = profileQuery.eq("is_couple_profile", true);
   if (profileType === "INDIVIDUAL") profileQuery = profileQuery.eq("is_couple_profile", false);
+  if (gender === "MALE" || gender === "FEMALE") profileQuery = profileQuery.eq("is_couple_profile", false).eq("gender", gender);
+  profileQuery = profileQuery.gte("age", Math.min(minAge, maxAge)).lte("age", Math.max(minAge, maxAge));
+  if (verifiedOnly) profileQuery = profileQuery.or("verification_status.eq.VERIFIED,verification_level.in.(LEVEL_3_PROFILE_BIOMETRIC,LEVEL_4_CREATOR)");
+  if (recentlyActiveOnly) profileQuery = profileQuery.eq("show_online_status", true).gte("last_active_at", new Date(Date.now() - 86_400_000).toISOString());
   if (search) {
     const escaped = search.replace(/[%_,()]/g, "");
     if (escaped) profileQuery = profileQuery.or(`display_name.ilike.%${escaped}%,username.ilike.%${escaped}%,headline.ilike.%${escaped}%`);

@@ -2,8 +2,10 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
-import { BadgeCheck, CalendarHeart, MapPin, Search, ShieldCheck, Users } from "lucide-react";
+import { BadgeCheck, CalendarHeart, MapPin, Search } from "lucide-react";
+import { MemberActivityFeed } from "@/components/community/MemberActivityFeed";
 
 interface PublicProfile {
   id: string;
@@ -45,10 +47,9 @@ function Initials({ name }: { name: string }) {
 }
 
 export function PublicCommunityHome() {
-  const { user } = useAuth();
+  const { user, isAuthLoading } = useAuth();
   const [data, setData] = React.useState<CommunityResponse | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState("");
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -59,23 +60,28 @@ export function PublicCommunityHome() {
       })
       .then(setData)
       .catch((cause) => {
-        if (cause.name !== "AbortError") setError("The public community could not be loaded. Please try again shortly.");
+        if (cause.name !== "AbortError") {
+          setData(null);
+        }
       })
       .finally(() => setLoading(false));
     return () => controller.abort();
   }, []);
 
+  if (isAuthLoading) return <div className="min-h-screen animate-pulse bg-[#090b10]" />;
+  if (user) return <MemberActivityFeed />;
+
   return (
     <div className="min-h-screen bg-[#090b10]">
-      <section className="border-b border-white/10 bg-[#0e1118]">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-300">The Intimo community</p>
-              <h1 className="mt-2 font-serif text-3xl font-semibold text-white sm:text-4xl">Meet people before you decide to join.</h1>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">Browse profiles and current dating posts that members have deliberately made public. Private activity, messages, intimate preferences, and exact locations stay private.</p>
-            </div>
-            <div className="flex flex-wrap gap-3">
+      <section className="relative isolate min-h-[440px] overflow-hidden border-b border-white/10 bg-[#0e1118] sm:min-h-[520px]">
+        <Image src="/marketing/intimo-community-hero.jpg" alt="Adults socializing in an elegant lounge" fill priority sizes="100vw" className="-z-20 object-cover object-center" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black via-black/75 to-black/15" />
+        <div className="mx-auto flex min-h-[440px] max-w-7xl items-end px-4 py-10 sm:min-h-[520px] sm:px-6 sm:py-14 lg:px-8">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-300">The Intimo community</p>
+            <h1 className="mt-3 font-serif text-5xl font-semibold leading-[0.98] text-white sm:text-6xl lg:text-7xl">Find your people.</h1>
+            <p className="mt-5 max-w-lg text-base leading-7 text-slate-200 sm:text-lg">Profiles, dating, photos, and videos in one adults-only community.</p>
+            <div className="mt-7 flex flex-wrap gap-3">
               <Link href="/people" className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-amber-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-amber-200"><Search className="h-4 w-4" /> Browse people</Link>
               {user ? (
                 <Link href="/dashboard" className="inline-flex min-h-11 items-center rounded-lg border border-white/15 px-5 py-3 text-sm font-semibold text-white hover:bg-white/5">My dashboard</Link>
@@ -87,20 +93,27 @@ export function PublicCommunityHome() {
         </div>
       </section>
 
-      <main className="mx-auto max-w-7xl space-y-10 px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl space-y-10 px-4 py-7 sm:px-6 lg:px-8">
         {data?.demoContentPresent && <div role="status" className="rounded-xl border border-sky-300/30 bg-sky-300/10 px-4 py-3 text-sm text-sky-100"><strong>Staging demo content:</strong> profiles labeled Demo are fictional test records, not real members or activity.</div>}
-        <section aria-labelledby="new-members">
+        <section aria-labelledby="explore-intimo">
+          <h2 id="explore-intimo" className="sr-only">Explore Intimo</h2>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {[
+              ["People", "/people", "20% center"], ["Dating", "/dating", "42% center"],
+              ["Photos", "/photos", "68% center"], ["Videos", "/videos", "88% center"],
+            ].map(([label, href, position]) => <Link key={label} href={href} className="group relative min-h-32 overflow-hidden rounded-xl border border-white/10 bg-[#11151e] sm:min-h-40"><Image src="/marketing/intimo-community-hero.jpg" alt="" aria-hidden="true" fill sizes="(max-width: 1024px) 50vw, 25vw" className="scale-125 object-cover opacity-65 transition duration-500 group-hover:scale-110 group-hover:opacity-80" style={{ objectPosition: position }} /><span className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" /><span className="absolute bottom-4 left-4 text-lg font-bold text-white sm:text-xl">{label}</span></Link>)}
+          </div>
+        </section>
+
+        {(loading || data?.profiles.length) && <section aria-labelledby="new-members">
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
               <h2 id="new-members" className="text-xl font-bold text-white">New public members</h2>
-              <p className="mt-1 text-sm text-slate-400">Newest first. No paid placement or hidden ranking.</p>
             </div>
             <Link href="/people" className="text-sm font-semibold text-amber-300 hover:text-amber-200">View all</Link>
           </div>
           {loading ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Loading public members">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-44 animate-pulse rounded-xl border border-white/10 bg-white/5" />)}</div>
-          ) : error ? (
-            <div className="rounded-xl border border-red-400/30 bg-red-400/10 p-5 text-sm text-red-100">{error}</div>
           ) : data?.profiles.length ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {data.profiles.map((profile) => (
@@ -111,25 +124,15 @@ export function PublicCommunityHome() {
                 </Link>
               ))}
             </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] p-8 text-center"><Users className="mx-auto h-7 w-7 text-slate-500" /><h3 className="mt-3 font-semibold text-white">No public profiles yet</h3><p className="mt-1 text-sm text-slate-400">Members control whether their profiles appear here.</p></div>
-          )}
-        </section>
+          ) : null}
+        </section>}
 
-        <section aria-labelledby="dating-posts">
-          <div className="mb-4 flex items-end justify-between gap-4"><div><h2 id="dating-posts" className="text-xl font-bold text-white">Latest dating posts</h2><p className="mt-1 text-sm text-slate-400">Active public summaries from visible members.</p></div><Link href="/dating" className="text-sm font-semibold text-amber-300 hover:text-amber-200">Browse dating</Link></div>
+        {data?.datingAds.length ? <section aria-labelledby="dating-posts">
+          <div className="mb-4 flex items-end justify-between gap-4"><h2 id="dating-posts" className="text-xl font-bold text-white">Latest dating posts</h2><Link href="/dating" className="text-sm font-semibold text-amber-300 hover:text-amber-200">View all</Link></div>
           {data?.datingAds.length ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{data.datingAds.slice(0, 6).map((ad) => <Link key={ad.id} href={`/dating?ad=${encodeURIComponent(ad.id)}`} className="rounded-xl border border-white/10 bg-[#121620] p-5 hover:border-rose-300/30"><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-rose-300"><CalendarHeart className="h-4 w-4" />{ad.category}</div><h3 className="mt-3 text-base font-semibold text-white">{ad.title}</h3><p className="mt-2 text-sm text-slate-400">By {ad.authorName}{ad.verified ? " · Verified" : ""}</p>{ad.location && <p className="mt-3 text-xs text-slate-500">{ad.location} · Preferred ages {ad.ageRange}</p>}</Link>)}</div>
-          ) : !loading && !error ? (
-            <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] p-8 text-center"><CalendarHeart className="mx-auto h-7 w-7 text-slate-500" /><h3 className="mt-3 font-semibold text-white">No active public dating posts</h3><p className="mt-1 text-sm text-slate-400">New posts will appear only when their author is publicly visible.</p></div>
           ) : null}
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-xl border border-white/10 bg-[#10141d] p-5"><ShieldCheck className="h-5 w-5 text-emerald-400" /><h2 className="mt-3 font-semibold text-white">Privacy-first public browsing</h2><p className="mt-2 text-sm leading-5 text-slate-400">Only explicitly public, active profiles appear. Sensitive preference fields and private media are excluded.</p></div>
-          <div className="rounded-xl border border-white/10 bg-[#10141d] p-5"><Users className="h-5 w-5 text-amber-300" /><h2 className="mt-3 font-semibold text-white">Real empty states</h2><p className="mt-2 text-sm leading-5 text-slate-400">Intimo does not invent members, activity, likes, albums, or popularity to make the community look busy.</p></div>
-          <div className="rounded-xl border border-white/10 bg-[#10141d] p-5"><BadgeCheck className="h-5 w-5 text-sky-300" /><h2 className="mt-3 font-semibold text-white">Actions require an account</h2><p className="mt-2 text-sm leading-5 text-slate-400">Following, messaging, posting, saving, and reporting use authenticated, server-authorized workflows.</p></div>
-        </section>
+        </section> : null}
       </main>
     </div>
   );
