@@ -13,6 +13,7 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   role: UserRole;
+  isAuthLoading: boolean;
   isAgeVerified: boolean;
   confirmAge: () => Promise<void>;
   loginWithAuth0: (screenHint?: string) => void;
@@ -27,6 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<UserRole>("MEMBER");
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isAgeVerified, setIsAgeVerified] = useState<boolean>(false);
 
   // Age declaration is only a low-assurance visitor gate. Identity and roles
@@ -51,7 +53,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         if (!response.ok) return;
         const session = await response.json();
-        if (!session?.provisioned || !session?.actor?.email) return;
+        if (!session?.provisioned) {
+          if (window.location.pathname !== "/onboarding") window.location.replace("/onboarding");
+          return;
+        }
+        if (!session?.actor?.email) return;
 
         const profileResponse = await fetch("/api/profile/me", { cache: "no-store", credentials: "same-origin" });
         if (!profileResponse.ok) return;
@@ -68,6 +74,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
         setProfile(null);
         setRole("MEMBER");
+      })
+      .finally(() => {
+        if (!cancelled) setIsAuthLoading(false);
       });
     return () => { cancelled = true; };
   }, []);
@@ -141,6 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         profile,
         role,
+        isAuthLoading,
         isAgeVerified,
         confirmAge,
         loginWithAuth0,
