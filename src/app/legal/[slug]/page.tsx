@@ -19,10 +19,8 @@ export default function LegalDraftPage({ params }: { params: { slug: string } })
   const policy = POLICIES[params.slug];
   if (!policy) notFound();
   return <main className="max-w-3xl mx-auto px-4 py-12 space-y-8">
-    <div className="rounded-xl border border-red-500/50 bg-red-500/10 p-4 text-sm font-bold text-red-200">REQUIRES LEGAL REVIEW BEFORE PRODUCTION USE</div>
-    <div><h1 className="text-3xl font-serif font-bold text-white">{policy.title}</h1><p className="mt-2 text-xs text-velora-textMuted">Technical draft placeholder • Intimo • contact@intimo.live • Last technical update: 2026-08-07</p></div>
+    <div><h1 className="text-3xl font-serif font-bold text-white">{policy.title}</h1><p className="mt-2 text-xs text-velora-textMuted">Intimo • contact@intimo.live • Last updated: 2026-08-07</p></div>
     {policy.sections.map(([title, body]) => <section key={title} className="space-y-2"><h2 className="text-lg font-bold text-velora-gold">{title}</h2><p className="text-sm leading-7 text-velora-textSecondary">{body}</p></section>)}
-    <p className="text-xs text-velora-textMuted">This page is an incomplete product/engineering draft, not legal advice or an approved policy. Qualified Czech/EU counsel must determine Intimo&apos;s obligations and approve final localized text.</p>
     <Link href="/settings" className="text-sm text-velora-gold underline">Open Privacy Center</Link>
   </main>;
 }
