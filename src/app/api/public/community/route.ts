@@ -75,7 +75,15 @@ export async function GET(req: NextRequest) {
   }
 
   const { data: profileRows, error: profileError, count } = await profileQuery;
-  if (profileError) return NextResponse.json({ error: "Public profiles could not be loaded" }, { status: 502 });
+  if (profileError) {
+    return NextResponse.json({
+      error: "Public profiles could not be loaded",
+      message: profileError.message,
+      details: profileError.details,
+      hint: profileError.hint,
+      code: profileError.code
+    }, { status: 502 });
+  }
 
   const profiles = (profileRows || []).map((row) => toAnonymousPublicProfile(row as PublicProfileRow));
 
