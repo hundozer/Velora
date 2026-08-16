@@ -10,6 +10,22 @@ import { useAuth } from "@/context/AuthContext";
 import { User as UserType, UserRole, Profile as ProfileType } from "@/types";
 import { Sparkles, ArrowRight, CheckCircle2, Heart, ShieldCheck, Compass, User, Users, Crown, Camera, Flame } from "lucide-react";
 
+function ageFromBirthDate(value: string): number | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  const birthDate = new Date(year, month - 1, day);
+  if (
+    birthDate.getFullYear() !== year ||
+    birthDate.getMonth() !== month - 1 ||
+    birthDate.getDate() !== day
+  ) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - year;
+  if (today.getMonth() < month - 1 || (today.getMonth() === month - 1 && today.getDate() < day)) age -= 1;
+  return age;
+}
+
 export default function OnboardingWizardPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -73,6 +89,9 @@ export default function OnboardingWizardPage() {
   const [displayName, setDisplayName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const nicknameIsValid = displayName.trim().length >= 2 && displayName.trim().length <= 80;
+  const enteredAge = ageFromBirthDate(dateOfBirth);
+  const birthDateIsValid = enteredAge !== null && enteredAge >= 18 && enteredAge <= 120;
 
   const handleFinish = async () => {
     setSubmitting(true);
@@ -261,16 +280,26 @@ export default function OnboardingWizardPage() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 className="w-full text-xs"
+                required
+                minLength={2}
+                maxLength={80}
+                aria-invalid={!nicknameIsValid}
               />
               <p className="text-[10px] text-velora-textMuted">
                 This nickname will represent your private identity to verified members on Intimo.
               </p>
+              {!nicknameIsValid && (
+                <p className="text-[11px] text-amber-300" role="alert">
+                  Enter a nickname between 2 and 80 characters to continue.
+                </p>
+              )}
             </div>
 
             <Button
               variant="gold"
               className="w-full text-xs font-bold uppercase tracking-wider py-3 shadow-gold-glow flex items-center justify-center gap-2"
               onClick={() => setStep(2)}
+              disabled={!nicknameIsValid}
             >
               <span>Next: Define Interests</span>
               <ArrowRight className="w-4 h-4" />
@@ -388,7 +417,23 @@ export default function OnboardingWizardPage() {
                 onChange={(e) => setDateOfBirth(e.target.value)}
                 max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split("T")[0]}
                 required
+                aria-invalid={!birthDateIsValid}
               />
+              {!dateOfBirth && (
+                <p className="mt-2 text-[11px] text-amber-300" role="alert">
+                  Enter your date of birth to continue.
+                </p>
+              )}
+              {dateOfBirth && enteredAge !== null && enteredAge < 18 && (
+                <p className="mt-2 text-[11px] text-red-400" role="alert">
+                  Intimo is only available to adults aged 18 or older.
+                </p>
+              )}
+              {dateOfBirth && (enteredAge === null || enteredAge > 120) && (
+                <p className="mt-2 text-[11px] text-red-400" role="alert">
+                  Enter a valid date of birth.
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -447,6 +492,7 @@ export default function OnboardingWizardPage() {
                 variant="gold"
                 className="w-2/3 text-xs font-bold uppercase tracking-wider py-3 shadow-gold-glow flex items-center justify-center gap-2"
                 onClick={() => setStep(4)}
+                disabled={!birthDateIsValid}
               >
                 <span>Next: Intimate Preferences (Optional)</span>
                 <ArrowRight className="w-4 h-4" />

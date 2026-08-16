@@ -1,6 +1,8 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- user media URLs are signed/dynamic and cannot use a static remote loader */
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -28,6 +30,7 @@ import {
   LogOut,
   AlertTriangle,
   Camera,
+  Image as ImageIcon,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -57,9 +60,20 @@ export default function SettingsPage() {
   const [appealCaseId, setAppealCaseId] = useState("");
   const [appealReason, setAppealReason] = useState("");
   const [appealMessage, setAppealMessage] = useState("");
+  const [avatarImageFailed, setAvatarImageFailed] = useState(false);
+  const [coverImageFailed, setCoverImageFailed] = useState(false);
+
+  const avatarUrl = profile?.avatarUrl || user?.avatarUrl || "";
+  const coverUrl = profile?.coverPhotoUrl || "";
 
   const avatarInputRef = React.useRef<HTMLInputElement>(null);
   const coverInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => setAvatarImageFailed(false), [avatarUrl]);
+  React.useEffect(() => setCoverImageFailed(false), [coverUrl]);
+  React.useEffect(() => {
+    if (profile?.displayName || user?.username) setNickname(profile?.displayName || user?.username || "");
+  }, [profile?.displayName, user?.username]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0] && user && profile) {
@@ -236,8 +250,8 @@ export default function SettingsPage() {
 
       {/* SECTION 0: PRIVATE IDENTITY, AVATAR & BANNER */}
       <Card variant="glass" className="p-6 space-y-6">
-        <input type="file" ref={avatarInputRef} accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-        <input type="file" ref={coverInputRef} accept="image/*" className="hidden" onChange={handleCoverUpload} />
+        <input type="file" ref={avatarInputRef} accept="image/jpeg,image/png,image/webp,image/gif,image/heic" className="hidden" onChange={handleAvatarUpload} />
+        <input type="file" ref={coverInputRef} accept="image/jpeg,image/png,image/webp,image/gif,image/heic" className="hidden" onChange={handleCoverUpload} />
 
         <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
           <UserCheck className="w-4 h-4 text-velora-gold" />
@@ -249,8 +263,8 @@ export default function SettingsPage() {
           <div className="flex flex-wrap items-center gap-6 pb-2 border-b border-white/5">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-2xl border-2 border-velora-gold/60 overflow-hidden bg-velora-card relative group shrink-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={profile?.avatarUrl || user?.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                <span className="absolute inset-0 flex items-center justify-center bg-amber-300/5"><UserCheck className="h-7 w-7 text-amber-300/60" /></span>
+                {avatarUrl && !avatarImageFailed && <img src={avatarUrl} alt="Your profile avatar" onError={() => setAvatarImageFailed(true)} className="relative h-full w-full object-cover" />}
                 <button
                   type="button"
                   onClick={() => !mediaUploadPending && avatarInputRef.current?.click()}
@@ -271,11 +285,11 @@ export default function SettingsPage() {
 
             <div className="flex items-center gap-4 border-l border-white/10 pl-6">
               <div className="w-24 h-16 rounded-2xl border border-white/20 overflow-hidden bg-velora-card relative group shrink-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={profile?.coverPhotoUrl || profile?.avatarUrl} alt="Cover Banner" className="w-full h-full object-cover" />
+                <span className="absolute inset-0 flex items-center justify-center bg-white/[0.03]"><ImageIcon className="h-7 w-7 text-slate-500" /></span>
+                {coverUrl && !coverImageFailed && <img src={coverUrl} alt="Your profile cover" onError={() => setCoverImageFailed(true)} className="relative h-full w-full object-cover" />}
                 <button
                   type="button"
-                  onClick={() => coverInputRef.current?.click()}
+                  onClick={() => !mediaUploadPending && coverInputRef.current?.click()}
                   className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
                   title="Upload New Cover Banner"
                 >
@@ -285,8 +299,8 @@ export default function SettingsPage() {
               <div>
                 <p className="text-xs font-bold text-white">Cover Banner Image</p>
                 <p className="text-[10px] text-velora-textMuted mb-2">Upload header background banner</p>
-                <Button variant="glass" size="sm" onClick={() => coverInputRef.current?.click()} className="text-[11px] gap-1.5">
-                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> Upload New Banner
+                <Button variant="glass" size="sm" disabled={mediaUploadPending} onClick={() => coverInputRef.current?.click()} className="text-[11px] gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUploadPending ? "Uploading…" : "Upload New Banner"}
                 </Button>
               </div>
             </div>
@@ -340,26 +354,54 @@ export default function SettingsPage() {
 
       <Card variant="glass" className="p-6 space-y-5">
         <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
-          <EyeOff className="w-4 h-4 text-emerald-400" /> Privacy Center
+          <EyeOff className="w-4 h-4 text-emerald-400" /> Who can see what
         </h2>
-        <p className="text-xs text-velora-textSecondary">Sensitive profile fields default to private. Exact coordinates are never shown through public profile APIs.</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {[
-            ["Profile visibility", "profileVisibility", ["EVERYONE", "MEMBERS_ONLY", "MATCHING_USERS", "APPROVED_USERS", "PRIVATE"]],
-            ["Sensitive fields", "sensitiveFieldsVisibility", ["EVERYONE", "MEMBERS_ONLY", "MATCHING_USERS", "APPROVED_USERS", "PRIVATE"]],
-            ["Location display", "locationPrecision", ["HIDDEN", "CITY", "APPROXIMATE_DISTANCE"]],
-            ["Who may message", "messagePermission", ["EVERYONE", "MEMBERS_ONLY", "MATCHING_USERS", "APPROVED_USERS", "PRIVATE"]],
-          ].map(([label, key, options]) => (
-            <label key={key as string} className="text-xs text-velora-textSecondary">
-              <span className="block mb-2 font-semibold">{label as string}</span>
-              <select value={(privacy as any)[key as string]} onChange={(event) => setPrivacy({ ...privacy, [key as string]: event.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white">
-                {(options as string[]).map((option) => <option key={option} value={option} className="bg-velora-card">{option.replaceAll("_", " ")}</option>)}
-              </select>
-            </label>
-          ))}
+        <p className="text-xs text-velora-textSecondary">Choose an audience for your profile and each kind of information. New intimate details and media stay private until you change them.</p>
+
+        <div className="space-y-3">
+          <VisibilityChoice
+            icon={<Globe className="h-5 w-5" />}
+            title="Your profile"
+            description="Controls whether your profile appears in People and discovery. Choose Hidden to disappear without deleting your account."
+            value={privacy.profileVisibility}
+            options={[["EVERYONE", "Public"], ["MEMBERS_ONLY", "Members"], ["FRIENDS_ONLY", "Friends"], ["PRIVATE", "Hidden"]]}
+            onChange={(value) => setPrivacy({ ...privacy, profileVisibility: value })}
+          />
+          <VisibilityChoice
+            icon={<Lock className="h-5 w-5" />}
+            title="Intimate preferences"
+            description="Sexual orientation, practices, desires, and other sensitive profile details."
+            value={privacy.sensitiveFieldsVisibility}
+            options={[["MEMBERS_ONLY", "Members"], ["FRIENDS_ONLY", "Friends"], ["PRIVATE", "Only me"]]}
+            onChange={(value) => setPrivacy({ ...privacy, sensitiveFieldsVisibility: value })}
+          />
+          <VisibilityChoice
+            icon={<MapPin className="h-5 w-5" />}
+            title="Your location"
+            description="Show a city, an approximate distance, or nothing. Your exact coordinates are never displayed."
+            value={privacy.locationPrecision}
+            options={[["CITY", "City"], ["APPROXIMATE_DISTANCE", "Approx. distance"], ["HIDDEN", "Hidden"]]}
+            onChange={(value) => setPrivacy({ ...privacy, locationPrecision: value, showDistance: value === "APPROXIMATE_DISTANCE" })}
+          />
+          <VisibilityChoice
+            icon={<MessageSquare className="h-5 w-5" />}
+            title="Who can message you"
+            description="Limit new conversations without hiding your profile. Friends means people whose request you accepted."
+            value={privacy.messagePermission}
+            options={[["EVERYONE", "Everyone"], ["MEMBERS_ONLY", "Members"], ["FRIENDS_ONLY", "Friends"], ["PRIVATE", "Nobody"]]}
+            onChange={(value) => setPrivacy({ ...privacy, messagePermission: value })}
+          />
         </div>
-        <label className="flex items-center justify-between p-3 glass-panel rounded-xl text-xs"><span>Show online status</span><input type="checkbox" checked={privacy.showOnlineStatus} onChange={(event) => setPrivacy({ ...privacy, showOnlineStatus: event.target.checked })} /></label>
-        <label className="flex items-center justify-between p-3 glass-panel rounded-xl text-xs"><span>Show approximate distance</span><input type="checkbox" checked={privacy.showDistance} onChange={(event) => setPrivacy({ ...privacy, showDistance: event.target.checked })} /></label>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <PrivacyToggle title="Online now" description="Let members see when you were recently active." checked={privacy.showOnlineStatus} onChange={(checked) => setPrivacy({ ...privacy, showOnlineStatus: checked })} />
+          <PrivacyToggle title="Approximate distance" description="Never reveals your precise position." checked={privacy.showDistance} disabled={privacy.locationPrecision === "HIDDEN"} onChange={(checked) => setPrivacy({ ...privacy, showDistance: checked })} />
+        </div>
+
+        <div className="flex flex-col gap-3 rounded-2xl border border-amber-300/20 bg-amber-300/[0.04] p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div><p className="text-xs font-bold text-white">Photos, videos, and albums</p><p className="mt-1 text-[11px] leading-5 text-velora-textMuted">Choose Public, Members, Followers, or Private separately for every album. Switch an album to Private to hide it without deleting it.</p></div>
+          <Link href="/albums/manage" className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-amber-300/40 px-4 text-xs font-bold text-amber-200 transition hover:bg-amber-300/10">Manage media visibility</Link>
+        </div>
         <div className="p-4 border border-emerald-500/30 rounded-xl space-y-3">
           <p className="text-xs font-bold">Explicit sensitive-data consent</p>
           <p className="text-[11px] text-velora-textMuted">Controls processing of sexual orientation and intimate preferences for your profile and discovery. Withdrawal may make these features unavailable; it does not replace a deletion request.</p>
@@ -471,4 +513,36 @@ export default function SettingsPage() {
       />
     </div>
   );
+}
+
+function VisibilityChoice({ icon, title, description, value, options, onChange }: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  value: string;
+  options: Array<[string, string]>;
+  onChange: (value: string) => void;
+}) {
+  return <section className="rounded-2xl border border-white/10 bg-black/15 p-4">
+    <div className="flex gap-3">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-amber-300">{icon}</div>
+      <div><h3 className="text-sm font-bold text-white">{title}</h3><p className="mt-1 text-[11px] leading-5 text-velora-textMuted">{description}</p></div>
+    </div>
+    <div className="mt-4 flex flex-wrap gap-2">
+      {options.map(([optionValue, label]) => <button key={optionValue} type="button" aria-pressed={value === optionValue} onClick={() => onChange(optionValue)} className={`min-h-9 rounded-full border px-3.5 text-xs font-semibold transition ${value === optionValue ? "border-amber-300 bg-amber-300 text-slate-950" : "border-white/10 bg-white/[0.02] text-slate-300 hover:border-white/25 hover:text-white"}`}>{label}</button>)}
+    </div>
+  </section>;
+}
+
+function PrivacyToggle({ title, description, checked, disabled = false, onChange }: {
+  title: string;
+  description: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return <label className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/15 p-4 ${disabled ? "cursor-not-allowed opacity-50" : ""}`}>
+    <span><strong className="block text-xs text-white">{title}</strong><span className="mt-1 block text-[11px] leading-4 text-velora-textMuted">{description}</span></span>
+    <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${checked ? "bg-amber-300" : "bg-white/10"}`}><input className="sr-only" type="checkbox" checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} /><span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition ${checked ? "left-6" : "left-1"}`} /></span>
+  </label>;
 }

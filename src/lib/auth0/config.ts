@@ -10,7 +10,6 @@ export interface Auth0EnvironmentConfig {
   secret: string;
   baseUrl: string;
   issuer: string;
-  audience?: string;
   callbackUrl: string;
   logoutUrl: string;
   allowedOrigins: string[];
@@ -37,7 +36,6 @@ export const AUTH0_CONFIG: Auth0EnvironmentConfig = {
   secret: required("AUTH0_SECRET"),
   baseUrl: BASE_URL,
   issuer: DOMAIN.endsWith("/") ? DOMAIN : `${DOMAIN}/`,
-  audience: process.env.AUTH0_AUDIENCE,
   callbackUrl: `${BASE_URL}/auth/callback`,
   logoutUrl: `${BASE_URL}/login`,
   allowedOrigins: [

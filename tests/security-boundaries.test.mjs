@@ -6,10 +6,12 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("Auth0 source contains no embedded credential fallback", async () => {
   const source = await read("src/lib/auth0/config.ts");
+  const client = await read("src/lib/auth0/client.ts");
   assert.doesNotMatch(source, /AUTH0_CLIENT_SECRET\s*\|\|/);
   assert.doesNotMatch(source, /AUTH0_SECRET\s*\|\|/);
   assert.match(source, /required\("AUTH0_CLIENT_SECRET"\)/);
   assert.match(source, /required\("AUTH0_SECRET"\)/);
+  assert.match(client, /signInReturnToPath: "\/dashboard"/);
 });
 
 test("account deletion derives its target from the verified session", async () => {
@@ -77,6 +79,40 @@ test("shared modal provides dialog semantics, escape handling, and keyboard focu
   assert.match(modal, /event\.key !== "Tab"/);
   assert.match(modal, /previouslyFocused\?\.focus/);
   assert.match(modal, /aria-label="Close dialog"/);
+  assert.match(modal, /showCloseButton/);
+});
+
+test("mandatory age gate has balanced responsive actions and no inert close control", async () => {
+  const gate = await read("src/components/common/AgeVerificationModal.tsx");
+  assert.match(gate, /maxWidth="lg"/);
+  assert.match(gate, /showCloseButton=\{false\}/);
+  assert.match(gate, /sm:grid-cols-\[1\.65fr_1fr\]/);
+});
+
+test("public home is content-first rather than implementation-focused", async () => {
+  const home = await read("src/components/community/PublicCommunityHome.tsx");
+  assert.match(home, /intimo-community-hero\.jpg/);
+  assert.match(home, /Find your people/);
+  for (const destination of ["people", "dating", "photos", "videos"]) assert.match(home, new RegExp(`\\"/${destination}\\"`));
+  assert.doesNotMatch(home, /Real empty states|server-authorized workflows|Sensitive preference fields|Local design preview|Newest first/);
+});
+
+test("public media pages use member-focused copy rather than internal moderation language", async () => {
+  const gallery = await read("src/components/community/PublicMediaGallery.tsx");
+  assert.match(gallery, /From the community/);
+  assert.match(gallery, /Discover \{noun\.toLowerCase\(\)\} shared by Intimo members/);
+  assert.doesNotMatch(gallery, /Popularity is never fabricated|fully uploaded, processed|moderator-approved|Approved public media/);
+});
+
+test("people discovery prioritizes age, location, profile type, verification, and activity", async () => {
+  const page = await read("src/app/people/page.tsx");
+  const route = await read("src/app/api/public/community/route.ts");
+  for (const label of ["I want to meet", "Man", "Woman", "Couples", "Country", "City or region", "Age range", "Verified", "Online recently"]) assert.match(page, new RegExp(label));
+  assert.doesNotMatch(page, /Name or headline|Country \(exact\)/);
+  for (const parameter of ["city", "gender", "minAge", "maxAge", "verified", "recentlyActive"]) assert.match(route, new RegExp(`searchParams\\.get\\(\\"${parameter}\\"\\)`));
+  assert.match(route, /gte\("age"/);
+  assert.match(route, /lte\("age"/);
+  assert.match(route, /show_online_status/);
 });
 
 test("six-language mobile navigation uses Intimo keys and migrates the legacy locale preference", async () => {
@@ -181,20 +217,28 @@ test("profile updates are owner-derived and strip authority fields", async () =>
 test("onboarding creates a verified-session-owned adult profile without self-granting creator or premium", async () => {
   const route = await read("src/app/api/profile/me/route.ts");
   const onboarding = await read("src/app/onboarding/page.tsx");
-  assert.match(route, /if \(!identity\.emailVerified\)/);
+  assert.match(route, /if \(identity\.emailVerified\) return true/);
+  assert.match(route, /managementRequest\(/);
+  assert.match(route, /email_verified === true/);
+  assert.match(route, /if \(!\(await hasVerifiedEmail\(identity\)\)\)/);
   assert.match(route, /age < 18/);
   assert.match(route, /member_tier: "FREE"/);
   assert.match(route, /profileType === "COUPLE" \? "COUPLE" : "MEMBER"/);
   assert.match(route, /verification_level: "LEVEL_1_EMAIL"/);
   assert.match(onboarding, /method: "POST"/);
   assert.match(onboarding, /Date of Birth \(18\+ required\)/);
+  assert.match(onboarding, /disabled=\{!nicknameIsValid\}/);
+  assert.match(onboarding, /disabled=\{!birthDateIsValid\}/);
+  assert.match(onboarding, /Intimo is only available to adults aged 18 or older/);
 });
 
 test("discovery is authenticated, visibility-filtered, and deterministically ordered", async () => {
   const route = await read("src/app/api/discovery/profiles/route.ts");
   const page = await read("src/app/discovery/page.tsx");
   assert.match(route, /resolveServerActor\(req\)/);
-  assert.match(route, /\.in\("profile_visibility", \["EVERYONE", "MEMBERS_ONLY"\]\)/);
+  assert.match(route, /\.in\("profile_visibility", \["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY"\]\)/);
+  assert.match(route, /\.from\("friendships"\)/);
+  assert.match(route, /row\.profile_visibility !== "FRIENDS_ONLY" \|\| friendIds\.has\(row\.id\)/);
   assert.match(route, /created_at.*ascending: false/);
   assert.match(route, /id.*ascending: true/);
   assert.match(route, /\.neq\("auth_id", actorResult\.actor\.auth0Sub\)/);
@@ -205,11 +249,34 @@ test("discovery is authenticated, visibility-filtered, and deterministically ord
 test("member profile pages load through the authenticated visibility boundary", async () => {
   const route = await read("src/app/api/profiles/[id]/route.ts");
   const page = await read("src/app/profile/[id]/page.tsx");
-  assert.match(route, /\["EVERYONE", "MEMBERS_ONLY"\]\.includes\(data\.profile_visibility\)/);
+  assert.match(route, /data\.profile_visibility === "FRIENDS_ONLY" && friends/);
+  assert.match(route, /areFriends\(actorResult\.actor\.profileId, id\)/);
   assert.match(route, /isAdminActor\(actorResult\.actor\)/);
   assert.match(route, /\.eq\("id", id\)/);
   assert.match(page, /fetch\(`\/api\/profiles\/\$\{encodeURIComponent\(id\)\}`/);
   assert.match(page, /response\.status === 401.*\/api\/public\/profiles/s);
+});
+
+test("friendships are mutual, accepted, server-owned, block-aware, and enforce private audiences", async () => {
+  const route = await read("src/app/api/friends/route.ts");
+  const messages = await read("src/app/api/messages/route.ts");
+  const privacy = await read("src/app/api/privacy/settings/route.ts");
+  const profile = await read("src/app/profile/[id]/page.tsx");
+  const migration = await read("supabase/migrations/20260820_mutual_friendships.sql");
+  assert.match(route, /resolveServerActor\(req\)/);
+  assert.match(route, /intimo_friend_action/);
+  assert.match(route, /appendDurableAudit/);
+  assert.match(migration, /friendships_unordered_pair_unique/);
+  assert.match(migration, /status text not null default 'PENDING'/);
+  assert.match(migration, /delete from public\.friendships/);
+  assert.match(migration, /force row level security/i);
+  assert.match(messages, /message_permission === "FRIENDS_ONLY"/);
+  assert.match(messages, /await areFriends\(actor\.actor\.profileId, receiverId\)/);
+  assert.match(privacy, /"FRIENDS_ONLY"/);
+  assert.doesNotMatch(privacy, /MATCHING_USERS/);
+  assert.match(profile, /Add friend/);
+  assert.match(profile, /Accept friend/);
+  assert.doesNotMatch(profile, />Follow</);
 });
 
 test("anonymous community discovery is explicit-public-only and excludes sensitive profile fields", async () => {
@@ -461,16 +528,21 @@ test("Auth0 email verification synchronizes only to canonical durable profile st
   assert.doesNotMatch(route, /UserSynchronizationService|userStore/);
 });
 
-test("public media requires signed adult declaration and explicit moderation approval", async () => {
+test("public media requires adult declaration, moderation approval, and member access for explicit content", async () => {
   const declaration = await read("src/lib/auth/ageDeclaration.ts");
   const publicFile = await read("src/app/api/public/media/[id]/route.ts");
   const memberFile = await read("src/app/api/media/[id]/route.ts");
   const migration = await read("supabase/migrations/20260814_public_community_content.sql");
+  const ratingMigration = await read("supabase/migrations/20260823_explicit_media_and_photo_verification.sql");
   assert.match(declaration, /createHmac\("sha256"/);
   assert.match(declaration, /timingSafeEqual/);
   assert.match(publicFile, /verifyAgeDeclarationValue/);
   assert.match(publicFile, /\.eq\("visibility", "PUBLIC"\)/);
   assert.match(publicFile, /\.eq\("moderation_status", "APPROVED"\)/);
+  assert.match(publicFile, /content_rating/);
+  assert.match(publicFile, /Sign in to view explicit media/);
+  assert.match(publicFile, /hasAdultAccess/);
+  assert.match(ratingMigration, /default 'EXPLICIT'/);
   assert.match(memberFile, /moderationStatus !== "APPROVED"/);
   assert.match(migration, /PENDING_REVIEW/);
   assert.match(migration, /revoke all on table public\.content_posts/);
@@ -528,11 +600,16 @@ test("identity verification evidence is owner-submitted, private, and admin-audi
   const submission = await read("src/app/api/verification/route.ts");
   const evidence = await read("src/app/api/admin/verification/[id]/evidence/route.ts");
   const context = await read("src/context/AuthContext.tsx");
+  const verificationModal = await read("src/components/profile/GetVerifiedModal.tsx");
   assert.match(submission, /eq\("owner_id", actor\.actor\.profileId\)/);
   assert.match(submission, /media\.visibility !== "PRIVATE"/);
   assert.match(submission, /verification_type: "IDENTITY"/);
   assert.match(evidence, /requireAdminPermission\(req, "verification:view"\)/);
   assert.match(evidence, /VERIFICATION_EVIDENCE_VIEW/);
+  assert.match(verificationModal, /Get Photo Verified/);
+  assert.match(verificationModal, /your username/);
+  assert.match(verificationModal, /not government-ID or biometric verification/);
+  assert.doesNotMatch(verificationModal, /Get Biometric Verified|Biometric Verified Badge/);
   assert.doesNotMatch(context, /impersonateUser|fallbackUser|intimo_original_admin_user/);
 });
 
@@ -613,7 +690,7 @@ test("blocking is atomic, relationship-ending, and durably audited", async () =>
   for (const route of [blocks, connections, profile]) assert.match(route, /appendDurableAudit/);
 });
 
-test("anonymous search returns only explicit public, approved, active records", async () => {
+test("anonymous search stays privacy-filtered while the redundant search page routes to people discovery", async () => {
   const route = await read("src/app/api/public/search/route.ts");
   const page = await read("src/app/search/page.tsx");
   assert.match(route, /eq\("profile_visibility", "EVERYONE"\)/);
@@ -623,8 +700,7 @@ test("anonymous search returns only explicit public, approved, active records", 
   assert.match(route, /eq\("processing_status", "READY"\)/);
   assert.match(route, /privacy: "anonymous_minimized_public_records_only"/);
   assert.doesNotMatch(route, /sexual_orientation|auth_id|email/);
-  assert.match(page, /user \? "\/api\/search" : "\/api\/public\/search"/);
-  assert.doesNotMatch(page, /if \(!user\) return <BehindTheDoorLanding/);
+  assert.match(page, /redirect\("\/people"\)/);
 });
 
 test("demo profiles are staging-only, visibly labeled, reversible, and cannot impersonate activity", async () => {

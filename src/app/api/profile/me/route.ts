@@ -6,6 +6,7 @@ import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
 import type { Profile } from "@/types";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
+import { managementRequest } from "@/lib/auth0/management";
 
 export const dynamic = "force-dynamic";
 const MAX_BODY_BYTES = 64 * 1024;
@@ -59,12 +60,32 @@ function ageFromDateOfBirth(dateOfBirth: string): number | null {
   return age;
 }
 
+async function hasVerifiedEmail(identity: { sub: string; emailVerified: boolean }): Promise<boolean> {
+  if (identity.emailVerified) return true;
+
+  try {
+    const response = await managementRequest(
+      `/users/${encodeURIComponent(identity.sub)}?fields=user_id,email_verified&include_fields=true`,
+    );
+    if (!response.ok) return false;
+    const payload: unknown = await response.json();
+    return Boolean(
+      payload &&
+      typeof payload === "object" &&
+      (payload as Record<string, unknown>).email_verified === true,
+    );
+  } catch (error) {
+    console.error("Current Auth0 email verification could not be confirmed", error);
+    return false;
+  }
+}
+
 export async function POST(req: NextRequest) {
   const contentLength = Number(req.headers.get("content-length") || "0");
   if (contentLength > MAX_BODY_BYTES) return NextResponse.json({ error: "Profile payload is too large" }, { status: 413 });
   const { identity, supabase } = await context(req);
   if (!identity?.email) return NextResponse.json({ error: "Verified account email required" }, { status: 401 });
-  if (!identity.emailVerified) return NextResponse.json({ error: "Email verification required" }, { status: 403 });
+  if (!(await hasVerifiedEmail(identity))) return NextResponse.json({ error: "Email verification required" }, { status: 403 });
   if (!supabase) return NextResponse.json({ error: "Profile service unavailable" }, { status: 503 });
 
   const rate = checkRateLimit(`profile-create:${identity.sub}`, 5, 60 * 60);

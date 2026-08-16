@@ -3,6 +3,7 @@ import { hasAdultAccess, isAdminActor, resolveServerActor } from "@/lib/auth/ser
 import { getServerSupabase } from "@/lib/supabase/server";
 import { toMemberVisibleProfile } from "@/lib/supabase/publicProfile";
 import type { ProfileRow } from "@/lib/supabase/profileService";
+import { areFriends } from "@/lib/social/friendship";
 
 export const dynamic = "force-dynamic";
 
@@ -24,12 +25,17 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!data) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
   const isOwner = data.auth_id === actorResult.actor.auth0Sub;
-  if (!isOwner && !isAdminActor(actorResult.actor)) {
+  const isAdmin = isAdminActor(actorResult.actor);
+  let friends = false;
+  if (!isOwner && !isAdmin) {
     const { data: block } = await supabase.from("user_blocks").select("id").or(`and(blocker_id.eq.${actorResult.actor.profileId},blocked_profile_id.eq.${id}),and(blocker_id.eq.${id},blocked_profile_id.eq.${actorResult.actor.profileId})`).limit(1).maybeSingle();
     if (block) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+    friends = await areFriends(actorResult.actor.profileId, id);
   }
-  if (!["EVERYONE", "MEMBERS_ONLY"].includes(data.profile_visibility) && !isOwner && !isAdminActor(actorResult.actor)) {
+  const visible = ["EVERYONE", "MEMBERS_ONLY"].includes(data.profile_visibility)
+    || (data.profile_visibility === "FRIENDS_ONLY" && friends);
+  if (!visible && !isOwner && !isAdmin) {
     return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   }
-  return NextResponse.json({ profile: toMemberVisibleProfile(data as ProfileRow), ownership: { isOwner } }, { headers: { "Cache-Control": "private, no-store" } });
+  return NextResponse.json({ profile: toMemberVisibleProfile(data as ProfileRow, { friends: friends || isOwner || isAdmin }), ownership: { isOwner } }, { headers: { "Cache-Control": "private, no-store" } });
 }

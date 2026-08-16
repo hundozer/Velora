@@ -6,7 +6,8 @@ import { useAuth } from "@/context/AuthContext";
 import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
 
 export default function DashboardPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, isAuthLoading } = useAuth();
+  if (isAuthLoading) return <main className="flex min-h-[55vh] items-center justify-center" aria-live="polite"><span className="h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-amber-300" aria-hidden="true" /><span className="sr-only">Loading</span></main>;
   if (!user) return <BehindTheDoorLanding />;
 
   const required = [profile?.displayName, profile?.avatarUrl, profile?.bio, profile?.city, profile?.country, profile?.lookingFor?.length];

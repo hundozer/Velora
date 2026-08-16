@@ -26,10 +26,18 @@ export async function GET(req: NextRequest) {
   if (blockError) return NextResponse.json({ error: "Discovery safety lookup failed" }, { status: 502 });
   const excludedIds = (blockRows || []).map((block) => block.blocker_id === actorResult.actor.profileId ? block.blocked_profile_id : block.blocker_id);
 
+  const { data: friendshipRows, error: friendshipError } = await supabase
+    .from("friendships")
+    .select("requester_id,addressee_id")
+    .eq("status", "ACCEPTED")
+    .or(`requester_id.eq.${actorResult.actor.profileId},addressee_id.eq.${actorResult.actor.profileId}`);
+  if (friendshipError) return NextResponse.json({ error: "Discovery friends lookup failed" }, { status: 502 });
+  const friendIds = new Set((friendshipRows || []).map((row) => row.requester_id === actorResult.actor.profileId ? row.addressee_id : row.requester_id));
+
   let query = supabase
     .from("profiles")
     .select("*")
-    .in("profile_visibility", ["EVERYONE", "MEMBERS_ONLY"])
+    .in("profile_visibility", ["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY"])
     .neq("auth_id", actorResult.actor.auth0Sub)
     .order("created_at", { ascending: false })
     .order("id", { ascending: true })
@@ -38,7 +46,9 @@ export async function GET(req: NextRequest) {
   const { data, error } = await query;
 
   if (error) return NextResponse.json({ error: "Discovery lookup failed" }, { status: 502 });
-  const profiles = (data || []).map((row) => toMemberVisibleProfile(row as ProfileRow));
+  const profiles = (data || [])
+    .filter((row) => row.profile_visibility !== "FRIENDS_ONLY" || friendIds.has(row.id))
+    .map((row) => toMemberVisibleProfile(row as ProfileRow, { friends: friendIds.has(row.id) }));
   return NextResponse.json(
     { profiles, ranking: { algorithm: "created_at_desc_then_id_asc", limit: MAX_RESULTS } },
     { headers: { "Cache-Control": "private, no-store" } }

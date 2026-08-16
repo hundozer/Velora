@@ -23,7 +23,7 @@ Do not place secret values in tickets, chat, documentation, source, client bundl
 
 ## Required runtime variables
 
-See `.env.example`. Production requires `AUTH0_SECRET`, `AUTH0_BASE_URL` (or `APP_BASE_URL`), `AUTH0_ISSUER_BASE_URL`, `AUTH0_CLIENT_ID`, and `AUTH0_CLIENT_SECRET`. `AUTH0_AUDIENCE` is required only when requesting an application API access token. Resend, Supabase, and R2 variables are required when their server features are enabled.
+See `.env.example`. Production requires `AUTH0_SECRET`, `AUTH0_BASE_URL` (or `APP_BASE_URL`), `AUTH0_ISSUER_BASE_URL`, `AUTH0_CLIENT_ID`, and `AUTH0_CLIENT_SECRET`. Intimo currently uses Auth0 as a web application authentication provider. No custom Auth0 API audience is required for the MVP. Resend, Supabase, and R2 variables are required when their server features are enabled.
 
 ## Known unresolved risks
 

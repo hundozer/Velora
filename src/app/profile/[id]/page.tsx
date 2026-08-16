@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Bookmark, Flag, Heart, ImageIcon, MapPin, MessageSquare, ShieldCheck, UserMinus } from "lucide-react";
+import { Bookmark, Check, Clock3, Flag, ImageIcon, MapPin, MessageSquare, ShieldCheck, UserMinus, UserPlus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 import { ReportModal } from "@/components/safety/ReportModal";
@@ -27,7 +27,7 @@ export default function CanonicalProfilePage() {
   const [memberView, setMemberView] = useState(false);
   const [media, setMedia] = useState<Media[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
-  const [following, setFollowing] = useState(false);
+  const [friendStatus, setFriendStatus] = useState<"NONE" | "OUTGOING" | "INCOMING" | "FRIENDS">("NONE");
   const [favorite, setFavorite] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -50,8 +50,8 @@ export default function CanonicalProfilePage() {
     if (mediaResponse.ok) setMedia((await mediaResponse.json()).media || []);
     if (albumResponse.ok) setAlbums((await albumResponse.json()).albums || []);
     if (membersOnly && !payload.ownership?.isOwner) {
-      const [follows, favorites] = await Promise.all([fetch("/api/connections?type=follow", { credentials: "same-origin", cache: "no-store" }), fetch("/api/connections?type=favorite", { credentials: "same-origin", cache: "no-store" })]);
-      if (follows.ok) setFollowing(((await follows.json()).connections || []).some((item: { followed_id: string }) => item.followed_id === id));
+      const [friendship, favorites] = await Promise.all([fetch(`/api/friends?targetProfileId=${encodeURIComponent(id)}`, { credentials: "same-origin", cache: "no-store" }), fetch("/api/connections?type=favorite", { credentials: "same-origin", cache: "no-store" })]);
+      if (friendship.ok) setFriendStatus((await friendship.json()).status || "NONE");
       if (favorites.ok) setFavorite(((await favorites.json()).connections || []).some((item: { followed_id: string }) => item.followed_id === id));
     }
     setLoading(false);
@@ -59,12 +59,22 @@ export default function CanonicalProfilePage() {
 
   useEffect(() => { void load(); }, [load]);
 
-  const setConnection = async (type: "follow" | "favorite", connected: boolean) => {
+  const setConnection = async (type: "favorite", connected: boolean) => {
     setActionError("");
     const response = await fetch(connected ? `/api/connections?targetProfileId=${encodeURIComponent(id)}&type=${type}` : "/api/connections", connected ? { method: "DELETE", credentials: "same-origin" } : { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ targetProfileId: id, type }) });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) return setActionError(payload.error || "Action unavailable");
-    type === "follow" ? setFollowing(!connected) : setFavorite(!connected);
+    setFavorite(!connected);
+  };
+
+  const updateFriendship = async () => {
+    setActionError("");
+    const action = friendStatus === "INCOMING" ? "ACCEPT" : friendStatus === "NONE" ? "REQUEST" : "REMOVE";
+    if (friendStatus === "FRIENDS" && !window.confirm(`Remove ${profile?.displayName || "this member"} from your friends?`)) return;
+    const response = await fetch("/api/friends", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ targetProfileId: id, action }) });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) return setActionError(payload.error || "Friend action unavailable");
+    setFriendStatus(payload.status || "NONE");
   };
 
   const block = async () => {
@@ -90,7 +100,7 @@ export default function CanonicalProfilePage() {
           </div>
           <div className="min-w-0 flex-1 pb-1"><div className="flex flex-wrap items-center gap-2"><h1 className="text-3xl font-bold text-white">{profile.displayName}{profile.age ? `, ${profile.age}` : ""}</h1>{profile.verified && <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/10 px-2.5 py-1 text-xs font-bold text-emerald-300"><ShieldCheck className="h-4 w-4" /> Verified</span>}</div>{profile.headline && <p className="mt-2 text-lg text-white/75">{profile.headline}</p>}<div className="mt-2 flex flex-wrap gap-3 text-sm text-white/55">{profile.location && <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" />{profile.location}</span>}<span>{profile.isCoupleProfile || profile.profileType === "COUPLE" ? "Couple profile" : "Individual profile"}</span>{profile.recentlyActive && <span className="text-emerald-300">Recently active</span>}</div></div>
           <div className="flex flex-wrap gap-2 pb-1">
-            {isOwner ? <><Link href="/settings"><Button variant="outline">Edit profile</Button></Link><Link href="/albums/manage"><Button>Manage albums</Button></Link></> : authenticated ? <><Button variant={following ? "glass" : "gold"} onClick={() => void setConnection("follow", following)}><Heart className="mr-2 h-4 w-4" />{following ? "Following" : "Follow"}</Button><Button variant={favorite ? "glass" : "outline"} onClick={() => void setConnection("favorite", favorite)} aria-label={favorite ? "Remove saved profile" : "Save profile"}><Bookmark className="h-4 w-4" /></Button><Link href={`/messages?user=${encodeURIComponent(id)}`}><Button variant="glass"><MessageSquare className="mr-2 h-4 w-4" />Message</Button></Link></> : <Button onClick={() => loginWithAuth0()}>Sign in to connect</Button>}
+            {isOwner ? <><Link href="/settings"><Button variant="outline">Edit profile</Button></Link><Link href="/albums/manage"><Button>Manage albums</Button></Link></> : authenticated ? <><Button variant={friendStatus === "NONE" ? "gold" : "glass"} onClick={() => void updateFriendship()}>{friendStatus === "NONE" ? <UserPlus className="mr-2 h-4 w-4" /> : friendStatus === "OUTGOING" ? <Clock3 className="mr-2 h-4 w-4" /> : <Check className="mr-2 h-4 w-4" />}{friendStatus === "NONE" ? "Add friend" : friendStatus === "OUTGOING" ? "Request sent" : friendStatus === "INCOMING" ? "Accept friend" : "Friends"}</Button><Button variant={favorite ? "glass" : "outline"} onClick={() => void setConnection("favorite", favorite)} aria-label={favorite ? "Remove saved profile" : "Save profile"}><Bookmark className="h-4 w-4" /></Button><Link href={`/messages?user=${encodeURIComponent(id)}`}><Button variant="glass"><MessageSquare className="mr-2 h-4 w-4" />Message</Button></Link></> : <Button onClick={() => loginWithAuth0()}>Sign in to connect</Button>}
           </div>
         </div>
         {actionError && <p className="mt-4 text-sm text-red-300" role="alert">{actionError}</p>}

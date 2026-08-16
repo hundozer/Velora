@@ -6,8 +6,8 @@ import { auditLogger } from "@/lib/auth/auditLogger";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
 
 export const dynamic = "force-dynamic";
-const VISIBILITY = new Set(["EVERYONE", "MEMBERS_ONLY", "MATCHING_USERS", "APPROVED_USERS", "PRIVATE"]);
-const MESSAGE_PERMISSION = new Set(["EVERYONE", "MEMBERS_ONLY", "MATCHING_USERS", "APPROVED_USERS", "PRIVATE"]);
+const VISIBILITY = new Set(["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY", "PRIVATE"]);
+const MESSAGE_PERMISSION = new Set(["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY", "PRIVATE"]);
 
 export async function GET(req: NextRequest) {
   const actor = await resolveServerActor(req);

@@ -22,6 +22,7 @@ alter table public.media_objects drop constraint if exists media_objects_moderat
 update public.media_objects
 set moderation_status = 'PENDING_REVIEW'
 where moderation_status in ('ACTIVE','RESTORED');
+alter table public.media_objects alter column moderation_status set default 'PENDING_REVIEW';
 alter table public.media_objects add constraint media_objects_moderation_status_check check
   (moderation_status in ('PENDING_REVIEW','UNDER_REVIEW','APPROVED','REJECTED','HIDDEN','REMOVED'));
 

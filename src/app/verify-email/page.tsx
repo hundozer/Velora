@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { CheckCircle2, AlertTriangle, ArrowRight, ShieldCheck, Mail, RefreshCw } from "lucide-react";
 
 function VerifyEmailContent() {
-  const { user, logoutWithAuth0 } = useAuth();
+  const { user, logoutWithAuth0, isAuthLoading } = useAuth();
 
   const handleLogout = () => {
     logoutWithAuth0("/login");
@@ -23,6 +23,8 @@ function VerifyEmailContent() {
   const [waitingForPoll, setWaitingForPoll] = useState(false);
 
   useEffect(() => {
+    if (isAuthLoading) return;
+
     if (user?.verificationStatus !== "UNVERIFIED") {
       setLoading(false);
       if (user) {
@@ -89,7 +91,7 @@ function VerifyEmailContent() {
   return (
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-12 text-left">
       <Card variant="goldBorder" className="w-full max-w-md p-8 space-y-6 bg-gold-card text-center">
-        {loading ? (
+        {isAuthLoading || loading ? (
           <div className="py-8 space-y-4">
             <RefreshCw className="w-12 h-12 text-velora-gold animate-spin mx-auto" />
             <h2 className="text-xl font-serif font-bold text-velora-textPrimary">

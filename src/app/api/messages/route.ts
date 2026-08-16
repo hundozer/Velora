@@ -4,6 +4,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
+import { areFriends } from "@/lib/social/friendship";
 
 export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -110,6 +111,9 @@ export async function POST(req: NextRequest) {
   if (await blocked(supabase, actor.actor.profileId, receiverId)) return NextResponse.json({ error: "Messaging is not allowed between these profiles" }, { status: 403 });
   const { data: recipient } = await supabase.from("profiles").select("id,display_name,message_permission,allow_direct_messages,require_verification_to_message").eq("id", receiverId).eq("account_status", "ACTIVE").maybeSingle();
   if (!recipient || recipient.allow_direct_messages === false || recipient.message_permission === "PRIVATE") return NextResponse.json({ error: "Recipient is not accepting messages" }, { status: 403 });
+  if (recipient.message_permission === "FRIENDS_ONLY" && !(await areFriends(actor.actor.profileId, receiverId))) {
+    return NextResponse.json({ error: "This member accepts messages from friends only" }, { status: 403 });
+  }
   const { data: sender } = await supabase.from("profiles").select("display_name,avatar_url,verification_level,verification_status,gender,is_couple_profile,date_of_birth").eq("id", actor.actor.profileId).single();
   if (!sender) return NextResponse.json({ error: "Sender profile unavailable" }, { status: 502 });
   const verifiedSender = sender.verification_status === "VERIFIED" || ["LEVEL_3_PROFILE_BIOMETRIC", "LEVEL_4_CREATOR"].includes(sender.verification_level || "");

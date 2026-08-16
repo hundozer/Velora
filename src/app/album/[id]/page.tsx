@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { BadgeCheck, Flag, Images } from "lucide-react";
 import { ReportModal } from "@/components/safety/ReportModal";
+import { useAuth } from "@/context/AuthContext";
 
 type Album = {
   id: string; title: string; description?: string | null; category?: string | null; tags: string[];
@@ -15,16 +16,19 @@ type Album = {
 
 export default function AlbumPage() {
   const params = useParams<{ id: string }>();
+  const { user, isAuthLoading } = useAuth();
   const [album, setAlbum] = React.useState<Album | null>(null);
   const [error, setError] = React.useState("");
   const [reportOpen, setReportOpen] = React.useState(false);
   React.useEffect(() => {
-    fetch(`/api/public/albums/${encodeURIComponent(params.id)}`).then(async (response) => {
+    if (isAuthLoading) return;
+    const endpoint = user ? `/api/albums/${encodeURIComponent(params.id)}` : `/api/public/albums/${encodeURIComponent(params.id)}`;
+    fetch(endpoint, { credentials: "same-origin", cache: "no-store" }).then(async (response) => {
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Album unavailable");
       return payload;
     }).then((payload) => setAlbum(payload.album)).catch((cause) => setError(cause.message || "Album unavailable"));
-  }, [params.id]);
+  }, [params.id, user, isAuthLoading]);
   if (error) return <main className="mx-auto max-w-5xl p-8"><p role="alert" className="rounded-xl border border-amber-300/30 p-5 text-amber-100">{error}</p></main>;
   if (!album) return <main className="mx-auto max-w-5xl p-8 text-slate-400">Loading album…</main>;
   return <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">

@@ -10,7 +10,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const mediaIds = Array.isArray(body.mediaIds) ? body.mediaIds.filter((id: unknown): id is string => typeof id === "string" && UUID.test(id)) : [];
   const uniqueIds = [...new Set(mediaIds)]; const coverMediaId = typeof body.coverMediaId === "string" && UUID.test(body.coverMediaId) ? body.coverMediaId : null;
-  if (uniqueIds.length !== mediaIds.length || uniqueIds.length > 100 || (coverMediaId && !uniqueIds.includes(coverMediaId))) return NextResponse.json({ error: "Invalid album media selection" }, { status: 400 });
+  if (uniqueIds.length !== mediaIds.length || uniqueIds.length > 30 || (coverMediaId && !uniqueIds.includes(coverMediaId))) return NextResponse.json({ error: "An album can contain no more than 30 photos" }, { status: 400 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Albums unavailable" }, { status: 503 });
   const { error } = await db.rpc("intimo_set_album_media", { p_album_id: params.id, p_owner_id: auth.actor.profileId, p_media_ids: uniqueIds, p_cover_media_id: coverMediaId });
   if (error) return NextResponse.json({ error: "Album media could not be updated" }, { status: 409 });

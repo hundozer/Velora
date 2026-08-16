@@ -10,6 +10,7 @@ interface ModalProps {
   title?: string;
   children: React.ReactNode;
   maxWidth?: "sm" | "md" | "lg" | "xl";
+  showCloseButton?: boolean;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -18,6 +19,7 @@ export const Modal: React.FC<ModalProps> = ({
   title,
   children,
   maxWidth = "md",
+  showCloseButton = true,
 }) => {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -83,13 +85,15 @@ export const Modal: React.FC<ModalProps> = ({
           >
             <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
               {title && <h3 id={titleId} className="text-xl font-semibold tracking-wide text-velora-textPrimary font-serif">{title}</h3>}
-              <button
-                onClick={onClose}
-                aria-label="Close dialog"
-                className="p-1 rounded-full text-velora-textSecondary hover:text-velora-gold hover:bg-white/5 transition-colors ml-auto"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              {showCloseButton && (
+                <button
+                  onClick={onClose}
+                  aria-label="Close dialog"
+                  className="p-1 rounded-full text-velora-textSecondary hover:text-velora-gold hover:bg-white/5 transition-colors ml-auto"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
             </div>
             {children}
           </motion.div>

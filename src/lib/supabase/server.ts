@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import WebSocket from "ws";
 
 let serverClient: SupabaseClient | null = null;
 
@@ -10,6 +11,9 @@ export function getServerSupabase(): SupabaseClient | null {
 
   serverClient = createClient(url, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    // Supabase's browser-shaped constructor type is narrower than the ws
+    // implementation, although ws satisfies the runtime contract in Node.
+    realtime: { transport: WebSocket as unknown as typeof globalThis.WebSocket },
   });
   return serverClient;
 }

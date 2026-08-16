@@ -14,42 +14,39 @@ export const AgeVerificationModal: React.FC = () => {
   if (isAgeVerified) return null;
 
   return (
-    <Modal isOpen={!isAgeVerified} onClose={() => {}} title="Welcome to Intimo" maxWidth="md">
-      <div className="text-center space-y-6">
-        <div className="w-16 h-16 rounded-full bg-gold-gradient p-[1px] mx-auto shadow-gold-glow">
+    <Modal isOpen={!isAgeVerified} onClose={() => {}} title="Welcome to Intimo" maxWidth="lg" showCloseButton={false}>
+      <div className="space-y-5 text-center">
+        <div className="w-14 h-14 rounded-full bg-gold-gradient p-[1px] mx-auto shadow-gold-glow">
           <div className="w-full h-full bg-velora-bg rounded-full flex items-center justify-center">
-            <ShieldCheck className="w-8 h-8 text-velora-gold" />
+            <ShieldCheck className="w-7 h-7 text-velora-gold" />
           </div>
         </div>
 
-        <div>
-          <h2 className="text-2xl font-serif font-bold gold-gradient-text">
+        <div className="mx-auto max-w-md">
+          <h2 className="text-2xl sm:text-[1.7rem] font-serif font-bold gold-gradient-text">
             Age & Discretion Agreement
           </h2>
-          <p className="text-xs text-velora-textSecondary mt-2 leading-relaxed">
+          <p className="mt-2 text-sm leading-6 text-velora-textSecondary">
             Intimo is a private, verified adult social platform for consenting adults aged 18 and older.
-          </p>
-          <p className="text-[11px] text-amber-300 mt-2 leading-relaxed">
-            This declaration is an initial access gate, not stronger age verification. Some explicit-content features remain unavailable until appropriate age assurance is implemented.
           </p>
         </div>
 
-        <div className="glass-panel p-4 rounded-2xl text-left space-y-3 text-xs text-velora-textSecondary">
-          <div className="flex items-start gap-2.5">
-            <ShieldCheck className="w-4 h-4 text-velora-gold shrink-0 mt-0.5" />
+        <div className="glass-panel rounded-2xl p-4 sm:p-5 text-left space-y-4 text-sm leading-5 text-velora-textSecondary">
+          <div className="flex items-start gap-3">
+            <ShieldCheck className="w-4 h-4 text-velora-gold shrink-0 mt-0.5" aria-hidden="true" />
             <span>I confirm that I am at least <strong>18 years of age</strong> (or legal majority in my jurisdiction).</span>
           </div>
-          <div className="flex items-start gap-2.5">
-            <Lock className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+          <div className="flex items-start gap-3">
+            <Lock className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" aria-hidden="true" />
             <span>I agree to uphold the community standards of mutual consent, privacy, and non-disclosure.</span>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+        <div className="grid gap-3 pt-1 sm:grid-cols-[1.65fr_1fr]">
           <Button
             variant="gold"
             size="lg"
-            className="w-full font-bold uppercase tracking-wider"
+            className="min-h-14 w-full rounded-xl px-6 text-sm font-bold uppercase tracking-[0.12em]"
             disabled={submitting}
             onClick={async () => {
               setSubmitting(true);
@@ -58,11 +55,11 @@ export const AgeVerificationModal: React.FC = () => {
               finally { setSubmitting(false); }
             }}
           >
-            {submitting ? "Recording declaration…" : "I am 18+ • Enter Intimo"}
+            {submitting ? "Recording declaration…" : "I am 18+ · Enter Intimo"}
           </Button>
           <a
             href="https://google.com"
-            className="w-full px-5 py-3 text-xs text-center uppercase tracking-wider text-velora-textMuted hover:text-velora-textSecondary transition-colors flex items-center justify-center"
+            className="flex min-h-14 w-full items-center justify-center rounded-xl border border-white/10 px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-velora-textMuted transition-colors hover:border-white/20 hover:bg-white/5 hover:text-velora-textSecondary"
           >
             Exit Site
           </a>

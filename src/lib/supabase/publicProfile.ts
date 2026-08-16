@@ -1,8 +1,10 @@
 import { dbRowToProfile, ProfileRow } from "./profileService";
 
-export function toMemberVisibleProfile(row: ProfileRow) {
+export function toMemberVisibleProfile(row: ProfileRow, audience: { friends?: boolean } = {}) {
   const profile = dbRowToProfile(row);
-  const sensitiveVisible = row.sensitive_fields_visibility === "EVERYONE" || row.sensitive_fields_visibility === "MEMBERS_ONLY";
+  const sensitiveVisible = row.sensitive_fields_visibility === "EVERYONE"
+    || row.sensitive_fields_visibility === "MEMBERS_ONLY"
+    || (row.sensitive_fields_visibility === "FRIENDS_ONLY" && audience.friends === true);
   const locationVisible = row.location_precision !== "HIDDEN";
   return {
     id: profile.id,

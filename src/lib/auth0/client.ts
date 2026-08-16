@@ -9,9 +9,8 @@ export const auth0 = new Auth0Client({
   clientSecret: process.env.AUTH0_CLIENT_SECRET,
   secret: process.env.AUTH0_SECRET,
   appBaseUrl: process.env.AUTH0_BASE_URL || process.env.APP_BASE_URL || process.env.NEXT_PUBLIC_APP_URL,
-  authorizationParameters: process.env.AUTH0_AUDIENCE
-    ? { audience: process.env.AUTH0_AUDIENCE, scope: "openid profile email" }
-    : { scope: "openid profile email" },
+  signInReturnToPath: "/dashboard",
+  authorizationParameters: { scope: "openid profile email" },
   enableAccessTokenEndpoint: false,
   session: {
     rolling: true,
