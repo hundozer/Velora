@@ -75,23 +75,7 @@ export async function GET(req: NextRequest) {
   }
 
   const { data: profileRows, error: profileError, count } = await profileQuery;
-  if (profileError) {
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-    return NextResponse.json({
-      error: "Public profiles could not be loaded",
-      message: profileError.message,
-      details: profileError.details,
-      hint: profileError.hint,
-      code: profileError.code,
-      diagnostics: {
-        url: url,
-        keyLength: key.length,
-        keyPrefix: key.slice(0, 10),
-        envKeys: Object.keys(process.env).filter(k => k.includes("SUPABASE"))
-      }
-    }, { status: 502 });
-  }
+  if (profileError) return NextResponse.json({ error: "Public profiles could not be loaded" }, { status: 502 });
 
   const profiles = (profileRows || []).map((row) => toAnonymousPublicProfile(row as PublicProfileRow));
 
