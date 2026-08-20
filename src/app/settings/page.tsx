@@ -50,7 +50,7 @@ export default function SettingsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
-  const [mediaUploadPending, setMediaUploadPending] = useState(false);
+  const [mediaUpload, setMediaUpload] = useState<{ kind: "avatar" | "cover"; progress: number } | null>(null);
   const [settingsError, setSettingsError] = useState("");
   const [rightsType, setRightsType] = useState("CORRECTION");
   const [rightsDetails, setRightsDetails] = useState("");
@@ -75,39 +75,63 @@ export default function SettingsPage() {
     if (profile?.displayName || user?.username) setNickname(profile?.displayName || user?.username || "");
   }, [profile?.displayName, user?.username]);
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0] && user && profile) {
-      const file = e.target.files[0];
-      try {
-        setMediaUploadPending(true);
-        setSettingsError("");
-        const declaration = await requestParticipantDeclaration();
-        const result = await uploadFileToR2(file, "avatars", undefined, declaration);
-        await updateUserProfile({ ...user, avatarUrl: result.publicUrl }, { ...profile, avatarUrl: result.publicUrl });
-      } catch (error) {
-        setSettingsError(error instanceof Error ? error.message : "Profile photo could not be uploaded");
-      } finally {
-        setMediaUploadPending(false);
-        e.target.value = "";
+  const uploadProfileImage = async (file: File, kind: "avatar" | "cover") => {
+    if (!user || !profile) throw new Error("Your profile is not ready yet");
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      throw new Error("Choose a JPEG, PNG, or WebP image");
+    }
+    if (file.size <= 0 || file.size > 15 * 1024 * 1024) {
+      throw new Error("Choose an image smaller than 15 MB");
+    }
+
+    setSettingsError("");
+    setMediaUpload({ kind, progress: 0 });
+    let uploadedUrl = "";
+    try {
+      const declaration = await requestParticipantDeclaration();
+      const result = await uploadFileToR2(
+        file,
+        kind === "avatar" ? "avatars" : "covers",
+        (progress) => setMediaUpload({ kind, progress }),
+        declaration,
+        "MEMBERS_ONLY",
+        "NON_EXPLICIT",
+      );
+      uploadedUrl = result.publicUrl;
+      const nextProfile = kind === "avatar"
+        ? { ...profile, avatarUrl: result.publicUrl }
+        : { ...profile, coverPhotoUrl: result.publicUrl };
+      const nextUser = kind === "avatar" ? { ...user, avatarUrl: result.publicUrl } : user;
+      await updateUserProfile(nextUser, nextProfile);
+    } catch (error) {
+      if (uploadedUrl.startsWith("/api/media/")) {
+        await fetch(uploadedUrl, { method: "DELETE", credentials: "same-origin" }).catch(() => undefined);
       }
+      throw error;
+    } finally {
+      setMediaUpload(null);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    try {
+      if (file) await uploadProfileImage(file, "avatar");
+    } catch (error) {
+      setSettingsError(error instanceof Error ? error.message : "Profile photo could not be uploaded");
+    } finally {
+      e.target.value = "";
     }
   };
 
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0] && user && profile) {
-      const file = e.target.files[0];
-      try {
-        setMediaUploadPending(true);
-        setSettingsError("");
-        const declaration = await requestParticipantDeclaration();
-        const result = await uploadFileToR2(file, "covers", undefined, declaration);
-        await updateUserProfile(user, { ...profile, coverPhotoUrl: result.publicUrl });
-      } catch (error) {
-        setSettingsError(error instanceof Error ? error.message : "Cover photo could not be uploaded");
-      } finally {
-        setMediaUploadPending(false);
-        e.target.value = "";
-      }
+    const file = e.target.files?.[0];
+    try {
+      if (file) await uploadProfileImage(file, "cover");
+    } catch (error) {
+      setSettingsError(error instanceof Error ? error.message : "Cover photo could not be uploaded");
+    } finally {
+      e.target.value = "";
     }
   };
 
@@ -133,24 +157,29 @@ export default function SettingsPage() {
   }, []);
 
   const handleSave = async () => {
-    if (user && profile && nickname.trim()) {
-      const updatedUser = {
-        ...user,
-        username: nickname.trim().toLowerCase().replace(/\s+/g, "_"),
-      };
-      const updatedProfile = {
-        ...profile,
-        displayName: nickname.trim(),
-      };
-      updateUserProfile(updatedUser, updatedProfile);
-    }
-    const response = await fetch("/api/privacy/settings", {
-      method: "PUT", credentials: "same-origin", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(privacy),
-    });
-    if (response.ok) {
+    try {
+      setSettingsError("");
+      if (user && profile && nickname.trim()) {
+        const updatedUser = {
+          ...user,
+          username: nickname.trim().toLowerCase().replace(/\s+/g, "_"),
+        };
+        const updatedProfile = {
+          ...profile,
+          displayName: nickname.trim(),
+        };
+        await updateUserProfile(updatedUser, updatedProfile);
+      }
+      const response = await fetch("/api/privacy/settings", {
+        method: "PUT", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(privacy),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Settings could not be saved");
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error) {
+      setSettingsError(error instanceof Error ? error.message : "Settings could not be saved");
     }
   };
 
@@ -250,8 +279,8 @@ export default function SettingsPage() {
 
       {/* SECTION 0: PRIVATE IDENTITY, AVATAR & BANNER */}
       <Card variant="glass" className="p-6 space-y-6">
-        <input type="file" ref={avatarInputRef} accept="image/jpeg,image/png,image/webp,image/gif,image/heic" className="hidden" onChange={handleAvatarUpload} />
-        <input type="file" ref={coverInputRef} accept="image/jpeg,image/png,image/webp,image/gif,image/heic" className="hidden" onChange={handleCoverUpload} />
+        <input type="file" ref={avatarInputRef} accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarUpload} />
+        <input type="file" ref={coverInputRef} accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleCoverUpload} />
 
         <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
           <UserCheck className="w-4 h-4 text-velora-gold" />
@@ -267,7 +296,7 @@ export default function SettingsPage() {
                 {avatarUrl && !avatarImageFailed && <img src={avatarUrl} alt="Your profile avatar" onError={() => setAvatarImageFailed(true)} className="relative h-full w-full object-cover" />}
                 <button
                   type="button"
-                  onClick={() => !mediaUploadPending && avatarInputRef.current?.click()}
+                  onClick={() => !mediaUpload && avatarInputRef.current?.click()}
                   className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
                   title="Upload New Avatar"
                 >
@@ -276,9 +305,9 @@ export default function SettingsPage() {
               </div>
               <div>
                 <p className="text-xs font-bold text-white">Profile Picture / Avatar</p>
-                <p className="text-[10px] text-velora-textMuted mb-2">Upload a custom profile photo</p>
-                <Button variant="glass" size="sm" disabled={mediaUploadPending} onClick={() => avatarInputRef.current?.click()} className="text-[11px] gap-1.5">
-                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUploadPending ? "Uploading…" : "Upload New Avatar"}
+                <p className="text-[10px] text-velora-textMuted mb-2">JPEG, PNG or WebP · non-explicit · max 15 MB</p>
+                <Button variant="glass" size="sm" disabled={Boolean(mediaUpload)} onClick={() => avatarInputRef.current?.click()} className="text-[11px] gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUpload?.kind === "avatar" ? `Uploading ${mediaUpload.progress}%` : "Upload New Avatar"}
                 </Button>
               </div>
             </div>
@@ -289,7 +318,7 @@ export default function SettingsPage() {
                 {coverUrl && !coverImageFailed && <img src={coverUrl} alt="Your profile cover" onError={() => setCoverImageFailed(true)} className="relative h-full w-full object-cover" />}
                 <button
                   type="button"
-                  onClick={() => !mediaUploadPending && coverInputRef.current?.click()}
+                  onClick={() => !mediaUpload && coverInputRef.current?.click()}
                   className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
                   title="Upload New Cover Banner"
                 >
@@ -298,9 +327,9 @@ export default function SettingsPage() {
               </div>
               <div>
                 <p className="text-xs font-bold text-white">Cover Banner Image</p>
-                <p className="text-[10px] text-velora-textMuted mb-2">Upload header background banner</p>
-                <Button variant="glass" size="sm" disabled={mediaUploadPending} onClick={() => coverInputRef.current?.click()} className="text-[11px] gap-1.5">
-                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUploadPending ? "Uploading…" : "Upload New Banner"}
+                <p className="text-[10px] text-velora-textMuted mb-2">JPEG, PNG or WebP · non-explicit · max 15 MB</p>
+                <Button variant="glass" size="sm" disabled={Boolean(mediaUpload)} onClick={() => coverInputRef.current?.click()} className="text-[11px] gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUpload?.kind === "cover" ? `Uploading ${mediaUpload.progress}%` : "Upload New Banner"}
                 </Button>
               </div>
             </div>

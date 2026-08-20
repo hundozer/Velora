@@ -22,7 +22,7 @@ export interface ServerActor {
 export type ServerActorResult =
   | { status: "authenticated"; actor: ServerActor }
   | { status: "unauthenticated" }
-  | { status: "unprovisioned" }
+  | { status: "unprovisioned"; identity: Awaited<ReturnType<typeof getVerifiedIdentity>> & {} }
   | { status: "unavailable" };
 
 export async function resolveServerActor(req?: NextRequest): Promise<ServerActorResult> {
@@ -42,7 +42,7 @@ export async function resolveServerActor(req?: NextRequest): Promise<ServerActor
     console.error("Server actor lookup failed", { code: error.code });
     return { status: "unavailable" };
   }
-  if (!data) return { status: "unprovisioned" };
+  if (!data) return { status: "unprovisioned", identity };
 
   // Transitional bootstrap authority: profiles.role is currently browser-writable
   // until the RLS lockdown migration is applied, so it must never grant admin.

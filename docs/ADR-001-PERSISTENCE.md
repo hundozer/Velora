@@ -13,6 +13,15 @@ remains the identity provider; `profiles.auth_id` stores its unique `sub`.
 
 Browser code does not connect directly to protected tables. Next.js APIs verify the encrypted Auth0 session, resolve the actor and ownership server-side, then access PostgreSQL through a server-only credential. The Supabase service-role key is never exposed to the browser. RLS remains forced and deny-by-default as defense in depth for this server-boundary architecture.
 
+Profile persistence follows the same boundary. `/api/profile/me` is the only
+self-service profile write path: clients send changed fields only, the server
+allowlists editable fields, validates owned canonical-media references, writes
+by the verified Auth0 subject, records durable audit evidence, and returns the
+canonical database row. Browser state is replaced from that returned row.
+Direct browser profile upsert/update/delete helpers are intentionally absent.
+Privacy settings, verification state, administration, and account lifecycle
+remain separate domain APIs so a stale profile form cannot overwrite them.
+
 ## Transitional sources
 
 - `prisma/schema.prisma`: legacy, conflicting schema; frozen and not used by runtime code.

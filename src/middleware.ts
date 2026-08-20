@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { MONETIZATION_ENABLED, isMonetizationRoute, isMvpSafetyDisabledRoute } from "@/lib/features";
+import { validateProductionAuthConfiguration } from "@/lib/auth0/configValidation.mjs";
 
 /**
  * Resilient Next.js Middleware for Auth0 Session Management & Route Protection
@@ -32,7 +33,12 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    if (missing.length > 0) {
+    const productionAuth = validateProductionAuthConfiguration(process.env);
+    if (process.env.NODE_ENV === "production" && !productionAuth.valid) {
+      console.error("[AUTH CONFIG] Production authentication configuration is invalid", {
+        missing: productionAuth.missing,
+        issuerValid: productionAuth.issuerValid,
+      });
       return NextResponse.json({ error: "Authentication service is unavailable" }, { status: 503 });
     }
 

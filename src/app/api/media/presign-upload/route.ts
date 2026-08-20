@@ -10,6 +10,7 @@ const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "im
 const ALLOWED_FOLDERS = new Set(["photos", "videos", "avatars", "covers", "general"]);
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 250 * 1024 * 1024;
+const PROFILE_IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function POST(req: NextRequest) {
   const actor = await resolveServerActor(req);
@@ -25,15 +26,21 @@ export async function POST(req: NextRequest) {
     const fileType = typeof body.fileType === "string" ? body.fileType.toLowerCase() : "";
     const fileSize = Number(body.fileSize);
     const folder = ALLOWED_FOLDERS.has(body.folder) ? body.folder : "general";
-    const visibility = ["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY", "PRIVATE", "APPROVED_USERS_ONLY"].includes(body.visibility) ? body.visibility : "PRIVATE";
+    const isProfileImage = folder === "avatars" || folder === "covers";
+    const visibility = isProfileImage
+      ? "MEMBERS_ONLY"
+      : (["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY", "PRIVATE", "APPROVED_USERS_ONLY"].includes(body.visibility) ? body.visibility : "PRIVATE");
     // Unknown media is treated as explicit. This fail-safe default prevents a
     // new upload from becoming anonymously accessible because a client omitted
     // its content classification.
-    const contentRating = body.contentRating === "NON_EXPLICIT" ? "NON_EXPLICIT" : "EXPLICIT";
+    const contentRating = isProfileImage ? "NON_EXPLICIT" : (body.contentRating === "NON_EXPLICIT" ? "NON_EXPLICIT" : "EXPLICIT");
     const declaration = body.participantDeclaration;
 
     if (!fileName || fileName.length > 180 || !ALLOWED_MIME_TYPES.has(fileType)) {
       return NextResponse.json({ error: "Invalid file name or type" }, { status: 400 });
+    }
+    if (isProfileImage && !PROFILE_IMAGE_MIME_TYPES.has(fileType)) {
+      return NextResponse.json({ error: "Profile and cover images must be JPEG, PNG, or WebP" }, { status: 400 });
     }
     const maxBytes = fileType.startsWith("image/") ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES;
     if (!Number.isSafeInteger(fileSize) || fileSize <= 0 || fileSize > maxBytes) {
@@ -64,7 +71,7 @@ export async function POST(req: NextRequest) {
       moderation_status: "PENDING_REVIEW",
       title: typeof body.title === "string" ? body.title.trim().slice(0, 160) || null : null,
       description: typeof body.description === "string" ? body.description.trim().slice(0, 4_000) || null : null,
-      category: typeof body.category === "string" ? body.category.trim().slice(0, 100) || null : null,
+      category: isProfileImage ? (folder === "avatars" ? "PROFILE_AVATAR" : "PROFILE_COVER") : (typeof body.category === "string" ? body.category.trim().slice(0, 100) || null : null),
       tags: Array.isArray(body.tags) ? body.tags.filter((tag: unknown): tag is string => typeof tag === "string").map((tag: string) => tag.trim().slice(0, 50)).filter(Boolean).slice(0, 20) : [],
     }).select("id").single();
     if (mediaError || !media) return NextResponse.json({ error: "Media metadata could not be created" }, { status: 502 });

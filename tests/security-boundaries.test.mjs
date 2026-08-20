@@ -166,7 +166,15 @@ test("media completion durably audits both successful finalization and quarantin
 test("production auth middleware has a fail-closed response", async () => {
   const source = await read("src/middleware.ts");
   assert.match(source, /NODE_ENV === "production"/);
+  assert.match(source, /validateProductionAuthConfiguration/);
   assert.match(source, /status: 503/);
+});
+
+test("verification screen never polls without an authenticated verification-required state", async () => {
+  const source = await read("src/app/verify-email/page.tsx");
+  assert.match(source, /authState !== "EMAIL_VERIFICATION_REQUIRED"/);
+  assert.match(source, /sessionMissing/);
+  assert.match(source, /Sign in again/);
 });
 
 test("RLS lockdown removes public allow-all policies and revokes browser roles", async () => {
@@ -206,12 +214,19 @@ test("browser identity cannot switch roles or fabricate a fallback login", async
 test("profile updates are owner-derived and strip authority fields", async () => {
   const route = await read("src/app/api/profile/me/route.ts");
   const context = await read("src/context/AuthContext.tsx");
+  const service = await read("src/lib/supabase/profileService.ts");
   assert.match(route, /getVerifiedIdentity\(req\)/);
   assert.match(route, /\.eq\("auth_id", identity\.sub\)/);
-  assert.match(route, /delete update\.role/);
-  assert.match(route, /delete update\.verification_status/);
+  assert.match(route, /SELF_SERVICE_PROFILE_FIELDS/);
+  assert.doesNotMatch(route, /SELF_SERVICE_PROFILE_FIELDS[\s\S]{0,500}"role"/);
+  assert.doesNotMatch(route, /SELF_SERVICE_PROFILE_FIELDS[\s\S]{0,500}"verification_status"/);
+  assert.match(route, /PROFILE_MEDIA_REFERENCE/);
+  assert.match(route, /\.eq\("owner_id", owner\.id\)/);
+  assert.match(route, /changedFields/);
   assert.match(route, /MAX_BODY_BYTES/);
   assert.match(context, /fetch\("\/api\/profile\/me"/);
+  assert.match(context, /Object\.fromEntries/);
+  assert.doesNotMatch(service, /\.from\("profiles"\)/);
 });
 
 test("onboarding creates a verified-session-owned adult profile without self-granting creator or premium", async () => {
@@ -226,9 +241,9 @@ test("onboarding creates a verified-session-owned adult profile without self-gra
   assert.match(route, /profileType === "COUPLE" \? "COUPLE" : "MEMBER"/);
   assert.match(route, /verification_level: "LEVEL_1_EMAIL"/);
   assert.match(onboarding, /method: "POST"/);
-  assert.match(onboarding, /Date of Birth \(18\+ required\)/);
-  assert.match(onboarding, /disabled=\{!nicknameIsValid\}/);
-  assert.match(onboarding, /disabled=\{!birthDateIsValid\}/);
+  assert.match(onboarding, /label="Date of birth"/);
+  assert.match(onboarding, /const basicsValid =/);
+  assert.match(onboarding, /disabled=\{!basicsValid\}/);
   assert.match(onboarding, /Intimo is only available to adults aged 18 or older/);
 });
 
@@ -503,8 +518,9 @@ test("canonical profile has no browser media stores or development fixtures", as
 
 test("settings uses durable media uploads and exposes no fake blocked users or push controls", async () => {
   const settings = await read("src/app/settings/page.tsx");
-  assert.match(settings, /uploadFileToR2\(file, "avatars"/);
-  assert.match(settings, /uploadFileToR2\(file, "covers"/);
+  assert.match(settings, /uploadFileToR2\(/);
+  assert.match(settings, /kind === "avatar" \? "avatars" : "covers"/);
+  assert.match(settings, /await updateUserProfile\(nextUser, nextProfile\)/);
   assert.doesNotMatch(settings, /FileReader|MOCK_SAFETY_SETTINGS|spammer_bot_99|unwanted_contact/);
   assert.doesNotMatch(settings, /Mobile Push Notification Controls|Livestream Start Notifications/);
 });

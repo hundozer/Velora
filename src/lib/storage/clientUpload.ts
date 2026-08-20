@@ -115,8 +115,8 @@ export async function uploadFileToR2(
       fileType: file.type || "application/octet-stream",
       fileSize: file.size,
       folder,
-      visibility: visibility || (folder === "avatars" || folder === "covers" ? "PUBLIC" : "PRIVATE"),
-      contentRating,
+      visibility: visibility || (folder === "avatars" || folder === "covers" ? "MEMBERS_ONLY" : "PRIVATE"),
+      contentRating: folder === "avatars" || folder === "covers" ? "NON_EXPLICIT" : contentRating,
       participantDeclaration,
     }),
   });
@@ -157,6 +157,7 @@ export async function uploadFileToR2(
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", uploadUrl, true);
+    xhr.timeout = 5 * 60 * 1000;
     xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
 
     if (xhr.upload && onProgress) {
@@ -183,6 +184,10 @@ export async function uploadFileToR2(
 
     xhr.onerror = () => {
       reject(new Error("Network error during direct Cloudflare R2 upload"));
+    };
+
+    xhr.ontimeout = () => {
+      reject(new Error("The upload timed out. Please check your connection and try again."));
     };
 
     xhr.send(file);

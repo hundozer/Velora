@@ -1,4 +1,3 @@
-import { supabase } from "./client";
 import { User, Profile } from "@/types";
 
 // ── Database Row Type ──────────────────────────────────────
@@ -79,7 +78,7 @@ export function dbRowToUser(row: ProfileRow): User {
     verificationStatus: row.verification_status as any,
     verificationLevel: row.verification_level as any,
     createdAt: row.created_at?.split("T")[0] || new Date().toISOString().split("T")[0],
-    avatarUrl: row.avatar_url || undefined,
+    avatarUrl: row.avatar_url || "",
   };
 }
 
@@ -129,7 +128,7 @@ export function dbRowToProfile(row: ProfileRow): Profile {
     verified: row.verification_status === "VERIFIED",
     isOnline: true,
     compatibilityScore: 90,
-    avatarUrl: row.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+    avatarUrl: row.avatar_url || "",
     coverPhotoUrl: row.cover_photo_url || undefined,
     galleryImages: row.gallery_images || [],
   };
@@ -185,79 +184,4 @@ export function profileToDbRow(authId: string, email: string, profile: Partial<P
   if (profile.galleryImages !== undefined) row.gallery_images = profile.galleryImages;
 
   return row;
-}
-
-// ── Service Functions ──────────────────────────────────────
-
-export async function getProfileByAuthId(authId: string) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("auth_id", authId)
-    .single();
-
-  if (error || !data) return { data: null, error };
-  return { data: data as ProfileRow, error: null };
-}
-
-export async function getProfileByEmail(email: string) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("email", email.toLowerCase().trim())
-    .single();
-
-  if (error || !data) return { data: null, error };
-  return { data: data as ProfileRow, error: null };
-}
-
-export async function getProfileById(id: string) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error || !data) return { data: null, error };
-  return { data: data as ProfileRow, error: null };
-}
-
-export async function upsertProfile(authId: string, email: string, profileData: Partial<ProfileRow>) {
-  const row = {
-    auth_id: authId,
-    email: email.toLowerCase().trim(),
-    display_name: profileData.display_name || email.split("@")[0],
-    ...profileData,
-    updated_at: new Date().toISOString(),
-  };
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .upsert(row, { onConflict: "auth_id" })
-    .select()
-    .single();
-
-  if (error || !data) return { data: null, error };
-  return { data: data as ProfileRow, error: null };
-}
-
-export async function updateProfile(profileId: string, updates: Partial<ProfileRow>) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq("id", profileId)
-    .select()
-    .single();
-
-  if (error || !data) return { data: null, error };
-  return { data: data as ProfileRow, error: null };
-}
-
-export async function deleteProfileByAuthId(authId: string) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .delete()
-    .eq("auth_id", authId);
-
-  return { data, error };
 }
