@@ -4,9 +4,8 @@ import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Mail } from "lucide-react";
-import { createBrowserSupabase } from "@/lib/supabase/browser";
 import { useAuth } from "@/context/AuthContext";
-import { AuthMessage, AuthShell, friendlyAuthError, submitClass } from "@/components/auth/AuthShell";
+import { AuthMessage, AuthShell, requestAuthEmail, submitClass } from "@/components/auth/AuthShell";
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
@@ -26,12 +25,9 @@ function VerifyEmail() {
   const resend = async () => {
     if (!email) return;
     setMessage(null);
-    const { error } = await createBrowserSupabase().auth.resend({
-      type: "signup",
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=%2Fonboarding` },
-    });
-    if (error) { setMessage({ tone: "error", text: friendlyAuthError(error.message) }); return; }
+    // A sign-in link also confirms the address, so it doubles as "resend confirmation".
+    const failure = await requestAuthEmail({ action: "magiclink", email, next: "/onboarding" });
+    if (failure) { setMessage({ tone: "error", text: failure }); return; }
     setCooldown(RESEND_COOLDOWN_SECONDS);
     setMessage({ tone: "info", text: "Sent. The newest link is the one that works." });
   };
@@ -44,7 +40,7 @@ function VerifyEmail() {
       </div>
       {message && <AuthMessage tone={message.tone}>{message.text}</AuthMessage>}
       <button type="button" onClick={resend} disabled={!email || cooldown > 0} className={submitClass}>
-        {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend confirmation email"}
+        {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend the link"}
       </button>
       <p className="text-xs text-velora-textMuted">Nothing arriving? Check spam, or sign up again with the correct address.</p>
     </AuthShell>

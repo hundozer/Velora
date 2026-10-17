@@ -2,8 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { createBrowserSupabase } from "@/lib/supabase/browser";
-import { AuthField, AuthMessage, AuthShell, friendlyAuthError, submitClass } from "@/components/auth/AuthShell";
+import { AuthField, AuthMessage, AuthShell, requestAuthEmail, submitClass } from "@/components/auth/AuthShell";
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState("");
@@ -14,11 +13,9 @@ export default function ResetPasswordPage() {
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     setBusy(true); setError("");
-    const { error: resetError } = await createBrowserSupabase().auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/auth/callback?next=%2Fupdate-password`,
-    });
+    const failure = await requestAuthEmail({ action: "recovery", email: email.trim() });
     setBusy(false);
-    if (resetError) setError(friendlyAuthError(resetError.message)); else setSent(true);
+    if (failure) setError(failure); else setSent(true);
   };
 
   return (

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import { safeReturnTo } from "@/lib/auth/accountState.mjs";
-import { AuthField, AuthMessage, AuthShell, friendlyAuthError, submitClass } from "@/components/auth/AuthShell";
+import { AuthField, AuthMessage, AuthShell, friendlyAuthError, requestAuthEmail, submitClass } from "@/components/auth/AuthShell";
 
 const LINK_ERRORS: Record<string, string> = {
   link_invalid: "That sign-in link is invalid. Request a new one below.",
@@ -32,13 +32,10 @@ function LoginForm() {
   const sendMagicLink = async () => {
     if (!email.trim()) { setError("Enter your email first."); return; }
     setBusy(true); setError(""); setInfo("");
-    const { error: otpError } = await createBrowserSupabase().auth.signInWithOtp({
-      email: email.trim(),
-      options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(returnTo)}` },
-    });
+    const failure = await requestAuthEmail({ action: "magiclink", email: email.trim(), next: returnTo });
     setBusy(false);
-    if (otpError) setError(friendlyAuthError(otpError.message));
-    else setInfo("If an account exists for that email, a sign-in link is on its way.");
+    if (failure) setError(failure);
+    else setInfo("A sign-in link is on its way. Check your inbox.");
   };
 
   return (

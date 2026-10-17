@@ -2,8 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { createBrowserSupabase } from "@/lib/supabase/browser";
-import { AuthField, AuthMessage, AuthShell, friendlyAuthError, submitClass } from "@/components/auth/AuthShell";
+import { AuthField, AuthMessage, AuthShell, requestAuthEmail, submitClass } from "@/components/auth/AuthShell";
 
 const MIN_PASSWORD = 10;
 
@@ -22,15 +21,9 @@ export default function RegisterPage() {
     event.preventDefault();
     if (!ready) return;
     setBusy(true); setError("");
-    const { data, error: signUpError } = await createBrowserSupabase().auth.signUp({
-      email: email.trim(),
-      password,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=%2Fonboarding` },
-    });
-    if (signUpError) { setError(friendlyAuthError(signUpError.message)); setBusy(false); return; }
-    // With email confirmation enabled Supabase returns no session until the link is clicked.
-    if (data.session) window.location.assign("/onboarding");
-    else window.location.assign(`/verify-email?email=${encodeURIComponent(email.trim())}`);
+    const failure = await requestAuthEmail({ action: "signup", email: email.trim(), password, adult, terms });
+    if (failure) { setError(failure); setBusy(false); return; }
+    window.location.assign(`/verify-email?email=${encodeURIComponent(email.trim())}`);
   };
 
   return (

@@ -24,26 +24,16 @@ select count(*) from pg_policies where policyname like 'anon_%';      -- 0
 select conname from pg_constraint where conname = 'profiles_auth_id_matches_id';
 ```
 
-## 2. Supabase Auth settings (Dashboard → Authentication)
-- **URL configuration:** Site URL `https://intimo.live`; redirect URLs
-  `https://intimo.live/**` and `https://*-hundozers-projects.vercel.app/**` (previews).
-- **Providers → Email:** enabled, *Confirm email* ON, minimum password length 10.
-- **Email templates** (recommended, enables cross-device links): in *Confirm signup*,
-  *Magic link* and *Reset password*, use
-  `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=<signup|magiclink|recovery>`.
-  Without this the default PKCE links still work through `/auth/callback`, but only
-  in the browser that started the flow.
-- **SMTP:** set Resend (`smtp.resend.com`, port 465, user `resend`, password = Resend API key,
-  sender `noreply@intimo.live`). The built-in mailer allows only a few emails per hour.
-- **MFA:** enable TOTP (needed for admins, issue #10).
+## 2. Supabase Auth settings — none required
+Auth emails are generated with the admin API (`/api/auth/email`) and sent through
+Resend with token-hash links to `/auth/confirm`, so the Supabase Site URL,
+redirect allow-list, email templates and SMTP settings are not used.
+Optional later: enable TOTP MFA for admins (issue #10).
 
-## 3. Vercel environment (project `velora`, Production + Preview)
-- Add `INTIMO_COOKIE_SECRET` (32+ random bytes) — signs the 18+ declaration cookie.
-- Add to Production: `CLOUDFLARE_R2_*` (4), `RESEND_API_KEY`, `RESEND_FROM_EMAIL` (issue #4).
-- Rename `INTIMO_ADMIN_AUTH0_SUBS` → `INTIMO_ADMIN_USER_IDS` (Supabase user ids) once the
-  first admin has signed up.
-- Delete: `AUTH0_SECRET`, `AUTH0_BASE_URL`, `AUTH0_ISSUER_BASE_URL`, `AUTH0_CLIENT_ID`,
-  `AUTH0_CLIENT_SECRET`, `APP_BASE_URL` (unused now), `MONETIZATION_ENABLED`.
+## 3. Vercel environment
+- Done 2026-10-17: R2 (4) and Resend (2) variables now target Production too.
+- `INTIMO_COOKIE_SECRET` is optional; without it the cookie key is derived from the service-role key.
+- After cutover, delete `AUTH0_*`, `APP_BASE_URL`, `MONETIZATION_ENABLED` (issue #9).
 
 ## 4. Deploy and smoke test
 Merge to `main` (issue #5), deploy, then on a phone: register → confirm email →

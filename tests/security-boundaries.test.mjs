@@ -173,10 +173,9 @@ test("production auth middleware has a fail-closed response and refreshes the se
   assert.match(source, /auth\.getUser\(\)/);
 });
 
-test("verification screen resends through Supabase without polling or local identity", async () => {
+test("verification screen resends through the server email route without polling or local identity", async () => {
   const source = await read("src/app/verify-email/page.tsx");
-  assert.match(source, /auth\.resend\(/);
-  assert.match(source, /type: "signup"/);
+  assert.match(source, /requestAuthEmail\(\{ action: "magiclink"/);
   assert.match(source, /RESEND_COOLDOWN_SECONDS/);
   assert.doesNotMatch(source, /setInterval|localStorage/);
 });
@@ -212,7 +211,7 @@ test("browser identity cannot switch roles or fabricate a fallback login", async
   assert.doesNotMatch(source, /dateOfBirth: "1998-05-15"/);
   assert.doesNotMatch(source, /setUser\(parsedUser\)/);
   assert.doesNotMatch(verifyEmail, /EmailVerificationService|intimo_user_data|verifyToken/);
-  assert.match(verifyEmail, /auth\.resend/);
+  assert.match(verifyEmail, /requestAuthEmail/);
 });
 
 test("profile updates are owner-derived and strip authority fields", async () => {
@@ -735,4 +734,14 @@ test("demo profiles are staging-only, visibly labeled, reversible, and cannot im
     assert.match(source, /Staging demo content/);
     assert.match(source, /fictional/);
   }
+});
+
+test("auth emails are server-sent, enumeration-safe and rate-limited", async () => {
+  const route = await read("src/app/api/auth/email/route.ts");
+  assert.match(route, /auth\.admin\.generateLink/);
+  assert.match(route, /checkRateLimit\(`auth-email:/);
+  assert.match(route, /safeReturnTo\(body\.next\)/);
+  assert.match(route, /body\.adult !== true \|\| body\.terms !== true/);
+  assert.match(route, /\/auth\/confirm\?token_hash=/);
+  assert.match(route, /Already registered: send a sign-in link instead/);
 });

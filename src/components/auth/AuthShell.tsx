@@ -49,3 +49,15 @@ export function friendlyAuthError(message: string | undefined): string {
   if (text.includes("password")) return message || "Choose a stronger password.";
   return "Something went wrong. Please try again.";
 }
+
+/** Asks the server to email an auth link; it never reveals whether an account exists. */
+export async function requestAuthEmail(payload: { action: "signup" | "magiclink" | "recovery"; email: string; password?: string; adult?: boolean; terms?: boolean; next?: string }): Promise<string | null> {
+  try {
+    const response = await fetch("/api/auth/email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    if (response.ok) return null;
+    const body = await response.json().catch(() => ({}));
+    return typeof body.error === "string" ? body.error : "Something went wrong. Please try again.";
+  } catch {
+    return "Check your connection and try again.";
+  }
+}

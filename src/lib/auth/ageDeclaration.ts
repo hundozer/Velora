@@ -4,10 +4,14 @@ export const AGE_DECLARATION_COOKIE = "intimo_age_declaration";
 const MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
 
 function secret() {
-  // Server-only HMAC key for the signed 18+ declaration cookie (32+ random bytes).
-  const value = process.env.INTIMO_COOKIE_SECRET;
-  if (!value || value.length < 32) return null;
-  return value;
+  // Server-only HMAC key for the signed 18+ declaration cookie. Prefer a dedicated
+  // INTIMO_COOKIE_SECRET; otherwise derive a domain-separated key from the
+  // service-role key so the raw service credential is never used as a MAC key.
+  const dedicated = process.env.INTIMO_COOKIE_SECRET;
+  if (dedicated && dedicated.length >= 32) return dedicated;
+  const root = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!root || root.length < 32) return null;
+  return createHmac("sha256", root).update("intimo-age-declaration-cookie-v1").digest("base64url");
 }
 
 function signature(timestamp: string, signingSecret: string) {
