@@ -14,6 +14,10 @@ const r2Client = isR2Configured
   ? new S3Client({
       region: "auto",
       endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+      // SDK >= 3.729 otherwise signs a CRC32 of the (empty) presign body into
+      // every PutObject URL, so R2 rejects the browser's real upload.
+      requestChecksumCalculation: "WHEN_REQUIRED",
+      responseChecksumValidation: "WHEN_REQUIRED",
       credentials: {
         accessKeyId,
         secretAccessKey,
