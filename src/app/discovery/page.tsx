@@ -292,43 +292,6 @@ export default function DiscoveryMarketplacePage() {
         )}
       </div>
 
-      {/* TRENDING SALONS & CREATORS FOOTER BAR */}
-      <div className="pt-6 border-t border-white/10">
-        <Card variant="goldBorder" className="p-6 space-y-4 text-left bg-gold-card">
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <h3 className="text-sm font-serif font-bold text-amber-300 flex items-center gap-2">
-              <Crown className="w-4 h-4 text-amber-400" /> Trending Salons & Verified Creators
-            </h3>
-            <Link href="/creators" className="text-xs text-amber-400 font-bold hover:underline">
-              View All Creators →
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            {allProfiles.filter((p) => p.categories && p.categories.length > 0).map((creator) => (
-              <div key={creator.id} className="flex items-center justify-between p-3 rounded-2xl glass-panel">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full border border-amber-400 overflow-hidden bg-velora-card shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={creator.avatarUrl} alt={creator.displayName} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="text-left min-w-0">
-                    <h4 className="text-xs font-bold text-velora-textPrimary truncate">{creator.displayName}</h4>
-                    <span className="text-[10px] text-emerald-300 font-mono">Free creator profile</span>
-                  </div>
-                </div>
-
-                <Link href={`/profile/${creator.id}`}>
-                  <Button variant="ghost" size="sm" className="text-[10px] font-bold text-velora-gold px-2">
-                    View
-                  </Button>
-                </Link>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
-
       {/* MOBILE SLIDE-OVER FILTER DRAWER */}
       {mobileFilterOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex justify-end animate-in fade-in">
