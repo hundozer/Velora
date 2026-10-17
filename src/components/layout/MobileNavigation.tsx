@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, MessageSquare, Users, Heart, CircleUserRound } from "lucide-react";
+import { Compass, MessageSquare, Users, Flame, CircleUserRound } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 
@@ -15,7 +15,7 @@ export const MobileNavigation: React.FC = () => {
   const publicItems = [
     { href: "/", label: t("nav.home"), icon: Compass },
     { href: "/people", label: t("nav.people"), icon: Users },
-    { href: "/dating", label: t("nav.dating"), icon: Heart },
+    { href: "/tonight", label: t("nav.tonight"), icon: Flame },
   ];
   const memberItems = [
     { href: "/messages", label: t("nav.messages"), icon: MessageSquare },

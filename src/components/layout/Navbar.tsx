@@ -71,15 +71,15 @@ export const Navbar: React.FC = () => {
             </Link>
 
             <Link
-              href="/dating"
+              href="/tonight"
               className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-                pathname.startsWith("/dating")
+                pathname.startsWith("/tonight")
                   ? "bg-white/10 text-velora-gold border border-velora-gold/30"
                   : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
               }`}
             >
               <Heart className="w-4 h-4 text-rose-400 fill-rose-400/20" />
-              Dating
+              Tonight
             </Link>
 
             <Link href="/photos" className={`hidden xl:flex px-3 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all items-center gap-2 ${pathname === "/photos" ? "bg-white/10 text-velora-gold border border-velora-gold/30" : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"}`}>

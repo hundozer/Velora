@@ -79,43 +79,8 @@ export async function GET(req: NextRequest) {
 
   const profiles = (profileRows || []).map((row) => toAnonymousPublicProfile(row as PublicProfileRow));
 
-  const { data: adRows, error: adError } = await db
-    .from("dating_ads")
-    .select("id,author_id,title,category,country,region,min_age,max_age,created_at,validity_days")
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-    .limit(12);
-
-  let datingAds: Array<Record<string, unknown>> = [];
-  if (!adError && adRows?.length) {
-    const authorIds = Array.from(new Set(adRows.map((row) => row.author_id)));
-    const { data: publicAuthors } = await db
-      .from("profiles")
-      .select("id,display_name,username,verification_status,verification_level")
-      .in("id", authorIds)
-      .eq("profile_visibility", "EVERYONE")
-      .eq("public_profile_visibility", true)
-      .eq("account_status", "ACTIVE")
-      .eq("discovery_disabled", false);
-    const authorMap = new Map((publicAuthors || []).map((author) => [author.id, author]));
-    const now = Date.now();
-    datingAds = adRows.flatMap((ad) => {
-      const author = authorMap.get(ad.author_id);
-      const expiresAt = new Date(ad.created_at).getTime() + ad.validity_days * 86_400_000;
-      if (!author || expiresAt <= now) return [];
-      return [{
-        id: ad.id,
-        authorId: ad.author_id,
-        authorName: author.display_name || author.username || "Intimo member",
-        verified: author.verification_status === "VERIFIED" || ["LEVEL_3_PROFILE_BIOMETRIC", "LEVEL_4_CREATOR"].includes(author.verification_level || ""),
-        title: String(ad.title || "").slice(0, 120),
-        category: String(ad.category || "").slice(0, 80),
-        location: [ad.region, ad.country].filter(Boolean).join(", ").slice(0, 160) || undefined,
-        ageRange: `${ad.min_age}–${ad.max_age}`,
-        createdAt: ad.created_at,
-      }];
-    });
-  }
+  // Plans (Tonight) are members-only: time-and-place intent is never public.
+  const datingAds: Array<Record<string, unknown>> = [];
 
   return NextResponse.json(
     {

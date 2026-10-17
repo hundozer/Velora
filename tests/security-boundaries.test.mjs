@@ -95,7 +95,7 @@ test("public home is content-first rather than implementation-focused", async ()
   const home = await read("src/components/community/PublicCommunityHome.tsx");
   assert.match(home, /intimo-community-hero\.jpg/);
   assert.match(home, /Find your people/);
-  for (const destination of ["people", "dating", "photos", "videos"]) assert.match(home, new RegExp(`\\"/${destination}\\"`));
+  for (const destination of ["people", "tonight", "photos", "videos"]) assert.match(home, new RegExp(`\\"/${destination}\\"`));
   assert.doesNotMatch(home, /Real empty states|server-authorized workflows|Sensitive preference fields|Local design preview|Newest first/);
 });
 
@@ -131,17 +131,18 @@ test("six-language mobile navigation uses Intimo keys and migrates the legacy lo
   assert.match(mobile, /aria-label="Mobile navigation"/);
 });
 
-test("affected users can see eligible decisions and appeal while dating ads expose reporting", async () => {
+test("affected users can see eligible decisions and appeal while plans expose reporting", async () => {
   const reports = await read("src/app/api/reports/route.ts");
   const appeal = await read("src/app/api/reports/[id]/appeal/route.ts");
   const settings = await read("src/app/settings/page.tsx");
-  const dating = await read("src/app/dating/page.tsx");
+  const dating = await read("src/app/tonight/page.tsx");
+  const planCard = await read("src/components/plans/PlanCard.tsx");
   assert.match(reports, /relationship: reported_user_id === actor\.actor\.profileId \? "AFFECTED_USER" : "REPORTER"/);
   assert.match(appeal, /eq\("reported_user_id", actor\.actor\.profileId\)/);
   assert.match(appeal, /\["RESOLVED", "REJECTED"\]/);
   assert.match(settings, /Appeal this decision/);
   assert.match(dating, /contentType="POST"/);
-  assert.match(dating, /Report this dating ad/);
+  assert.match(planCard, /Report this plan/);
 });
 
 test("media presigning requires identity and enforces size and type allowlists", async () => {
@@ -334,18 +335,20 @@ test("privacy APIs derive ownership from the server actor and public profiles mi
 test("dating ads derive authorship and deletion ownership from the server actor", async () => {
   const collection = await read("src/app/api/dating-ads/route.ts");
   const item = await read("src/app/api/dating-ads/[id]/route.ts");
-  assert.match(collection, /author_id: actor\.actor\.profileId/);
+  assert.match(collection, /const profileId = actor\.actor\.profileId;[\s\S]*author_id: profileId,/);
   assert.match(collection, /author_name: profile\.display_name/);
-  assert.match(collection, /minAge < 18/);
+  assert.match(await read("src/lib/plans.mjs"), /minAge < 18/);
   assert.match(item, /\.eq\("author_id", actor\.actor\.profileId\)/);
   assert.match(collection, /require_vip: false/);
 });
 
 test("dating-ad reply requirements are enforced by the server, not browser claims", async () => {
   const messages = await read("src/app/api/messages/route.ts");
-  const dating = await read("src/app/dating/page.tsx");
+  const dating = await read("src/components/plans/PlanCard.tsx");
   const messagesPage = await read("src/app/messages/page.tsx");
-  assert.match(dating, /datingAd=.*encodeURIComponent\(ad\.id\)/);
+  assert.match(dating, /datingAd=\$\{encodeURIComponent\(plan\.id\)\}/);
+  assert.match(messages, /new Date\(ad\.expires_at\) <= new Date\(\)/);
+  assert.match(messages, /plan_id: datingAdId/);
   assert.match(messagesPage, /searchParams\.get\("datingAd"\)/);
   assert.match(messages, /dating_ads/);
   assert.match(messages, /ad\.author_id !== receiverId/);
@@ -379,14 +382,17 @@ test("every unfinished mock community route remains centrally unreachable", asyn
   assert.match(middleware, /NextResponse\.redirect\(new URL\("\/discovery", request\.url\), 307\)/);
 });
 
-test("active dating ads cannot advertise commercial sexual services or require VIP", async () => {
-  const createPage = await read("src/app/dating/create/page.tsx");
-  const browsePage = await read("src/app/dating/page.tsx");
+test("plans cannot advertise commercial sexual services or require VIP", async () => {
+  const createPage = await read("src/app/tonight/new/page.tsx");
+  const browsePage = await read("src/app/tonight/page.tsx");
+  const plans = await read("src/lib/plans.mjs");
   const collection = await read("src/app/api/dating-ads/route.ts");
-  assert.doesNotMatch(createPage, /offering services|Erotic services|Incall apartments|S\/M studios/i);
+  const migration = await read("supabase/migrations/20261023_tonight_plans.sql");
+  assert.doesNotMatch(createPage + plans, /offering services|Erotic services|Incall apartments|S\/M studios/i);
   assert.doesNotMatch(createPage, /Require VIP Membership/);
   assert.doesNotMatch(browsePage, /INITIAL_ADS|images\.unsplash\.com|Prince Charming/);
-  assert.match(browsePage, /return <PublicDatingBrowse \/>/);
+  assert.match(browsePage, /if \(!user\) return <BehindTheDoorLanding \/>;/);
+  assert.match(migration, /check \(category in \('DATE', 'CASUAL', 'COUPLES', 'KINK', 'PARTY', 'CHAT'\)\)/);
   assert.match(collection, /require_vip: false/);
 });
 
@@ -596,17 +602,15 @@ test("shared actor boundary blocks inactive accounts and unified search enforces
   assert.doesNotMatch(search, /openai|anthropic|embedding|vector/i);
 });
 
-test("dating saves and reactivation use durable server APIs", async () => {
-  const page = await read("src/app/dating/page.tsx");
+test("plans end and expire through durable, owner-checked server APIs", async () => {
   const route = await read("src/app/api/dating-ads/[id]/route.ts");
   const collection = await read("src/app/api/dating-ads/route.ts");
-  assert.match(page, /api\/saved-items/);
-  assert.doesNotMatch(page, /intimo_all_dating_ads/);
-  assert.doesNotMatch(page, /FileReader|photoPreview|handlePhotoSelect/);
-  assert.match(route, /DATING_AD_REACTIVATE/);
+  assert.match(route, /PLAN_END/);
   assert.match(route, /eq\("author_id", actor\.actor\.profileId\)/);
   assert.match(route, /appendDurableAudit/);
+  assert.doesNotMatch(route, /REACTIVATE/);
   assert.match(collection, /appendDurableAudit/);
+  assert.match(collection, /\.gt\("expires_at", now\.toISOString\(\)\)/);
 });
 
 test("identity verification evidence is owner-submitted, private, and admin-audited", async () => {
@@ -640,7 +644,7 @@ test("privileged admin decisions use explicit inline forms, not ambiguous browse
 
 test("messaging entry points use the durable message screen, not a local chat store", async () => {
   const layout = await read("src/app/layout.tsx");
-  const dating = await read("src/app/dating/page.tsx");
+  const dating = await read("src/components/plans/PlanCard.tsx");
   const chat = await read("src/components/chat/ChatWindow.tsx");
   const messages = await read("src/app/api/messages/route.ts");
   const messagesPage = await read("src/app/messages/page.tsx");

@@ -47,7 +47,7 @@ export default function DashboardPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
             ["Discover members", "Use real profile search and filters.", "/discovery", Compass],
-            ["Create a dating ad", "Describe the connection you are looking for.", "/dating/create", Heart],
+            ["Post a plan for tonight", "Say what you're up for; it expires on its own.", "/tonight/new", Heart],
             ["View messages", "Continue genuine member conversations.", "/messages", MessageSquare],
             ["Manage photos", "Add your first photo or manage existing media.", `/profile/${profile?.id || "me"}?tab=PHOTOS`, ImagePlus],
             ["View favourites", "Profiles you have genuinely saved appear here.", "/favorites", UserRound],

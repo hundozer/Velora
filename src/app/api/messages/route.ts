@@ -124,9 +124,9 @@ export async function POST(req: NextRequest) {
   if (!sender) return NextResponse.json({ error: "Sender profile unavailable" }, { status: 502 });
   const verifiedSender = sender.verification_status === "VERIFIED" || ["LEVEL_3_PROFILE_BIOMETRIC", "LEVEL_4_CREATOR"].includes(sender.verification_level || "");
   if (datingAdId) {
-    const { data: ad, error: adError } = await supabase.from("dating_ads").select("id,author_id,status,allowed_reply_genders,min_age,max_age,require_media,require_verified").eq("id", datingAdId).maybeSingle();
+    const { data: ad, error: adError } = await supabase.from("dating_ads").select("id,author_id,status,expires_at,moderation_status,allowed_reply_genders,min_age,max_age,require_media,require_verified").eq("id", datingAdId).maybeSingle();
     if (adError) return NextResponse.json({ error: "Dating ad eligibility could not be checked" }, { status: 502 });
-    if (!ad || ad.status !== "active" || ad.author_id !== receiverId) return NextResponse.json({ error: "Dating ad is no longer available" }, { status: 404 });
+    if (!ad || ad.status !== "active" || ad.moderation_status === "REJECTED" || new Date(ad.expires_at) <= new Date() || ad.author_id !== receiverId) return NextResponse.json({ error: "This plan is no longer available" }, { status: 404 });
     const replySymbol = profileReplySymbol(sender.gender, sender.is_couple_profile);
     const allowed = Array.isArray(ad.allowed_reply_genders) ? ad.allowed_reply_genders : [];
     if (!replySymbol || (allowed.length > 0 && !allowed.includes(replySymbol))) return NextResponse.json({ error: "Your profile does not match this ad's allowed reply profiles" }, { status: 403 });
@@ -157,7 +157,7 @@ export async function POST(req: NextRequest) {
     const decision = firstMessageDecision(resolveBoundaries(boundaryRows), { gender: sender.gender, isCoupleProfile: sender.is_couple_profile, verified: verifiedSender });
     if (!decision.allowed) return NextResponse.json({ error: decision.reason, boundary: true }, { status: 403 });
   }
-  const row = { conversation_id: conversationId(actor.actor.profileId, receiverId), sender_id: actor.actor.profileId, receiver_id: receiverId, sender_name: sender.display_name, sender_avatar: sender.avatar_url, content, media_url: null, attachment_type: null, is_disappearing: false, is_opened: false, status: "SENT", is_locked: false, unlock_price: null, is_unlocked: true };
+  const row = { conversation_id: conversationId(actor.actor.profileId, receiverId), sender_id: actor.actor.profileId, receiver_id: receiverId, sender_name: sender.display_name, sender_avatar: sender.avatar_url, content, media_url: null, attachment_type: null, plan_id: datingAdId, is_disappearing: false, is_opened: false, status: "SENT", is_locked: false, unlock_price: null, is_unlocked: true };
   const { data, error } = await supabase.from("direct_messages").insert(row).select("id,conversation_id,sender_id,receiver_id,content,status,created_at").single();
   if (error || !data) return NextResponse.json({ error: "Message could not be sent" }, { status: 502 });
   const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MESSAGE_SEND", resourceType: "MESSAGE", resourceId: data.id, outcome: "SUCCESS", metadata: { receiverId, datingAdId } });

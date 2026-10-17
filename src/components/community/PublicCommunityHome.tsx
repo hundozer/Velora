@@ -99,7 +99,7 @@ export function PublicCommunityHome() {
           <h2 id="explore-intimo" className="sr-only">Explore Intimo</h2>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[
-              ["People", "/people", "20% center"], ["Dating", "/dating", "42% center"],
+              ["People", "/people", "20% center"], ["Tonight", "/tonight", "42% center"],
               ["Photos", "/photos", "68% center"], ["Videos", "/videos", "88% center"],
             ].map(([label, href, position]) => <Link key={label} href={href} className="group relative min-h-32 overflow-hidden rounded-xl border border-white/10 bg-[#11151e] sm:min-h-40"><Image src="/marketing/intimo-community-hero.jpg" alt="" aria-hidden="true" fill sizes="(max-width: 1024px) 50vw, 25vw" className="scale-125 object-cover opacity-65 transition duration-500 group-hover:scale-110 group-hover:opacity-80" style={{ objectPosition: position }} /><span className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" /><span className="absolute bottom-4 left-4 text-lg font-bold text-white sm:text-xl">{label}</span></Link>)}
           </div>
@@ -127,12 +127,7 @@ export function PublicCommunityHome() {
           ) : null}
         </section>}
 
-        {data?.datingAds.length ? <section aria-labelledby="dating-posts">
-          <div className="mb-4 flex items-end justify-between gap-4"><h2 id="dating-posts" className="text-xl font-bold text-white">Latest dating posts</h2><Link href="/dating" className="text-sm font-semibold text-amber-300 hover:text-amber-200">View all</Link></div>
-          {data?.datingAds.length ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{data.datingAds.slice(0, 6).map((ad) => <Link key={ad.id} href={`/dating?ad=${encodeURIComponent(ad.id)}`} className="rounded-xl border border-white/10 bg-[#121620] p-5 hover:border-rose-300/30"><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-rose-300"><CalendarHeart className="h-4 w-4" />{ad.category}</div><h3 className="mt-3 text-base font-semibold text-white">{ad.title}</h3><p className="mt-2 text-sm text-slate-400">By {ad.authorName}{ad.verified ? " · Verified" : ""}</p>{ad.location && <p className="mt-3 text-xs text-slate-500">{ad.location} · Preferred ages {ad.ageRange}</p>}</Link>)}</div>
-          ) : null}
-        </section> : null}
+
       </main>
     </div>
   );

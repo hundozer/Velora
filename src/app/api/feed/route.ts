@@ -110,7 +110,7 @@ export async function GET(req: NextRequest) {
   const now = Date.now();
   for (const ad of adRows || []) {
     const actor = actorFor(ad.author_id); if (!actor || new Date(ad.created_at).getTime() + Number(ad.validity_days || 0) * 86_400_000 <= now) continue;
-    items.push({ id: `DATING_AD:${ad.id}`, type: "DATING_AD", actor, title: ad.title, body: ad.text, category: ad.category, href: `/dating?ad=${encodeURIComponent(ad.id)}`, occurredAt: ad.created_at });
+    items.push({ id: `DATING_AD:${ad.id}`, type: "DATING_AD", actor, title: ad.title, body: ad.text, category: ad.category, href: "/tonight", occurredAt: ad.created_at });
   }
   for (const post of postRows || []) {
     const actor = actorFor(post.author_id); if (!actor) continue;
