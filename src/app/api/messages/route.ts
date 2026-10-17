@@ -4,6 +4,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
+import { firstMessageDecision, resolveBoundaries } from "@/lib/boundaries.mjs";
 import { areFriends } from "@/lib/social/friendship";
 
 export const dynamic = "force-dynamic";
@@ -109,15 +110,11 @@ export async function POST(req: NextRequest) {
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Messaging unavailable" }, { status: 503 });
   if (await blocked(supabase, actor.actor.profileId, receiverId)) return NextResponse.json({ error: "Messaging is not allowed between these profiles" }, { status: 403 });
-  const { data: recipient } = await supabase.from("profiles").select("id,display_name,message_permission,allow_direct_messages,require_verification_to_message").eq("id", receiverId).eq("account_status", "ACTIVE").maybeSingle();
-  if (!recipient || recipient.allow_direct_messages === false || recipient.message_permission === "PRIVATE") return NextResponse.json({ error: "Recipient is not accepting messages" }, { status: 403 });
-  if (recipient.message_permission === "FRIENDS_ONLY" && !(await areFriends(actor.actor.profileId, receiverId))) {
-    return NextResponse.json({ error: "This member accepts messages from friends only" }, { status: 403 });
-  }
+  const { data: recipient } = await supabase.from("profiles").select("id,display_name,message_permission,allow_direct_messages").eq("id", receiverId).eq("account_status", "ACTIVE").maybeSingle();
+  if (!recipient || recipient.allow_direct_messages === false) return NextResponse.json({ error: "Recipient is not accepting messages" }, { status: 403 });
   const { data: sender } = await supabase.from("profiles").select("display_name,avatar_url,verification_level,verification_status,gender,is_couple_profile,date_of_birth").eq("id", actor.actor.profileId).single();
   if (!sender) return NextResponse.json({ error: "Sender profile unavailable" }, { status: 502 });
   const verifiedSender = sender.verification_status === "VERIFIED" || ["LEVEL_3_PROFILE_BIOMETRIC", "LEVEL_4_CREATOR"].includes(sender.verification_level || "");
-  if ((recipient.require_verification_to_message === true || recipient.message_permission === "VERIFIED_ONLY") && !verifiedSender) return NextResponse.json({ error: "Recipient accepts messages from verified members only" }, { status: 403 });
   if (datingAdId) {
     const { data: ad, error: adError } = await supabase.from("dating_ads").select("id,author_id,status,allowed_reply_genders,min_age,max_age,require_media,require_verified").eq("id", datingAdId).maybeSingle();
     if (adError) return NextResponse.json({ error: "Dating ad eligibility could not be checked" }, { status: 502 });
@@ -133,6 +130,24 @@ export async function POST(req: NextRequest) {
       if (mediaError) return NextResponse.json({ error: "Dating ad media eligibility could not be checked" }, { status: 502 });
       if (!media) return NextResponse.json({ error: "This dating ad accepts replies from members with approved profile media only" }, { status: 403 });
     }
+  }
+
+  // Once the recipient has written to the sender, the conversation is established
+  // and first-message rules no longer apply. A valid reply to the recipient's own
+  // ad is invited too (the ad's eligibility rules were checked above).
+  const { data: repliedBefore, error: repliedError } = await supabase.from("direct_messages").select("id").eq("sender_id", receiverId).eq("receiver_id", actor.actor.profileId).limit(1).maybeSingle();
+  if (repliedError) return NextResponse.json({ error: "Messaging eligibility could not be checked" }, { status: 502 });
+  const invited = Boolean(repliedBefore) || Boolean(datingAdId);
+  if (!invited) {
+    if (recipient.message_permission === "PRIVATE") return NextResponse.json({ error: "This member only accepts messages from people they've written to" }, { status: 403 });
+    if (recipient.message_permission === "FRIENDS_ONLY" && !(await areFriends(actor.actor.profileId, receiverId))) {
+      return NextResponse.json({ error: "This member accepts messages from friends only" }, { status: 403 });
+    }
+    if (recipient.message_permission === "VERIFIED_ONLY" && !verifiedSender) return NextResponse.json({ error: "Recipient accepts messages from verified members only" }, { status: 403 });
+    const { data: boundaryRows, error: boundaryError } = await supabase.from("member_boundaries").select("kind,preference").eq("profile_id", receiverId);
+    if (boundaryError) return NextResponse.json({ error: "Messaging eligibility could not be checked" }, { status: 502 });
+    const decision = firstMessageDecision(resolveBoundaries(boundaryRows), { gender: sender.gender, isCoupleProfile: sender.is_couple_profile, verified: verifiedSender });
+    if (!decision.allowed) return NextResponse.json({ error: decision.reason, boundary: true }, { status: 403 });
   }
   const row = { conversation_id: conversationId(actor.actor.profileId, receiverId), sender_id: actor.actor.profileId, receiver_id: receiverId, sender_name: sender.display_name, sender_avatar: sender.avatar_url, content, media_url: null, attachment_type: null, is_disappearing: false, is_opened: false, status: "SENT", is_locked: false, unlock_price: null, is_unlocked: true };
   const { data, error } = await supabase.from("direct_messages").insert(row).select("id,conversation_id,sender_id,receiver_id,content,status,created_at").single();

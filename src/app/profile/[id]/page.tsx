@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 import { ReportModal } from "@/components/safety/ReportModal";
 import { ProfileDesires } from "@/components/profile/ProfileDesires";
+import { ProfileBoundaries } from "@/components/profile/ProfileBoundaries";
 import { LOOKING_FOR } from "@/lib/onboardingPolicy.mjs";
 
 const LOOKING_FOR_LABELS = new Map(LOOKING_FOR.map((item) => [item.value, item.label]));
@@ -120,6 +121,7 @@ export default function CanonicalProfilePage() {
         {albums.length === 0 && media.length === 0 && isOwner && <section className="rounded-3xl border border-dashed border-white/15 p-8 text-center"><ImageIcon className="mx-auto h-8 w-8 text-white/30" /><h2 className="mt-3 font-bold text-white">No public media yet</h2><p className="mt-1 text-sm text-white/55">Create an album and publish approved media when you are ready.</p><Link href="/albums/manage" className="mt-4 inline-block text-amber-300 underline">Manage albums</Link></section>}
       </div>
       <aside className="space-y-4">
+        {memberView && <ProfileBoundaries profileId={profile.id} isOwner={isOwner} />}
         {memberView && (profile.lookingFor?.length || profile.languages?.length) ? <section className="rounded-3xl border border-white/10 bg-[#111722] p-5"><h2 className="font-bold text-white">Profile details</h2>{profile.lookingFor?.length ? <div className="mt-4"><p className="text-xs uppercase tracking-wide text-white/40">Looking for</p><p className="mt-1 text-sm text-white/70">{profile.lookingFor.map((value) => LOOKING_FOR_LABELS.get(value) || value).join(", ")}</p></div> : null}{profile.languages?.length ? <div className="mt-4"><p className="text-xs uppercase tracking-wide text-white/40">Languages</p><p className="mt-1 text-sm text-white/70">{profile.languages.join(", ")}</p></div> : null}</section> : null}
         {!isOwner && authenticated && <section className="rounded-3xl border border-white/10 bg-[#111722] p-5"><h2 className="font-bold text-white">Safety controls</h2><p className="mt-2 text-sm text-white/55">Reports are reviewed by the moderation team. Blocking removes contact between both accounts.</p><div className="mt-4 flex flex-col gap-2"><Button variant="ghost" className="justify-start" onClick={() => setReportOpen(true)}><Flag className="mr-2 h-4 w-4" />Report profile</Button><Button variant="ghost" className="justify-start text-red-300" onClick={() => void block()}><UserMinus className="mr-2 h-4 w-4" />Block member</Button></div></section>}
       </aside>
