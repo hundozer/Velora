@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const auth = await requireAdminPermission(req, "dashboard:view"); if ("response" in auth) return auth.response;
   if (auth.actor.role !== "SUPER_ADMIN" || !auth.actor.emailVerified) return NextResponse.json({ error: "SUPER_ADMIN authorization and verified email required" }, { status: 403 });
-  if (!adminSessionFresh(auth.actor, 5 * 60)) return NextResponse.json({ error: "Recent Auth0 authentication required" }, { status: 409 });
+  if (!adminSessionFresh(auth.actor, 5 * 60)) return NextResponse.json({ error: "Recent sign-in required" }, { status: 409 });
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const reason = typeof body.reason === "string" ? body.reason.trim().slice(0, 1000) : "";
   if (!reason || body.confirmation !== "ENTER GOD MODE") return NextResponse.json({ error: "Reason and exact confirmation are required" }, { status: 400 });

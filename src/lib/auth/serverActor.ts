@@ -1,12 +1,12 @@
 import { NextRequest } from "next/server";
-import { getVerifiedIdentity } from "@/lib/auth0/serverSession";
+import { getVerifiedIdentity } from "@/lib/auth/serverSession";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { hasValidAdminMfaSession } from "./adminMfaSession";
 
 export const ADMIN_ROLES = new Set(["ADMIN", "SUPER_ADMIN", "SYSTEM_ADMIN", "TRUST_AND_SAFETY_ADMIN", "CONTENT_MODERATOR", "PRIVACY_ADMIN", "SUPPORT_ADMIN", "COMMUNITY_ADMIN"]);
 
 export interface ServerActor {
-  auth0Sub: string;
+  userId: string;
   email?: string;
   role: string;
   verificationStatus: string;
@@ -44,10 +44,10 @@ export async function resolveServerActor(req?: NextRequest): Promise<ServerActor
   }
   if (!data) return { status: "unprovisioned", identity };
 
-  // Transitional bootstrap authority: profiles.role is currently browser-writable
-  // until the RLS lockdown migration is applied, so it must never grant admin.
+  // profiles.role never grants admin. Admin comes only from admin_assignments or
+  // the INTIMO_ADMIN_* bootstrap env (Supabase user ids), pending issue #10.
   const adminSubjects = new Set(
-    (process.env.INTIMO_ADMIN_AUTH0_SUBS || "")
+    (process.env.INTIMO_ADMIN_USER_IDS || "")
       .split(",")
       .map((subject) => subject.trim())
       .filter(Boolean)
@@ -74,7 +74,7 @@ export async function resolveServerActor(req?: NextRequest): Promise<ServerActor
   return {
     status: "authenticated",
     actor: {
-      auth0Sub: identity.sub,
+      userId: identity.sub,
       email: typeof data.email === "string" ? data.email : identity.email,
       role: adminRole || (typeof data.role === "string" && !ADMIN_ROLES.has(data.role) ? data.role : "MEMBER"),
       verificationStatus: typeof data.verification_status === "string" ? data.verification_status : "UNVERIFIED",

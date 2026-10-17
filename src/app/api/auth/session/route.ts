@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveServerActor } from "@/lib/auth/serverActor";
-import { currentEmailVerification } from "@/lib/auth0/emailVerification";
 import { deriveAccountState } from "@/lib/auth/accountState.mjs";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +9,7 @@ export async function GET(req: NextRequest) {
   if (result.status === "unauthenticated") return NextResponse.json({ authenticated: false, accountState: deriveAccountState({ authenticated: false }) }, { status: 401 });
   if (result.status === "unavailable") return NextResponse.json({ error: "Authorization service unavailable" }, { status: 503 });
   if (result.status === "unprovisioned") {
-    const emailVerified = await currentEmailVerification(result.identity);
+    const emailVerified = result.identity.emailVerified;
     return NextResponse.json({
       authenticated: true,
       provisioned: false,
@@ -31,7 +30,7 @@ export async function GET(req: NextRequest) {
     provisioned: true,
     accountState,
     actor: {
-      id: result.actor.auth0Sub,
+      id: result.actor.userId,
       email: result.actor.email,
       role: result.actor.role,
       verificationStatus: result.actor.verificationStatus,

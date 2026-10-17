@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
 
-  const rate = checkRateLimit(`media-presign:${actor.actor.auth0Sub}`, 20, 60);
+  const rate = checkRateLimit(`media-presign:${actor.actor.userId}`, 20, 60);
   if (!rate.allowed) return NextResponse.json({ error: "Too many upload requests" }, { status: 429, headers: { "Retry-After": String(rate.resetInSeconds) } });
 
   try {
@@ -80,10 +80,10 @@ export async function POST(req: NextRequest) {
       await supabase.from("media_objects").delete().eq("id", media.id).eq("owner_id", actor.actor.profileId);
       return NextResponse.json({ error: "Participant declaration could not be recorded" }, { status: 502 });
     }
-    auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "MEDIA_UPLOAD_PRESIGNED", resourceId: media.id, resourceType: "MEDIA", status: "SUCCESS", details: { fileType, fileSize, folder, visibility, contentRating } });
+    auditLogger.logEvent({ actorId: actor.actor.userId, actorRole: actor.actor.role as any, action: "MEDIA_UPLOAD_PRESIGNED", resourceId: media.id, resourceType: "MEDIA", status: "SUCCESS", details: { fileType, fileSize, folder, visibility, contentRating } });
     const audited = await appendDurableAudit(supabase, {
       actorProfileId: actor.actor.profileId,
-      actorAuth0Sub: actor.actor.auth0Sub,
+      actorUserId: actor.actor.userId,
       action: "MEDIA_UPLOAD_PRESIGNED",
       resourceType: "MEDIA",
       resourceId: media.id,

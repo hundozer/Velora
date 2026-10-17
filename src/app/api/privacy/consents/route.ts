@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return noStore(NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 }));
-  const rate = checkRateLimit(`consent:${actor.actor.auth0Sub}`, 20, 60 * 60);
+  const rate = checkRateLimit(`consent:${actor.actor.userId}`, 20, 60 * 60);
   if (!rate.allowed) return NextResponse.json({ error: "Too many consent changes" }, { status: 429 });
   let body: unknown;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
@@ -48,8 +48,8 @@ export async function POST(req: NextRequest) {
     source: "PRIVACY_CENTER",
   });
   if (error) return NextResponse.json({ error: "Consent update failed" }, { status: 502 });
-  auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: granted ? "CONSENT_GRANTED" : "CONSENT_WITHDRAWN", resourceType: "CONSENT", status: "SUCCESS", details: { consentType, consentVersion: CONSENT_VERSION } });
-  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: granted ? "CONSENT_GRANTED" : "CONSENT_WITHDRAWN", resourceType: "CONSENT", resourceId: consentType, outcome: "SUCCESS", metadata: { consentVersion: CONSENT_VERSION } });
+  auditLogger.logEvent({ actorId: actor.actor.userId, actorRole: actor.actor.role as any, action: granted ? "CONSENT_GRANTED" : "CONSENT_WITHDRAWN", resourceType: "CONSENT", status: "SUCCESS", details: { consentType, consentVersion: CONSENT_VERSION } });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: granted ? "CONSENT_GRANTED" : "CONSENT_WITHDRAWN", resourceType: "CONSENT", resourceId: consentType, outcome: "SUCCESS", metadata: { consentVersion: CONSENT_VERSION } });
   if (!audited) return NextResponse.json({ error: "Consent saved but audit evidence failed; contact support" }, { status: 502 });
   return noStore(NextResponse.json({ consentType, consentVersion: CONSENT_VERSION, status: granted ? "GRANTED" : "WITHDRAWN", timestamp: now }));
 }

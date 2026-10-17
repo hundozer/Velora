@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
-  const rate = checkRateLimit(`dating-ad-create:${actor.actor.auth0Sub}`, 10, 60 * 60);
+  const rate = checkRateLimit(`dating-ad-create:${actor.actor.userId}`, 10, 60 * 60);
   if (!rate.allowed) return NextResponse.json({ error: "Too many ads created" }, { status: 429, headers: { "Retry-After": String(rate.resetInSeconds) } });
   const contentLength = Number(req.headers.get("content-length") || "0");
   if (contentLength > MAX_BODY_BYTES) return NextResponse.json({ error: "Payload too large" }, { status: 413 });
@@ -74,8 +74,8 @@ export async function POST(req: NextRequest) {
   };
   const { data, error } = await supabase.from("dating_ads").insert(row).select("*").single();
   if (error || !data) return NextResponse.json({ error: "Dating ad creation failed" }, { status: 502 });
-  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "DATING_AD_CREATE", resourceType: "DATING_AD", resourceId: String(data.id), outcome: "SUCCESS", metadata: { validityDays, hasMedia: Boolean(row.photo_url) } });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "DATING_AD_CREATE", resourceType: "DATING_AD", resourceId: String(data.id), outcome: "SUCCESS", metadata: { validityDays, hasMedia: Boolean(row.photo_url) } });
   if (!audited) return NextResponse.json({ error: "Dating ad created but audit recording failed; contact support" }, { status: 503 });
-  auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "DATING_AD_CREATE", resourceId: String(data.id), resourceType: "DATING_AD", status: "SUCCESS" });
+  auditLogger.logEvent({ actorId: actor.actor.userId, actorRole: actor.actor.role as any, action: "DATING_AD_CREATE", resourceId: String(data.id), resourceType: "DATING_AD", status: "SUCCESS" });
   return NextResponse.json({ ad: dbRowToDatingAd(data as DatingAdRow) }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
 }

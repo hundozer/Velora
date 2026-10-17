@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const auth = await resolveServerActor(req);
   if (auth.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: auth.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(auth.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
-  const rate = checkRateLimit(`friend:${auth.actor.auth0Sub}`, 40, 60 * 60); if (!rate.allowed) return NextResponse.json({ error: "Too many friend actions" }, { status: 429 });
+  const rate = checkRateLimit(`friend:${auth.actor.userId}`, 40, 60 * 60); if (!rate.allowed) return NextResponse.json({ error: "Too many friend actions" }, { status: 429 });
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const targetId = typeof body.targetProfileId === "string" ? body.targetProfileId : "";
   const action = typeof body.action === "string" ? body.action : "";
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   if (!target || target.account_status !== "ACTIVE") return NextResponse.json({ error: "Member unavailable" }, { status: 404 });
   const { data, error } = await db.rpc("intimo_friend_action", { p_actor_id: auth.actor.profileId, p_target_id: targetId, p_action: action });
   if (error) return NextResponse.json({ error: "Friend action unavailable" }, { status: 409 });
-  const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorAuth0Sub: auth.actor.auth0Sub, action: `FRIEND_${action}`, resourceType: "PROFILE", resourceId: targetId, outcome: "SUCCESS" });
+  const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorUserId: auth.actor.userId, action: `FRIEND_${action}`, resourceType: "PROFILE", resourceId: targetId, outcome: "SUCCESS" });
   if (!audited) return NextResponse.json({ error: "Friend action applied but audit recording failed; contact support" }, { status: 503 });
   if ((action === "REQUEST" && data === "OUTGOING") || (action === "ACCEPT" && data === "FRIENDS")) {
     const { data: actorProfile } = await db.from("profiles").select("display_name,avatar_url").eq("id", auth.actor.profileId).maybeSingle();

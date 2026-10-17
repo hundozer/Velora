@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
-  const rate = checkRateLimit(`privacy-settings:${actor.actor.auth0Sub}`, 30, 60 * 60);
+  const rate = checkRateLimit(`privacy-settings:${actor.actor.userId}`, 30, 60 * 60);
   if (!rate.allowed) return NextResponse.json({ error: "Too many settings changes" }, { status: 429 });
   let body: unknown;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
@@ -43,8 +43,8 @@ export async function PUT(req: NextRequest) {
   if (!supabase) return NextResponse.json({ error: "Privacy service unavailable" }, { status: 503 });
   const { data, error } = await supabase.from("profiles").update(update).eq("id", actor.actor.profileId).select("profile_visibility,sensitive_fields_visibility,location_precision,show_online_status,show_distance,message_permission").single();
   if (error) return NextResponse.json({ error: "Privacy settings update failed" }, { status: 502 });
-  auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "PRIVACY_SETTINGS_UPDATE", resourceId: actor.actor.profileId, resourceType: "PROFILE", status: "SUCCESS" });
-  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "PRIVACY_SETTINGS_UPDATE", resourceType: "PROFILE", resourceId: actor.actor.profileId, outcome: "SUCCESS" });
+  auditLogger.logEvent({ actorId: actor.actor.userId, actorRole: actor.actor.role as any, action: "PRIVACY_SETTINGS_UPDATE", resourceId: actor.actor.profileId, resourceType: "PROFILE", status: "SUCCESS" });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "PRIVACY_SETTINGS_UPDATE", resourceType: "PROFILE", resourceId: actor.actor.profileId, outcome: "SUCCESS" });
   if (!audited) return NextResponse.json({ error: "Settings saved but audit evidence failed; contact support" }, { status: 502 });
   return NextResponse.json({ settings: data }, { headers: { "Cache-Control": "private, no-store" } });
 }

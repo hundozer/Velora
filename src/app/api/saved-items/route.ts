@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const actor = await resolveServerActor(req); if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
-  if (!checkRateLimit(`saved-items:${actor.actor.auth0Sub}`, 80, 60 * 60).allowed) return NextResponse.json({ error: "Too many save requests" }, { status: 429 });
+  if (!checkRateLimit(`saved-items:${actor.actor.userId}`, 80, 60 * 60).allowed) return NextResponse.json({ error: "Too many save requests" }, { status: 429 });
   let body: unknown; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const input = body as { targetType?: unknown; targetId?: unknown };
   const targetType = typeof input.targetType === "string" ? input.targetType : ""; const targetId = typeof input.targetId === "string" ? input.targetId : "";
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   const access = await resolveContentTarget(actor.actor, targetType as ContentTargetType, targetId); if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
   const { data, error } = await access.db.from("saved_items").upsert({ profile_id: actor.actor.profileId, target_type: targetType, target_id: targetId }, { onConflict: "profile_id,target_type,target_id" }).select("id,target_type,target_id,created_at").single();
   if (error || !data) return NextResponse.json({ error: "Item could not be saved" }, { status: 502 });
-  const audited = await appendDurableAudit(access.db, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "CONTENT_SAVE", resourceType: targetType, resourceId: targetId, outcome: "SUCCESS" });
+  const audited = await appendDurableAudit(access.db, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "CONTENT_SAVE", resourceType: targetType, resourceId: targetId, outcome: "SUCCESS" });
   if (!audited) return NextResponse.json({ error: "Item saved but audit recording failed; contact support" }, { status: 503 });
   return NextResponse.json({ item: data }, { status: 201 });
 }
@@ -54,7 +54,7 @@ export async function DELETE(req: NextRequest) {
   const { data, error } = await db.from("saved_items").delete().eq("profile_id", actor.actor.profileId).eq("target_type", targetType).eq("target_id", targetId).select("id");
   if (error) return NextResponse.json({ error: "Saved item could not be removed" }, { status: 502 });
   if (data?.length) {
-    const audited = await appendDurableAudit(db, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "CONTENT_UNSAVE", resourceType: targetType, resourceId: targetId, outcome: "SUCCESS" });
+    const audited = await appendDurableAudit(db, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "CONTENT_UNSAVE", resourceType: targetType, resourceId: targetId, outcome: "SUCCESS" });
     if (!audited) return NextResponse.json({ error: "Item removed but audit recording failed; contact support" }, { status: 503 });
   }
   return NextResponse.json({ saved: false });

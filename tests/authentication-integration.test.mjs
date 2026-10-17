@@ -10,10 +10,6 @@ import {
   safeReturnTo,
 } from "../src/lib/auth/accountState.mjs";
 import { ageFromBirthDate, onboardingBasicsAreValid } from "../src/lib/onboardingPolicy.mjs";
-import {
-  OFFICIAL_INTIMO_AUTH0_ISSUER,
-  validateProductionAuthConfiguration,
-} from "../src/lib/auth0/configValidation.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
@@ -78,21 +74,11 @@ test("onboarding enforces nickname, valid birth date and 18+ boundary", () => {
   assert.equal(onboardingBasicsAreValid(" ", "1990-01-01", today), false);
 });
 
-test("production authentication accepts only the approved Intimo Auth0 issuer", () => {
-  const complete = {
-    AUTH0_SECRET: "set",
-    AUTH0_CLIENT_ID: "set",
-    AUTH0_CLIENT_SECRET: "set",
-    AUTH0_ISSUER_BASE_URL: `${OFFICIAL_INTIMO_AUTH0_ISSUER}/`,
-  };
-  assert.deepEqual(validateProductionAuthConfiguration(complete), {
-    valid: true,
-    missing: [],
-    issuerValid: true,
-  });
-  assert.equal(validateProductionAuthConfiguration({ ...complete, AUTH0_ISSUER_BASE_URL: "https://wrong.eu.auth0.com" }).valid, false);
-  assert.equal(validateProductionAuthConfiguration({ ...complete, AUTH0_CLIENT_SECRET: "" }).valid, false);
-  assert.equal(validateProductionAuthConfiguration({ ...complete, AUTH0_ISSUER_BASE_URL: "http://intimo.eu.auth0.com" }).valid, false);
+test("no Auth0 integration remains", async () => {
+  const pkg = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
+  assert.equal(pkg.dependencies["@auth0/nextjs-auth0"], undefined);
+  assert.ok(pkg.dependencies["@supabase/ssr"]);
+  await assert.rejects(fs.readdir(path.join(root, "src/lib/auth0")));
 });
 
 test("production boundaries consume the canonical policies", async () => {
@@ -111,7 +97,7 @@ test("production boundaries consume the canonical policies", async () => {
   assert.match(adminLayout, /redirect\("\/auth\/login\?returnTo=%2Fadmin"\)/);
   assert.match(onboardingLayout, /resolveServerActor/);
   assert.match(onboardingLayout, /returnTo=%2Fonboarding/);
-  assert.match(onboardingLayout, /currentEmailVerification/);
+  assert.match(onboardingLayout, /identity\.emailVerified/);
   assert.match(settingsLayout, /resolveServerActor/);
   assert.match(settingsLayout, /returnTo=%2Fsettings/);
   assert.match(settingsLayout, /account-restricted/);

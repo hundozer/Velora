@@ -41,6 +41,6 @@ export async function PATCH(req: NextRequest) {
   if (error || !after) return NextResponse.json({ error: "Media decision failed" }, { status: 502 });
   const { error: auditError } = await db.from("admin_action_events").insert({ actor_profile_id: auth.actor.profileId, actor_role: auth.actor.role, action: `MEDIA_${decision}`, category: "CONTENT_MODERATION", resource_type: "MEDIA", resource_id: id, reason, previous_state: before, new_state: after, security_metadata: requestSecurityMetadata(req) });
   if (auditError) return NextResponse.json({ error: "Decision saved but audit append failed; escalate immediately" }, { status: 502 });
-  await db.from("audit_events").insert({ actor_profile_id: auth.actor.profileId, actor_auth0_sub: auth.actor.auth0Sub, action: `MEDIA_${decision}`, resource_type: "MEDIA", resource_id: id, outcome: "SUCCESS", metadata: { reason } });
+  await db.from("audit_events").insert({ actor_profile_id: auth.actor.profileId, actor_user_id: auth.actor.userId, action: `MEDIA_${decision}`, resource_type: "MEDIA", resource_id: id, outcome: "SUCCESS", metadata: { reason } });
   return NextResponse.json({ media: after });
 }

@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Active adult access required" }, { status: 403 });
   const q = cleanQuery(new URL(req.url).searchParams.get("q"));
   if (q.length < 2) return NextResponse.json({ error: "Enter at least two characters" }, { status: 400 });
-  const rate = checkRateLimit(`search:${actor.actor.auth0Sub}`, 60, 60);
+  const rate = checkRateLimit(`search:${actor.actor.userId}`, 60, 60);
   if (!rate.allowed) return NextResponse.json({ error: "Too many search requests" }, { status: 429, headers: { "Retry-After": String(rate.resetInSeconds) } });
   const db = getServerSupabase();
   if (!db) return NextResponse.json({ error: "Search unavailable" }, { status: 503 });

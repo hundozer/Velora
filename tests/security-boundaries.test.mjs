@@ -4,14 +4,16 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("Auth0 source contains no embedded credential fallback", async () => {
-  const source = await read("src/lib/auth0/config.ts");
-  const client = await read("src/lib/auth0/client.ts");
-  assert.doesNotMatch(source, /AUTH0_CLIENT_SECRET\s*\|\|/);
-  assert.doesNotMatch(source, /AUTH0_SECRET\s*\|\|/);
-  assert.match(source, /required\("AUTH0_CLIENT_SECRET"\)/);
-  assert.match(source, /required\("AUTH0_SECRET"\)/);
-  assert.match(client, /signInReturnToPath: "\/dashboard"/);
+test("auth source contains no embedded Supabase credential fallback", async () => {
+  const env = await read("src/lib/supabase/env.ts");
+  const browser = await read("src/lib/supabase/browser.ts");
+  const server = await read("src/lib/supabase/server.ts");
+  for (const source of [env, browser, server]) {
+    assert.doesNotMatch(source, /NEXT_PUBLIC_SUPABASE_(URL|ANON_KEY)\s*\|\|/);
+    assert.doesNotMatch(source, /sb_publishable_|supabase\.co"/);
+  }
+  await assert.rejects(read("src/lib/supabase/client.ts"));
+  await assert.rejects(read("src/lib/auth0/client.ts"));
 });
 
 test("account deletion derives its target from the verified session", async () => {
@@ -54,7 +56,7 @@ test("privacy-rights requests are owner-derived, rate-limited, durable, and audi
   const route = await read("src/app/api/privacy/requests/route.ts");
   const settings = await read("src/app/settings/page.tsx");
   assert.match(route, /resolveServerActor\(req\)/);
-  assert.match(route, /privacy-request:\$\{actor\.actor\.auth0Sub\}/);
+  assert.match(route, /privacy-request:\$\{actor\.actor\.userId\}/);
   assert.match(route, /profile_id: actor\.actor\.profileId/);
   assert.match(route, /MEMBER_RIGHTS_REQUEST/);
   assert.match(route, /appendDurableAudit/);
@@ -163,18 +165,20 @@ test("media completion durably audits both successful finalization and quarantin
   assert.match(completion, /processingError/);
 });
 
-test("production auth middleware has a fail-closed response", async () => {
+test("production auth middleware has a fail-closed response and refreshes the session", async () => {
   const source = await read("src/middleware.ts");
   assert.match(source, /NODE_ENV === "production"/);
-  assert.match(source, /validateProductionAuthConfiguration/);
   assert.match(source, /status: 503/);
+  assert.match(source, /createServerClient/);
+  assert.match(source, /auth\.getUser\(\)/);
 });
 
-test("verification screen never polls without an authenticated verification-required state", async () => {
+test("verification screen resends through Supabase without polling or local identity", async () => {
   const source = await read("src/app/verify-email/page.tsx");
-  assert.match(source, /authState !== "EMAIL_VERIFICATION_REQUIRED"/);
-  assert.match(source, /sessionMissing/);
-  assert.match(source, /Sign in again/);
+  assert.match(source, /auth\.resend\(/);
+  assert.match(source, /type: "signup"/);
+  assert.match(source, /RESEND_COOLDOWN_SECONDS/);
+  assert.doesNotMatch(source, /setInterval|localStorage/);
 });
 
 test("RLS lockdown removes public allow-all policies and revokes browser roles", async () => {
@@ -193,7 +197,7 @@ test("admin route is guarded by server-derived database authority", async () => 
   assert.match(layout, /isAdminActor\(result\.actor\)/);
   assert.match(serverDb, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(actor, /\.eq\("auth_id", identity\.sub\)/);
-  assert.match(actor, /INTIMO_ADMIN_AUTH0_SUBS/);
+  assert.match(actor, /INTIMO_ADMIN_USER_IDS/);
   assert.match(actor, /adminAuthorized/);
   assert.doesNotMatch(layout, /localStorage|sessionStorage/);
 });
@@ -208,7 +212,7 @@ test("browser identity cannot switch roles or fabricate a fallback login", async
   assert.doesNotMatch(source, /dateOfBirth: "1998-05-15"/);
   assert.doesNotMatch(source, /setUser\(parsedUser\)/);
   assert.doesNotMatch(verifyEmail, /EmailVerificationService|intimo_user_data|verifyToken/);
-  assert.match(verifyEmail, /api\/auth\/verify-status/);
+  assert.match(verifyEmail, /auth\.resend/);
 });
 
 test("profile updates are owner-derived and strip authority fields", async () => {
@@ -232,10 +236,8 @@ test("profile updates are owner-derived and strip authority fields", async () =>
 test("onboarding creates a verified-session-owned adult profile without self-granting creator or premium", async () => {
   const route = await read("src/app/api/profile/me/route.ts");
   const onboarding = await read("src/app/onboarding/page.tsx");
-  assert.match(route, /if \(identity\.emailVerified\) return true/);
-  assert.match(route, /managementRequest\(/);
-  assert.match(route, /email_verified === true/);
-  assert.match(route, /if \(!\(await hasVerifiedEmail\(identity\)\)\)/);
+  assert.match(route, /if \(!identity\.emailVerified\)/);
+  assert.match(route, /id: identity\.sub,/);
   assert.match(route, /age < 18/);
   assert.match(route, /member_tier: "FREE"/);
   assert.match(route, /profileType === "COUPLE" \? "COUPLE" : "MEMBER"/);
@@ -256,7 +258,7 @@ test("discovery is authenticated, visibility-filtered, and deterministically ord
   assert.match(route, /row\.profile_visibility !== "FRIENDS_ONLY" \|\| friendIds\.has\(row\.id\)/);
   assert.match(route, /created_at.*ascending: false/);
   assert.match(route, /id.*ascending: true/);
-  assert.match(route, /\.neq\("auth_id", actorResult\.actor\.auth0Sub\)/);
+  assert.match(route, /\.neq\("auth_id", actorResult\.actor\.userId\)/);
   assert.match(page, /fetch\("\/api\/discovery\/profiles"/);
   assert.doesNotMatch(page, /MOCK_PROFILES/);
 });
@@ -529,15 +531,15 @@ test("client identity is restored only from the verified server session", async 
   assert.doesNotMatch(context, /dateOfBirth: "1998-05-15"/);
 });
 
-test("Auth0 email verification synchronizes only to canonical durable profile state", async () => {
-  const route = await read("src/app/api/auth/verify-status/route.ts");
-  assert.match(route, /getVerifiedIdentity\(req\)/);
-  assert.match(route, /managementRequest/);
-  assert.match(route, /from\("profiles"\)/);
-  assert.match(route, /eq\("auth_id", identity\.sub\)/);
-  assert.match(route, /EMAIL_VERIFICATION_SYNCHRONIZED/);
-  assert.match(route, /appendDurableAudit/);
-  assert.doesNotMatch(route, /UserSynchronizationService|userStore/);
+test("identity comes only from a revalidated Supabase Auth user", async () => {
+  const session = await read("src/lib/auth/serverSession.ts");
+  assert.match(session, /auth\.getUser\(\)/);
+  assert.doesNotMatch(session, /auth\.getSession\(\)/);
+  assert.match(session, /email_confirmed_at/);
+  assert.match(session, /currentLevel === "aal2"/);
+  const confirm = await read("src/app/auth/confirm/route.ts");
+  assert.match(confirm, /verifyOtp/);
+  assert.match(confirm, /safeReturnTo/);
 });
 
 test("public media requires adult declaration, moderation approval, and member access for explicit content", async () => {

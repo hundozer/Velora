@@ -20,8 +20,8 @@ interface AuthContextType {
   authError: string | null;
   isAgeVerified: boolean;
   confirmAge: () => Promise<void>;
-  loginWithAuth0: (screenHint?: string) => void;
-  logoutWithAuth0: (returnTo?: string) => void;
+  signIn: (mode?: "signup") => void;
+  signOut: (returnTo?: string) => void;
   updateUserProfile: (newUser: User, newProfile: Profile) => Promise<void>;
   logout: () => void;
 }
@@ -183,19 +183,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setProfile({ ...dbRowToProfile(saved), userId: newUser.id });
   }, [profile, role]);
 
-  // ── Auth0 Login/Logout ─────────────────────────────────
-  const loginWithAuth0 = (screenHint?: string) => {
-    if (typeof window !== "undefined") {
-      const targetUrl = screenHint ? `/auth/login?screen_hint=${screenHint}` : "/auth/login";
-      window.location.href = targetUrl;
-    }
+  // ── Sign in / sign out ─────────────────────────────────
+  const signIn = (mode?: "signup") => {
+    if (typeof window !== "undefined") window.location.href = mode === "signup" ? "/register" : "/login";
   };
 
-  const logoutWithAuth0 = (returnTo?: string) => {
+  const signOut = (returnTo?: string) => {
     logout();
     if (typeof window !== "undefined") {
-      const target = returnTo ? `/auth/logout?returnTo=${encodeURIComponent(returnTo)}` : "/auth/logout";
-      window.location.href = target;
+      window.location.href = returnTo ? `/auth/logout?returnTo=${encodeURIComponent(returnTo)}` : "/auth/logout";
     }
   };
 
@@ -217,8 +213,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         authError,
         isAgeVerified,
         confirmAge,
-        loginWithAuth0,
-        logoutWithAuth0,
+        signIn,
+        signOut,
         updateUserProfile,
         logout,
       }}

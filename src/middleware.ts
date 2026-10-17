@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 import { MONETIZATION_ENABLED, isMonetizationRoute, isMvpSafetyDisabledRoute } from "@/lib/features";
-import { validateProductionAuthConfiguration } from "@/lib/auth0/configValidation.mjs";
 
 /**
- * Resilient Next.js Middleware for Auth0 Session Management & Route Protection
+ * Route gating plus Supabase session refresh. Authorization itself happens in
+ * server layouts and route handlers; this only keeps the auth cookie fresh.
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -17,45 +18,33 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/discovery", request.url), 307);
   }
 
-  // Static assets bypass middleware. Auth routes must pass through the SDK.
-  if (
-    pathname.startsWith("/_next") ||
-    pathname.includes(".")
-  ) {
-    return NextResponse.next();
-  }
-
-  try {
-    const required = ["AUTH0_SECRET", "AUTH0_CLIENT_ID", "AUTH0_CLIENT_SECRET", "AUTH0_ISSUER_BASE_URL"];
-    const missing = required.filter((name) => !process.env[name]);
-    if (missing.length > 0 && process.env.NODE_ENV !== "production") {
-      console.warn(`[AUTH CONFIG] Authentication disabled locally; missing: ${missing.join(", ")}`);
-      return NextResponse.next();
-    }
-
-    const productionAuth = validateProductionAuthConfiguration(process.env);
-    if (process.env.NODE_ENV === "production" && !productionAuth.valid) {
-      console.error("[AUTH CONFIG] Production authentication configuration is invalid", {
-        missing: productionAuth.missing,
-        issuerValid: productionAuth.issuerValid,
-      });
-      return NextResponse.json({ error: "Authentication service is unavailable" }, { status: 503 });
-    }
-
-    // Dynamic import to handle edge runtime safety
-    const { auth0 } = await import("@/lib/auth0/client");
-    return await auth0.middleware(request);
-  } catch (err) {
-    console.error("[AUTH MIDDLEWARE] Authentication processing failed", err);
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) {
     if (process.env.NODE_ENV === "production") {
       return NextResponse.json({ error: "Authentication service is unavailable" }, { status: 503 });
     }
     return NextResponse.next();
   }
+
+  let response = NextResponse.next({ request });
+  const supabase = createServerClient(url, anonKey, {
+    cookies: {
+      getAll: () => request.cookies.getAll(),
+      setAll: (toSet) => {
+        toSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        response = NextResponse.next({ request });
+        toSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+      },
+    },
+  });
+  // Refreshes an expiring session and writes the rotated cookies onto the response.
+  await supabase.auth.getUser();
+  return response;
 }
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml)$).*)",
   ],
 };

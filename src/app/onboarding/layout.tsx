@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { resolveServerActor } from "@/lib/auth/serverActor";
-import { currentEmailVerification } from "@/lib/auth0/emailVerification";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +10,6 @@ export default async function OnboardingLayout({ children }: { children: React.R
   if (result.status === "authenticated") {
     redirect(result.actor.accountStatus === "ACTIVE" ? "/dashboard" : "/account-restricted");
   }
-  if (!(await currentEmailVerification(result.identity))) redirect("/verify-email");
+  if (!result.identity.emailVerified) redirect("/verify-email");
   return children;
 }

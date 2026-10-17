@@ -49,7 +49,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Albums unavailable" }, { status: 503 });
   const { data, error } = await db.from("media_albums").update({ title, description: description || null, category: category || null, tags, visibility, comment_policy: commentPolicy, reactions_enabled: reactionsEnabled, moderation_status: "PENDING_REVIEW", published_at: null, updated_at: new Date().toISOString() }).eq("id", params.id).eq("owner_id", auth.actor.profileId).neq("moderation_status", "REMOVED").select("id,title,description,category,tags,visibility,comment_policy,reactions_enabled,moderation_status,cover_media_id,updated_at").maybeSingle();
   if (error) return NextResponse.json({ error: "Album update failed" }, { status: 502 }); if (!data) return NextResponse.json({ error: "Album not found" }, { status: 404 });
-  const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorAuth0Sub: auth.actor.auth0Sub, action: "ALBUM_UPDATE", resourceType: "ALBUM", resourceId: data.id, outcome: "SUCCESS", metadata: { visibility } });
+  const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorUserId: auth.actor.userId, action: "ALBUM_UPDATE", resourceType: "ALBUM", resourceId: data.id, outcome: "SUCCESS", metadata: { visibility } });
   if (!audited) return NextResponse.json({ error: "Album was updated but audit evidence failed", albumId: data.id }, { status: 502 });
   return NextResponse.json({ album: data });
 }
@@ -60,7 +60,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Albums unavailable" }, { status: 503 });
   const { data, error } = await db.from("media_albums").update({ moderation_status: "REMOVED", visibility: "PRIVATE", published_at: null, updated_at: new Date().toISOString() }).eq("id", params.id).eq("owner_id", auth.actor.profileId).neq("moderation_status", "REMOVED").select("id").maybeSingle();
   if (error) return NextResponse.json({ error: "Album removal failed" }, { status: 502 }); if (!data) return NextResponse.json({ error: "Album not found" }, { status: 404 });
-  const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorAuth0Sub: auth.actor.auth0Sub, action: "ALBUM_REMOVE", resourceType: "ALBUM", resourceId: data.id, outcome: "SUCCESS" });
+  const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorUserId: auth.actor.userId, action: "ALBUM_REMOVE", resourceType: "ALBUM", resourceId: data.id, outcome: "SUCCESS" });
   if (!audited) return NextResponse.json({ error: "Album was removed but audit evidence failed", albumId: data.id }, { status: 502 });
   return NextResponse.json({ success: true });
 }

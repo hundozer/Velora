@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     const { error } = await db.from("admin_mfa_credentials").insert({ profile_id: actor.profileId, encrypted_secret: encryptTotpSecret(secret), status: "PENDING" });
     if (error) return NextResponse.json({ error: "MFA enrollment could not start" }, { status: 502 });
   }
-  return NextResponse.json({ enrolled: false, secret, uri: totpUri(secret, actor.email || actor.auth0Sub) }, { headers: { "Cache-Control": "private, no-store" } });
+  return NextResponse.json({ enrolled: false, secret, uri: totpUri(secret, actor.email || actor.userId) }, { headers: { "Cache-Control": "private, no-store" } });
 }
 
 export async function POST(req: NextRequest) {

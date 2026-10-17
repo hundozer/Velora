@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
-  const rate = checkRateLimit(`connection:${actor.actor.auth0Sub}`, 60, 60 * 60);
+  const rate = checkRateLimit(`connection:${actor.actor.userId}`, 60, 60 * 60);
   if (!rate.allowed) return NextResponse.json({ error: "Too many connection changes" }, { status: 429 });
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const targetProfileId = typeof body.targetProfileId === "string" ? body.targetProfileId : "";
@@ -43,9 +43,9 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: "Connection failed" }, { status: 502 });
   const { data: sourceProfile } = await supabase.from("profiles").select("display_name,avatar_url").eq("id", actor.actor.profileId).maybeSingle();
   if (sourceProfile) await supabase.from("notifications").insert({ user_id: targetProfileId, type: type === "follow" ? "NEW_FOLLOWER" : "FAVORITED", title: type === "follow" ? "New follower" : "Profile saved", message: `${sourceProfile.display_name} ${type === "follow" ? "followed" : "saved"} your profile.`, actor_name: sourceProfile.display_name, actor_avatar: sourceProfile.avatar_url, target_link: `/profile/${actor.actor.profileId}`, is_read: false });
-  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: type === "follow" ? "PROFILE_FOLLOW" : "PROFILE_FAVORITE", resourceType: "PROFILE", resourceId: targetProfileId, outcome: "SUCCESS" });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: type === "follow" ? "PROFILE_FOLLOW" : "PROFILE_FAVORITE", resourceType: "PROFILE", resourceId: targetProfileId, outcome: "SUCCESS" });
   if (!audited) return NextResponse.json({ error: "Connection applied but audit recording failed; contact support" }, { status: 503 });
-  auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: type === "follow" ? "PROFILE_FOLLOW" : "PROFILE_FAVORITE", resourceId: targetProfileId, resourceType: "PROFILE", status: "SUCCESS" });
+  auditLogger.logEvent({ actorId: actor.actor.userId, actorRole: actor.actor.role as any, action: type === "follow" ? "PROFILE_FOLLOW" : "PROFILE_FAVORITE", resourceId: targetProfileId, resourceType: "PROFILE", status: "SUCCESS" });
   return NextResponse.json({ connected: true, type }, { status: 201 });
 }
 
@@ -61,7 +61,7 @@ export async function DELETE(req: NextRequest) {
   if (!supabase) return NextResponse.json({ error: "Connections unavailable" }, { status: 503 });
   const { error } = await supabase.from("connections").delete().eq("follower_id", actor.actor.profileId).eq("followed_id", targetProfileId).eq("connection_type", type);
   if (error) return NextResponse.json({ error: "Connection removal failed" }, { status: 502 });
-  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: type === "follow" ? "PROFILE_UNFOLLOW" : "PROFILE_UNFAVORITE", resourceType: "PROFILE", resourceId: targetProfileId, outcome: "SUCCESS" });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: type === "follow" ? "PROFILE_UNFOLLOW" : "PROFILE_UNFAVORITE", resourceType: "PROFILE", resourceId: targetProfileId, outcome: "SUCCESS" });
   if (!audited) return NextResponse.json({ error: "Connection removed but audit recording failed; contact support" }, { status: 503 });
   return NextResponse.json({ connected: false, type });
 }

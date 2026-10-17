@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getVerifiedIdentity } from "@/lib/auth0/serverSession";
-import { managementRequest } from "@/lib/auth0/management";
+import { getVerifiedIdentity } from "@/lib/auth/serverSession";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { auditLogger } from "@/lib/auth/auditLogger";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
@@ -36,9 +35,10 @@ export async function POST(req: NextRequest) {
     const { error: requestError } = await supabase.from("privacy_requests").insert({ profile_id: profile.id, request_type: "DELETION", status: "IN_PROGRESS", requested_at: requestedAt, notes: "Self-service deletion; identity deactivation initiated" });
     if (requestError) throw new Error("Deletion request could not be recorded");
 
-    const auth0Response = await managementRequest(`/users/${encodeURIComponent(identity.sub)}`, { method: "DELETE" });
-    if (!auth0Response.ok && auth0Response.status !== 404) {
-      throw new Error(`Auth0 user deletion failed (${auth0Response.status})`);
+    // Removing the auth user revokes every session and frees the email address.
+    const { error: authDeleteError } = await supabase.auth.admin.deleteUser(identity.sub);
+    if (authDeleteError && authDeleteError.status !== 404) {
+      throw new Error(`Auth user deletion failed (${authDeleteError.status})`);
     }
 
     const deactivatedAt = new Date().toISOString();
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       status: "SUCCESS",
       details: { selfService: true, lifecycleStatus: "DEACTIVATED", hardDeletionPending: true },
     });
-    await appendDurableAudit(supabase, { actorProfileId: profile.id, actorAuth0Sub: identity.sub, action: "GDPR_DELETE_ACCOUNT", resourceType: "PROFILE", resourceId: profile.id, outcome: "SUCCESS", metadata: { lifecycleStatus: "DEACTIVATED", hardDeletionPending: true } });
+    await appendDurableAudit(supabase, { actorProfileId: profile.id, actorUserId: identity.sub, action: "GDPR_DELETE_ACCOUNT", resourceType: "PROFILE", resourceId: profile.id, outcome: "SUCCESS", metadata: { lifecycleStatus: "DEACTIVATED", hardDeletionPending: true } });
     return NextResponse.json({ success: true });
   } catch (error) {
     auditLogger.logEvent({ actorId: identity.sub, actorRole: "MEMBER", action: "GDPR_DELETE_ACCOUNT", status: "ERROR" });

@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const auth = await actor(req); if ("response" in auth) return auth.response;
-  if (!checkRateLimit(`notifications-update:${auth.actor.auth0Sub}`, 60, 60).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  if (!checkRateLimit(`notifications-update:${auth.actor.userId}`, 60, 60).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   let body: unknown; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const input = body as { id?: unknown; all?: unknown };
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Notifications unavailable" }, { status: 503 });
@@ -44,7 +44,7 @@ export async function PATCH(req: NextRequest) {
   }
   const { data, error } = await query.select("id"); if (error) return NextResponse.json({ error: "Notification update failed" }, { status: 502 });
   if (data?.length) {
-    const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorAuth0Sub: auth.actor.auth0Sub, action: input.all === true ? "NOTIFICATIONS_READ_ALL" : "NOTIFICATION_READ", resourceType: "NOTIFICATION", resourceId: input.all === true ? "all" : String(input.id), outcome: "SUCCESS", metadata: { count: data.length } });
+    const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorUserId: auth.actor.userId, action: input.all === true ? "NOTIFICATIONS_READ_ALL" : "NOTIFICATION_READ", resourceType: "NOTIFICATION", resourceId: input.all === true ? "all" : String(input.id), outcome: "SUCCESS", metadata: { count: data.length } });
     if (!audited) return NextResponse.json({ error: "Notifications updated but audit recording failed; contact support" }, { status: 503 });
   }
   return NextResponse.json({ updated: true });
@@ -52,14 +52,14 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const auth = await actor(req); if ("response" in auth) return auth.response;
-  if (!checkRateLimit(`notifications-delete:${auth.actor.auth0Sub}`, 40, 60).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  if (!checkRateLimit(`notifications-delete:${auth.actor.userId}`, 40, 60).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   const url = new URL(req.url); const id = url.searchParams.get("id"); const all = url.searchParams.get("all") === "true";
   if (!all && (!id || !UUID.test(id))) return NextResponse.json({ error: "Invalid notification" }, { status: 400 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Notifications unavailable" }, { status: 503 });
   let query = db.from("notifications").delete().eq("user_id", auth.actor.profileId); if (!all && id) query = query.eq("id", id);
   const { data, error } = await query.select("id"); if (error) return NextResponse.json({ error: "Notification deletion failed" }, { status: 502 });
   if (data?.length) {
-    const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorAuth0Sub: auth.actor.auth0Sub, action: all ? "NOTIFICATIONS_DELETE_ALL" : "NOTIFICATION_DELETE", resourceType: "NOTIFICATION", resourceId: all ? "all" : String(id), outcome: "SUCCESS", metadata: { count: data.length } });
+    const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorUserId: auth.actor.userId, action: all ? "NOTIFICATIONS_DELETE_ALL" : "NOTIFICATION_DELETE", resourceType: "NOTIFICATION", resourceId: all ? "all" : String(id), outcome: "SUCCESS", metadata: { count: data.length } });
     if (!audited) return NextResponse.json({ error: "Notifications deleted but audit recording failed; contact support" }, { status: 503 });
   }
   return NextResponse.json({ deleted: true });

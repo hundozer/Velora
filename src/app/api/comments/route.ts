@@ -22,14 +22,14 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const actor = await resolveServerActor(req); if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
-  if (!checkRateLimit(`comment:${actor.actor.auth0Sub}`, 30, 60).allowed) return NextResponse.json({ error: "Comment rate limit reached" }, { status: 429 });
+  if (!checkRateLimit(`comment:${actor.actor.userId}`, 30, 60).allowed) return NextResponse.json({ error: "Comment rate limit reached" }, { status: 429 });
   let body: unknown; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const input = body as { targetType?: unknown; targetId?: unknown; text?: unknown }; const targetType = typeof input.targetType === "string" ? input.targetType : ""; const targetId = typeof input.targetId === "string" ? input.targetId : ""; const text = typeof input.text === "string" ? input.text.trim() : "";
   if (!CONTENT_TARGET_TYPES.includes(targetType as ContentTargetType) || !UUID.test(targetId) || text.length < 1 || text.length > 2_000) return NextResponse.json({ error: "Invalid comment" }, { status: 400 });
   const access = await resolveContentTarget(actor.actor, targetType as ContentTargetType, targetId); if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
   const { data, error } = await access.db.from("content_comments").insert({ author_id: actor.actor.profileId, target_type: targetType, target_id: targetId, body: text, moderation_status: "VISIBLE" }).select("id,author_id,body,created_at").single();
   if (error || !data) return NextResponse.json({ error: "Comment could not be created" }, { status: 502 });
-  const audited = await appendDurableAudit(access.db, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "COMMENT_CREATE", resourceType: targetType, resourceId: targetId, outcome: "SUCCESS", metadata: { commentId: data.id } });
+  const audited = await appendDurableAudit(access.db, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "COMMENT_CREATE", resourceType: targetType, resourceId: targetId, outcome: "SUCCESS", metadata: { commentId: data.id } });
   if (!audited) return NextResponse.json({ error: "Comment created but audit recording failed; contact support" }, { status: 503 });
   if (!access.isOwner) { const { data: author } = await access.db.from("profiles").select("display_name,avatar_url").eq("id", actor.actor.profileId).maybeSingle(); if (author) await access.db.from("notifications").insert({ user_id: access.target.ownerId, type: "NEW_COMMENT", title: "New comment", message: `${author.display_name} commented on your content.`, actor_name: author.display_name, actor_avatar: author.avatar_url, target_link: `/${targetType.toLowerCase()}/${targetId}`, is_read: false }); }
   return NextResponse.json({ comment: data }, { status: 201 });
@@ -41,7 +41,7 @@ export async function DELETE(req: NextRequest) {
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Comments unavailable" }, { status: 503 });
   let query = db.from("content_comments").delete().eq("id", id); if (!isAdminActor(actor.actor)) query = query.eq("author_id", actor.actor.profileId);
   const { data, error } = await query.select("id,author_id,target_type,target_id").maybeSingle(); if (error) return NextResponse.json({ error: "Comment deletion failed" }, { status: 502 }); if (!data) return NextResponse.json({ error: "Comment not found" }, { status: 404 });
-  const audited = await appendDurableAudit(db, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: isAdminActor(actor.actor) && data.author_id !== actor.actor.profileId ? "COMMENT_ADMIN_REMOVE" : "COMMENT_DELETE", resourceType: data.target_type, resourceId: data.target_id, outcome: "SUCCESS", metadata: { commentId: data.id, authorId: data.author_id } });
+  const audited = await appendDurableAudit(db, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: isAdminActor(actor.actor) && data.author_id !== actor.actor.profileId ? "COMMENT_ADMIN_REMOVE" : "COMMENT_DELETE", resourceType: data.target_type, resourceId: data.target_id, outcome: "SUCCESS", metadata: { commentId: data.id, authorId: data.author_id } });
   if (!audited) return NextResponse.json({ error: "Comment removed but audit recording failed; contact support" }, { status: 503 });
   return NextResponse.json({ deleted: true });
 }

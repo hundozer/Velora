@@ -7,7 +7,7 @@ import { auditLogger } from "@/lib/auth/auditLogger";
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
-  const rate = checkRateLimit(`appeal:${actor.actor.auth0Sub}`, 5, 24 * 60 * 60);
+  const rate = checkRateLimit(`appeal:${actor.actor.userId}`, 5, 24 * 60 * 60);
   if (!rate.allowed) return NextResponse.json({ error: "Appeal limit reached" }, { status: 429 });
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const reason = typeof body.reason === "string" ? body.reason.trim() : "";
@@ -18,6 +18,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!moderationCase || !["RESOLVED", "REJECTED"].includes(moderationCase.status) || moderationCase.appeal_status !== "NONE") return NextResponse.json({ error: "This decision is not eligible for appeal" }, { status: 409 });
   const { data, error } = await supabase.rpc("intimo_create_appeal", { p_case_id: moderationCase.id, p_appellant_id: actor.actor.profileId, p_reason: reason });
   if (error || !data) return NextResponse.json({ error: "Appeal could not be submitted" }, { status: 502 });
-  auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "MODERATION_APPEAL_CREATE", resourceId: moderationCase.id, resourceType: "MODERATION_CASE", status: "SUCCESS" });
+  auditLogger.logEvent({ actorId: actor.actor.userId, actorRole: actor.actor.role as any, action: "MODERATION_APPEAL_CREATE", resourceId: moderationCase.id, resourceType: "MODERATION_CASE", status: "SUCCESS" });
   return NextResponse.json({ appeal: data }, { status: 201 });
 }

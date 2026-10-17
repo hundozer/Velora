@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
   const { data: readRows, error: readError } = await supabase.from("direct_messages").update({ is_opened: true, status: "READ" }).eq("conversation_id", conversationId(actor.actor.profileId, peerId)).eq("receiver_id", actor.actor.profileId).eq("is_opened", false).select("id");
   if (readError) return NextResponse.json({ error: "Message read state could not be recorded" }, { status: 502 });
   if (readRows?.length) {
-    const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "MESSAGES_READ", resourceType: "CONVERSATION", resourceId: conversationId(actor.actor.profileId, peerId), outcome: "SUCCESS", metadata: { count: readRows.length, peerId } });
+    const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MESSAGES_READ", resourceType: "CONVERSATION", resourceId: conversationId(actor.actor.profileId, peerId), outcome: "SUCCESS", metadata: { count: readRows.length, peerId } });
     if (!audited) return NextResponse.json({ error: "Message read state was updated but audit recording failed; contact support" }, { status: 503 });
   }
   return NextResponse.json({ messages: page, pagination: { limit, hasMore, nextCursor: hasMore ? page[0]?.created_at || null : null } }, { headers: { "Cache-Control": "private, no-store" } });
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
   const length = Number(req.headers.get("content-length") || "0");
   if (length > MAX_BODY_BYTES) return NextResponse.json({ error: "Message is too large" }, { status: 413 });
-  const rate = checkRateLimit(`message:${actor.actor.auth0Sub}`, 60, 60);
+  const rate = checkRateLimit(`message:${actor.actor.userId}`, 60, 60);
   if (!rate.allowed) return NextResponse.json({ error: "Message rate limit reached" }, { status: 429 });
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const receiverId = typeof body.receiverId === "string" ? body.receiverId : "";
@@ -137,9 +137,9 @@ export async function POST(req: NextRequest) {
   const row = { conversation_id: conversationId(actor.actor.profileId, receiverId), sender_id: actor.actor.profileId, receiver_id: receiverId, sender_name: sender.display_name, sender_avatar: sender.avatar_url, content, media_url: null, attachment_type: null, is_disappearing: false, is_opened: false, status: "SENT", is_locked: false, unlock_price: null, is_unlocked: true };
   const { data, error } = await supabase.from("direct_messages").insert(row).select("id,conversation_id,sender_id,receiver_id,content,status,created_at").single();
   if (error || !data) return NextResponse.json({ error: "Message could not be sent" }, { status: 502 });
-  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "MESSAGE_SEND", resourceType: "MESSAGE", resourceId: data.id, outcome: "SUCCESS", metadata: { receiverId, datingAdId } });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MESSAGE_SEND", resourceType: "MESSAGE", resourceId: data.id, outcome: "SUCCESS", metadata: { receiverId, datingAdId } });
   if (!audited) return NextResponse.json({ error: "Message sent but audit recording failed; contact support" }, { status: 503 });
   await supabase.from("notifications").insert({ user_id: receiverId, type: "NEW_MESSAGE", title: "New message", message: `${sender.display_name} sent you a message.`, actor_name: sender.display_name, actor_avatar: sender.avatar_url, target_link: `/messages?peerId=${actor.actor.profileId}`, is_read: false });
-  auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "MESSAGE_SEND", resourceId: data.id, resourceType: "MESSAGE", status: "SUCCESS" });
+  auditLogger.logEvent({ actorId: actor.actor.userId, actorRole: actor.actor.role as any, action: "MESSAGE_SEND", resourceId: data.id, resourceType: "MESSAGE", status: "SUCCESS" });
   return NextResponse.json({ message: data }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
 }

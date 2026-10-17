@@ -12,7 +12,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
   if (!UUID.test(params.id)) return NextResponse.json({ error: "Invalid media identifier" }, { status: 400 });
-  if (!checkRateLimit(`media-complete:${actor.actor.auth0Sub}`, 30, 60).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  if (!checkRateLimit(`media-complete:${actor.actor.userId}`, 30, 60).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Media service unavailable" }, { status: 503 });
   const { data: media, error } = await supabase.from("media_objects").select("id,owner_id,object_key,mime_type,byte_size,upload_status").eq("id", params.id).eq("owner_id", actor.actor.profileId).single();
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if (!stored || stored.byteSize !== Number(media.byte_size) || stored.mimeType.toLowerCase() !== String(media.mime_type).toLowerCase()) {
       const { error: quarantineError } = await supabase.from("media_objects").update({ upload_status: "QUARANTINED", updated_at: new Date().toISOString() }).eq("id", media.id).eq("owner_id", actor.actor.profileId);
       if (quarantineError) return NextResponse.json({ error: "Stored object mismatch could not be quarantined" }, { status: 502 });
-      const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "MEDIA_UPLOAD_QUARANTINED", resourceType: "MEDIA", resourceId: media.id, outcome: "DENIED", metadata: { reason: "STORED_OBJECT_MISMATCH" } });
+      const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MEDIA_UPLOAD_QUARANTINED", resourceType: "MEDIA", resourceId: media.id, outcome: "DENIED", metadata: { reason: "STORED_OBJECT_MISMATCH" } });
       if (!audited) return NextResponse.json({ error: "Upload quarantined but audit recording failed; contact support" }, { status: 503 });
       return NextResponse.json({ error: "Stored object did not match the authorized upload" }, { status: 422 });
     }
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if (updateError) return NextResponse.json({ error: "Upload could not be finalized" }, { status: 502 });
     const { error: processingError } = await supabase.from("media_objects").update({ processing_status: media.mime_type.startsWith("video/") ? "PROCESSING" : "READY", moderation_status: "PENDING_REVIEW" }).eq("id", media.id).eq("owner_id", actor.actor.profileId);
     if (processingError) return NextResponse.json({ error: "Media processing state could not be initialized" }, { status: 502 });
-    const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "MEDIA_UPLOAD_COMPLETED", resourceType: "MEDIA", resourceId: media.id, outcome: "SUCCESS", metadata: { mimeType: media.mime_type, byteSize: media.byte_size } });
+    const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MEDIA_UPLOAD_COMPLETED", resourceType: "MEDIA", resourceId: media.id, outcome: "SUCCESS", metadata: { mimeType: media.mime_type, byteSize: media.byte_size } });
     if (!audited) return NextResponse.json({ error: "Upload finalized but audit recording failed; contact support" }, { status: 503 });
     return NextResponse.json({ success: true });
   } catch {

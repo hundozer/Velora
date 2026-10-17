@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
   if (!UUID.test(params.id)) return NextResponse.json({ error: "Invalid media identifier" }, { status: 400 });
-  const rate = checkRateLimit(`media-view:${actor.actor.auth0Sub}`, 120, 60);
+  const rate = checkRateLimit(`media-view:${actor.actor.userId}`, 120, 60);
   if (!rate.allowed) return NextResponse.json({ error: "Media access rate limit reached" }, { status: 429 });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Media service unavailable" }, { status: 503 });
@@ -62,7 +62,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Media service unavailable" }, { status: 503 });
   const { data, error } = await db.from("media_objects").update({ title: title || null, description: description || null, category: category || null, tags, visibility, moderation_status: "PENDING_REVIEW", published_at: null, updated_at: new Date().toISOString() }).eq("id", params.id).eq("owner_id", actor.actor.profileId).neq("upload_status", "REMOVED").select("id,title,description,category,tags,visibility,moderation_status,processing_status,upload_status").maybeSingle();
   if (error) return NextResponse.json({ error: "Media update failed" }, { status: 502 }); if (!data) return NextResponse.json({ error: "Media not found" }, { status: 404 });
-  const audited = await appendDurableAudit(db, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "MEDIA_UPDATE", resourceType: "MEDIA", resourceId: data.id, outcome: "SUCCESS", metadata: { visibility } });
+  const audited = await appendDurableAudit(db, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MEDIA_UPDATE", resourceType: "MEDIA", resourceId: data.id, outcome: "SUCCESS", metadata: { visibility } });
   if (!audited) return NextResponse.json({ error: "Media was updated but audit evidence failed", mediaId: data.id }, { status: 502 });
   return NextResponse.json({ media: data });
 }
@@ -74,7 +74,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   const { data: media } = await db.from("media_objects").select("id,object_key").eq("id", params.id).eq("owner_id", actor.actor.profileId).maybeSingle(); if (!media) return NextResponse.json({ error: "Media not found" }, { status: 404 });
   try { await deleteStoredObject(media.object_key); } catch { return NextResponse.json({ error: "Stored media could not be removed" }, { status: 502 }); }
   const { error } = await db.from("media_objects").delete().eq("id", media.id).eq("owner_id", actor.actor.profileId); if (error) return NextResponse.json({ error: "Media metadata could not be removed" }, { status: 502 });
-  const audited = await appendDurableAudit(db, { actorProfileId: actor.actor.profileId, actorAuth0Sub: actor.actor.auth0Sub, action: "MEDIA_DELETE", resourceType: "MEDIA", resourceId: media.id, outcome: "SUCCESS" });
+  const audited = await appendDurableAudit(db, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MEDIA_DELETE", resourceType: "MEDIA", resourceId: media.id, outcome: "SUCCESS" });
   if (!audited) return NextResponse.json({ error: "Media was deleted but audit evidence failed", mediaId: media.id }, { status: 502 });
   return NextResponse.json({ success: true });
 }

@@ -4,7 +4,8 @@ export const AGE_DECLARATION_COOKIE = "intimo_age_declaration";
 const MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
 
 function secret() {
-  const value = process.env.AUTH0_SECRET;
+  // Server-only HMAC key for the signed 18+ declaration cookie (32+ random bytes).
+  const value = process.env.INTIMO_COOKIE_SECRET;
   if (!value || value.length < 32) return null;
   return value;
 }

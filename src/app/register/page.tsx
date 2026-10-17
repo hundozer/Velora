@@ -1,60 +1,57 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { Sparkles, ArrowRight, ShieldCheck, Lock } from "lucide-react";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import React, { useState } from "react";
+import Link from "next/link";
+import { createBrowserSupabase } from "@/lib/supabase/browser";
+import { AuthField, AuthMessage, AuthShell, friendlyAuthError, submitClass } from "@/components/auth/AuthShell";
+
+const MIN_PASSWORD = 10;
 
 export default function RegisterPage() {
-  useEffect(() => {
-    // Automatically redirect to Auth0 Registration
-    const timer = setTimeout(() => {
-      window.location.href = "/auth/login?screen_hint=signup";
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, []);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [adult, setAdult] = useState(false);
+  const [terms, setTerms] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const passwordError = password.length > 0 && password.length < MIN_PASSWORD ? `Use at least ${MIN_PASSWORD} characters.` : "";
+  const ready = email.trim() && password.length >= MIN_PASSWORD && adult && terms;
+
+  const register = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!ready) return;
+    setBusy(true); setError("");
+    const { data, error: signUpError } = await createBrowserSupabase().auth.signUp({
+      email: email.trim(),
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=%2Fonboarding` },
+    });
+    if (signUpError) { setError(friendlyAuthError(signUpError.message)); setBusy(false); return; }
+    // With email confirmation enabled Supabase returns no session until the link is clicked.
+    if (data.session) window.location.assign("/onboarding");
+    else window.location.assign(`/verify-email?email=${encodeURIComponent(email.trim())}`);
+  };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 text-left">
-      <div className="max-w-md w-full space-y-6">
-        <div className="text-center space-y-2">
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-velora-gold/20 text-velora-gold border border-velora-gold/40 uppercase tracking-widest inline-flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" /> PRIVATE MEMBERS CLUB
-          </span>
-          <h1 className="text-3xl font-serif font-bold text-velora-textPrimary">Join Intimo</h1>
-          <p className="text-xs text-velora-textSecondary leading-relaxed">
-            Connecting to Auth0 Secure Registration...
-          </p>
+    <AuthShell title="Join Intimo" subtitle="Free, private and strictly 18+" footer={<>Already a member? <Link href="/login" className="font-semibold text-velora-gold hover:underline">Sign in</Link></>}>
+      <form onSubmit={register} className="space-y-4" noValidate>
+        <AuthField id="email" label="Email" type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        <div>
+          <AuthField id="password" label="Password" type="password" autoComplete="new-password" required minLength={MIN_PASSWORD} value={password} onChange={(e) => setPassword(e.target.value)} aria-describedby="password-hint" />
+          <p id="password-hint" className={`mt-1.5 text-xs ${passwordError ? "text-red-300" : "text-velora-textMuted"}`}>{passwordError || `At least ${MIN_PASSWORD} characters.`}</p>
         </div>
-
-        <Card variant="goldBorder" className="p-8 space-y-6 text-center">
-          <div className="w-16 h-16 rounded-full bg-gold-gradient p-[1px] mx-auto shadow-gold-glow">
-            <div className="w-full h-full bg-velora-bg rounded-full flex items-center justify-center">
-              <ShieldCheck className="w-8 h-8 text-velora-gold animate-pulse" />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <h2 className="text-xl font-serif font-bold text-velora-textPrimary">
-              Redirecting to Secure Sign Up
-            </h2>
-            <p className="text-xs text-velora-textMuted leading-relaxed">
-              If your browser does not redirect automatically within a second, click below.
-            </p>
-          </div>
-
-          <a
-            href="/auth/login?screen_hint=signup"
-            className="block w-full"
-          >
-            <Button variant="gold" size="lg" className="w-full text-xs font-bold uppercase tracking-wider shadow-gold-glow flex items-center justify-center gap-2">
-              <Lock className="w-4 h-4" />
-              <span>Continue to Auth0 Registration</span>
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </a>
-        </Card>
-      </div>
-    </div>
+        <label className="flex items-start gap-3 text-sm text-velora-textSecondary">
+          <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-amber-400" />
+          <span>I am at least 18 years old.</span>
+        </label>
+        <label className="flex items-start gap-3 text-sm text-velora-textSecondary">
+          <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-amber-400" />
+          <span>I accept the <Link href="/legal/terms" className="text-velora-gold underline">Terms</Link> and <Link href="/legal/privacy-policy" className="text-velora-gold underline">Privacy Policy</Link>.</span>
+        </label>
+        {error && <AuthMessage tone="error">{error}</AuthMessage>}
+        <button type="submit" disabled={busy || !ready} className={submitClass}>{busy ? "Creating account…" : "Create account"}</button>
+      </form>
+    </AuthShell>
   );
 }

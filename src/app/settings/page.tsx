@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 
 export default function SettingsPage() {
-  const { user, profile, updateUserProfile, logout, logoutWithAuth0 } = useAuth();
+  const { user, profile, updateUserProfile, logout, signOut } = useAuth();
   const [nickname, setNickname] = useState(profile?.displayName || user?.username || "");
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>("en");
   const [privacy, setPrivacy] = useState({

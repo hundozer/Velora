@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   const auth = await resolveServerActor(req);
   if (auth.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: auth.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(auth.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
-  if (!checkRateLimit(`album-create:${auth.actor.auth0Sub}`, 20, 60 * 60).allowed) return NextResponse.json({ error: "Album creation limit reached" }, { status: 429 });
+  if (!checkRateLimit(`album-create:${auth.actor.userId}`, 20, 60 * 60).allowed) return NextResponse.json({ error: "Album creation limit reached" }, { status: 429 });
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const title = typeof body.title === "string" ? body.title.trim() : "";
   const description = typeof body.description === "string" ? body.description.trim() : "";
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Albums unavailable" }, { status: 503 });
   const { data, error } = await db.from("media_albums").insert({ owner_id: auth.actor.profileId, title, description: description || null, category: category || null, tags, visibility, comment_policy: commentPolicy, reactions_enabled: reactionsEnabled, moderation_status: "PENDING_REVIEW" }).select("id,title,description,category,tags,visibility,comment_policy,reactions_enabled,moderation_status,created_at").single();
   if (error || !data) return NextResponse.json({ error: "Album could not be created" }, { status: 502 });
-  const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorAuth0Sub: auth.actor.auth0Sub, action: "ALBUM_CREATE", resourceType: "ALBUM", resourceId: data.id, outcome: "SUCCESS", metadata: { visibility } });
+  const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorUserId: auth.actor.userId, action: "ALBUM_CREATE", resourceType: "ALBUM", resourceId: data.id, outcome: "SUCCESS", metadata: { visibility } });
   if (!audited) { await db.from("media_albums").delete().eq("id", data.id).eq("owner_id", auth.actor.profileId); return NextResponse.json({ error: "Album creation could not be audited" }, { status: 502 }); }
   return NextResponse.json({ album: { ...data, mediaIds: [], coverUrl: null } }, { status: 201 });
 }

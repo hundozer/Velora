@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
-  const rate = checkRateLimit(`report:${actor.actor.auth0Sub}`, 15, 24 * 60 * 60);
+  const rate = checkRateLimit(`report:${actor.actor.userId}`, 15, 24 * 60 * 60);
   if (!rate.allowed) return NextResponse.json({ error: "Report limit reached; contact support for urgent safety concerns" }, { status: 429 });
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const contentType = typeof body.contentType === "string" ? body.contentType : "";
@@ -46,6 +46,6 @@ export async function POST(req: NextRequest) {
   if (duplicate) return NextResponse.json({ error: "You already reported this item for the same reason recently", reportId: duplicate.id }, { status: 409 });
   const { data, error } = await supabase.rpc("intimo_create_report", { p_reporter_id: actor.actor.profileId, p_reported_user_id: reportedUserId, p_content_type: contentType, p_content_id: contentId, p_reason: reason, p_description: description, p_priority: priority, p_status: status });
   if (error || !data) return NextResponse.json({ error: "Report submission failed" }, { status: 502 });
-  auditLogger.logEvent({ actorId: actor.actor.auth0Sub, actorRole: actor.actor.role as any, action: "REPORT_CREATE", resourceId: data.id, resourceType: "MODERATION_CASE", status: "SUCCESS", details: { contentType, reason, priority } });
+  auditLogger.logEvent({ actorId: actor.actor.userId, actorRole: actor.actor.role as any, action: "REPORT_CREATE", resourceId: data.id, resourceType: "MODERATION_CASE", status: "SUCCESS", details: { contentType, reason, priority } });
   return NextResponse.json({ report: data }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
 }

@@ -24,7 +24,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (error) return NextResponse.json({ error: "Profile lookup failed" }, { status: 502 });
   if (!data) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
-  const isOwner = data.auth_id === actorResult.actor.auth0Sub;
+  const isOwner = data.auth_id === actorResult.actor.userId;
   const isAdmin = isAdminActor(actorResult.actor);
   let friends = false;
   if (!isOwner && !isAdmin) {

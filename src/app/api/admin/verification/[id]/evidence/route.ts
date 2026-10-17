@@ -17,8 +17,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!media || media.visibility !== "PRIVATE" || media.upload_status !== "AVAILABLE") return NextResponse.json({ error: "Evidence not found" }, { status: 404 });
   try {
     const url = await getPresignedDownloadUrl(media.object_key);
-    auditLogger.logEvent({ actorId: auth.actor.auth0Sub, actorRole: auth.actor.role as any, action: "VERIFICATION_EVIDENCE_VIEW", resourceId: params.id, resourceType: "VERIFICATION_REVIEW", status: "SUCCESS" });
-    const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorAuth0Sub: auth.actor.auth0Sub, action: "VERIFICATION_EVIDENCE_VIEW", resourceType: "VERIFICATION_REVIEW", resourceId: params.id, outcome: "SUCCESS", metadata: { mediaId: media.id } });
+    auditLogger.logEvent({ actorId: auth.actor.userId, actorRole: auth.actor.role as any, action: "VERIFICATION_EVIDENCE_VIEW", resourceId: params.id, resourceType: "VERIFICATION_REVIEW", status: "SUCCESS" });
+    const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorUserId: auth.actor.userId, action: "VERIFICATION_EVIDENCE_VIEW", resourceType: "VERIFICATION_REVIEW", resourceId: params.id, outcome: "SUCCESS", metadata: { mediaId: media.id } });
     if (!audited) return NextResponse.json({ error: "Verification evidence access could not be audited" }, { status: 502 });
     const response = NextResponse.redirect(url, 307); response.headers.set("Cache-Control", "private, no-store"); response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive"); return response;
   } catch { return NextResponse.json({ error: "Verification evidence unavailable" }, { status: 503 }); }

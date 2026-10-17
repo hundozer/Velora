@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   if (actorResult.status !== "authenticated") return NextResponse.json({ error: "Discovery unavailable" }, { status: actorResult.status === "unprovisioned" ? 403 : 503 });
   if (!hasAdultAccess(actorResult.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
 
-  const rate = checkRateLimit(`discovery:${actorResult.actor.auth0Sub}`, 60, 60);
+  const rate = checkRateLimit(`discovery:${actorResult.actor.userId}`, 60, 60);
   if (!rate.allowed) return NextResponse.json({ error: "Too many discovery requests" }, { status: 429, headers: { "Retry-After": String(rate.resetInSeconds) } });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Discovery unavailable" }, { status: 503 });
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     .from("profiles")
     .select("*")
     .in("profile_visibility", ["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY"])
-    .neq("auth_id", actorResult.actor.auth0Sub)
+    .neq("auth_id", actorResult.actor.userId)
     .order("created_at", { ascending: false })
     .order("id", { ascending: true })
     .limit(MAX_RESULTS);

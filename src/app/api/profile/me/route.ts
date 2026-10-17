@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getVerifiedIdentity } from "@/lib/auth0/serverSession";
+import { getVerifiedIdentity } from "@/lib/auth/serverSession";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { profileToDbRow } from "@/lib/supabase/profileService";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
 import type { Profile } from "@/types";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
-import { managementRequest } from "@/lib/auth0/management";
 
 export const dynamic = "force-dynamic";
 const MAX_BODY_BYTES = 64 * 1024;
@@ -66,32 +65,12 @@ function ageFromDateOfBirth(dateOfBirth: string): number | null {
   return age;
 }
 
-async function hasVerifiedEmail(identity: { sub: string; emailVerified: boolean }): Promise<boolean> {
-  if (identity.emailVerified) return true;
-
-  try {
-    const response = await managementRequest(
-      `/users/${encodeURIComponent(identity.sub)}?fields=user_id,email_verified&include_fields=true`,
-    );
-    if (!response.ok) return false;
-    const payload: unknown = await response.json();
-    return Boolean(
-      payload &&
-      typeof payload === "object" &&
-      (payload as Record<string, unknown>).email_verified === true,
-    );
-  } catch (error) {
-    console.error("Current Auth0 email verification could not be confirmed", error);
-    return false;
-  }
-}
-
 export async function POST(req: NextRequest) {
   const contentLength = Number(req.headers.get("content-length") || "0");
   if (contentLength > MAX_BODY_BYTES) return NextResponse.json({ error: "Profile payload is too large" }, { status: 413 });
   const { identity, supabase } = await context(req);
   if (!identity?.email) return NextResponse.json({ error: "Verified account email required" }, { status: 401 });
-  if (!(await hasVerifiedEmail(identity))) return NextResponse.json({ error: "Email verification required" }, { status: 403 });
+  if (!identity.emailVerified) return NextResponse.json({ error: "Email verification required" }, { status: 403 });
   if (!supabase) return NextResponse.json({ error: "Profile service unavailable" }, { status: 503 });
 
   const rate = checkRateLimit(`profile-create:${identity.sub}`, 5, 60 * 60);
@@ -115,6 +94,8 @@ export async function POST(req: NextRequest) {
   const profileType = ["SINGLE", "COUPLE", "CREATOR", "LIFESTYLE"].includes(body.profileType) ? body.profileType : "SINGLE";
   const username = displayName.toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 80) || `member_${identity.sub.slice(-8)}`;
   const row = {
+    // profiles.id mirrors auth.users.id: one identifier end to end.
+    id: identity.sub,
     auth_id: identity.sub,
     email: identity.email.toLowerCase(),
     display_name: displayName,
@@ -179,7 +160,7 @@ export async function POST(req: NextRequest) {
     }
   }
   auditLogger.logEvent({ actorId: identity.sub, actorRole: "MEMBER", action: "PROFILE_CREATE", resourceId: String(data.id), resourceType: "PROFILE", status: "SUCCESS", details: { creatorIntent: profileType === "CREATOR" } });
-  const audited = await appendDurableAudit(supabase, { actorProfileId: data.id, actorAuth0Sub: identity.sub, action: "PROFILE_CREATE", resourceType: "PROFILE", resourceId: String(data.id), outcome: "SUCCESS", metadata: { creatorIntent: profileType === "CREATOR" } });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: data.id, actorUserId: identity.sub, action: "PROFILE_CREATE", resourceType: "PROFILE", resourceId: String(data.id), outcome: "SUCCESS", metadata: { creatorIntent: profileType === "CREATOR" } });
   if (!audited) return NextResponse.json({ error: "Profile created but audit recording failed; contact support" }, { status: 503 });
   return noStore(NextResponse.json({ profile: data }, { status: 201 }));
 }
@@ -277,7 +258,7 @@ export async function PUT(req: NextRequest) {
   if (!data) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
   auditLogger.logEvent({ actorId: identity.sub, actorRole: "MEMBER", action: "PROFILE_UPDATE", resourceId: String(data.id), resourceType: "PROFILE", status: "SUCCESS" });
-  const audited = await appendDurableAudit(supabase, { actorProfileId: data.id, actorAuth0Sub: identity.sub, action: "PROFILE_UPDATE", resourceType: "PROFILE", resourceId: String(data.id), outcome: "SUCCESS", metadata: { changedFields } });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: data.id, actorUserId: identity.sub, action: "PROFILE_UPDATE", resourceType: "PROFILE", resourceId: String(data.id), outcome: "SUCCESS", metadata: { changedFields } });
   if (!audited) {
     const previous = before as unknown as Record<string, unknown>;
     const rollback = Object.fromEntries(changedFields.map((field) => [field, previous[field]]));
