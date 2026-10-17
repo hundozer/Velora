@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
@@ -7,12 +7,16 @@ import { Footer } from "@/components/layout/Footer";
 import { MobileNavigation } from "@/components/layout/MobileNavigation";
 import { AgeVerificationModal } from "@/components/common/AgeVerificationModal";
 import { CookieConsent } from "@/components/privacy/CookieConsent";
+import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration";
 
 export const metadata: Metadata = {
   title: "Intimo | Adults-Only Social Discovery",
   description:
     "Intimo is a free adults-only social discovery platform for consenting adults seeking compatible social, casual, dating and erotic experiences.",
   metadataBase: new URL("https://intimo.live"),
+  applicationName: "Intimo",
+  appleWebApp: { capable: true, title: "Intimo", statusBarStyle: "black-translucent" },
+  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
   keywords: [
     "private social club",
     "adult social discovery",
@@ -28,6 +32,13 @@ export const metadata: Metadata = {
     siteName: "Intimo",
     type: "website",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0A0B0E",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -48,6 +59,7 @@ export default function RootLayout({
             <Footer />
           </AuthProvider>
         </LanguageProvider>
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );
