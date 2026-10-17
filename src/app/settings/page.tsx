@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { AreaSelect } from "@/components/profile/AreaSelect";
+import { EmailPreferences } from "@/components/settings/EmailPreferences";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { VerificationWizard } from "@/components/verification/VerificationWizard";
@@ -458,6 +459,12 @@ export default function SettingsPage() {
           <p className="text-[11px] text-velora-textMuted">Controls processing of sexual orientation and intimate preferences for your profile and discovery. Withdrawal may make these features unavailable; it does not replace a deletion request.</p>
           <Button variant="glass" size="sm" onClick={() => updateSensitiveConsent(!sensitiveConsentGranted)}>{sensitiveConsentGranted ? "Withdraw consent" : "Grant consent"}</Button>
         </div>
+      </Card>
+
+      {/* Emails (P1-11) */}
+      <Card variant="glass" className="p-6 space-y-4">
+        <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider border-b border-white/10 pb-3">Emails</h2>
+        <EmailPreferences />
       </Card>
 
       {/* SECTION 3: GDPR DATA PRIVACY & ACCOUNT ERASURE */}

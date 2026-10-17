@@ -6,6 +6,7 @@ import { toMemberVisibleProfile } from "@/lib/supabase/publicProfile";
 import type { ProfileRow } from "@/lib/supabase/profileService";
 import { establishedDecision, resolveBoundaries } from "@/lib/boundaries.mjs";
 import { canRequest, decisionUpdate, grantIsActive } from "@/lib/privateAccess.mjs";
+import { maybeSendReturnEmail } from "@/lib/notifications/returnEmails";
 
 // Private Album Handshake (P1-06).
 export const dynamic = "force-dynamic";
@@ -99,6 +100,7 @@ export async function POST(req: NextRequest) {
   const { error } = await db.from("album_access_grants").upsert({ owner_id: ownerId, viewer_id: actor.profileId, status: "REQUESTED", grant_type: null, expires_at: null, requested_at: new Date().toISOString(), decided_at: null }, { onConflict: "owner_id,viewer_id" });
   if (error) return NextResponse.json({ error: "Request could not be sent" }, { status: 502 });
   await db.from("notifications").insert({ user_id: ownerId, type: "PRIVATE_ACCESS_REQUEST", title: "Photo access request", message: `${me.display_name} asked to see your private photos.`, actor_name: me.display_name, actor_avatar: me.avatar_url, target_link: "/me/private-photos", is_read: false });
+  await maybeSendReturnEmail(db, ownerId, "PRIVATE_ACCESS");
   return NextResponse.json({ status: "REQUESTED" }, { status: 201, headers: noStore });
 }
 
@@ -118,6 +120,7 @@ export async function PATCH(req: NextRequest) {
   if (update.status === "GRANTED") {
     const { data: me } = await db.from("profiles").select("display_name,avatar_url").eq("id", actor.profileId).single();
     if (me) await db.from("notifications").insert({ user_id: viewerId, type: "PRIVATE_ACCESS_GRANTED", title: "Photo access granted", message: update.grant_type === "ONCE" ? `${me.display_name} shared their private photos with you for 24 hours.` : `${me.display_name} shared their private photos with you.`, actor_name: me.display_name, actor_avatar: me.avatar_url, target_link: `/profile/${actor.profileId}`, is_read: false });
+    await maybeSendReturnEmail(db, viewerId, "PRIVATE_ACCESS");
   }
   // Denials and revocations are silent: the requester simply sees no access.
   return NextResponse.json({ status: update.status, grantType: update.grant_type, expiresAt: update.expires_at }, { headers: noStore });
