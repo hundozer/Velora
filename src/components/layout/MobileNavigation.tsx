@@ -3,23 +3,27 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, MessageSquare, Users, Sparkles, User, Heart } from "lucide-react";
+import { Compass, MessageSquare, Users, Heart } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 
 export const MobileNavigation: React.FC = () => {
   const pathname = usePathname();
   const { t } = useTranslation();
+  const { user } = useAuth();
 
-  const navItems = [
-    { href: "/dashboard", label: t("nav.feed"), icon: User },
-    { href: "/dating", label: "Dating", icon: Heart },
-    { href: "/discovery", label: t("nav.discover"), icon: Compass },
-    { href: "/messages", label: t("nav.messages"), icon: MessageSquare },
-    { href: "/creators", label: t("nav.creators"), icon: Sparkles },
+  const publicItems = [
+    { href: "/", label: t("nav.home"), icon: Compass },
+    { href: "/people", label: t("nav.people"), icon: Users },
+    { href: "/dating", label: t("nav.dating"), icon: Heart },
   ];
+  const memberItems = [
+    { href: "/messages", label: t("nav.messages"), icon: MessageSquare },
+  ];
+  const navItems = user ? [...publicItems, ...memberItems] : publicItems;
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-velora-bg/95 backdrop-blur-xl border-t border-white/10 px-2 py-2 flex items-center justify-around">
+    <nav aria-label="Mobile navigation" className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-velora-bg/95 backdrop-blur-xl border-t border-white/10 px-2 py-2 flex items-center justify-around">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
@@ -37,6 +41,6 @@ export const MobileNavigation: React.FC = () => {
           </Link>
         );
       })}
-    </div>
+    </nav>
   );
 };

@@ -6,13 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.mjs",
+    "demo:seed:staging": "node scripts/seed-staging-demo.mjs",
+    "demo:remove:staging": "node scripts/seed-staging-demo.mjs --remove",
+    "check": "npm run test && npm run typecheck && npm run lint && npm run build"
   },
   "dependencies": {
-    "@auth0/nextjs-auth0": "^4.26.0",
     "@aws-sdk/client-s3": "^3.1102.0",
     "@aws-sdk/s3-request-presigner": "^3.1102.0",
-    "@prisma/client": "^5.21.1",
+    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.109.0",
     "clsx": "^2.1.1",
     "framer-motion": "^11.11.9",
@@ -20,17 +24,18 @@
     "next": "^14.2.15",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tailwind-merge": "^2.5.4"
+    "tailwind-merge": "^2.5.4",
+    "ws": "^8.21.3"
   },
   "devDependencies": {
     "@types/node": "^20.17.1",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",
+    "@types/ws": "^8.18.1",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.15",
     "postcss": "^8.4.47",
-    "prisma": "^5.21.1",
     "tailwindcss": "^3.4.14",
     "typescript": "^5.6.3"
   }

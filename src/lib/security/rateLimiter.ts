@@ -79,7 +79,7 @@ export function validateDMTrustGate(options: DMTrustGateOptions): {
   ) {
     return {
       canSendDM: false,
-      blockReason: "Recipient requires Level 3 Biometric Verification to receive direct messages.",
+      blockReason: "Recipient requires Photo Verified members for direct messages.",
     };
   }
 

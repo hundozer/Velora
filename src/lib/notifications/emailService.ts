@@ -132,6 +132,15 @@ export class EmailNotificationService {
     return logEntry;
   }
 
+  public static async sendPrivacyDeletionComplete(email: string): Promise<SentEmailLog> {
+    const subject = "Your Intimo account deletion is complete";
+    const bodyHtml = `<p>Your Intimo account deletion and anonymization workflow is complete.</p><p>If you did not request this action, contact <a href="mailto:contact@intimo.live">contact@intimo.live</a>.</p>`;
+    const resendRes = await ResendClient.sendEmail({ to: email, subject, html: bodyHtml });
+    const logEntry: SentEmailLog = { id: resendRes.id, to: email, from: this.DEFAULT_SENDER, subject, bodyHtml, sentAt: resendRes.timestamp, provider: resendRes.provider };
+    OUTBOX.unshift(logEntry);
+    return logEntry;
+  }
+
   public static getLatestEmailFor(email: string): SentEmailLog | undefined {
     const clean = email.toLowerCase();
     return OUTBOX.find((m) => m.to.toLowerCase() === clean);

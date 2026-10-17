@@ -41,15 +41,17 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [language, setLanguageState] = useState<SupportedLanguage>("en");
 
   useEffect(() => {
-    const saved = localStorage.getItem("velora_lang") as SupportedLanguage;
+    const saved = (localStorage.getItem("intimo_lang") || localStorage.getItem("velora_lang")) as SupportedLanguage;
     if (saved && DICTIONARIES[saved]) {
       setLanguageState(saved);
+      localStorage.setItem("intimo_lang", saved);
+      localStorage.removeItem("velora_lang");
     }
   }, []);
 
   const setLanguage = (lang: SupportedLanguage) => {
     setLanguageState(lang);
-    localStorage.setItem("velora_lang", lang);
+    localStorage.setItem("intimo_lang", lang);
   };
 
   const t = (key: string): string => {

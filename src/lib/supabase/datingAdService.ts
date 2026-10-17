@@ -1,4 +1,3 @@
-import { supabase } from "./client";
 
 // ── Database Row Type ──────────────────────────────────────
 export interface DatingAdRow {
@@ -99,61 +98,4 @@ function formatTimeAgo(date: Date): string {
   if (diffHours < 24) return `${diffHours} hours ago`;
   if (diffDays < 7) return `${diffDays} days ago`;
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
-
-// ── Service Functions ──────────────────────────────────────
-
-export async function getAllActiveAds() {
-  const { data, error } = await supabase
-    .from("dating_ads")
-    .select("*")
-    .eq("status", "active")
-    .order("created_at", { ascending: false });
-
-  if (error) return { data: null, error };
-  return { data: (data as DatingAdRow[]).map(dbRowToDatingAd), error: null };
-}
-
-export async function getAdsByAuthor(authorId: string) {
-  const { data, error } = await supabase
-    .from("dating_ads")
-    .select("*")
-    .eq("author_id", authorId)
-    .order("created_at", { ascending: false });
-
-  if (error) return { data: null, error };
-  return { data: (data as DatingAdRow[]).map(dbRowToDatingAd), error: null };
-}
-
-export async function createAd(ad: Omit<DatingAdRow, "id" | "created_at">) {
-  const { data, error } = await supabase
-    .from("dating_ads")
-    .insert(ad)
-    .select()
-    .single();
-
-  if (error || !data) return { data: null, error };
-  return { data: dbRowToDatingAd(data as DatingAdRow), error: null };
-}
-
-export async function deleteAd(adId: string, authorId: string) {
-  const { error } = await supabase
-    .from("dating_ads")
-    .delete()
-    .eq("id", adId)
-    .eq("author_id", authorId);
-
-  return { error };
-}
-
-export async function updateAdStatus(adId: string, status: string) {
-  const { data, error } = await supabase
-    .from("dating_ads")
-    .update({ status })
-    .eq("id", adId)
-    .select()
-    .single();
-
-  if (error || !data) return { data: null, error };
-  return { data: dbRowToDatingAd(data as DatingAdRow), error: null };
 }

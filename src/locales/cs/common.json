@@ -9,18 +9,19 @@
     "messages": "Zprávy",
     "wallet": "Trezor",
     "settings": "Nastavení",
-    "membership": "Členství"
+    "membership": "Členství",
+    "home": "Domů", "people": "Lidé", "dating": "Seznamování", "search": "Hledat"
   },
   "hero": {
     "tag": "Tržiště sociálního objevování pro dospělé",
     "headline": "Seznamte se s lidmi, kteří hledají stejné zážitky.",
     "subhead": "Připojte se k soukromé komunitě ověřených dospělých hledajících spojení, chemii a nezapomenutelné zážitky.",
-    "join_cta": "Vstoupit do Velora",
+    "join_cta": "Vstoupit do Intimo",
     "explore_cta": "Procházet Členy"
   },
   "auth": {
     "login": "Přihlásit se",
-    "register": "Vstoupit do Velora",
+    "register": "Vstoupit do Intimo",
     "logout": "Odhlásit se"
   },
   "common": {

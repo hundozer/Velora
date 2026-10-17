@@ -9,13 +9,14 @@
     "messages": "Nachrichten",
     "wallet": "Tresor",
     "settings": "Einstellungen",
-    "membership": "Mitgliedschaft"
+    "membership": "Mitgliedschaft",
+    "home": "Start", "people": "Menschen", "dating": "Dating", "search": "Suche"
   },
   "hero": {
     "tag": "Adults-Only Social Discovery Marketplace",
     "headline": "Lerne Menschen kennen, die dieselben Erlebnisse suchen.",
     "subhead": "Trete einer privaten Community verifizierter Erwachsener bei, die nach Kontakten, Chemie und unvergesslichen Erlebnissen suchen.",
-    "join_cta": "Velora Beitreten",
+    "join_cta": "Intimo beitreten",
     "explore_cta": "Mitglieder Entdecken"
   },
   "auth": {

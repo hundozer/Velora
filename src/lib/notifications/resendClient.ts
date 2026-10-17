@@ -14,7 +14,7 @@ export interface ResendResponse {
 }
 
 export class ResendClient {
-  public static readonly DEFAULT_SENDER = process.env.EMAIL_FROM || "Intimo <noreply@intimo.live>";
+  public static readonly DEFAULT_SENDER = process.env.RESEND_FROM_EMAIL ? `Intimo <${process.env.RESEND_FROM_EMAIL}>` : "Intimo <noreply@intimo.live>";
   public static readonly DEFAULT_REPLY_TO = process.env.EMAIL_REPLY_TO || "contact@intimo.live";
 
   /**
@@ -45,7 +45,7 @@ export class ResendClient {
 
         if (response.ok) {
           const data = await response.json();
-          console.log(`[RESEND API DISPATCH SUCCESS] ID: ${data.id} | To: ${payload.to}`);
+          console.log(`[RESEND API DISPATCH SUCCESS] ID: ${data.id}`);
           return {
             id: data.id || `resend-${Date.now()}`,
             delivered: true,
@@ -61,9 +61,13 @@ export class ResendClient {
       }
     }
 
-    // Fallback to simulated outbox when RESEND_API_KEY is not configured
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Transactional email delivery is unavailable");
+    }
+
+    // Development-only simulated outbox. Never report a simulated production delivery.
     const simulatedId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    console.log(`[RESEND SIMULATED DISPATCH] Sender: ${sender} | ReplyTo: ${replyTo} | To: ${payload.to} | Subject: ${payload.subject}`);
+    console.log(`[RESEND SIMULATED DISPATCH] Subject: ${payload.subject}`);
 
     return {
       id: simulatedId,

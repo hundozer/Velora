@@ -7,7 +7,6 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
 import { SUPPORTED_COUNTRIES } from "@/lib/data/locations";
-import { createAd } from "@/lib/supabase/datingAdService";
 import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
 import {
   Heart,
@@ -16,7 +15,6 @@ import {
   Camera,
   X,
   ShieldCheck,
-  Crown,
   Sparkles,
   CheckCircle2,
   Lock,
@@ -35,22 +33,7 @@ const DATING_CATEGORIES = [
   "Man seeking couple",
   "Couple seeking man",
   "Lovers asylums",
-  "Woman offering services",
-  "Man offering services",
-  "Couple offering services",
-  "Strip-tease",
-  "Photographing - offer",
-  "Jobs in the erotic industry - offer",
-  "Market - offer",
-  "Incall apartments and clubs",
-  "Photographing - request",
-  "Jobs in the erotic industry - request",
-  "Market - request",
-  "Erotic services",
   "Transgender seeking",
-  "Transgender offering services",
-  "Massage/Sauna",
-  "S/M studios",
 ];
 
 export default function CreateDatingAdPage() {
@@ -68,10 +51,10 @@ export default function CreateDatingAdPage() {
   const [formTransgender, setFormTransgender] = useState<"Including trans" | "Excluding trans" | "Only trans">("Including trans");
   const [formMinAge, setFormMinAge] = useState(18);
   const [formMaxAge, setFormMaxAge] = useState(100);
-  const [formRequireVip, setFormRequireVip] = useState(false);
   const [formRequireMedia, setFormRequireMedia] = useState(false);
   const [formRequireVerified, setFormRequireVerified] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   // Photo Attachment File
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -111,6 +94,7 @@ export default function CreateDatingAdPage() {
     if (!formTitle.trim() || !formText.trim()) return;
 
     setIsSubmitting(true);
+    setSubmitError("");
 
     const newAdItem = {
       id: `ad-${Date.now()}`,
@@ -129,7 +113,7 @@ export default function CreateDatingAdPage() {
       transgenderOption: formTransgender,
       minAge: formMinAge,
       maxAge: formMaxAge,
-      requireVip: formRequireVip,
+      requireVip: false,
       requireMedia: formRequireMedia,
       requireVerified: formRequireVerified,
       createdAt: "Just now",
@@ -160,49 +144,28 @@ export default function CreateDatingAdPage() {
       comments: [],
     };
 
-    // Save to local cache first (both Dating Marketplace and Feed)
-    if (typeof window !== "undefined") {
-      const existingAdsStr = localStorage.getItem("intimo_all_dating_ads");
-      const existingAds = existingAdsStr ? JSON.parse(existingAdsStr) : [];
-      const updatedAds = [newAdItem, ...existingAds.filter((a: any) => a.id !== newAdItem.id)];
-      localStorage.setItem("intimo_all_dating_ads", JSON.stringify(updatedAds));
-
-      const existingFeedStr = localStorage.getItem("intimo_feed_posts");
-      const existingFeed = existingFeedStr ? JSON.parse(existingFeedStr) : [];
-      const updatedFeed = [newFeedPost, ...existingFeed.filter((f: any) => f.id !== newFeedPost.id)];
-      localStorage.setItem("intimo_feed_posts", JSON.stringify(updatedFeed));
-
-      window.dispatchEvent(new Event("intimo_ads_updated"));
-    }
-
-    // Persist to Supabase in background
     try {
-      await createAd({
-        author_id: profile?.id || null,
-        author_name: profile?.displayName || user?.username || "Intimo Member",
-        author_avatar: profile?.avatarUrl || null,
-        is_verified: true,
-        category: formCategory,
-        title: formTitle.trim(),
-        text: formText.trim(),
-        photo_url: photoPreview || null,
-        validity_days: formValidity,
-        country: formCountry,
-        region: formRegion,
-        allowed_reply_genders: formReplyGenders,
-        transgender_option: formTransgender,
-        min_age: formMinAge,
-        max_age: formMaxAge,
-        require_vip: formRequireVip,
-        require_media: formRequireMedia,
-        require_verified: formRequireVerified,
-        status: "active",
+      const response = await fetch("/api/dating-ads", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: formCategory, title: formTitle.trim(), text: formText.trim(),
+          photoUrl: photoPreview?.startsWith("https://") ? photoPreview : undefined,
+          validityDays: formValidity, country: formCountry, region: formRegion,
+          allowedReplyGenders: formReplyGenders, transgenderOption: formTransgender,
+          minAge: formMinAge, maxAge: formMaxAge, requireVip: false,
+          requireMedia: formRequireMedia, requireVerified: formRequireVerified,
+        }),
       });
-    } catch (err) {
-      console.error("Failed to save ad to Supabase:", err);
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Dating ad creation failed");
+      router.push(`/dating?category=${encodeURIComponent(formCategory)}`);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Dating ad creation failed");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    router.push(`/dating?category=${encodeURIComponent(formCategory)}`);
   };
 
   if (!user) {
@@ -520,23 +483,6 @@ export default function CreateDatingAdPage() {
             <label className="flex items-center justify-between p-3.5 rounded-2xl bg-black/40 border border-white/10 hover:border-amber-400/30 transition-all cursor-pointer">
               <div className="space-y-0.5">
                 <span className="text-xs font-bold text-white flex items-center gap-2">
-                  <Crown className="w-4 h-4 text-amber-400" /> Require VIP Membership
-                </span>
-                <p className="text-[11px] text-velora-textMuted">
-                  Only active VIP tier members can reply to your announcement.
-                </p>
-              </div>
-              <input
-                type="checkbox"
-                checked={formRequireVip}
-                onChange={(e) => setFormRequireVip(e.target.checked)}
-                className="w-5 h-5 accent-amber-400 rounded cursor-pointer"
-              />
-            </label>
-
-            <label className="flex items-center justify-between p-3.5 rounded-2xl bg-black/40 border border-white/10 hover:border-amber-400/30 transition-all cursor-pointer">
-              <div className="space-y-0.5">
-                <span className="text-xs font-bold text-white flex items-center gap-2">
                   <Camera className="w-4 h-4 text-purple-400" /> Require Profile Photo/Video Albums
                 </span>
                 <p className="text-[11px] text-velora-textMuted">
@@ -554,6 +500,7 @@ export default function CreateDatingAdPage() {
         </Card>
 
         {/* SUBMIT BUTTON BAR */}
+        {submitError && <p className="text-xs text-red-400 text-right" role="alert">{submitError}</p>}
         <div className="flex items-center justify-end gap-4 pt-4 border-t border-white/10">
           <Link href="/dating">
             <Button variant="outline" size="lg" type="button" className="text-xs font-bold uppercase tracking-wider">

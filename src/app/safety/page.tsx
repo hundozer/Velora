@@ -42,10 +42,10 @@ export default function SafetyPage() {
         <Card variant="glass" className="p-8 space-y-4">
           <div className="flex items-center gap-3">
             <EyeOff className="w-6 h-6 text-purple-400" />
-            <h2 className="text-xl font-serif font-bold text-velora-textPrimary">3. Discreet Billing & Stealth</h2>
+            <h2 className="text-xl font-serif font-bold text-velora-textPrimary">3. Location Privacy & Stealth</h2>
           </div>
           <p className="text-xs text-velora-textSecondary leading-relaxed">
-            All financial transactions use non-descript billing descriptors on credit card and bank statements to protect user privacy.
+            Exact residential coordinates are not displayed publicly. Members can hide location or use city-level and approximate-distance visibility.
           </p>
         </Card>
       </div>

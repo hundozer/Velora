@@ -1,0 +1,747 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import test from "node:test";
+
+const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
+
+test("auth source contains no embedded Supabase credential fallback", async () => {
+  const env = await read("src/lib/supabase/env.ts");
+  const browser = await read("src/lib/supabase/browser.ts");
+  const server = await read("src/lib/supabase/server.ts");
+  for (const source of [env, browser, server]) {
+    assert.doesNotMatch(source, /NEXT_PUBLIC_SUPABASE_(URL|ANON_KEY)\s*\|\|/);
+    assert.doesNotMatch(source, /sb_publishable_|supabase\.co"/);
+  }
+  await assert.rejects(read("src/lib/supabase/client.ts"));
+  await assert.rejects(read("src/lib/auth0/client.ts"));
+});
+
+test("account deletion derives its target from the verified session", async () => {
+  const source = await read("src/app/api/auth/delete-account/route.ts");
+  assert.match(source, /getVerifiedIdentity\(req\)/);
+  assert.match(source, /identity\.sub/);
+  assert.match(source, /account_status: "DELETION_REQUESTED"/);
+  assert.match(source, /account_status: "DEACTIVATED"/);
+  assert.doesNotMatch(source, /body\?\.auth0UserId|body\?\.email/);
+});
+
+test("retention execution is secret-authenticated, legal-hold aware, durable, and removes stored media first", async () => {
+  const route = await read("src/app/api/internal/retention/run/route.ts");
+  const auth = await read("src/lib/security/cronAuth.ts");
+  const worker = await read("src/lib/privacy/retention.ts");
+  const migration = await read("supabase/migrations/20260815_retention_execution.sql");
+  assert.match(route, /isAuthorizedCronRequest\(req\)/);
+  assert.match(route, /ANONYMIZATION_IN_PROGRESS/);
+  assert.match(auth, /timingSafeEqual/);
+  assert.match(auth, /INTIMO_RETENTION_CRON_SECRET/);
+  assert.match(worker, /retention_holds/);
+  assert.match(worker, /deleteStoredObject/);
+  assert.match(worker, /account_lifecycle_status: "DELETED"/);
+  assert.match(worker, /sendPrivacyDeletionComplete/);
+  assert.match(migration, /retention_execution_events/);
+  assert.match(migration, /force row level security/i);
+});
+
+test("privacy export covers durable profile, media, interaction, safety, and rights data", async () => {
+  const route = await read("src/app/api/privacy/export/route.ts");
+  for (const table of ["media_objects", "content_posts", "content_comments", "saved_items", "content_reactions", "notifications", "moderation_cases", "moderation_appeals", "copyright_notices", "verification_reviews", "privacy_requests"]) {
+    assert.match(route, new RegExp(`from\\(\\"${table}\\"\\)`));
+  }
+  assert.match(route, /SELF_SERVICE_JSON/);
+  assert.match(route, /third-party rights are protected/);
+  assert.doesNotMatch(route, /provider_reference/);
+});
+
+test("privacy-rights requests are owner-derived, rate-limited, durable, and auditable", async () => {
+  const route = await read("src/app/api/privacy/requests/route.ts");
+  const settings = await read("src/app/settings/page.tsx");
+  assert.match(route, /resolveServerActor\(req\)/);
+  assert.match(route, /privacy-request:\$\{actor\.actor\.userId\}/);
+  assert.match(route, /profile_id: actor\.actor\.profileId/);
+  assert.match(route, /MEMBER_RIGHTS_REQUEST/);
+  assert.match(route, /appendDurableAudit/);
+  assert.match(settings, /Exercise another privacy right/);
+  assert.match(settings, /\/api\/privacy\/requests/);
+});
+
+test("privacy and consent actions append durable database audit evidence", async () => {
+  const helper = await read("src/lib/auth/durableAudit.ts");
+  for (const routePath of ["src/app/api/privacy/requests/route.ts", "src/app/api/privacy/export/route.ts", "src/app/api/privacy/consents/route.ts", "src/app/api/privacy/settings/route.ts", "src/app/api/auth/delete-account/route.ts"]) {
+    assert.match(await read(routePath), /appendDurableAudit/);
+  }
+  assert.match(helper, /from\("audit_events"\)\.insert/);
+  assert.match(helper, /metadata: event\.metadata \|\| \{\}/);
+});
+
+test("shared modal provides dialog semantics, escape handling, and keyboard focus containment", async () => {
+  const modal = await read("src/components/ui/Modal.tsx");
+  assert.match(modal, /role="dialog"/);
+  assert.match(modal, /aria-modal="true"/);
+  assert.match(modal, /event\.key === "Escape"/);
+  assert.match(modal, /event\.key !== "Tab"/);
+  assert.match(modal, /previouslyFocused\?\.focus/);
+  assert.match(modal, /aria-label="Close dialog"/);
+  assert.match(modal, /showCloseButton/);
+});
+
+test("mandatory age gate has balanced responsive actions and no inert close control", async () => {
+  const gate = await read("src/components/common/AgeVerificationModal.tsx");
+  assert.match(gate, /maxWidth="lg"/);
+  assert.match(gate, /showCloseButton=\{false\}/);
+  assert.match(gate, /sm:grid-cols-\[1\.65fr_1fr\]/);
+});
+
+test("public home is content-first rather than implementation-focused", async () => {
+  const home = await read("src/components/community/PublicCommunityHome.tsx");
+  assert.match(home, /intimo-community-hero\.jpg/);
+  assert.match(home, /Find your people/);
+  for (const destination of ["people", "dating", "photos", "videos"]) assert.match(home, new RegExp(`\\"/${destination}\\"`));
+  assert.doesNotMatch(home, /Real empty states|server-authorized workflows|Sensitive preference fields|Local design preview|Newest first/);
+});
+
+test("public media pages use member-focused copy rather than internal moderation language", async () => {
+  const gallery = await read("src/components/community/PublicMediaGallery.tsx");
+  assert.match(gallery, /From the community/);
+  assert.match(gallery, /Discover \{noun\.toLowerCase\(\)\} shared by Intimo members/);
+  assert.doesNotMatch(gallery, /Popularity is never fabricated|fully uploaded, processed|moderator-approved|Approved public media/);
+});
+
+test("people discovery prioritizes age, location, profile type, verification, and activity", async () => {
+  const page = await read("src/app/people/page.tsx");
+  const route = await read("src/app/api/public/community/route.ts");
+  for (const label of ["I want to meet", "Man", "Woman", "Couples", "Country", "City or region", "Age range", "Verified", "Online recently"]) assert.match(page, new RegExp(label));
+  assert.doesNotMatch(page, /Name or headline|Country \(exact\)/);
+  for (const parameter of ["city", "gender", "minAge", "maxAge", "verified", "recentlyActive"]) assert.match(route, new RegExp(`searchParams\\.get\\(\\"${parameter}\\"\\)`));
+  assert.match(route, /gte\("age"/);
+  assert.match(route, /lte\("age"/);
+  assert.match(route, /show_online_status/);
+});
+
+test("six-language mobile navigation uses Intimo keys and migrates the legacy locale preference", async () => {
+  const context = await read("src/context/LanguageContext.tsx");
+  const mobile = await read("src/components/layout/MobileNavigation.tsx");
+  for (const locale of ["en", "cs", "hu", "ro", "sk", "de"]) {
+    const dictionary = await read(`src/locales/${locale}/common.json`);
+    assert.doesNotMatch(dictionary, /Velora/);
+    for (const key of ["home", "people", "dating", "search"]) assert.match(dictionary, new RegExp(`"${key}"`));
+  }
+  assert.match(context, /localStorage\.setItem\("intimo_lang"/);
+  assert.match(context, /localStorage\.removeItem\("velora_lang"/);
+  assert.match(mobile, /t\("nav\.home"\)/);
+  assert.match(mobile, /aria-label="Mobile navigation"/);
+});
+
+test("affected users can see eligible decisions and appeal while dating ads expose reporting", async () => {
+  const reports = await read("src/app/api/reports/route.ts");
+  const appeal = await read("src/app/api/reports/[id]/appeal/route.ts");
+  const settings = await read("src/app/settings/page.tsx");
+  const dating = await read("src/app/dating/page.tsx");
+  assert.match(reports, /relationship: reported_user_id === actor\.actor\.profileId \? "AFFECTED_USER" : "REPORTER"/);
+  assert.match(appeal, /eq\("reported_user_id", actor\.actor\.profileId\)/);
+  assert.match(appeal, /\["RESOLVED", "REJECTED"\]/);
+  assert.match(settings, /Appeal this decision/);
+  assert.match(dating, /contentType="POST"/);
+  assert.match(dating, /Report this dating ad/);
+});
+
+test("media presigning requires identity and enforces size and type allowlists", async () => {
+  const source = await read("src/app/api/media/presign-upload/route.ts");
+  assert.match(source, /resolveServerActor\(req\)/);
+  assert.match(source, /hasAdultAccess\(actor\.actor\)/);
+  assert.match(source, /ALLOWED_MIME_TYPES\.has\(fileType\)/);
+  assert.match(source, /fileSize > maxBytes/);
+  assert.match(source, /NODE_ENV === "production" && !isR2Configured/);
+  assert.match(source, /content_participant_declarations/);
+  assert.match(source, /publicUrl: `\/api\/media\/\$\{media\.id\}`/);
+  assert.doesNotMatch(source, /publicUrl: presigned\.publicUrl/);
+});
+
+test("media completion durably audits both successful finalization and quarantine", async () => {
+  const completion = await read("src/app/api/media/[id]/complete/route.ts");
+  assert.match(completion, /appendDurableAudit/);
+  assert.match(completion, /MEDIA_UPLOAD_COMPLETED/);
+  assert.match(completion, /MEDIA_UPLOAD_QUARANTINED/);
+  assert.match(completion, /STORED_OBJECT_MISMATCH/);
+  assert.match(completion, /processingError/);
+});
+
+test("production auth middleware has a fail-closed response and refreshes the session", async () => {
+  const source = await read("src/middleware.ts");
+  assert.match(source, /NODE_ENV === "production"/);
+  assert.match(source, /status: 503/);
+  assert.match(source, /createServerClient/);
+  assert.match(source, /auth\.getUser\(\)/);
+});
+
+test("verification screen resends through the server email route without polling or local identity", async () => {
+  const source = await read("src/app/verify-email/page.tsx");
+  assert.match(source, /requestAuthEmail\(\{ action: "magiclink"/);
+  assert.match(source, /RESEND_COOLDOWN_SECONDS/);
+  assert.doesNotMatch(source, /setInterval|localStorage/);
+});
+
+test("RLS lockdown removes public allow-all policies and revokes browser roles", async () => {
+  const source = await read("supabase/migrations/20260807_lock_down_auth0_boundary.sql");
+  assert.doesNotMatch(source, /create\s+policy[\s\S]*using\s*\(true\)/i);
+  assert.doesNotMatch(source, /create\s+policy[\s\S]*with\s+check\s*\(true\)/i);
+  assert.match(source, /revoke all on table public\.profiles from anon, authenticated/i);
+  assert.match(source, /force row level security/i);
+});
+
+test("admin route is guarded by server-derived database authority", async () => {
+  const layout = await read("src/app/admin/layout.tsx");
+  const actor = await read("src/lib/auth/serverActor.ts");
+  const serverDb = await read("src/lib/supabase/server.ts");
+  assert.match(layout, /resolveServerActor\(\)/);
+  assert.match(layout, /isAdminActor\(result\.actor\)/);
+  assert.match(serverDb, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(actor, /\.eq\("auth_id", identity\.sub\)/);
+  assert.match(actor, /INTIMO_ADMIN_USER_IDS/);
+  assert.match(actor, /adminAuthorized/);
+  assert.doesNotMatch(layout, /localStorage|sessionStorage/);
+});
+
+test("browser identity cannot switch roles or fabricate a fallback login", async () => {
+  const source = await read("src/context/AuthContext.tsx");
+  const verifyEmail = await read("src/app/verify-email/page.tsx");
+  assert.match(source, /fetch\("\/api\/auth\/session"/);
+  assert.doesNotMatch(source, /switchRole|impersonateUser|stopImpersonating/);
+  assert.doesNotMatch(source, /fallbackUser|LEVEL_3_PROFILE_BIOMETRIC/);
+  assert.doesNotMatch(source, /intimo_user_data/);
+  assert.doesNotMatch(source, /dateOfBirth: "1998-05-15"/);
+  assert.doesNotMatch(source, /setUser\(parsedUser\)/);
+  assert.doesNotMatch(verifyEmail, /EmailVerificationService|intimo_user_data|verifyToken/);
+  assert.match(verifyEmail, /requestAuthEmail/);
+});
+
+test("profile updates are owner-derived and strip authority fields", async () => {
+  const route = await read("src/app/api/profile/me/route.ts");
+  const context = await read("src/context/AuthContext.tsx");
+  const service = await read("src/lib/supabase/profileService.ts");
+  assert.match(route, /getVerifiedIdentity\(req\)/);
+  assert.match(route, /\.eq\("auth_id", identity\.sub\)/);
+  assert.match(route, /SELF_SERVICE_PROFILE_FIELDS/);
+  assert.doesNotMatch(route, /SELF_SERVICE_PROFILE_FIELDS[\s\S]{0,500}"role"/);
+  assert.doesNotMatch(route, /SELF_SERVICE_PROFILE_FIELDS[\s\S]{0,500}"verification_status"/);
+  assert.match(route, /PROFILE_MEDIA_REFERENCE/);
+  assert.match(route, /\.eq\("owner_id", owner\.id\)/);
+  assert.match(route, /changedFields/);
+  assert.match(route, /MAX_BODY_BYTES/);
+  assert.match(context, /fetch\("\/api\/profile\/me"/);
+  assert.match(context, /Object\.fromEntries/);
+  assert.doesNotMatch(service, /\.from\("profiles"\)/);
+});
+
+test("onboarding creates a verified-session-owned adult profile without self-granting creator or premium", async () => {
+  const route = await read("src/app/api/profile/me/route.ts");
+  const onboarding = await read("src/app/onboarding/page.tsx");
+  assert.match(route, /if \(!identity\.emailVerified\)/);
+  assert.match(route, /id: identity\.sub,/);
+  assert.match(route, /age < 18/);
+  assert.match(route, /member_tier: "FREE"/);
+  assert.match(route, /profileType === "COUPLE" \? "COUPLE" : "MEMBER"/);
+  assert.match(route, /verification_level: "LEVEL_1_EMAIL"/);
+  assert.match(onboarding, /method: "POST"/);
+  assert.match(onboarding, /label="Date of birth"/);
+  assert.match(onboarding, /const basicsValid =/);
+  assert.match(onboarding, /disabled=\{!basicsValid\}/);
+  assert.match(onboarding, /Intimo is only available to adults aged 18 or older/);
+});
+
+test("discovery is authenticated, visibility-filtered, and deterministically ordered", async () => {
+  const route = await read("src/app/api/discovery/profiles/route.ts");
+  const page = await read("src/app/discovery/page.tsx");
+  assert.match(route, /resolveServerActor\(req\)/);
+  assert.match(route, /\.in\("profile_visibility", \["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY"\]\)/);
+  assert.match(route, /\.from\("friendships"\)/);
+  assert.match(route, /row\.profile_visibility !== "FRIENDS_ONLY" \|\| friendIds\.has\(row\.id\)/);
+  assert.match(route, /created_at.*ascending: false/);
+  assert.match(route, /id.*ascending: true/);
+  assert.match(route, /\.neq\("auth_id", actorResult\.actor\.userId\)/);
+  assert.match(page, /fetch\("\/api\/discovery\/profiles"/);
+  assert.doesNotMatch(page, /MOCK_PROFILES/);
+});
+
+test("member profile pages load through the authenticated visibility boundary", async () => {
+  const route = await read("src/app/api/profiles/[id]/route.ts");
+  const page = await read("src/app/profile/[id]/page.tsx");
+  assert.match(route, /data\.profile_visibility === "FRIENDS_ONLY" && friends/);
+  assert.match(route, /areFriends\(actorResult\.actor\.profileId, id\)/);
+  assert.match(route, /isAdminActor\(actorResult\.actor\)/);
+  assert.match(route, /\.eq\("id", id\)/);
+  assert.match(page, /fetch\(`\/api\/profiles\/\$\{encodeURIComponent\(id\)\}`/);
+  assert.match(page, /response\.status === 401.*\/api\/public\/profiles/s);
+});
+
+test("friendships are mutual, accepted, server-owned, block-aware, and enforce private audiences", async () => {
+  const route = await read("src/app/api/friends/route.ts");
+  const messages = await read("src/app/api/messages/route.ts");
+  const privacy = await read("src/app/api/privacy/settings/route.ts");
+  const profile = await read("src/app/profile/[id]/page.tsx");
+  const migration = await read("supabase/migrations/20260820_mutual_friendships.sql");
+  assert.match(route, /resolveServerActor\(req\)/);
+  assert.match(route, /intimo_friend_action/);
+  assert.match(route, /appendDurableAudit/);
+  assert.match(migration, /friendships_unordered_pair_unique/);
+  assert.match(migration, /status text not null default 'PENDING'/);
+  assert.match(migration, /delete from public\.friendships/);
+  assert.match(migration, /force row level security/i);
+  assert.match(messages, /message_permission === "FRIENDS_ONLY"/);
+  assert.match(messages, /await areFriends\(actor\.actor\.profileId, receiverId\)/);
+  assert.match(privacy, /"FRIENDS_ONLY"/);
+  assert.doesNotMatch(privacy, /MATCHING_USERS/);
+  assert.match(profile, /Add friend/);
+  assert.match(profile, /Accept friend/);
+  assert.doesNotMatch(profile, />Follow</);
+});
+
+test("anonymous community discovery is explicit-public-only and excludes sensitive profile fields", async () => {
+  const collection = await read("src/app/api/public/community/route.ts");
+  const item = await read("src/app/api/public/profiles/[id]/route.ts");
+  const serializer = await read("src/lib/supabase/publicCommunity.ts");
+  assert.match(collection, /\.eq\("profile_visibility", "EVERYONE"\)/);
+  assert.match(collection, /\.eq\("public_profile_visibility", true\)/);
+  assert.match(collection, /\.eq\("account_status", "ACTIVE"\)/);
+  assert.match(collection, /\.eq\("discovery_disabled", false\)/);
+  assert.match(collection, /\.range\(offset, offset \+ limit - 1\)/);
+  assert.match(item, /toAnonymousPublicProfile/);
+  assert.doesNotMatch(serializer, /sexual_orientation|interests|lifestyle_tags|looking_for|email|auth_id|gallery_images/);
+  assert.doesNotMatch(serializer, /avatar_url|cover_photo_url|date_of_birth/);
+});
+
+test("onboarding records declared age separately from stronger verification and requires explicit consent", async () => {
+  const route = await read("src/app/api/profile/me/route.ts");
+  const onboarding = await read("src/app/onboarding/page.tsx");
+  assert.match(route, /age_verification_status: "AGE_DECLARED"/);
+  assert.match(route, /age_verification_method: "DATE_OF_BIRTH_DECLARATION"/);
+  assert.match(route, /explicitSensitiveDataConsent !== true/);
+  assert.match(route, /consent_type: "SPECIAL_CATEGORY_PROFILE"/);
+  assert.match(onboarding, /I explicitly consent/);
+});
+
+test("privacy APIs derive ownership from the server actor and public profiles minimize sensitive data", async () => {
+  const consents = await read("src/app/api/privacy/consents/route.ts");
+  const settings = await read("src/app/api/privacy/settings/route.ts");
+  const exportRoute = await read("src/app/api/privacy/export/route.ts");
+  const publicProfile = await read("src/lib/supabase/publicProfile.ts");
+  assert.match(consents, /profile_id: actor\.actor\.profileId/);
+  assert.match(settings, /\.eq\("id", actor\.actor\.profileId\)/);
+  assert.match(exportRoute, /profileId = actor\.actor\.profileId/);
+  assert.doesNotMatch(publicProfile, /dateOfBirth:/);
+  assert.match(publicProfile, /locationVisible/);
+});
+
+test("dating ads derive authorship and deletion ownership from the server actor", async () => {
+  const collection = await read("src/app/api/dating-ads/route.ts");
+  const item = await read("src/app/api/dating-ads/[id]/route.ts");
+  assert.match(collection, /author_id: actor\.actor\.profileId/);
+  assert.match(collection, /author_name: profile\.display_name/);
+  assert.match(collection, /minAge < 18/);
+  assert.match(item, /\.eq\("author_id", actor\.actor\.profileId\)/);
+  assert.match(collection, /require_vip: false/);
+});
+
+test("dating-ad reply requirements are enforced by the server, not browser claims", async () => {
+  const messages = await read("src/app/api/messages/route.ts");
+  const dating = await read("src/app/dating/page.tsx");
+  const messagesPage = await read("src/app/messages/page.tsx");
+  assert.match(dating, /datingAd=.*encodeURIComponent\(ad\.id\)/);
+  assert.match(messagesPage, /searchParams\.get\("datingAd"\)/);
+  assert.match(messages, /dating_ads/);
+  assert.match(messages, /ad\.author_id !== receiverId/);
+  assert.match(messages, /allowed_reply_genders/);
+  assert.match(messages, /date_of_birth/);
+  assert.match(messages, /require_verified/);
+  assert.match(messages, /require_media/);
+  assert.match(messages, /moderation_status", "APPROVED"/);
+});
+
+test("free MVP centrally disables and server-blocks monetization routes", async () => {
+  const features = await read("src/lib/features.ts");
+  const middleware = await read("src/middleware.ts");
+  const navbar = await read("src/components/layout/Navbar.tsx");
+  assert.match(features, /MONETIZATION_ENABLED = false/);
+  assert.match(features, /"\/membership"/);
+  assert.match(features, /"\/wallet"/);
+  assert.match(middleware, /!MONETIZATION_ENABLED && isMonetizationRoute\(pathname\)/);
+  assert.match(middleware, /isMvpSafetyDisabledRoute\(pathname\)/);
+  assert.doesNotMatch(navbar, /href="\/wallet"/);
+  assert.doesNotMatch(navbar, /href="\/(membership|events|live|creator-studio|referrals)"/);
+});
+
+test("every unfinished mock community route remains centrally unreachable", async () => {
+  const features = await read("src/lib/features.ts");
+  const middleware = await read("src/middleware.ts");
+  for (const route of ["creator-studio", "creators", "communities", "events", "live", "referrals"]) {
+    assert.match(features, new RegExp(`"/${route}"`));
+  }
+  assert.match(middleware, /if \(isMvpSafetyDisabledRoute\(pathname\)\)/);
+  assert.match(middleware, /NextResponse\.redirect\(new URL\("\/discovery", request\.url\), 307\)/);
+});
+
+test("active dating ads cannot advertise commercial sexual services or require VIP", async () => {
+  const createPage = await read("src/app/dating/create/page.tsx");
+  const browsePage = await read("src/app/dating/page.tsx");
+  const collection = await read("src/app/api/dating-ads/route.ts");
+  assert.doesNotMatch(createPage, /offering services|Erotic services|Incall apartments|S\/M studios/i);
+  assert.doesNotMatch(createPage, /Require VIP Membership/);
+  assert.doesNotMatch(browsePage, /INITIAL_ADS|images\.unsplash\.com|Prince Charming/);
+  assert.match(browsePage, /return <PublicDatingBrowse \/>/);
+  assert.match(collection, /require_vip: false/);
+});
+
+test("blocking is server-owned and enforced in discovery, profiles, and messages", async () => {
+  const blocks = await read("src/app/api/blocks/route.ts");
+  const discovery = await read("src/app/api/discovery/profiles/route.ts");
+  const profile = await read("src/app/api/profiles/[id]/route.ts");
+  const messages = await read("src/app/api/messages/route.ts");
+  assert.match(blocks, /blocker_id: actor\.actor\.profileId/);
+  assert.match(discovery, /from\("user_blocks"\)/);
+  assert.match(profile, /from\("user_blocks"\)/);
+  assert.match(messages, /await blocked\(supabase, actor\.actor\.profileId, receiverId\)/);
+  assert.match(messages, /sender_id: actor\.actor\.profileId/);
+});
+
+test("reports use structured categories and immediately escalate critical harms", async () => {
+  const reports = await read("src/app/api/reports/route.ts");
+  const modal = await read("src/components/safety/ReportModal.tsx");
+  assert.match(reports, /SUSPECTED_MINOR/);
+  assert.match(reports, /NON_CONSENSUAL_INTIMATE_CONTENT/);
+  assert.match(reports, /EXPLOITATION_TRAFFICKING/);
+  assert.match(reports, /priority === "CRITICAL" \? "ESCALATED"/);
+  assert.match(reports, /rpc\("intimo_create_report"/);
+  assert.match(modal, /fetch\("\/api\/reports"/);
+  assert.doesNotMatch(modal, /userStore\.submitReport/);
+});
+
+test("report and appeal case transitions are transactional and unavailable to browser roles", async () => {
+  const migration = await read("supabase/migrations/20260816_transactional_safety_actions.sql");
+  const appeal = await read("src/app/api/reports/[id]/appeal/route.ts");
+  assert.match(migration, /create or replace function public\.intimo_create_report/);
+  assert.match(migration, /insert into public\.moderation_events/);
+  assert.match(migration, /for update/);
+  assert.match(migration, /create unique index.*moderation_appeals_case_appellant/i);
+  assert.match(migration, /revoke all on function public\.intimo_create_report[\s\S]*from public,anon,authenticated/i);
+  assert.match(appeal, /rpc\("intimo_create_appeal"/);
+});
+
+test("follow and favorite operations are server-owned and block-aware", async () => {
+  const route = await read("src/app/api/connections/route.ts");
+  const favorites = await read("src/app/favorites/page.tsx");
+  assert.match(route, /follower_id: actor\.actor\.profileId/);
+  assert.match(route, /from\("user_blocks"\)/);
+  assert.match(route, /toMemberVisibleProfile/);
+  assert.match(favorites, /fetch\("\/api\/saved-items"/);
+  assert.doesNotMatch(favorites, /MOCK_PROFILES/);
+});
+
+test("legacy client admin and monetization overlays are not mounted", async () => {
+  const layout = await read("src/app/layout.tsx");
+  const admin = await read("src/app/admin/layout.tsx");
+  assert.doesNotMatch(layout, /AdminSystemOverlay/);
+  assert.match(admin, /return <AdminCommandCenter/);
+  assert.doesNotMatch(admin, /return children/);
+});
+
+test("admin console enforces MFA, granular permissions, audit history, and free-MVP settings", async () => {
+  const actor = await read("src/lib/auth/serverActor.ts");
+  const authorization = await read("src/lib/auth/adminAuthorization.ts");
+  const api = await read("src/lib/auth/adminApi.ts");
+  const userActions = await read("src/app/api/admin/users/[id]/route.ts");
+  const settings = await read("src/app/api/admin/settings/route.ts");
+  const migration = await read("supabase/migrations/20260811_admin_command_center.sql");
+  assert.match(actor, /INTIMO_ADMIN_ROLE_ASSIGNMENTS/);
+  assert.doesNotMatch(actor, /FINANCE_ADMIN/);
+  assert.match(api, /adminMfaSatisfied/);
+  assert.match(api, /hasAdminPermission/);
+  assert.match(authorization, /PRIVACY_ADMIN/);
+  assert.doesNotMatch(authorization, /payment|payout|wallet|billing/i);
+  assert.match(userActions, /Administrators cannot apply privileged account actions to themselves/);
+  assert.match(userActions, /Reason and category are required/);
+  assert.match(userActions, /admin_action_events/);
+  assert.match(settings, /Monetization cannot be enabled in the free MVP/);
+  assert.match(migration, /revoke all on table public\.admin_action_events/);
+});
+
+test("God Mode is a short-lived, MFA-backed, audited SUPER_ADMIN elevation without a backdoor", async () => {
+  const god = await read("src/lib/auth/godMode.ts");
+  const session = await read("src/app/api/admin/god/session/route.ts");
+  const admins = await read("src/app/api/admin/god/admins/route.ts");
+  const sensitive = await read("src/app/api/admin/god/sensitive-access/route.ts");
+  const migration = await read("supabase/migrations/20260812_super_admin_elevation.sql");
+  assert.match(god, /GOD_MODE_TTL_SECONDS = 15 \* 60/);
+  assert.match(god, /createHash\("sha256"\)/);
+  assert.match(god, /httpOnly: true/);
+  assert.match(god, /sameSite: "strict"/);
+  assert.match(god, /actor\.role !== "SUPER_ADMIN"/);
+  assert.match(session, /adminSessionFresh\(auth\.actor, 5 \* 60\)/);
+  assert.match(session, /confirmation !== "ENTER GOD MODE"/);
+  assert.match(session, /GOD_MODE_ENTERED/);
+  assert.match(session, /GOD_MODE_EXITED/);
+  assert.match(admins, /last active SUPER_ADMIN cannot remove or suspend themselves/i);
+  assert.match(sensitive, /valid moderation or privacy case reference is required/);
+  assert.match(sensitive, /NO_CREDENTIAL_ACCESS/);
+  assert.match(migration, /revoke all on table public\.admin_assignments/);
+  assert.doesNotMatch(god + session, /master password|bypass URL|hardcoded.*email/i);
+});
+
+test("production member surfaces do not inject fabricated profiles, feeds, relationships, or visitors", async () => {
+  const dashboard = await read("src/app/dashboard/page.tsx");
+  const profile = await read("src/app/profile/[id]/page.tsx");
+  const search = await read("src/components/discovery/SearchBar.tsx");
+  const features = await read("src/lib/features.ts");
+  assert.doesNotMatch(dashboard, /MOCK_PROFILES|INITIAL_FEED_POSTS|RECENT_VISITORS|localStorage/);
+  assert.doesNotMatch(profile, /MOCK_PROFILES\[0\]/);
+  assert.doesNotMatch(search, /MOCK_PROFILES/);
+  assert.match(features, /"\/creators"/);
+  assert.match(features, /"\/communities"/);
+});
+
+test("legacy admin route cannot mount browser authority or fabricated operational data", async () => {
+  const page = await read("src/app/admin/page.tsx");
+  const center = await read("src/components/admin/AdminCommandCenter.tsx");
+  assert.doesNotMatch(page, /localStorage|userStore|MOCK_|impersonate|wallet|payout/i);
+  assert.doesNotMatch(center, /\["\/admin\/communities"|\["\/admin\/events"|\["\/admin\/live"/);
+});
+
+test("canonical profile has no browser media stores or development fixtures", async () => {
+  const profile = await read("src/app/profile/[id]/page.tsx");
+  assert.doesNotMatch(profile, /localStorage|NODE_ENV|mediaService|MOCK_|INITIAL_/);
+  assert.match(profile, /api\/public\/media\?ownerId=/);
+  assert.match(profile, /api\/public\/albums\?ownerId=/);
+  assert.match(profile, /api\/connections/);
+  assert.match(profile, /api\/blocks/);
+});
+
+test("settings uses durable media uploads and exposes no fake blocked users or push controls", async () => {
+  const settings = await read("src/app/settings/page.tsx");
+  assert.match(settings, /uploadFileToR2\(/);
+  assert.match(settings, /kind === "avatar" \? "avatars" : "covers"/);
+  assert.match(settings, /await updateUserProfile\(nextUser, nextProfile\)/);
+  assert.doesNotMatch(settings, /FileReader|MOCK_SAFETY_SETTINGS|spammer_bot_99|unwanted_contact/);
+  assert.doesNotMatch(settings, /Mobile Push Notification Controls|Livestream Start Notifications/);
+});
+
+test("client identity is restored only from the verified server session", async () => {
+  const context = await read("src/context/AuthContext.tsx");
+  assert.match(context, /fetch\("\/api\/auth\/session"/);
+  assert.doesNotMatch(context, /intimo_user_data/);
+  assert.doesNotMatch(context, /setUser\(parsedUser\)/);
+  assert.doesNotMatch(context, /dateOfBirth: "1998-05-15"/);
+});
+
+test("identity comes only from a revalidated Supabase Auth user", async () => {
+  const session = await read("src/lib/auth/serverSession.ts");
+  assert.match(session, /auth\.getUser\(\)/);
+  assert.doesNotMatch(session, /auth\.getSession\(\)/);
+  assert.match(session, /email_confirmed_at/);
+  assert.match(session, /currentLevel === "aal2"/);
+  const confirm = await read("src/app/auth/confirm/route.ts");
+  assert.match(confirm, /verifyOtp/);
+  assert.match(confirm, /safeReturnTo/);
+});
+
+test("public media requires adult declaration, moderation approval, and member access for explicit content", async () => {
+  const declaration = await read("src/lib/auth/ageDeclaration.ts");
+  const publicFile = await read("src/app/api/public/media/[id]/route.ts");
+  const memberFile = await read("src/app/api/media/[id]/route.ts");
+  const migration = await read("supabase/migrations/20260814_public_community_content.sql");
+  const ratingMigration = await read("supabase/migrations/20260823_explicit_media_and_photo_verification.sql");
+  assert.match(declaration, /createHmac\("sha256"/);
+  assert.match(declaration, /timingSafeEqual/);
+  assert.match(publicFile, /verifyAgeDeclarationValue/);
+  assert.match(publicFile, /\.eq\("visibility", "PUBLIC"\)/);
+  assert.match(publicFile, /\.eq\("moderation_status", "APPROVED"\)/);
+  assert.match(publicFile, /content_rating/);
+  assert.match(publicFile, /Sign in to view explicit media/);
+  assert.match(publicFile, /hasAdultAccess/);
+  assert.match(ratingMigration, /default 'EXPLICIT'/);
+  assert.match(memberFile, /moderationStatus !== "APPROVED"/);
+  assert.match(migration, /PENDING_REVIEW/);
+  assert.match(migration, /revoke all on table public\.content_posts/);
+});
+
+test("notifications, saves, comments, and unread messages are durable and server-owned", async () => {
+  const notifications = await read("src/app/api/notifications/route.ts");
+  const notificationPage = await read("src/app/notifications/page.tsx");
+  const messages = await read("src/app/api/messages/route.ts");
+  const saves = await read("src/app/api/saved-items/route.ts");
+  const comments = await read("src/app/api/comments/route.ts");
+  assert.match(notifications, /resolveServerActor\(req\)/);
+  assert.match(notifications, /\.eq\("user_id", auth\.actor\.profileId\)/);
+  assert.match(notifications, /safeTargetLink/);
+  assert.match(notifications, /appendDurableAudit/);
+  assert.match(notifications, /NOTIFICATIONS_DELETE_ALL/);
+  assert.doesNotMatch(notificationPage, /localStorage|notificationStore/);
+  assert.match(messages, /unreadCount =/);
+  assert.match(messages, /type: "NEW_MESSAGE"/);
+  assert.match(saves, /resolveContentTarget/);
+  assert.match(saves, /profile_id: actor\.actor\.profileId/);
+  assert.match(saves, /CONTENT_SAVE/);
+  assert.match(saves, /CONTENT_UNSAVE/);
+  assert.match(comments, /resolveContentTarget/);
+  assert.match(comments, /author_id: actor\.actor\.profileId/);
+  assert.match(comments, /COMMENT_CREATE/);
+  assert.match(comments, /COMMENT_ADMIN_REMOVE/);
+});
+
+test("shared actor boundary blocks inactive accounts and unified search enforces privacy", async () => {
+  const actor = await read("src/lib/auth/serverActor.ts");
+  const search = await read("src/app/api/search/route.ts");
+  assert.match(actor, /accountStatus/);
+  assert.match(actor, /actor\.accountStatus === "ACTIVE"/);
+  assert.match(search, /user_blocks/);
+  assert.match(search, /account_status", "ACTIVE"/);
+  assert.match(search, /ranking: "category_then_published_or_created_desc_then_id_asc"/);
+  assert.doesNotMatch(search, /openai|anthropic|embedding|vector/i);
+});
+
+test("dating saves and reactivation use durable server APIs", async () => {
+  const page = await read("src/app/dating/page.tsx");
+  const route = await read("src/app/api/dating-ads/[id]/route.ts");
+  const collection = await read("src/app/api/dating-ads/route.ts");
+  assert.match(page, /api\/saved-items/);
+  assert.doesNotMatch(page, /intimo_all_dating_ads/);
+  assert.doesNotMatch(page, /FileReader|photoPreview|handlePhotoSelect/);
+  assert.match(route, /DATING_AD_REACTIVATE/);
+  assert.match(route, /eq\("author_id", actor\.actor\.profileId\)/);
+  assert.match(route, /appendDurableAudit/);
+  assert.match(collection, /appendDurableAudit/);
+});
+
+test("identity verification evidence is owner-submitted, private, and admin-audited", async () => {
+  const submission = await read("src/app/api/verification/route.ts");
+  const evidence = await read("src/app/api/admin/verification/[id]/evidence/route.ts");
+  const context = await read("src/context/AuthContext.tsx");
+  assert.match(submission, /eq\("owner_id", actor\.actor\.profileId\)/);
+  assert.match(submission, /media\.visibility !== "PRIVATE"/);
+  assert.match(submission, /verification_type: "IDENTITY"/);
+  assert.match(evidence, /requireAdminPermission\(req, "verification:view"\)/);
+  assert.match(evidence, /VERIFICATION_EVIDENCE_VIEW/);
+  assert.doesNotMatch(context, /impersonateUser|fallbackUser|intimo_original_admin_user/);
+});
+
+test("media authorization and identity verification append durable audit evidence before disclosure", async () => {
+  const presign = await read("src/app/api/media/presign-upload/route.ts");
+  const verification = await read("src/app/api/verification/route.ts");
+  const evidence = await read("src/app/api/admin/verification/[id]/evidence/route.ts");
+  for (const route of [presign, verification, evidence]) assert.match(route, /appendDurableAudit/);
+  assert.match(presign, /Upload authorization could not be audited/);
+  assert.match(evidence, /Verification evidence access could not be audited/);
+  assert.ok(evidence.indexOf("appendDurableAudit(db") < evidence.indexOf("NextResponse.redirect"));
+});
+
+test("privileged admin decisions use explicit inline forms, not ambiguous browser prompts", async () => {
+  const consoleSource = await read("src/components/admin/AdminCommandCenter.tsx");
+  assert.doesNotMatch(consoleSource, /window\.prompt|\balert\(/);
+  assert.match(consoleSource, /Cancel without changes/);
+  assert.match(consoleSource, /Auditable reason/);
+});
+
+test("messaging entry points use the durable message screen, not a local chat store", async () => {
+  const layout = await read("src/app/layout.tsx");
+  const dating = await read("src/app/dating/page.tsx");
+  const chat = await read("src/components/chat/ChatWindow.tsx");
+  const messages = await read("src/app/api/messages/route.ts");
+  const messagesPage = await read("src/app/messages/page.tsx");
+  assert.doesNotMatch(layout, /FloatingChat/);
+  assert.doesNotMatch(dating, /intimo_open_chat|intimo_chat_messages/);
+  assert.match(dating, /\/messages\?user=/);
+  assert.doesNotMatch(chat, /Hello! Glad to connect|images\.unsplash\.com|setTimeout|Disappearing Mode|encrypted message/i);
+  assert.match(chat, /useState<Message\[]>\(\[\]\)/);
+  assert.match(messages, /require_verification_to_message/);
+  assert.match(messages, /Recipient accepts messages from verified members only/);
+  assert.match(messages, /appendDurableAudit/);
+  assert.match(messages, /limit \+ 1/);
+  assert.match(messages, /nextCursor/);
+  assert.match(messages, /MESSAGES_READ/);
+  assert.match(chat, /Load older messages/);
+  assert.match(messagesPage, /searchParams\.get\("user"\) \|\| searchParams\.get\("peerId"\)/);
+  assert.match(messagesPage, /loadOlderConversations/);
+  assert.match(messages, /Invalid conversation cursor/);
+  assert.match(chat, /Load older conversations/);
+});
+
+test("albums use canonical media objects with owner, moderation, public privacy, and admin parity", async () => {
+  const migration = await read("supabase/migrations/20260817_canonical_media_albums.sql");
+  const owner = await read("src/app/api/albums/route.ts");
+  const assignment = await read("src/app/api/albums/[id]/media/route.ts");
+  const publicAlbum = await read("src/app/api/public/albums/[id]/route.ts");
+  const admin = await read("src/app/api/admin/albums/route.ts");
+  assert.match(migration, /references public\.media_objects/);
+  assert.match(migration, /intimo_set_album_media/);
+  assert.match(migration, /revoke all.*anon,authenticated/);
+  assert.match(owner, /owner_id: auth\.actor\.profileId/);
+  assert.match(assignment, /p_owner_id: auth\.actor\.profileId/);
+  assert.match(publicAlbum, /eq\("moderation_status","APPROVED"\)/);
+  assert.match(publicAlbum, /eq\("visibility","PUBLIC"\)/);
+  assert.match(admin, /requireAdminPermission\(req,"content:moderate"\)/);
+  assert.match(admin, /Every photo in a public album must be public, ready, and approved first/);
+});
+
+test("obsolete simulated media management and gated marketing claims are not mounted", async () => {
+  const gate = await read("src/components/landing/BehindTheDoorLanding.tsx");
+  assert.doesNotMatch(gate, /100%|invite-only|Encrypted 1-on-1|live topic chatrooms/i);
+  await assert.rejects(read("src/components/media/MediaManager.tsx"));
+});
+
+test("blocking is atomic, relationship-ending, and durably audited", async () => {
+  const migration = await read("supabase/migrations/20260818_transactional_blocking.sql");
+  const blocks = await read("src/app/api/blocks/route.ts");
+  const connections = await read("src/app/api/connections/route.ts");
+  const profile = await read("src/app/api/profile/me/route.ts");
+  assert.match(migration, /create or replace function public\.intimo_block_profile/);
+  assert.match(migration, /delete from public\.connections/);
+  assert.match(migration, /follower_id = p_blocked_id and followed_id = p_blocker_id/);
+  assert.match(migration, /revoke all.*anon, authenticated/);
+  assert.match(blocks, /rpc\("intimo_block_profile"/);
+  for (const route of [blocks, connections, profile]) assert.match(route, /appendDurableAudit/);
+});
+
+test("anonymous search stays privacy-filtered while the redundant search page routes to people discovery", async () => {
+  const route = await read("src/app/api/public/search/route.ts");
+  const page = await read("src/app/search/page.tsx");
+  assert.match(route, /eq\("profile_visibility", "EVERYONE"\)/);
+  assert.match(route, /eq\("public_profile_visibility", true\)/);
+  assert.match(route, /eq\("visibility", "PUBLIC"\)/);
+  assert.match(route, /eq\("moderation_status", "APPROVED"\)/);
+  assert.match(route, /eq\("processing_status", "READY"\)/);
+  assert.match(route, /privacy: "anonymous_minimized_public_records_only"/);
+  assert.doesNotMatch(route, /sexual_orientation|auth_id|email/);
+  assert.match(page, /redirect\("\/people"\)/);
+});
+
+test("demo profiles are staging-only, visibly labeled, reversible, and cannot impersonate activity", async () => {
+  const seed = await read("scripts/seed-staging-demo.mjs");
+  const migration = await read("supabase/migrations/20260819_demo_content_marker.sql");
+  const publicRoute = await read("src/app/api/public/community/route.ts");
+  const home = await read("src/components/community/PublicCommunityHome.tsx");
+  const people = await read("src/app/people/page.tsx");
+  assert.match(seed, /const DEMO_COUNT = 100/);
+  assert.match(seed, /INTIMO_ENVIRONMENT.*staging/);
+  assert.match(seed, /INTIMO_STAGING_SUPABASE_PROJECT_REF/);
+  assert.match(seed, /INTIMO_PRODUCTION_SUPABASE_PROJECT_REF/);
+  assert.match(seed, /SEED_INTIMO_STAGING_DEMOS/);
+  assert.match(seed, /@intimo\.invalid/);
+  assert.match(seed, /verification_status: "UNVERIFIED"/);
+  assert.match(seed, /allow_direct_messages: false/);
+  assert.match(seed, /show_online_status: false/);
+  assert.match(seed, /is_demo: true/);
+  assert.match(seed, /delete\(\).*\.eq\("is_demo", true\).*\.like\("auth_id"/s);
+  assert.match(migration, /is_demo boolean not null default false/);
+  assert.match(publicRoute, /demoContentPresent/);
+  for (const source of [home, people]) {
+    assert.match(source, /Staging demo content/);
+    assert.match(source, /fictional/);
+  }
+});
+
+test("auth emails are server-sent, enumeration-safe and rate-limited", async () => {
+  const route = await read("src/app/api/auth/email/route.ts");
+  assert.match(route, /auth\.admin\.generateLink/);
+  assert.match(route, /checkRateLimit\(`auth-email:/);
+  assert.match(route, /safeReturnTo\(body\.next\)/);
+  assert.match(route, /body\.adult !== true \|\| body\.terms !== true/);
+  assert.match(route, /\/auth\/confirm\?token_hash=/);
+  assert.match(route, /Already registered: send a sign-in link instead/);
+});

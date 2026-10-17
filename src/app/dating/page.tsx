@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useRef, Suspense } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
+import { ReportModal } from "@/components/safety/ReportModal";
 import { SUPPORTED_COUNTRIES } from "@/lib/data/locations";
 import {
   Heart,
@@ -31,6 +32,7 @@ import {
   History,
   Trash2,
   Lock as LockIcon,
+  Flag,
 } from "lucide-react";
 
 export interface DatingAdItem {
@@ -73,219 +75,31 @@ const DATING_CATEGORIES = [
   "Man seeking couple",
   "Couple seeking man",
   "Lovers asylums",
-  "Woman offering services",
-  "Man offering services",
-  "Couple offering services",
-  "Strip-tease",
-  "Photographing - offer",
-  "Jobs in the erotic industry - offer",
-  "Market - offer",
-  "Incall apartments and clubs",
-  "Photographing - request",
-  "Jobs in the erotic industry - request",
-  "Market - request",
-  "Erotic services",
   "Transgender seeking",
-  "Transgender offering services",
-  "Massage/Sauna",
-  "S/M studios",
 ];
 
-const INITIAL_ADS: DatingAdItem[] = [
-  {
-    id: "ad-101",
-    authorId: "usr-1",
-    authorName: "Elena V.",
-    authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
-    isVerified: true,
-    category: "Woman seeking man",
-    title: "Discreet Fine Dining & Champagne Evening",
-    text: "Looking for a refined, open-minded gentleman for private dining in Prague. Value discretion, chemistry, and genuine conversation.",
-    photoUrl: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
-    validityDays: 7,
-    country: "Czech Republic",
-    region: "Hlavní město Praha",
-    allowedReplyGenders: ["♂"],
-    transgenderOption: "Including trans",
-    minAge: 25,
-    maxAge: 55,
-    requireVip: false,
-    requireMedia: false,
-    requireVerified: true,
-    createdAt: "2 hours ago",
-    status: "active",
-    daysLeft: 7,
-    saved: false,
-  },
-  {
-    id: "ad-102",
-    authorId: "usr-2",
-    authorName: "Marco & Sofia",
-    authorAvatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=150&q=80",
-    isVerified: true,
-    category: "Couple seeking woman",
-    title: "French Riviera Yacht & Private Lounge Weekend",
-    text: "Discreet couple inviting a sensual female companion for a yachting weekend in Monaco. Classy aesthetic and private suite.",
-    photoUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
-    validityDays: 14,
-    country: "Monaco",
-    region: "Monte Carlo",
-    allowedReplyGenders: ["♀"],
-    transgenderOption: "Including trans",
-    minAge: 21,
-    maxAge: 40,
-    requireVip: true,
-    requireMedia: true,
-    requireVerified: true,
-    createdAt: "5 hours ago",
-    status: "active",
-    daysLeft: 14,
-    saved: true,
-  },
-  {
-    id: "ad-103",
-    authorId: "me",
-    authorName: "Prince Charming",
-    authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
-    isVerified: true,
-    category: "Man seeking woman",
-    title: "Prague Old Town Cocktail & Salon Connection",
-    text: "Looking for an attractive, spontaneous partner to explore private member lounges and cocktail bars in Prague this weekend.",
-    photoUrl: "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=800&q=80",
-    validityDays: 7,
-    country: "Czech Republic",
-    region: "Hlavní město Praha",
-    allowedReplyGenders: ["♀"],
-    transgenderOption: "Including trans",
-    minAge: 21,
-    maxAge: 45,
-    requireVip: false,
-    requireMedia: false,
-    requireVerified: true,
-    createdAt: "1 day ago",
-    status: "active",
-    daysLeft: 6,
-    saved: false,
-  },
-  {
-    id: "ad-104",
-    authorId: "usr-3",
-    authorName: "Lucas & Mia",
-    authorAvatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=150&q=80",
-    isVerified: true,
-    category: "Couple seeking couple",
-    title: "Swingers Party & Private Villa Gathering",
-    text: "Hosting a discreet private villa salon for like-minded couples. Refreshments, sauna, and relaxed atmosphere provided.",
-    photoUrl: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80",
-    validityDays: 30,
-    country: "Germany",
-    region: "Berlin",
-    allowedReplyGenders: ["👫"],
-    transgenderOption: "Including trans",
-    minAge: 25,
-    maxAge: 50,
-    requireVip: false,
-    requireMedia: true,
-    requireVerified: true,
-    createdAt: "2 days ago",
-    status: "active",
-    daysLeft: 28,
-    saved: false,
-  },
-  {
-    id: "ad-105",
-    authorId: "me",
-    authorName: "Prince Charming",
-    authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
-    isVerified: true,
-    category: "Man seeking woman",
-    title: "Discreet Opera & Fine Dining Experience in Vienna",
-    text: "Inviting an elegant companion for an evening at the Vienna State Opera followed by wine at a private lounge.",
-    photoUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
-    validityDays: 7,
-    country: "Austria",
-    region: "Vienna",
-    allowedReplyGenders: ["♀"],
-    transgenderOption: "Including trans",
-    minAge: 21,
-    maxAge: 45,
-    requireVip: false,
-    requireMedia: false,
-    requireVerified: true,
-    createdAt: "10 days ago",
-    status: "expired",
-    daysLeft: 0,
-    saved: false,
-  },
-];
-
-import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
-import { getAllActiveAds, createAd, deleteAd } from "@/lib/supabase/datingAdService";
+import { PublicDatingBrowse } from "@/components/community/PublicDatingBrowse";
 
 function DatingMarketplaceContent() {
   const { user, profile } = useAuth();
   const searchParams = useSearchParams();
 
-  // Lazy load local ads first so newly created ads are never lost on mount
-  const [adsList, setAdsList] = useState<DatingAdItem[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("intimo_all_dating_ads");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
-          }
-        } catch (e) {
-          console.error("Failed to parse local dating ads:", e);
-        }
-      }
-    }
-    return INITIAL_ADS;
-  });
+  const [adsList, setAdsList] = useState<DatingAdItem[]>([]);
+  const [activeTab, setActiveTab] = useState<"browse" | "my-ads">("browse");
 
   const [isLoadingAds, setIsLoadingAds] = useState(true);
 
-  // Helper function to safely read and merge local ads
-  const syncLocalAds = React.useCallback(() => {
-    if (typeof window === "undefined") return;
-    const saved = localStorage.getItem("intimo_all_dating_ads");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setAdsList((prev) => {
-            const map = new Map<string, DatingAdItem>();
-            // Add freshly created local ads first
-            parsed.forEach((ad: DatingAdItem) => map.set(ad.id, ad));
-            // Keep existing ads if not present in map
-            prev.forEach((ad: DatingAdItem) => {
-              if (!map.has(ad.id)) {
-                map.set(ad.id, ad);
-              }
-            });
-            return Array.from(map.values());
-          });
-        }
-      } catch (e) {
-        console.error("Failed to parse local dating ads:", e);
-      }
-    }
-  }, []);
-
-  // Fetch live dating ads from Supabase on mount & merge with local ads
+  // Fetch durable dating ads through the authenticated server boundary.
   React.useEffect(() => {
     async function loadAds() {
       try {
-        const { data, error } = await getAllActiveAds();
-        if (data && data.length > 0) {
-          setAdsList((prev) => {
-            const map = new Map<string, DatingAdItem>();
-            prev.forEach((ad) => map.set(ad.id, ad));
-            data.forEach((ad) => map.set(ad.id, ad));
-            return Array.from(map.values());
-          });
-        }
+        const response = await fetch(activeTab === "my-ads" ? "/api/dating-ads?mine=true" : "/api/dating-ads", { cache: "no-store", credentials: "same-origin" });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "Dating ads unavailable");
+        const savedResponse = await fetch("/api/saved-items", { cache: "no-store", credentials: "same-origin" });
+        const savedPayload = savedResponse.ok ? await savedResponse.json() : { items: [] };
+        const savedIds = new Set((savedPayload.items || []).filter((item: any) => item.target_type === "DATING_AD").map((item: any) => item.target_id));
+        setAdsList(Array.isArray(payload.ads) ? payload.ads.map((ad: DatingAdItem) => ({ ...ad, saved: savedIds.has(ad.id) })) : []);
       } catch (e) {
         console.error("Failed to load dating ads from Supabase:", e);
       } finally {
@@ -293,15 +107,14 @@ function DatingMarketplaceContent() {
       }
     }
     loadAds();
-  }, []);
+  }, [activeTab]);
 
   const [selectedCategory, setSelectedCategory] = useState("Show all categories");
   const [selectedCountry, setSelectedCountry] = useState("All Countries");
   const [selectedRegion, setSelectedRegion] = useState("All Cities / Regions");
 
-  // Read category / tab from URL searchParams & sync local storage ads on navigation/focus
+  // Read durable navigation filters from the URL.
   React.useEffect(() => {
-    syncLocalAds();
     const cat = searchParams?.get("category");
     const tab = searchParams?.get("tab");
     if (cat) {
@@ -313,14 +126,7 @@ function DatingMarketplaceContent() {
       setActiveTab("my-ads");
     }
 
-    const handleUpdate = () => syncLocalAds();
-    window.addEventListener("intimo_ads_updated", handleUpdate);
-    window.addEventListener("focus", handleUpdate);
-    return () => {
-      window.removeEventListener("intimo_ads_updated", handleUpdate);
-      window.removeEventListener("focus", handleUpdate);
-    };
-  }, [searchParams, syncLocalAds]);
+  }, [searchParams]);
 
   const [ageRange, setAgeRange] = useState<[number, number]>([18, 100]);
   const [activeFilterPill, setActiveFilterPill] = useState<string | null>(null);
@@ -358,21 +164,6 @@ function DatingMarketplaceContent() {
     }
   };
 
-  // Photo Attachment File
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        setPhotoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const toggleReplyGender = (gender: string) => {
     if (formReplyGenders.includes(gender)) {
       setFormReplyGenders(formReplyGenders.filter((g) => g !== gender));
@@ -381,8 +172,8 @@ function DatingMarketplaceContent() {
     }
   };
 
-  const [activeTab, setActiveTab] = useState<"browse" | "my-ads">("browse");
   const [restrictedNoticeAd, setRestrictedNoticeAd] = useState<{ ad: DatingAdItem; reason: string } | null>(null);
+  const [reportAd, setReportAd] = useState<DatingAdItem | null>(null);
 
   const handleShowAllActiveAds = () => {
     setActiveTab("browse");
@@ -442,14 +233,6 @@ function DatingMarketplaceContent() {
       };
     }
 
-    const isUserVip = (profile as any)?.tier === "VIP" || (profile as any)?.membershipTier === "VIP" || user?.role === "ADMIN";
-    if (ad.requireVip && !isUserVip) {
-      return {
-        canReply: false,
-        reason: "Replies restricted by creator: Only users who have bought a VIP membership can reply to this ad.",
-      };
-    }
-
     const hasMediaAlbums = Boolean(
       ((profile as any)?.albums && (profile as any).albums.length > 0) ||
       ((profile as any)?.videos && (profile as any).videos.length > 0) ||
@@ -466,43 +249,21 @@ function DatingMarketplaceContent() {
     return { canReply: true };
   };
 
-  const handleReactivateAd = (id: string) => {
-    setAdsList((prev) => {
-      const updated = prev.map((ad) =>
-        ad.id === id
-          ? {
-              ...ad,
-              status: "active" as const,
-              daysLeft: ad.validityDays,
-              createdAt: "Just now",
-            }
-          : ad
-      );
-      if (typeof window !== "undefined") {
-        localStorage.setItem("intimo_all_dating_ads", JSON.stringify(updated));
-      }
-      return updated;
-    });
+  const handleReactivateAd = async (id: string) => {
+    const response = await fetch(`/api/dating-ads/${encodeURIComponent(id)}`, { method: "PATCH", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "REACTIVATE" }) });
+    if (response.ok) setAdsList((prev) => prev.map((ad) => ad.id === id ? { ...ad, status: "active" as const, daysLeft: ad.validityDays, createdAt: "Just now" } : ad));
   };
 
-  const handleDeleteAd = (id: string) => {
-    setAdsList((prev) => {
-      const updated = prev.filter((ad) => ad.id !== id);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("intimo_all_dating_ads", JSON.stringify(updated));
-      }
-      return updated;
-    });
+  const handleDeleteAd = async (id: string) => {
+    const response = await fetch(`/api/dating-ads/${encodeURIComponent(id)}`, { method: "DELETE", credentials: "same-origin" });
+    if (response.ok) setAdsList((prev) => prev.filter((ad) => ad.id !== id));
   };
 
-  const handleToggleSaveAd = (id: string) => {
-    setAdsList((prev) => {
-      const updated = prev.map((ad) => (ad.id === id ? { ...ad, saved: !ad.saved } : ad));
-      if (typeof window !== "undefined") {
-        localStorage.setItem("intimo_all_dating_ads", JSON.stringify(updated));
-      }
-      return updated;
-    });
+  const handleToggleSaveAd = async (id: string) => {
+    const current = adsList.find((ad) => ad.id === id);
+    if (!current) return;
+    const response = await fetch(current.saved ? `/api/saved-items?${new URLSearchParams({ targetType: "DATING_AD", targetId: id })}` : "/api/saved-items", current.saved ? { method: "DELETE", credentials: "same-origin" } : { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ targetType: "DATING_AD", targetId: id }) });
+    if (response.ok) setAdsList((prev) => prev.map((ad) => ad.id === id ? { ...ad, saved: !current.saved } : ad));
   };
 
   const filteredAds = adsList.filter((ad) => {
@@ -530,7 +291,7 @@ function DatingMarketplaceContent() {
   });
 
   if (!user) {
-    return <BehindTheDoorLanding />;
+    return <PublicDatingBrowse />;
   }
 
   return (
@@ -824,6 +585,8 @@ function DatingMarketplaceContent() {
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
+
+                      <button type="button" onClick={() => setReportAd(ad)} className="p-2 rounded-xl border border-white/10 bg-white/5 text-velora-textMuted hover:text-rose-400 hover:border-rose-500/40 transition-colors" title="Report this dating ad" aria-label={`Report ${ad.title}`}><Flag className="h-3.5 w-3.5" /></button>
                     </>
                   ) : (
                     <>
@@ -850,23 +613,7 @@ function DatingMarketplaceContent() {
                                size="sm"
                                className="text-xs font-bold uppercase gap-1.5 shadow-gold-glow"
                                onClick={() => {
-                                 if (typeof window !== "undefined") {
-                                   window.dispatchEvent(
-                                     new CustomEvent("intimo_open_chat", {
-                                       detail: {
-                                         id: ad.authorId,
-                                         displayName: ad.authorName,
-                                         avatarUrl: ad.authorAvatar,
-                                         genderSymbol: "👫",
-                                         verified: ad.isVerified ?? true,
-                                         location: ad.region || ad.country || "Prague, Czech Republic",
-                                         followersCount: 8,
-                                         photoCount: 12,
-                                         videoCount: 4,
-                                       },
-                                     })
-                                   );
-                                 }
+                                 window.location.assign(`/messages?user=${encodeURIComponent(ad.authorId)}&datingAd=${encodeURIComponent(ad.id)}`);
                                }}
                              >
                                <MessageSquare className="w-3.5 h-3.5" /> Reply to Ad
@@ -922,11 +669,6 @@ function DatingMarketplaceContent() {
                       ✓ Verified Only
                     </span>
                   )}
-                  {ad.requireVip && (
-                    <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30 font-bold">
-                      ⭐ VIP Only
-                    </span>
-                  )}
                 </div>
               </div>
             </Card>
@@ -979,6 +721,7 @@ function DatingMarketplaceContent() {
           </Card>
         </div>
       )}
+      <ReportModal isOpen={Boolean(reportAd)} onClose={() => setReportAd(null)} targetUsername={reportAd?.authorName} targetProfileId={reportAd?.authorId} contentType="POST" contentId={reportAd?.id} />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Message, Conversation, AttachmentType, MessageStatus } from "@/types";
+import { Message, Conversation } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -12,7 +12,6 @@ import {
   MessageSquare,
   Send,
   Lock,
-  Image as ImageIcon,
   MoreVertical,
   ShieldAlert,
   Ban,
@@ -20,109 +19,102 @@ import {
   Check,
   CheckCheck,
   Eye,
-  Clock,
-  Sparkles,
-  Heart,
   UserCheck,
   MapPin,
   X,
-  FileImage,
-  Flame,
   Search,
-  Crown,
 } from "lucide-react";
 
 interface ChatWindowProps {
   conversations: Conversation[];
   activeConversation: Conversation;
   onSelectConversation: (conv: Conversation) => void;
+  onLoadOlderConversations?: () => void;
+  loadingOlderConversations?: boolean;
+  datingAdId?: string | null;
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({
   conversations,
   activeConversation,
   onSelectConversation,
+  onLoadOlderConversations,
+  loadingOlderConversations = false,
+  datingAdId = null,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "m-1",
-      conversationId: activeConversation.id,
-      senderId: activeConversation.participant.userId,
-      senderName: activeConversation.participant.displayName,
-      senderAvatar: activeConversation.participant.avatarUrl,
-      content: activeConversation.lastMessage?.content || "Hello! Glad to connect on Intimo.",
-      status: "READ",
-      createdAt: activeConversation.lastMessage?.createdAt || "10:30 AM",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [sendError, setSendError] = useState("");
 
-  // Load chat messages from localStorage if available
+  // Load durable messages through the authenticated participant boundary.
   useEffect(() => {
-    if (typeof window === "undefined" || !activeConversation) return;
+    if (!activeConversation) return;
     const participantId = activeConversation.participant.id || activeConversation.participant.userId;
-    const storageKey = `intimo_chat_${participantId}`;
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const formatted: Message[] = parsed.map((item: any) => ({
-            id: item.id || `m-${Date.now()}`,
-            conversationId: activeConversation.id,
-            senderId: item.isSelf ? "user-current" : participantId,
-            senderName: item.isSelf ? "You" : activeConversation.participant.displayName,
-            senderAvatar: item.isSelf
-              ? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=800&q=80"
-              : activeConversation.participant.avatarUrl,
-            content: item.text || item.content || "",
-            status: item.status || "READ",
-            createdAt: item.timestamp || item.createdAt || "Recently",
-          }));
-          setMessages(formatted);
-          return;
-        }
-      } catch (e) {
-        console.error("Failed to parse saved chat thread:", e);
-      }
-    }
-
-    // Default fallback messages
-    setMessages([
-      {
-        id: "m-1",
-        conversationId: activeConversation.id,
-        senderId: activeConversation.participant.userId,
-        senderName: activeConversation.participant.displayName,
-        senderAvatar: activeConversation.participant.avatarUrl,
-        content: activeConversation.lastMessage?.content || "Hello! Glad to connect on Intimo.",
-        status: "READ",
-        createdAt: activeConversation.lastMessage?.createdAt || "10:30 AM",
-      },
-    ]);
+    let active = true;
+    fetch(`/api/messages?peerId=${encodeURIComponent(participantId)}`, { credentials: "same-origin" })
+      .then(async (response) => response.ok ? response.json() : Promise.reject(new Error("Messages unavailable")))
+      .then((payload) => {
+        if (!active) return;
+        setMessages((payload.messages || []).map((item: any) => ({
+          id: item.id,
+          conversationId: item.conversation_id,
+          senderId: item.sender_id === participantId ? participantId : "user-current",
+          senderName: item.sender_id === participantId ? activeConversation.participant.displayName : "You",
+          senderAvatar: item.sender_id === participantId ? activeConversation.participant.avatarUrl : "",
+          content: item.content,
+          status: item.status,
+          createdAt: new Date(item.created_at).toLocaleString(),
+        })));
+        setNextCursor(payload.pagination?.nextCursor || null);
+      })
+      .catch(() => { if (active) setMessages([]); });
+    return () => { active = false; };
   }, [activeConversation]);
 
   const [inputMessage, setInputMessage] = useState("");
-  const [attachmentMode, setAttachmentMode] = useState<AttachmentType>("STANDARD_IMAGE");
-  const [isDisappearing, setIsDisappearing] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [blockModalOpen, setBlockModalOpen] = useState(false);
   const [showProfilePreview, setShowProfilePreview] = useState(false);
 
-  const handleSendMessage = () => {
+  const loadOlder = async () => {
+    if (!nextCursor || loadingOlder) return;
+    setLoadingOlder(true);
+    const participantId = activeConversation.participant.id || activeConversation.participant.userId;
+    const response = await fetch(`/api/messages?peerId=${encodeURIComponent(participantId)}&before=${encodeURIComponent(nextCursor)}`, { credentials: "same-origin", cache: "no-store" });
+    const payload = await response.json().catch(() => ({}));
+    if (response.ok) {
+      const older = (payload.messages || []).map((item: any) => ({ id: item.id, conversationId: item.conversation_id, senderId: item.sender_id === participantId ? participantId : "user-current", senderName: item.sender_id === participantId ? activeConversation.participant.displayName : "You", senderAvatar: item.sender_id === participantId ? activeConversation.participant.avatarUrl : "", content: item.content, status: item.status, createdAt: new Date(item.created_at).toLocaleString() }));
+      setMessages((current) => [...older, ...current.filter((message) => !older.some((item: Message) => item.id === message.id))]);
+      setNextCursor(payload.pagination?.nextCursor || null);
+    }
+    setLoadingOlder(false);
+  };
+
+  const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
+    setSendError("");
+
+    const participantId = activeConversation.participant.id || activeConversation.participant.userId;
+    const response = await fetch("/api/messages", {
+      method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ receiverId: participantId, content: inputMessage.trim(), datingAdId }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setSendError(typeof payload.error === "string" ? payload.error : "Message could not be sent.");
+      return;
+    }
 
     const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     const newMsg: Message = {
-      id: "m-" + Date.now(),
+      id: payload.message?.id || "m-" + Date.now(),
       conversationId: activeConversation.id,
       senderId: "user-current",
       senderName: "You",
-      senderAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=800&q=80",
+      senderAvatar: "",
       content: inputMessage.trim(),
-      attachmentType: attachmentMode,
-      isDisappearing: isDisappearing,
-      disappearTimerSec: isDisappearing ? 10 : undefined,
       status: "SENT",
       createdAt: nowTime,
     };
@@ -131,58 +123,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     setMessages(updated);
     setInputMessage("");
 
-    // Sync to local storage intimo_chat_${participantId}
-    if (typeof window !== "undefined") {
-      const participantId = activeConversation.participant.id || activeConversation.participant.userId;
-      const storageKey = `intimo_chat_${participantId}`;
-      const chatWidgetFormat = updated.map((m) => ({
-        id: m.id,
-        senderId: m.senderId,
-        text: m.content,
-        timestamp: m.createdAt,
-        isSelf: m.senderId === "user-current",
-        status: m.status,
-      }));
-      localStorage.setItem(storageKey, JSON.stringify(chatWidgetFormat));
-
-      // Sync to central intimo_all_conversations
-      try {
-        const raw = localStorage.getItem("intimo_all_conversations");
-        let convs = raw ? JSON.parse(raw) : conversations;
-        const idx = convs.findIndex((c: any) => c.id === activeConversation.id || c.participant?.id === participantId);
-        if (idx >= 0) {
-          convs[idx].lastMessage = {
-            id: newMsg.id,
-            conversationId: activeConversation.id,
-            senderId: "user-current",
-            senderName: "You",
-            senderAvatar: "",
-            content: newMsg.content,
-            status: "SENT",
-            createdAt: nowTime,
-          };
-          convs[idx].updatedAt = nowTime;
-        }
-        localStorage.setItem("intimo_all_conversations", JSON.stringify(convs));
-        window.dispatchEvent(new Event("intimo_conversations_updated"));
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
-    // Delivery transition after 1s
-    setTimeout(() => {
-      setMessages((prev) =>
-        prev.map((msg) => (msg.id === newMsg.id ? { ...msg, status: "DELIVERED" } : msg))
-      );
-    }, 1000);
-
-    // Read transition after 2.5s
-    setTimeout(() => {
-      setMessages((prev) =>
-        prev.map((msg) => (msg.id === newMsg.id ? { ...msg, status: "READ" } : msg))
-      );
-    }, 2500);
   };
 
   const filteredConversations = conversations.filter((c) =>
@@ -255,9 +195,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                       {c.participant.verified && (
                         <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 fill-blue-400/20 shrink-0" />
                       )}
-                      {(c.participant as any).isVIP && (
-                        <Crown className="w-3 h-3 text-amber-400 fill-amber-400/20 shrink-0" />
-                      )}
                     </div>
                     <span className="text-[9px] font-mono text-velora-textMuted shrink-0 ml-1">
                       {c.lastMessage?.createdAt}
@@ -272,6 +209,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               </div>
             );
           })}
+          {onLoadOlderConversations && !searchQuery && (
+            <button type="button" onClick={onLoadOlderConversations} disabled={loadingOlderConversations} className="w-full rounded-xl border border-white/10 px-3 py-2 text-[11px] font-semibold text-velora-textMuted hover:border-amber-400/40 hover:text-amber-300 disabled:opacity-50">
+              {loadingOlderConversations ? "Loading older conversations…" : "Load older conversations"}
+            </button>
+          )}
         </div>
       </Card>
 
@@ -343,6 +285,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
         {/* Message Thread History */}
         <div className="flex-1 p-6 overflow-y-auto space-y-4">
+          {nextCursor && <div className="text-center"><Button variant="ghost" size="sm" onClick={() => void loadOlder()} disabled={loadingOlder}>{loadingOlder ? "Loading…" : "Load older messages"}</Button></div>}
           {messages.map((m) => {
             const isMe = m.senderId === "user-current";
             return (
@@ -362,14 +305,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                       : "glass-panel text-velora-textPrimary border-white/10 rounded-tl-none"
                   }`}
                 >
-                  {/* Disappearing Media Badge if applicable */}
-                  {m.isDisappearing && (
-                    <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-amber-300 mb-1">
-                      <Flame className="w-3 h-3 text-amber-400" />
-                      Disappearing Media (View Once)
-                    </div>
-                  )}
-
                   <p>{m.content}</p>
 
                   {/* Delivery Status Indicator for sent messages */}
@@ -388,33 +323,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
         </div>
 
-        {/* Message Input Box with Attachment Options */}
+        {/* Text messaging only until attachments have a moderated durable lifecycle. */}
         <div className="p-4 border-t border-white/10 bg-velora-card/60 space-y-2">
-          {/* Options Bar */}
-          <div className="flex items-center gap-2 text-xs">
-            <button
-              onClick={() => setIsDisappearing(!isDisappearing)}
-              className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase transition-all flex items-center gap-1 ${
-                isDisappearing
-                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                  : "bg-white/5 text-velora-textMuted hover:text-white"
-              }`}
-            >
-              <Flame className="w-3 h-3 text-amber-400" />
-              {isDisappearing ? "Disappearing Mode Active" : "Standard Photo"}
-            </button>
-          </div>
-
+          {datingAdId && <p className="text-[11px] text-amber-300">Replying to a dating ad. Its audience requirements are checked securely when you send.</p>}
+          {sendError && <p role="alert" className="text-[11px] text-rose-300">{sendError}</p>}
           <div className="flex items-center gap-3">
-            <button
-              className="p-2.5 rounded-2xl glass-panel text-velora-textMuted hover:text-velora-gold transition-colors"
-              title="Attach Photo"
-            >
-              <ImageIcon className="w-5 h-5" />
-            </button>
             <input
               type="text"
-              placeholder="Write a discreet encrypted message..."
+              placeholder="Write a private message…"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
@@ -432,6 +348,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         isOpen={reportModalOpen}
         onClose={() => setReportModalOpen(false)}
         targetUsername={activeConversation.participant.displayName}
+        targetProfileId={activeConversation.participant.id || activeConversation.participant.userId}
+        contentType="MESSAGE"
       />
 
       {/* User Block Modal */}
@@ -444,7 +362,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             <Button variant="ghost" className="w-1/3 text-xs" onClick={() => setBlockModalOpen(false)}>
               Cancel
             </Button>
-            <Button variant="danger" className="w-2/3 text-xs font-bold" onClick={() => setBlockModalOpen(false)}>
+            <Button variant="danger" className="w-2/3 text-xs font-bold" onClick={async () => {
+              const targetProfileId = activeConversation.participant.id || activeConversation.participant.userId;
+              const response = await fetch("/api/blocks", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ targetProfileId }) });
+              if (response.ok) setBlockModalOpen(false);
+            }}>
               Confirm Block
             </Button>
           </div>

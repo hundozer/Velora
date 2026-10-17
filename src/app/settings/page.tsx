@@ -1,22 +1,22 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- user media URLs are signed/dynamic and cannot use a static remote loader */
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { VerificationWizard } from "@/components/verification/VerificationWizard";
-import { MOCK_SAFETY_SETTINGS } from "@/lib/mockData";
 import { SUPPORTED_LANGUAGES } from "@/lib/i18n";
-import { SUPPORTED_CURRENCIES } from "@/lib/currency/CurrencyService";
-import { UserSafetySettings, LanguageCode, CurrencyCode } from "@/types";
+import { LanguageCode } from "@/types";
 import { useAuth } from "@/context/AuthContext";
+import { requestParticipantDeclaration, uploadFileToR2 } from "@/lib/storage/clientUpload";
 import {
   Settings,
   Shield,
   EyeOff,
-  Bell,
   Lock,
   MessageSquare,
   Ban,
@@ -25,116 +25,223 @@ import {
   Sliders,
   UserCheck,
   Globe,
-  DollarSign,
   Download,
   Trash2,
   LogOut,
   AlertTriangle,
   Camera,
+  Image as ImageIcon,
 } from "lucide-react";
 
 export default function SettingsPage() {
-  const { user, profile, updateUserProfile, logout, logoutWithAuth0 } = useAuth();
+  const { user, profile, updateUserProfile, logout, signOut } = useAuth();
   const [nickname, setNickname] = useState(profile?.displayName || user?.username || "");
-  const [safety, setSafety] = useState<UserSafetySettings>(MOCK_SAFETY_SETTINGS);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>("en");
-  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>("USD");
-  const [blockedUsers, setBlockedUsers] = useState([
-    { id: "usr-blk-1", username: "spammer_bot_99", blockedAt: "Yesterday" },
-    { id: "usr-blk-2", username: "unwanted_contact", blockedAt: "3 days ago" },
-  ]);
+  const [privacy, setPrivacy] = useState({
+    profileVisibility: "MEMBERS_ONLY",
+    sensitiveFieldsVisibility: "PRIVATE",
+    locationPrecision: "CITY",
+    messagePermission: "MEMBERS_ONLY",
+    showOnlineStatus: false,
+    showDistance: true,
+  });
+  const [sensitiveConsentGranted, setSensitiveConsentGranted] = useState(false);
   const [verificationWizardOpen, setVerificationWizardOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
+  const [mediaUpload, setMediaUpload] = useState<{ kind: "avatar" | "cover"; progress: number } | null>(null);
+  const [settingsError, setSettingsError] = useState("");
+  const [rightsType, setRightsType] = useState("CORRECTION");
+  const [rightsDetails, setRightsDetails] = useState("");
+  const [rightsMessage, setRightsMessage] = useState("");
+  const [rightsPending, setRightsPending] = useState(false);
+  const [reportHistory, setReportHistory] = useState<any[]>([]);
+  const [appealCaseId, setAppealCaseId] = useState("");
+  const [appealReason, setAppealReason] = useState("");
+  const [appealMessage, setAppealMessage] = useState("");
+  const [avatarImageFailed, setAvatarImageFailed] = useState(false);
+  const [coverImageFailed, setCoverImageFailed] = useState(false);
+
+  const avatarUrl = profile?.avatarUrl || user?.avatarUrl || "";
+  const coverUrl = profile?.coverPhotoUrl || "";
 
   const avatarInputRef = React.useRef<HTMLInputElement>(null);
   const coverInputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0] && user && profile) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        const url = reader.result as string;
-        updateUserProfile({ ...user, avatarUrl: url }, { ...profile, avatarUrl: url });
-      };
-      reader.readAsDataURL(file);
+  React.useEffect(() => setAvatarImageFailed(false), [avatarUrl]);
+  React.useEffect(() => setCoverImageFailed(false), [coverUrl]);
+  React.useEffect(() => {
+    if (profile?.displayName || user?.username) setNickname(profile?.displayName || user?.username || "");
+  }, [profile?.displayName, user?.username]);
+
+  const uploadProfileImage = async (file: File, kind: "avatar" | "cover") => {
+    if (!user || !profile) throw new Error("Your profile is not ready yet");
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      throw new Error("Choose a JPEG, PNG, or WebP image");
+    }
+    if (file.size <= 0 || file.size > 15 * 1024 * 1024) {
+      throw new Error("Choose an image smaller than 15 MB");
+    }
+
+    setSettingsError("");
+    setMediaUpload({ kind, progress: 0 });
+    let uploadedUrl = "";
+    try {
+      const declaration = await requestParticipantDeclaration();
+      const result = await uploadFileToR2(
+        file,
+        kind === "avatar" ? "avatars" : "covers",
+        (progress) => setMediaUpload({ kind, progress }),
+        declaration,
+        "MEMBERS_ONLY",
+        "NON_EXPLICIT",
+      );
+      uploadedUrl = result.publicUrl;
+      const nextProfile = kind === "avatar"
+        ? { ...profile, avatarUrl: result.publicUrl }
+        : { ...profile, coverPhotoUrl: result.publicUrl };
+      const nextUser = kind === "avatar" ? { ...user, avatarUrl: result.publicUrl } : user;
+      await updateUserProfile(nextUser, nextProfile);
+    } catch (error) {
+      if (uploadedUrl.startsWith("/api/media/")) {
+        await fetch(uploadedUrl, { method: "DELETE", credentials: "same-origin" }).catch(() => undefined);
+      }
+      throw error;
+    } finally {
+      setMediaUpload(null);
     }
   };
 
-  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0] && user && profile) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        const url = reader.result as string;
-        updateUserProfile(user, { ...profile, coverPhotoUrl: url });
-      };
-      reader.readAsDataURL(file);
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    try {
+      if (file) await uploadProfileImage(file, "avatar");
+    } catch (error) {
+      setSettingsError(error instanceof Error ? error.message : "Profile photo could not be uploaded");
+    } finally {
+      e.target.value = "";
     }
   };
 
-  const handleUnblock = (id: string) => {
-    setBlockedUsers(blockedUsers.filter((u) => u.id !== id));
-  };
-
-  const handleSave = () => {
-    if (user && profile && nickname.trim()) {
-      const updatedUser = {
-        ...user,
-        username: nickname.trim().toLowerCase().replace(/\s+/g, "_"),
-      };
-      const updatedProfile = {
-        ...profile,
-        displayName: nickname.trim(),
-      };
-      updateUserProfile(updatedUser, updatedProfile);
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    try {
+      if (file) await uploadProfileImage(file, "cover");
+    } catch (error) {
+      setSettingsError(error instanceof Error ? error.message : "Cover photo could not be uploaded");
+    } finally {
+      e.target.value = "";
     }
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
   };
 
-  const handleExportGdprData = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
-      user: { username: "elena_vance", email: "elena@velora.club", role: "CREATOR" },
-      profile: { displayName: "Elena Vance", city: "Monte Carlo", country: "Monaco" },
-      gdprExportDate: new Date().toISOString(),
-    }));
+  React.useEffect(() => {
+    Promise.all([
+      fetch("/api/privacy/settings", { credentials: "same-origin" }).then((response) => response.ok ? response.json() : null),
+      fetch("/api/privacy/consents", { credentials: "same-origin" }).then((response) => response.ok ? response.json() : null),
+      fetch("/api/reports", { credentials: "same-origin" }).then((response) => response.ok ? response.json() : null),
+    ]).then(([settingsPayload, consentPayload, reportsPayload]) => {
+      const settings = settingsPayload?.settings;
+      if (settings) setPrivacy({
+        profileVisibility: settings.profile_visibility || "MEMBERS_ONLY",
+        sensitiveFieldsVisibility: settings.sensitive_fields_visibility || "PRIVATE",
+        locationPrecision: settings.location_precision || "CITY",
+        messagePermission: settings.message_permission || "MEMBERS_ONLY",
+        showOnlineStatus: settings.show_online_status === true,
+        showDistance: settings.show_distance === true,
+      });
+      const latest = consentPayload?.consents?.find((item: any) => item.consent_type === "SPECIAL_CATEGORY_PROFILE");
+      setSensitiveConsentGranted(latest?.consent_status === "GRANTED");
+      setReportHistory(reportsPayload?.reports || []);
+    }).catch(() => undefined);
+  }, []);
+
+  const handleSave = async () => {
+    try {
+      setSettingsError("");
+      if (user && profile && nickname.trim()) {
+        const updatedUser = {
+          ...user,
+          username: nickname.trim().toLowerCase().replace(/\s+/g, "_"),
+        };
+        const updatedProfile = {
+          ...profile,
+          displayName: nickname.trim(),
+        };
+        await updateUserProfile(updatedUser, updatedProfile);
+      }
+      const response = await fetch("/api/privacy/settings", {
+        method: "PUT", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(privacy),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Settings could not be saved");
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error) {
+      setSettingsError(error instanceof Error ? error.message : "Settings could not be saved");
+    }
+  };
+
+  const handleExportGdprData = async () => {
+    const response = await fetch("/api/privacy/export", { credentials: "same-origin" });
+    if (!response.ok) return;
+    const blob = await response.blob();
     const downloadAnchor = document.createElement("a");
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "velora_gdpr_data_export.json");
+    downloadAnchor.href = URL.createObjectURL(blob);
+    downloadAnchor.download = `intimo-data-export-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
+    URL.revokeObjectURL(downloadAnchor.href);
 
     setExportSuccess(true);
     setTimeout(() => setExportSuccess(false), 3000);
   };
 
+  const updateSensitiveConsent = async (granted: boolean) => {
+    const response = await fetch("/api/privacy/consents", {
+      method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ consentType: "SPECIAL_CATEGORY_PROFILE", granted }),
+    });
+    if (response.ok) setSensitiveConsentGranted(granted);
+  };
+
   const handleDeleteAccount = async () => {
     if (user) {
       try {
-        await fetch("/api/auth/delete-account", {
+        const response = await fetch("/api/auth/delete-account", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            auth0UserId: user.id,
-            email: user.email
-          }),
+          body: JSON.stringify({ confirmation: "DELETE" }),
         });
+        if (!response.ok) throw new Error("Account deletion was not completed");
       } catch (err) {
         console.error("API call to delete account failed:", err);
       }
       setDeleteModalOpen(false);
       
-      // Clear session cookies locally
-      document.cookie = "intimo_session_active=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      document.cookie = "intimo_user_data=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      
-      // Redirect directly to /goodbye to avoid Auth0 returnTo whitelisting error
-      window.location.href = "/goodbye";
+      // The SDK clears its httpOnly session and validates the return target.
+      window.location.href = "/auth/logout?returnTo=%2Fgoodbye";
     }
+  };
+
+  const submitRightsRequest = async () => {
+    setRightsPending(true); setRightsMessage("");
+    const response = await fetch("/api/privacy/requests", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ requestType: rightsType, details: rightsDetails }) });
+    const payload = await response.json().catch(() => ({}));
+    setRightsPending(false);
+    if (!response.ok) { setRightsMessage(payload.error || "Privacy request could not be submitted"); return; }
+    setRightsDetails(""); setRightsMessage(`Request ${payload.request.id} was recorded.`);
+  };
+
+  const submitAppeal = async () => {
+    setAppealMessage("");
+    const response = await fetch(`/api/reports/${encodeURIComponent(appealCaseId)}/appeal`, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason: appealReason }) });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) { setAppealMessage(payload.error || "Appeal could not be submitted"); return; }
+    setReportHistory((items) => items.map((item) => item.id === appealCaseId ? { ...item, status: "APPEALED", appeal_status: "OPEN" } : item));
+    setAppealCaseId(""); setAppealReason(""); setAppealMessage(`Appeal ${payload.appeal.id} was submitted.`);
   };
 
   return (
@@ -148,7 +255,7 @@ export default function SettingsPage() {
               Privacy, Safety & Regional Settings
             </h1>
             <p className="text-xs text-velora-textSecondary mt-1">
-              Manage messaging permissions, GDPR data privacy, push notifications, language, and currency.
+              Manage messaging permissions, privacy rights, consent, language, and safety controls.
             </p>
           </div>
         </div>
@@ -168,11 +275,12 @@ export default function SettingsPage() {
           <CheckCircle2 className="w-4 h-4" /> Settings updated successfully!
         </div>
       )}
+      {settingsError && <div role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-xs text-red-300">{settingsError}</div>}
 
       {/* SECTION 0: PRIVATE IDENTITY, AVATAR & BANNER */}
       <Card variant="glass" className="p-6 space-y-6">
-        <input type="file" ref={avatarInputRef} accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-        <input type="file" ref={coverInputRef} accept="image/*" className="hidden" onChange={handleCoverUpload} />
+        <input type="file" ref={avatarInputRef} accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarUpload} />
+        <input type="file" ref={coverInputRef} accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleCoverUpload} />
 
         <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
           <UserCheck className="w-4 h-4 text-velora-gold" />
@@ -184,11 +292,11 @@ export default function SettingsPage() {
           <div className="flex flex-wrap items-center gap-6 pb-2 border-b border-white/5">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-2xl border-2 border-velora-gold/60 overflow-hidden bg-velora-card relative group shrink-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={profile?.avatarUrl || user?.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                <span className="absolute inset-0 flex items-center justify-center bg-amber-300/5"><UserCheck className="h-7 w-7 text-amber-300/60" /></span>
+                {avatarUrl && !avatarImageFailed && <img src={avatarUrl} alt="Your profile avatar" onError={() => setAvatarImageFailed(true)} className="relative h-full w-full object-cover" />}
                 <button
                   type="button"
-                  onClick={() => avatarInputRef.current?.click()}
+                  onClick={() => !mediaUpload && avatarInputRef.current?.click()}
                   className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
                   title="Upload New Avatar"
                 >
@@ -197,20 +305,20 @@ export default function SettingsPage() {
               </div>
               <div>
                 <p className="text-xs font-bold text-white">Profile Picture / Avatar</p>
-                <p className="text-[10px] text-velora-textMuted mb-2">Upload a custom profile photo</p>
-                <Button variant="glass" size="sm" onClick={() => avatarInputRef.current?.click()} className="text-[11px] gap-1.5">
-                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> Upload New Avatar
+                <p className="text-[10px] text-velora-textMuted mb-2">JPEG, PNG or WebP · non-explicit · max 15 MB</p>
+                <Button variant="glass" size="sm" disabled={Boolean(mediaUpload)} onClick={() => avatarInputRef.current?.click()} className="text-[11px] gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUpload?.kind === "avatar" ? `Uploading ${mediaUpload.progress}%` : "Upload New Avatar"}
                 </Button>
               </div>
             </div>
 
             <div className="flex items-center gap-4 border-l border-white/10 pl-6">
               <div className="w-24 h-16 rounded-2xl border border-white/20 overflow-hidden bg-velora-card relative group shrink-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={profile?.coverPhotoUrl || profile?.avatarUrl} alt="Cover Banner" className="w-full h-full object-cover" />
+                <span className="absolute inset-0 flex items-center justify-center bg-white/[0.03]"><ImageIcon className="h-7 w-7 text-slate-500" /></span>
+                {coverUrl && !coverImageFailed && <img src={coverUrl} alt="Your profile cover" onError={() => setCoverImageFailed(true)} className="relative h-full w-full object-cover" />}
                 <button
                   type="button"
-                  onClick={() => coverInputRef.current?.click()}
+                  onClick={() => !mediaUpload && coverInputRef.current?.click()}
                   className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
                   title="Upload New Cover Banner"
                 >
@@ -219,9 +327,9 @@ export default function SettingsPage() {
               </div>
               <div>
                 <p className="text-xs font-bold text-white">Cover Banner Image</p>
-                <p className="text-[10px] text-velora-textMuted mb-2">Upload header background banner</p>
-                <Button variant="glass" size="sm" onClick={() => coverInputRef.current?.click()} className="text-[11px] gap-1.5">
-                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> Upload New Banner
+                <p className="text-[10px] text-velora-textMuted mb-2">JPEG, PNG or WebP · non-explicit · max 15 MB</p>
+                <Button variant="glass" size="sm" disabled={Boolean(mediaUpload)} onClick={() => coverInputRef.current?.click()} className="text-[11px] gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUpload?.kind === "cover" ? `Uploading ${mediaUpload.progress}%` : "Upload New Banner"}
                 </Button>
               </div>
             </div>
@@ -249,10 +357,10 @@ export default function SettingsPage() {
       <Card variant="glass" className="p-6 space-y-6">
         <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
           <Globe className="w-4 h-4 text-velora-gold" />
-          Language & Currency Localization
+          Language
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
               Display Language
@@ -270,58 +378,63 @@ export default function SettingsPage() {
             </select>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
-              Preferred Payment Currency
-            </label>
-            <select
-              value={selectedCurrency}
-              onChange={(e) => setSelectedCurrency(e.target.value as CurrencyCode)}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
-            >
-              {SUPPORTED_CURRENCIES.map((curr) => (
-                <option key={curr.code} value={curr.code} className="bg-velora-card text-white">
-                  {curr.symbol} {curr.code} - {curr.name}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
       </Card>
 
-      {/* SECTION 2: MOBILE PUSH NOTIFICATIONS */}
-      <Card variant="glass" className="p-6 space-y-6">
+      <Card variant="glass" className="p-6 space-y-5">
         <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
-          <Bell className="w-4 h-4 text-velora-gold" />
-          Mobile Push Notification Controls
+          <EyeOff className="w-4 h-4 text-emerald-400" /> Who can see what
         </h2>
+        <p className="text-xs text-velora-textSecondary">Choose an audience for your profile and each kind of information. New intimate details and media stay private until you change them.</p>
 
-        <div className="space-y-4">
-          <label className="flex items-center justify-between p-3 glass-panel rounded-2xl cursor-pointer">
-            <div>
-              <span className="text-xs font-bold text-velora-textPrimary block">Direct Message Push Alerts</span>
-              <span className="text-[11px] text-velora-textMuted">Notify when a verified member sends a message</span>
-            </div>
-            <input
-              type="checkbox"
-              checked={safety.enablePushMessages ?? true}
-              onChange={(e) => setSafety({ ...safety, enablePushMessages: e.target.checked })}
-              className="w-4 h-4 accent-velora-gold"
-            />
-          </label>
+        <div className="space-y-3">
+          <VisibilityChoice
+            icon={<Globe className="h-5 w-5" />}
+            title="Your profile"
+            description="Controls whether your profile appears in People and discovery. Choose Hidden to disappear without deleting your account."
+            value={privacy.profileVisibility}
+            options={[["EVERYONE", "Public"], ["MEMBERS_ONLY", "Members"], ["FRIENDS_ONLY", "Friends"], ["PRIVATE", "Hidden"]]}
+            onChange={(value) => setPrivacy({ ...privacy, profileVisibility: value })}
+          />
+          <VisibilityChoice
+            icon={<Lock className="h-5 w-5" />}
+            title="Intimate preferences"
+            description="Sexual orientation, practices, desires, and other sensitive profile details."
+            value={privacy.sensitiveFieldsVisibility}
+            options={[["MEMBERS_ONLY", "Members"], ["FRIENDS_ONLY", "Friends"], ["PRIVATE", "Only me"]]}
+            onChange={(value) => setPrivacy({ ...privacy, sensitiveFieldsVisibility: value })}
+          />
+          <VisibilityChoice
+            icon={<MapPin className="h-5 w-5" />}
+            title="Your location"
+            description="Show a city, an approximate distance, or nothing. Your exact coordinates are never displayed."
+            value={privacy.locationPrecision}
+            options={[["CITY", "City"], ["APPROXIMATE_DISTANCE", "Approx. distance"], ["HIDDEN", "Hidden"]]}
+            onChange={(value) => setPrivacy({ ...privacy, locationPrecision: value, showDistance: value === "APPROXIMATE_DISTANCE" })}
+          />
+          <VisibilityChoice
+            icon={<MessageSquare className="h-5 w-5" />}
+            title="Who can message you"
+            description="Limit new conversations without hiding your profile. Friends means people whose request you accepted."
+            value={privacy.messagePermission}
+            options={[["EVERYONE", "Everyone"], ["MEMBERS_ONLY", "Members"], ["FRIENDS_ONLY", "Friends"], ["PRIVATE", "Nobody"]]}
+            onChange={(value) => setPrivacy({ ...privacy, messagePermission: value })}
+          />
+        </div>
 
-          <label className="flex items-center justify-between p-3 glass-panel rounded-2xl cursor-pointer">
-            <div>
-              <span className="text-xs font-bold text-velora-textPrimary block">Livestream Start Notifications</span>
-              <span className="text-[11px] text-velora-textMuted">Notify when creators you follow go live</span>
-            </div>
-            <input
-              type="checkbox"
-              checked={safety.enablePushLivestreams ?? true}
-              onChange={(e) => setSafety({ ...safety, enablePushLivestreams: e.target.checked })}
-              className="w-4 h-4 accent-velora-gold"
-            />
-          </label>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <PrivacyToggle title="Online now" description="Let members see when you were recently active." checked={privacy.showOnlineStatus} onChange={(checked) => setPrivacy({ ...privacy, showOnlineStatus: checked })} />
+          <PrivacyToggle title="Approximate distance" description="Never reveals your precise position." checked={privacy.showDistance} disabled={privacy.locationPrecision === "HIDDEN"} onChange={(checked) => setPrivacy({ ...privacy, showDistance: checked })} />
+        </div>
+
+        <div className="flex flex-col gap-3 rounded-2xl border border-amber-300/20 bg-amber-300/[0.04] p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div><p className="text-xs font-bold text-white">Photos, videos, and albums</p><p className="mt-1 text-[11px] leading-5 text-velora-textMuted">Choose Public, Members, Followers, or Private separately for every album. Switch an album to Private to hide it without deleting it.</p></div>
+          <Link href="/albums/manage" className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-amber-300/40 px-4 text-xs font-bold text-amber-200 transition hover:bg-amber-300/10">Manage media visibility</Link>
+        </div>
+        <div className="p-4 border border-emerald-500/30 rounded-xl space-y-3">
+          <p className="text-xs font-bold">Explicit sensitive-data consent</p>
+          <p className="text-[11px] text-velora-textMuted">Controls processing of sexual orientation and intimate preferences for your profile and discovery. Withdrawal may make these features unavailable; it does not replace a deletion request.</p>
+          <Button variant="glass" size="sm" onClick={() => updateSensitiveConsent(!sensitiveConsentGranted)}>{sensitiveConsentGranted ? "Withdraw consent" : "Grant consent"}</Button>
         </div>
       </Card>
 
@@ -337,7 +450,7 @@ export default function SettingsPage() {
             <div>
               <h4 className="text-xs font-bold text-velora-textPrimary">Export Personal Data Archive (GDPR Art. 20)</h4>
               <p className="text-[11px] text-velora-textMuted mt-0.5">
-                Download a complete JSON export of your profile, messages, transactions, and media history.
+                Download a server-generated JSON export of your profile, messages, connections, consent history, and dating ads.
               </p>
             </div>
             <Button
@@ -349,6 +462,21 @@ export default function SettingsPage() {
               <Download className="w-4 h-4" /> Download Data Archive
             </Button>
           </div>
+
+          <div className="space-y-3 rounded-2xl border border-white/10 p-4">
+            <div><h4 className="text-xs font-bold text-velora-textPrimary">Exercise another privacy right</h4><p className="mt-1 text-[11px] text-velora-textMuted">Request access, correction, restriction of processing, or object to specific processing. Each request receives a durable reference and reviewed response.</p></div>
+            <label className="block text-xs text-velora-textSecondary"><span className="mb-2 block font-semibold">Right requested</span><select value={rightsType} onChange={(event) => setRightsType(event.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white"><option className="bg-velora-card" value="CORRECTION">Correct my data</option><option className="bg-velora-card" value="RESTRICTION">Restrict processing</option><option className="bg-velora-card" value="OBJECTION">Object to processing</option><option className="bg-velora-card" value="ACCESS">Reviewed access request</option></select></label>
+            <label className="block text-xs text-velora-textSecondary"><span className="mb-2 block font-semibold">What should Intimo review?</span><textarea value={rightsDetails} onChange={(event) => setRightsDetails(event.target.value)} rows={4} maxLength={4000} className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" placeholder="Describe the data or processing involved (minimum 20 characters)." /></label>
+            {rightsMessage && <p role="status" className="text-xs text-emerald-300">{rightsMessage}</p>}
+            <Button variant="glass" size="sm" disabled={rightsPending || rightsDetails.trim().length < 20} onClick={submitRightsRequest}>{rightsPending ? "Submitting…" : "Submit privacy request"}</Button>
+          </div>
+
+          {reportHistory.some((item) => item.relationship === "AFFECTED_USER") && <div className="space-y-3 rounded-2xl border border-white/10 p-4">
+            <div><h4 className="text-xs font-bold text-velora-textPrimary">Moderation decisions and appeals</h4><p className="mt-1 text-[11px] text-velora-textMuted">Eligible resolved decisions can be appealed once. Give a specific reason for independent review.</p></div>
+            {reportHistory.filter((item) => item.relationship === "AFFECTED_USER").map((item) => <div key={item.id} className="rounded-xl bg-white/5 p-3 text-xs"><div className="flex flex-wrap justify-between gap-2"><span>{item.content_type} · {item.reason.replaceAll("_", " ")}</span><strong>{item.status}</strong></div>{item.decision_reason && <p className="mt-2 text-velora-textMuted">Decision reason: {item.decision_reason}</p>}{["RESOLVED", "REJECTED"].includes(item.status) && item.appeal_status === "NONE" && <Button variant="glass" size="sm" className="mt-3" onClick={() => setAppealCaseId(item.id)}>Appeal this decision</Button>}</div>)}
+            {appealCaseId && <div className="space-y-2"><label className="block text-xs"><span className="mb-2 block font-semibold">Why should this decision be reviewed?</span><textarea value={appealReason} onChange={(event) => setAppealReason(event.target.value)} rows={4} maxLength={4000} className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" /></label><div className="flex gap-2"><Button variant="ghost" size="sm" onClick={() => { setAppealCaseId(""); setAppealReason(""); }}>Cancel appeal</Button><Button variant="glass" size="sm" disabled={appealReason.trim().length < 20} onClick={submitAppeal}>Submit appeal</Button></div></div>}
+            {appealMessage && <p role="status" className="text-xs text-emerald-300">{appealMessage}</p>}
+          </div>}
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl border border-velora-gold/30">
             <div>
@@ -371,7 +499,7 @@ export default function SettingsPage() {
             <div>
               <h4 className="text-xs font-bold text-red-400">Permanently Delete Intimo Account (GDPR Right to be Forgotten)</h4>
               <p className="text-[11px] text-velora-textMuted mt-0.5">
-                Permanently purge all profile data, messages, wallet records, and media vaults.
+                Start permanent deletion of your profile data, messages, and media, subject to documented safety/legal retention exceptions.
               </p>
             </div>
             <Button
@@ -392,7 +520,7 @@ export default function SettingsPage() {
           <div className="p-4 bg-red-500/10 border border-red-500/40 rounded-2xl flex items-center gap-3">
             <AlertTriangle className="w-6 h-6 text-red-400 shrink-0" />
             <p className="text-xs text-red-300 leading-relaxed">
-              This action is permanent and cannot be undone. All your profile media, messages, wallet balances, and subscriptions will be permanently purged.
+              This action is permanent and cannot be undone. Your profile, messages, and media will be deleted or anonymized through the documented deletion workflow, subject to legitimate safety or legal retention duties.
             </p>
           </div>
 
@@ -414,4 +542,36 @@ export default function SettingsPage() {
       />
     </div>
   );
+}
+
+function VisibilityChoice({ icon, title, description, value, options, onChange }: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  value: string;
+  options: Array<[string, string]>;
+  onChange: (value: string) => void;
+}) {
+  return <section className="rounded-2xl border border-white/10 bg-black/15 p-4">
+    <div className="flex gap-3">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-amber-300">{icon}</div>
+      <div><h3 className="text-sm font-bold text-white">{title}</h3><p className="mt-1 text-[11px] leading-5 text-velora-textMuted">{description}</p></div>
+    </div>
+    <div className="mt-4 flex flex-wrap gap-2">
+      {options.map(([optionValue, label]) => <button key={optionValue} type="button" aria-pressed={value === optionValue} onClick={() => onChange(optionValue)} className={`min-h-9 rounded-full border px-3.5 text-xs font-semibold transition ${value === optionValue ? "border-amber-300 bg-amber-300 text-slate-950" : "border-white/10 bg-white/[0.02] text-slate-300 hover:border-white/25 hover:text-white"}`}>{label}</button>)}
+    </div>
+  </section>;
+}
+
+function PrivacyToggle({ title, description, checked, disabled = false, onChange }: {
+  title: string;
+  description: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return <label className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/15 p-4 ${disabled ? "cursor-not-allowed opacity-50" : ""}`}>
+    <span><strong className="block text-xs text-white">{title}</strong><span className="mt-1 block text-[11px] leading-4 text-velora-textMuted">{description}</span></span>
+    <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${checked ? "bg-amber-300" : "bg-white/10"}`}><input className="sr-only" type="checkbox" checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} /><span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition ${checked ? "left-6" : "left-1"}`} /></span>
+  </label>;
 }
