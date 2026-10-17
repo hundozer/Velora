@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { ReportModal } from "@/components/safety/ReportModal";
 import { ProfileDesires } from "@/components/profile/ProfileDesires";
 import { ProfileBoundaries } from "@/components/profile/ProfileBoundaries";
+import { ProfilePlans } from "@/components/plans/ProfilePlans";
 import { LOOKING_FOR } from "@/lib/onboardingPolicy.mjs";
 
 const LOOKING_FOR_LABELS = new Map(LOOKING_FOR.map((item) => [item.value, item.label]));
@@ -115,6 +116,7 @@ export default function CanonicalProfilePage() {
     <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)]">
       <div className="space-y-6">
         {(profile.bio || (profile.interests?.length || 0) > 0 || (profile.hobbies?.length || 0) > 0) && <section className="rounded-3xl border border-white/10 bg-[#111722] p-6"><h2 className="text-xl font-bold text-white">About</h2>{profile.bio && <p className="mt-3 whitespace-pre-line text-white/70">{profile.bio}</p>}{memberView && <div className="mt-5 flex flex-wrap gap-2">{[...(profile.interests || []), ...(profile.hobbies || []), ...(profile.lifestyleTags || [])].slice(0,24).map((tag) => <span key={tag} className="rounded-full border border-amber-300/20 bg-amber-300/5 px-3 py-1 text-sm text-amber-200">{tag}</span>)}</div>}</section>}
+        {memberView && <ProfilePlans profileId={profile.id} />}
         {memberView && <ProfileDesires profileId={profile.id} isOwner={isOwner} />}
         {albums.length > 0 && <section><div className="mb-3 flex items-center justify-between"><h2 className="text-xl font-bold text-white">Public albums</h2><Link href="/albums" className="text-sm text-amber-300">Browse all</Link></div><div className="grid gap-4 sm:grid-cols-2">{albums.map((album) => <Link key={album.id} href={`/album/${album.id}`} className="overflow-hidden rounded-2xl border border-white/10 bg-[#111722] transition hover:border-amber-300/40">{album.coverUrl ? <div className="relative aspect-[16/10]"><Image src={album.coverUrl} alt="" fill className="object-cover" unoptimized /></div> : <div className="flex aspect-[16/10] items-center justify-center bg-slate-900"><ImageIcon className="h-9 w-9 text-white/30" /></div>}<div className="p-4"><h3 className="font-bold text-white">{album.title}</h3><p className="mt-1 text-sm text-white/55">{album.photoCount} item{album.photoCount === 1 ? "" : "s"}</p></div></Link>)}</div></section>}
         {media.length > 0 && <section><h2 className="mb-3 text-xl font-bold text-white">Public media</h2><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{media.map((item) => <a key={item.id} href={item.mediaUrl} target="_blank" rel="noreferrer" className="group relative aspect-square overflow-hidden rounded-2xl border border-white/10 bg-slate-900">{item.type === "IMAGE" ? <Image src={item.mediaUrl} alt={item.title} fill className="object-cover transition group-hover:scale-105" unoptimized /> : <video src={item.mediaUrl} className="h-full w-full object-cover" preload="metadata" aria-label={item.title} />}</a>)}</div></section>}

@@ -56,7 +56,7 @@ test("return destinations reject open redirects", () => {
 });
 
 test("member-only route classification covers sensitive screens", () => {
-  for (const route of ["/dashboard", "/messages", "/messages/abc", "/settings", "/albums/manage", "/dating/create", "/admin", "/admin/users"]) {
+  for (const route of ["/dashboard", "/messages", "/messages/abc", "/settings", "/albums/manage", "/tonight/new", "/admin", "/admin/users"]) {
     assert.equal(isProtectedMemberRoute(route), true, route);
   }
   for (const route of ["/", "/people", "/dating", "/photos", "/terms"]) {
