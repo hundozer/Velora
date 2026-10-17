@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { ScenePreview } from "@/components/scene/ScenePreview";
 import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import { BadgeCheck, CalendarHeart, MapPin, Search } from "lucide-react";
@@ -105,6 +106,7 @@ export function PublicCommunityHome() {
           </div>
         </section>
 
+        <ScenePreview />
         {(loading || Boolean(data?.profiles.length)) && <section aria-labelledby="new-members">
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
