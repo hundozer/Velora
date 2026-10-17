@@ -745,3 +745,16 @@ test("auth emails are server-sent, enumeration-safe and rate-limited", async () 
   assert.match(route, /\/auth\/confirm\?token_hash=/);
   assert.match(route, /Already registered: send a sign-in link instead/);
 });
+
+test("member reads run under RLS with owner-only policies", async () => {
+  const migration = await read("supabase/migrations/20261019_member_read_rls.sql");
+  for (const table of ["profiles", "direct_messages", "notifications", "saved_items", "user_blocks", "media_objects", "user_consents", "privacy_requests"]) {
+    assert.match(migration, new RegExp(`on public\\.${table}\\s+for select to authenticated using`));
+  }
+  assert.doesNotMatch(migration, /to anon|for (insert|update|delete|all)/);
+  assert.match(migration, /alter publication supabase_realtime add table public\.direct_messages/);
+  const profile = await read("src/app/api/profile/me/route.ts");
+  const notifications = await read("src/app/api/notifications/route.ts");
+  assert.match(profile, /export async function GET[\s\S]*?createSessionClient\(\)[\s\S]*?export async function POST/);
+  assert.match(notifications, /export async function GET[\s\S]*?createSessionClient\(\)[\s\S]*?export async function PATCH/);
+});

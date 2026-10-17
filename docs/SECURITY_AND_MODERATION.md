@@ -24,6 +24,7 @@ reference, but **this file is what we enforce**.
 - Account deletion: immediate soft-delete (hidden everywhere), hard-delete of profile, media objects (R2) and messages content within 30 days; keep minimal moderation records where legally required.
 
 ## Authorization
+- **Status (2026-10-17, #15):** members have owner-only SELECT policies on profiles, direct_messages, notifications, saved_items, user_blocks, media_objects, user_consents and privacy_requests (`20261019_member_read_rls.sql`). No member INSERT/UPDATE/DELETE grants exist; all writes go through server routes. `/api/profile/me` GET and `/api/notifications` GET already read as the member.
 - RLS on every table, keyed by `auth.uid()`; default deny.
 - Service-role client is importable only from `src/lib/supabase/admin.ts`, which only `/api/admin/*` and `/api/cron/*` may import (enforced by test).
 - Blocks are enforced in SQL (discovery, profile view, messages, plans, activity), not just in UI.

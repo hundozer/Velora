@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getVerifiedIdentity } from "@/lib/auth/serverSession";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { createSessionClient } from "@/lib/supabase/session";
 import { profileToDbRow } from "@/lib/supabase/profileService";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
@@ -44,11 +45,13 @@ async function context(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const { identity, supabase } = await context(req);
+  const identity = await getVerifiedIdentity(req);
   if (!identity) return noStore(NextResponse.json({ error: "Authentication required" }, { status: 401 }));
+  // Read as the member: RLS (member_read_own_profile) limits this to their own row.
+  const supabase = createSessionClient();
   if (!supabase) return noStore(NextResponse.json({ error: "Profile service unavailable" }, { status: 503 }));
 
-  const { data, error } = await supabase.from("profiles").select("*").eq("auth_id", identity.sub).maybeSingle();
+  const { data, error } = await supabase.from("profiles").select("*").eq("id", identity.sub).maybeSingle();
   if (error) return noStore(NextResponse.json({ error: "Profile lookup failed" }, { status: 502 }));
   if (!data) return noStore(NextResponse.json({ error: "Profile not found" }, { status: 404 }));
   return noStore(NextResponse.json({ profile: data }));
