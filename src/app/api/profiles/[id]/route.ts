@@ -37,5 +37,16 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!visible && !isOwner && !isAdmin) {
     return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   }
+  // Visitors (P1-08): at most one row per viewer, profile and day; never for invisible browsers.
+  if (!isOwner && !isAdmin) {
+    const { data: viewer } = await supabase.from("profiles").select("browse_invisibly").eq("id", actorResult.actor.profileId).maybeSingle();
+    if (viewer && viewer.browse_invisibly !== true) {
+      const { error: viewError } = await supabase.from("profile_views").upsert(
+        { viewer_id: actorResult.actor.profileId, viewed_id: id, viewed_on: new Date().toISOString().slice(0, 10), last_viewed_at: new Date().toISOString() },
+        { onConflict: "viewer_id,viewed_id,viewed_on" },
+      );
+      if (viewError) console.error("Profile view not recorded", { code: viewError.code });
+    }
+  }
   return NextResponse.json({ profile: toMemberVisibleProfile(data as ProfileRow, { friends: friends || isOwner || isAdmin }), ownership: { isOwner } }, { headers: { "Cache-Control": "private, no-store" } });
 }
