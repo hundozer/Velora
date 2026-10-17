@@ -8,6 +8,7 @@ import { auditLogger } from "@/lib/auth/auditLogger";
 import type { Profile } from "@/types";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
 import { areaById, locationFieldsForArea } from "@/lib/areas.mjs";
+import { cleanFirstMessagePermission, cleanLookingFor, whoIsHereError } from "@/lib/onboardingPolicy.mjs";
 
 export const dynamic = "force-dynamic";
 const MAX_BODY_BYTES = 64 * 1024;
@@ -92,13 +93,25 @@ export async function POST(req: NextRequest) {
   const sexualOrientation = typeof body.sexualOrientation === "string" ? body.sexualOrientation : "";
   if (!ALLOWED_GENDERS.has(body.gender) || (sexualOrientation && !ALLOWED_ORIENTATIONS.has(sexualOrientation))) return NextResponse.json({ error: "Invalid demographic selection" }, { status: 400 });
   const areaId = typeof body.areaId === "string" && body.areaId ? body.areaId : null;
-  if (areaId && !areaById(areaId)) return NextResponse.json({ error: "Unknown area" }, { status: 400 });
-  const areaLocation = areaId ? locationFieldsForArea(areaId) : null;
+  const areaLocation = areaId && areaById(areaId) ? locationFieldsForArea(areaId) : null;
+  if (!areaId || !areaLocation) return NextResponse.json({ error: "Choose your area" }, { status: 400 });
+  // Who's here: individual or couple, identity, relationship structure. Every adult on the profile must be 18+.
+  const whoError = whoIsHereError({
+    profileType: body.profileType,
+    gender: body.gender,
+    relationshipStatus: body.relationshipStatus,
+    partnerDisplayName: typeof body.partnerDisplayName === "string" ? body.partnerDisplayName : "",
+    partnerDateOfBirth: typeof body.partnerDateOfBirth === "string" ? body.partnerDateOfBirth : "",
+  });
+  if (whoError) return NextResponse.json({ error: whoError }, { status: 400 });
+  const isCouple = body.profileType === "COUPLE";
+  const partnerAge = isCouple ? ageFromDateOfBirth(body.partnerDateOfBirth) : null;
+  if (isCouple && (partnerAge === null || partnerAge < 18)) return NextResponse.json({ error: "Everyone on a couple profile must be 18 or older." }, { status: 400 });
   const sensitiveDataProvided = Boolean(sexualOrientation);
   if (sensitiveDataProvided && body.explicitSensitiveDataConsent !== true) return NextResponse.json({ error: "Explicit consent is required to process sexual orientation" }, { status: 400 });
 
   const strings = (value: unknown) => Array.isArray(value) ? value.filter((item): item is string => typeof item === "string" && item.length <= 200).slice(0, MAX_ARRAY_ITEMS) : [];
-  const profileType = ["SINGLE", "COUPLE", "CREATOR", "LIFESTYLE"].includes(body.profileType) ? body.profileType : "SINGLE";
+  const profileType = isCouple ? "COUPLE" : "SINGLE";
   const username = displayName.toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 80) || `member_${identity.sub.slice(-8)}`;
   const row = {
     // profiles.id mirrors auth.users.id: one identifier end to end.
@@ -118,11 +131,16 @@ export async function POST(req: NextRequest) {
     age,
     gender: body.gender,
     sexual_orientation: sexualOrientation || null,
-    country: areaLocation ? areaLocation.country : typeof body.country === "string" ? body.country.slice(0, 120) : "",
-    city: areaLocation ? areaLocation.city : typeof body.city === "string" ? body.city.slice(0, 120) : "",
-    location: areaLocation ? areaLocation.location : [body.city, body.country].filter((value) => typeof value === "string" && value).join(", ").slice(0, 255),
     // The area is the only location a member gives us; city/country/location are derived from it.
-    ...(areaId ? { area_id: areaId } : {}),
+    area_id: areaId,
+    country: areaLocation.country,
+    city: areaLocation.city,
+    location: areaLocation.location,
+    relationship_status: body.relationshipStatus,
+    looking_for: cleanLookingFor(body.lookingFor),
+    // The partner's date of birth is checked above but only their age is kept.
+    partner_display_name: isCouple ? body.partnerDisplayName.trim() : null,
+    partner_age: partnerAge,
     languages: ["English"],
     headline: typeof body.headline === "string" ? body.headline.slice(0, 255) : "Intimo Member",
     bio: typeof body.headline === "string" ? body.headline.slice(0, MAX_STRING_LENGTH) : "Private member profile.",
@@ -140,7 +158,7 @@ export async function POST(req: NextRequest) {
     profile_visibility: "MEMBERS_ONLY",
     sensitive_fields_visibility: "PRIVATE",
     location_precision: "CITY",
-    message_permission: "MEMBERS_ONLY",
+    message_permission: cleanFirstMessagePermission(body.messagePermission),
     public_profile_visibility: false,
     updated_at: new Date().toISOString(),
   };
@@ -168,8 +186,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Consent record could not be created; no profile was retained" }, { status: 502 });
     }
   }
-  auditLogger.logEvent({ actorId: identity.sub, actorRole: "MEMBER", action: "PROFILE_CREATE", resourceId: String(data.id), resourceType: "PROFILE", status: "SUCCESS", details: { creatorIntent: profileType === "CREATOR" } });
-  const audited = await appendDurableAudit(supabase, { actorProfileId: data.id, actorUserId: identity.sub, action: "PROFILE_CREATE", resourceType: "PROFILE", resourceId: String(data.id), outcome: "SUCCESS", metadata: { creatorIntent: profileType === "CREATOR" } });
+  auditLogger.logEvent({ actorId: identity.sub, actorRole: "MEMBER", action: "PROFILE_CREATE", resourceId: String(data.id), resourceType: "PROFILE", status: "SUCCESS", details: { profileType } });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: data.id, actorUserId: identity.sub, action: "PROFILE_CREATE", resourceType: "PROFILE", resourceId: String(data.id), outcome: "SUCCESS", metadata: { profileType } });
   if (!audited) return NextResponse.json({ error: "Profile created but audit recording failed; contact support" }, { status: 503 });
   return noStore(NextResponse.json({ profile: data }, { status: 201 }));
 }

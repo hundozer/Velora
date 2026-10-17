@@ -47,7 +47,7 @@ test("distance is only ever a coarse bucket", () => {
 test("profile API validates area ids and derives location fields server-side", async () => {
   const route = await read("src/app/api/profile/me/route.ts");
   assert.match(route, /"area_id"/);
-  assert.match(route, /if \(areaId && !areaById\(areaId\)\) return NextResponse\.json\(\{ error: "Unknown area" \}/);
+  assert.match(route, /if \(!areaId \|\| !areaLocation\) return NextResponse\.json\(\{ error: "Choose your area" \}/);
   assert.match(route, /const derived = locationFieldsForArea\(update\.area_id\);/);
   assert.deepEqual(locationFieldsForArea("praha-2"), { city: "Prague", country: "Czech Republic", location: "Praha 2, Prague" });
 });
