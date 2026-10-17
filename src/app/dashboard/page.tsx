@@ -46,7 +46,7 @@ export default function DashboardPage() {
         <h2 id="start-heading" className="mb-4 text-lg font-bold text-white">What would you like to do?</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            ["Discover members", "Use real profile search and filters.", "/discovery", Compass],
+            ["Find people", "Who's around, online now and new in Prague.", "/people", Compass],
             ["Post a plan for tonight", "Say what you're up for; it expires on its own.", "/tonight/new", Heart],
             ["View messages", "Continue genuine member conversations.", "/messages", MessageSquare],
             ["Manage photos", "Add your first photo or manage existing media.", `/profile/${profile?.id || "me"}?tab=PHOTOS`, ImagePlus],

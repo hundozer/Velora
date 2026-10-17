@@ -52,7 +52,7 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/discovery" className="hover:text-velora-textPrimary transition-colors">
+                <Link href="/people" className="hover:text-velora-textPrimary transition-colors">
                   Discovery Marketplace
                 </Link>
               </li>
