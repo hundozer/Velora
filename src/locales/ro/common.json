@@ -10,7 +10,11 @@
     "wallet": "Seif",
     "settings": "Setări",
     "membership": "Abonament",
-    "home": "Acasă", "people": "Persoane", "dating": "Întâlniri", "search": "Caută"
+    "home": "Acasă",
+    "people": "Persoane",
+    "dating": "Întâlniri",
+    "search": "Caută",
+    "me": "Eu"
   },
   "hero": {
     "tag": "Piață de Descoperire Socială pentru Adulți",

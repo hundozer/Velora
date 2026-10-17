@@ -24,7 +24,7 @@ import {
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
-  const { user, profile, role, logout } = useAuth();
+  const { user, profile, role, signOut } = useAuth();
   const { language, setLanguage, t } = useTranslation();
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -50,7 +50,7 @@ export const Navbar: React.FC = () => {
             <span className="font-serif text-2xl font-bold tracking-widest gold-gradient-text uppercase">
               Intimo
             </span>
-            <span className="block text-[10px] tracking-[0.25em] text-velora-textMuted uppercase font-sans">
+            <span className="hidden sm:block text-[10px] tracking-[0.25em] text-velora-textMuted uppercase font-sans">
               Adult Social Community
             </span>
           </div>
@@ -117,7 +117,7 @@ export const Navbar: React.FC = () => {
           </nav>
 
         {/* Right Section: Language Selector & Auth / Avatar Controls */}
-        <div className="flex items-center gap-4 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           {/* Notifications Trigger for Logged In User */}
           {user && (
             <div className="relative">
@@ -142,8 +142,8 @@ export const Navbar: React.FC = () => {
             </div>
           )}
 
-          {/* Global Language Selector Dropdown */}
-          <div className="relative">
+          {/* Global Language Selector Dropdown (on phones it lives on the Me page) */}
+          <div className="relative hidden sm:block">
             <button
               onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-velora-textPrimary hover:bg-white/10 transition-colors"
@@ -264,7 +264,7 @@ export const Navbar: React.FC = () => {
                   </Link>
 
                   <button
-                    onClick={logout}
+                    onClick={() => signOut("/")}
                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-red-400 hover:bg-red-500/10 rounded-xl mt-1 border-t border-white/5"
                   >
                     <LogOut className="w-4 h-4" />

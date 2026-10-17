@@ -10,7 +10,11 @@
     "wallet": "Trezor",
     "settings": "Nastavenia",
     "membership": "Členstvo",
-    "home": "Domov", "people": "Ľudia", "dating": "Zoznamovanie", "search": "Hľadať"
+    "home": "Domov",
+    "people": "Ľudia",
+    "dating": "Zoznamovanie",
+    "search": "Hľadať",
+    "me": "Ja"
   },
   "hero": {
     "tag": "Trhovisko sociálneho objavovania pre dospelých",
