@@ -45,6 +45,7 @@ export default function SettingsPage() {
     locationPrecision: "CITY",
     messagePermission: "MEMBERS_ONLY",
     showOnlineStatus: false,
+    browseInvisibly: false,
     showDistance: true,
   });
   const [sensitiveConsentGranted, setSensitiveConsentGranted] = useState(false);
@@ -151,6 +152,7 @@ export default function SettingsPage() {
         locationPrecision: settings.location_precision || "CITY",
         messagePermission: settings.message_permission || "MEMBERS_ONLY",
         showOnlineStatus: settings.show_online_status === true,
+        browseInvisibly: settings.browse_invisibly === true,
         showDistance: settings.show_distance === true,
       });
       const latest = consentPayload?.consents?.find((item: any) => item.consent_type === "SPECIAL_CATEGORY_PROFILE");
@@ -443,6 +445,7 @@ export default function SettingsPage() {
 
         <div className="grid gap-3 sm:grid-cols-2">
           <PrivacyToggle title="Show activity" description="Members see a rough status (Online now, Active today, Active this week), never an exact time." checked={privacy.showOnlineStatus} onChange={(checked) => setPrivacy({ ...privacy, showOnlineStatus: checked })} />
+          <PrivacyToggle title="Browse invisibly" description="Your visits don't appear in other members' Visitors. You also won't see who visited you." checked={privacy.browseInvisibly} onChange={(checked) => setPrivacy({ ...privacy, browseInvisibly: checked })} />
           <PrivacyToggle title="Approximate distance" description="Never reveals your precise position." checked={privacy.showDistance} disabled={privacy.locationPrecision === "HIDDEN"} onChange={(checked) => setPrivacy({ ...privacy, showDistance: checked })} />
         </div>
 

@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Privacy service unavailable" }, { status: 503 });
-  const { data, error } = await supabase.from("profiles").select("profile_visibility,sensitive_fields_visibility,location_precision,show_online_status,show_distance,message_permission").eq("id", actor.actor.profileId).single();
+  const { data, error } = await supabase.from("profiles").select("profile_visibility,sensitive_fields_visibility,location_precision,show_online_status,show_distance,message_permission,browse_invisibly").eq("id", actor.actor.profileId).single();
   if (error) return NextResponse.json({ error: "Privacy settings lookup failed" }, { status: 502 });
   return NextResponse.json({ settings: data }, { headers: { "Cache-Control": "private, no-store" } });
 }
@@ -35,13 +35,14 @@ export async function PUT(req: NextRequest) {
     sensitive_fields_visibility: input.sensitiveFieldsVisibility,
     location_precision: input.locationPrecision,
     show_online_status: input.showOnlineStatus === true,
+    browse_invisibly: input.browseInvisibly === true,
     show_distance: input.showDistance === true && input.locationPrecision !== "HIDDEN",
     message_permission: input.messagePermission,
     updated_at: new Date().toISOString(),
   };
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Privacy service unavailable" }, { status: 503 });
-  const { data, error } = await supabase.from("profiles").update(update).eq("id", actor.actor.profileId).select("profile_visibility,sensitive_fields_visibility,location_precision,show_online_status,show_distance,message_permission").single();
+  const { data, error } = await supabase.from("profiles").update(update).eq("id", actor.actor.profileId).select("profile_visibility,sensitive_fields_visibility,location_precision,show_online_status,show_distance,message_permission,browse_invisibly").single();
   if (error) return NextResponse.json({ error: "Privacy settings update failed" }, { status: 502 });
   auditLogger.logEvent({ actorId: actor.actor.userId, actorRole: actor.actor.role as any, action: "PRIVACY_SETTINGS_UPDATE", resourceId: actor.actor.profileId, resourceType: "PROFILE", status: "SUCCESS" });
   const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "PRIVACY_SETTINGS_UPDATE", resourceType: "PROFILE", resourceId: actor.actor.profileId, outcome: "SUCCESS" });
