@@ -10,24 +10,24 @@ import { CookieConsent } from "@/components/privacy/CookieConsent";
 import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration";
 
 export const metadata: Metadata = {
-  title: "Intimo | Adults-Only Social Discovery",
+  title: "Intimo | Prague's private, sex-positive network",
   description:
-    "Intimo is a free adults-only social discovery platform for consenting adults seeking compatible social, casual, dating and erotic experiences.",
+    "Intimo is a free, members-only network for adults in Prague: share your desires and boundaries, see who's out tonight, and keep private photos for people you choose.",
   metadataBase: new URL("https://intimo.live"),
   applicationName: "Intimo",
   appleWebApp: { capable: true, title: "Intimo", statusBarStyle: "black-translucent" },
   icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
   keywords: [
-    "private social club",
-    "adult social discovery",
-    "verified adult network",
-    "free creator profiles",
-    "discreet dating",
+    "Prague sex-positive",
+    "private adult network Prague",
+    "swingers Prague",
+    "kink community Prague",
+    "couples Prague",
     "intimo live",
   ],
   openGraph: {
-    title: "Intimo — Private Members Club After Dark",
-    description: "Free adults-only social discovery and creator community.",
+    title: "Intimo — Prague's private, sex-positive network",
+    description: "Free and members-only. Desires, boundaries, plans for tonight and the Prague scene.",
     url: "https://intimo.live",
     siteName: "Intimo",
     type: "website",
