@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { createSessionClient } from "@/lib/supabase/session";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
 
@@ -24,7 +25,8 @@ function safeTargetLink(value: unknown) {
 
 export async function GET(req: NextRequest) {
   const auth = await actor(req); if ("response" in auth) return auth.response;
-  const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Notifications unavailable" }, { status: 503 });
+  // Read as the member: RLS (member_read_own_notifications) limits rows to their own.
+  const db = createSessionClient(); if (!db) return NextResponse.json({ error: "Notifications unavailable" }, { status: 503 });
   const { data, error } = await db.from("notifications").select("id,type,title,message,actor_name,actor_avatar,target_link,is_read,created_at").eq("user_id", auth.actor.profileId).order("created_at", { ascending: false }).limit(100);
   if (error) return NextResponse.json({ error: "Notifications lookup failed" }, { status: 502 });
   const notifications = (data || []).map((item) => ({ id: item.id, type: item.type, title: item.title, message: item.message, actorName: item.actor_name, actorAvatar: item.actor_avatar, targetLink: safeTargetLink(item.target_link), isRead: item.is_read, createdAt: item.created_at }));
