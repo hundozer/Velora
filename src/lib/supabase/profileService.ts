@@ -20,6 +20,7 @@ export interface ProfileRow {
   country: string;
   city: string;
   location: string;
+  area_id?: string | null;
   languages: string[];
   headline: string | null;
   bio: string | null;
@@ -94,6 +95,7 @@ export function dbRowToProfile(row: ProfileRow): Profile {
     country: row.country,
     city: row.city,
     location: row.location,
+    areaId: row.area_id || undefined,
     languages: row.languages || ["English"],
     headline: row.headline || undefined,
     bio: row.bio || "Private member profile.",
@@ -155,6 +157,7 @@ export function profileToDbRow(authId: string, email: string, profile: Partial<P
   if (profile.country !== undefined) row.country = profile.country;
   if (profile.city !== undefined) row.city = profile.city;
   if (profile.location !== undefined) row.location = profile.location;
+  if (profile.areaId !== undefined) row.area_id = profile.areaId || null;
   if (profile.languages !== undefined) row.languages = profile.languages;
   if (profile.headline !== undefined) row.headline = profile.headline;
   if (profile.bio !== undefined) row.bio = profile.bio;

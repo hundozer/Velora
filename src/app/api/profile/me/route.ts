@@ -7,6 +7,7 @@ import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
 import type { Profile } from "@/types";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
+import { areaById, locationFieldsForArea } from "@/lib/areas.mjs";
 
 export const dynamic = "force-dynamic";
 const MAX_BODY_BYTES = 64 * 1024;
@@ -16,7 +17,7 @@ const ALLOWED_GENDERS = new Set(["FEMALE", "MALE", "COUPLE_MF", "COUPLE_FF", "CO
 const ALLOWED_ORIENTATIONS = new Set(["BISEXUAL", "HETEROSEXUAL", "HOMOSEXUAL", "PANSEXUAL", "FLUID", "QUEER"]);
 const PROFILE_MEDIA_REFERENCE = /^\/api\/media\/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i;
 const SELF_SERVICE_PROFILE_FIELDS = new Set([
-  "display_name", "avatar_url", "cover_photo_url", "country", "city", "location",
+  "display_name", "avatar_url", "cover_photo_url", "country", "city", "location", "area_id",
   "languages", "headline", "bio", "interests", "lifestyle_tags", "hobbies",
   "relationship_status", "looking_for",
 ]);
@@ -90,6 +91,9 @@ export async function POST(req: NextRequest) {
   if (age === null || age < 18 || age > 120) return NextResponse.json({ error: "You must be at least 18 years old" }, { status: 400 });
   const sexualOrientation = typeof body.sexualOrientation === "string" ? body.sexualOrientation : "";
   if (!ALLOWED_GENDERS.has(body.gender) || (sexualOrientation && !ALLOWED_ORIENTATIONS.has(sexualOrientation))) return NextResponse.json({ error: "Invalid demographic selection" }, { status: 400 });
+  const areaId = typeof body.areaId === "string" && body.areaId ? body.areaId : null;
+  if (areaId && !areaById(areaId)) return NextResponse.json({ error: "Unknown area" }, { status: 400 });
+  const areaLocation = areaId ? locationFieldsForArea(areaId) : null;
   const sensitiveDataProvided = Boolean(sexualOrientation);
   if (sensitiveDataProvided && body.explicitSensitiveDataConsent !== true) return NextResponse.json({ error: "Explicit consent is required to process sexual orientation" }, { status: 400 });
 
@@ -114,9 +118,11 @@ export async function POST(req: NextRequest) {
     age,
     gender: body.gender,
     sexual_orientation: sexualOrientation || null,
-    country: typeof body.country === "string" ? body.country.slice(0, 120) : "",
-    city: typeof body.city === "string" ? body.city.slice(0, 120) : "",
-    location: [body.city, body.country].filter((value) => typeof value === "string" && value).join(", ").slice(0, 255),
+    country: areaLocation ? areaLocation.country : typeof body.country === "string" ? body.country.slice(0, 120) : "",
+    city: areaLocation ? areaLocation.city : typeof body.city === "string" ? body.city.slice(0, 120) : "",
+    location: areaLocation ? areaLocation.location : [body.city, body.country].filter((value) => typeof value === "string" && value).join(", ").slice(0, 255),
+    // The area is the only location a member gives us; city/country/location are derived from it.
+    ...(areaId ? { area_id: areaId } : {}),
     languages: ["English"],
     headline: typeof body.headline === "string" ? body.headline.slice(0, 255) : "Intimo Member",
     bio: typeof body.headline === "string" ? body.headline.slice(0, MAX_STRING_LENGTH) : "Private member profile.",
@@ -194,6 +200,16 @@ export async function PUT(req: NextRequest) {
     Object.entries(mapped).filter(([field]) => SELF_SERVICE_PROFILE_FIELDS.has(field)),
   ) as Record<string, unknown>;
   if (Object.keys(update).length === 0) return NextResponse.json({ error: "No supported profile changes were supplied" }, { status: 400 });
+
+  if ("area_id" in update) {
+    if (update.area_id === null) {
+      Object.assign(update, { city: "", country: "", location: "" });
+    } else {
+      const derived = locationFieldsForArea(update.area_id);
+      if (!derived) return NextResponse.json({ error: "Unknown area" }, { status: 400 });
+      Object.assign(update, derived);
+    }
+  }
 
   if (typeof update.display_name === "string") {
     const displayName = update.display_name.trim();

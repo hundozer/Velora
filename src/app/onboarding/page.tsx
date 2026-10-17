@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { ArrowLeft, ArrowRight, CheckCircle2, ShieldCheck, User, Users } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { LOCATION_DATA } from "@/lib/locationData";
+import { AreaSelect } from "@/components/profile/AreaSelect";
 import { ageFromBirthDate, onboardingBasicsAreValid } from "@/lib/onboardingPolicy.mjs";
 
 type ProfileKind = "" | "SINGLE" | "COUPLE";
@@ -18,8 +18,7 @@ export default function OnboardingWizardPage() {
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [profileType, setProfileType] = useState<ProfileKind>("");
   const [gender, setGender] = useState("");
-  const [country, setCountry] = useState("");
-  const [city, setCity] = useState("");
+  const [areaId, setAreaId] = useState("");
   const [headline, setHeadline] = useState("");
   const [sexualOrientation, setSexualOrientation] = useState("");
   const [sensitiveConsent, setSensitiveConsent] = useState(false);
@@ -38,13 +37,7 @@ export default function OnboardingWizardPage() {
         ? "Enter a valid date of birth."
         : "";
   const basicsValid = onboardingBasicsAreValid(displayName, dateOfBirth);
-  const profileValid = Boolean(profileType && gender && country && city);
-  const cities = useMemo(() => LOCATION_DATA.getCitiesForCountry(country), [country]);
-
-  function chooseCountry(value: string) {
-    setCountry(value);
-    setCity("");
-  }
+  const profileValid = Boolean(profileType && gender && areaId);
 
   async function finish() {
     if (!basicsValid || !profileValid || (sexualOrientation && !sensitiveConsent)) return;
@@ -60,8 +53,7 @@ export default function OnboardingWizardPage() {
           dateOfBirth,
           profileType,
           gender,
-          country,
-          city,
+          areaId,
           headline: headline.trim(),
           sexualOrientation: sexualOrientation || undefined,
           explicitSensitiveDataConsent: Boolean(sexualOrientation && sensitiveConsent),
@@ -125,15 +117,9 @@ export default function OnboardingWizardPage() {
                   <option value="">Choose one</option><option value="FEMALE">Woman</option><option value="MALE">Man</option><option value="COUPLE_MF">Woman and man couple</option><option value="COUPLE_FF">Two women couple</option><option value="COUPLE_MM">Two men couple</option><option value="NON_BINARY">Non-binary</option><option value="TRANSGENDER">Transgender</option><option value="OTHER">Another identity</option>
                 </select>
               </label>
-              <label className="space-y-2 text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">Country
-                <select className={selectClass} value={country} onChange={(event) => chooseCountry(event.target.value)}>
-                  <option value="">Choose a country</option>{LOCATION_DATA.COUNTRIES.map((item) => <option key={item.code} value={item.name}>{item.name}</option>)}
-                </select>
-              </label>
-              <label className="space-y-2 text-xs font-semibold uppercase tracking-wider text-velora-textSecondary sm:col-span-2">City or region
-                <select className={selectClass} value={city} onChange={(event) => setCity(event.target.value)} disabled={!country}>
-                  <option value="">{country ? "Choose your city or region" : "Choose a country first"}</option>{cities.map((item) => <option key={item} value={item}>{item}</option>)}
-                </select>
+              <label className="space-y-2 text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">Your area
+                <AreaSelect className={selectClass} value={areaId} onChange={setAreaId} />
+                <span className="block text-[11px] font-normal normal-case tracking-normal text-velora-textMuted">Members see your district and a rough distance, never your position.</span>
               </label>
             </div>
             <Input label="Headline (optional)" value={headline} onChange={(event) => setHeadline(event.target.value)} maxLength={255} placeholder="A short introduction" />

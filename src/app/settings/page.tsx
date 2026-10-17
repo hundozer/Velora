@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { AreaSelect } from "@/components/profile/AreaSelect";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { VerificationWizard } from "@/components/verification/VerificationWizard";
@@ -36,6 +37,7 @@ import {
 export default function SettingsPage() {
   const { user, profile, updateUserProfile, logout, signOut } = useAuth();
   const [nickname, setNickname] = useState(profile?.displayName || user?.username || "");
+  const [areaId, setAreaId] = useState(profile?.areaId || "");
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>("en");
   const [privacy, setPrivacy] = useState({
     profileVisibility: "MEMBERS_ONLY",
@@ -74,6 +76,7 @@ export default function SettingsPage() {
   React.useEffect(() => {
     if (profile?.displayName || user?.username) setNickname(profile?.displayName || user?.username || "");
   }, [profile?.displayName, user?.username]);
+  React.useEffect(() => { setAreaId(profile?.areaId || ""); }, [profile?.areaId]);
 
   const uploadProfileImage = async (file: File, kind: "avatar" | "cover") => {
     if (!user || !profile) throw new Error("Your profile is not ready yet");
@@ -167,6 +170,7 @@ export default function SettingsPage() {
         const updatedProfile = {
           ...profile,
           displayName: nickname.trim(),
+          ...(areaId ? { areaId } : {}),
         };
         await updateUserProfile(updatedUser, updatedProfile);
       }
@@ -348,6 +352,21 @@ export default function SettingsPage() {
             />
             <p className="text-[10px] text-velora-textMuted mt-1.5">
               This nickname will represent your verified identity across Intimo feeds, messaging, and community salons.
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="settings-area" className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
+              Your area
+            </label>
+            <AreaSelect
+              id="settings-area"
+              value={areaId}
+              onChange={setAreaId}
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-xs text-velora-textPrimary outline-none focus:border-velora-gold/60"
+            />
+            <p className="text-[10px] text-velora-textMuted mt-1.5">
+              Members see your district and a rough distance, never your position.
             </p>
           </div>
         </div>

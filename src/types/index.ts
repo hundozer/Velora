@@ -140,6 +140,8 @@ export interface Profile {
   country: string;
   city: string;
   location: string;
+  /** Prague district or nearby area id from src/lib/areas.mjs (P1-03). */
+  areaId?: string;
   languages: string[];
   headline?: string;
   bio: string;
