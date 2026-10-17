@@ -26,3 +26,10 @@ test("presigned PutObject URLs carry no baked-in body checksum", async () => {
   assert.ok(!keys.includes("x-amz-checksum-crc32"), `unexpected checksum param in ${keys}`);
   assert.ok(!keys.includes("x-amz-sdk-checksum-algorithm"));
 });
+
+test("album picker only offers finished uploads and explains rejected photos", async () => {
+  const manager = await fs.readFile(path.join(root, "src/components/media/AlbumManager.tsx"), "utf8");
+  const route = await fs.readFile(path.join(root, "src/app/api/albums/[id]/media/route.ts"), "utf8");
+  assert.match(manager, /filter\(\(item: Media\) => item\.upload_status === "AVAILABLE"\)/);
+  assert.match(route, /invalid_album_media/);
+});

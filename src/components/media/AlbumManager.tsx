@@ -56,7 +56,8 @@ export function AlbumManager() {
     if (!albumResponse.ok) throw new Error(albumPayload.error || "Albums unavailable");
     if (!mediaResponse.ok) throw new Error(mediaPayload.error || "Photos unavailable");
     setAlbums(albumPayload.albums || []);
-    setMedia(mediaPayload.media || []);
+    // Only finished uploads can go into an album; abandoned or failed uploads stay out of the picker.
+    setMedia((mediaPayload.media || []).filter((item: Media) => item.upload_status === "AVAILABLE"));
     setSelected((current) => current && albumPayload.albums?.some((album: Album) => album.id === current) ? current : albumPayload.albums?.[0]?.id || null);
   }, []);
 
@@ -96,7 +97,7 @@ export function AlbumManager() {
   }
 
   async function savePhotos(album: Album) {
-    setBusy(true); setError("");
+    setBusy(true); setError(""); setNotice("");
     const coverMediaId = album.cover_media_id && album.mediaIds.includes(album.cover_media_id) ? album.cover_media_id : album.mediaIds[0] || null;
     const response = await fetch(`/api/albums/${album.id}/media`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mediaIds: album.mediaIds, coverMediaId }) });
     const payload = await response.json().catch(() => ({})); setBusy(false);

@@ -13,7 +13,12 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   if (uniqueIds.length !== mediaIds.length || uniqueIds.length > 30 || (coverMediaId && !uniqueIds.includes(coverMediaId))) return NextResponse.json({ error: "An album can contain no more than 30 photos" }, { status: 400 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Albums unavailable" }, { status: 503 });
   const { error } = await db.rpc("intimo_set_album_media", { p_album_id: params.id, p_owner_id: auth.actor.profileId, p_media_ids: uniqueIds, p_cover_media_id: coverMediaId });
-  if (error) return NextResponse.json({ error: "Album media could not be updated" }, { status: 409 });
+  if (error) {
+    const reason = /invalid_album_media/.test(error.message) ? "One of these photos hasn't finished uploading or was removed. Refresh and try again."
+      : /album_not_found/.test(error.message) ? "Album not found"
+      : "Album media could not be updated";
+    return NextResponse.json({ error: reason }, { status: 409 });
+  }
   const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorUserId: auth.actor.userId, action: "ALBUM_MEDIA_SET", resourceType: "ALBUM", resourceId: params.id, outcome: "SUCCESS", metadata: { mediaCount: uniqueIds.length, coverMediaId } });
   if (!audited) return NextResponse.json({ error: "Album media changed but audit evidence failed", albumId: params.id }, { status: 502 });
   return NextResponse.json({ success: true });
