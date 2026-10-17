@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
     participantDeclarations: supabase.from("content_participant_declarations").select("media_id,contains_other_identifiable_participants,all_participants_adults,recording_consented,publication_consented,declaration_version,declared_at").eq("uploader_id", profileId),
     posts: supabase.from("content_posts").select("*").eq("author_id", profileId),
     comments: supabase.from("content_comments").select("*").eq("author_id", profileId),
+    desires: supabase.from("member_desires").select("desire_id,state,visibility,updated_at").eq("profile_id", profileId),
     savedItems: supabase.from("saved_items").select("target_type,target_id,created_at").eq("profile_id", profileId),
     reactions: supabase.from("content_reactions").select("target_type,target_id,reaction,created_at").eq("profile_id", profileId),
     notifications: supabase.from("notifications").select("type,title,message,actor_name,target_link,is_read,created_at").eq("user_id", profileId),
