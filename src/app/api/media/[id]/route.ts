@@ -14,7 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
   if (!UUID.test(params.id)) return NextResponse.json({ error: "Invalid media identifier" }, { status: 400 });
-  const rate = checkRateLimit(`media-view:${actor.actor.userId}`, 120, 60);
+  const rate = (await checkRateLimit(`media-view:${actor.actor.userId}`, 120, 60));
   if (!rate.allowed) return NextResponse.json({ error: "Media access rate limit reached" }, { status: 429 });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Media service unavailable" }, { status: 503 });

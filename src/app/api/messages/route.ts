@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
   const length = Number(req.headers.get("content-length") || "0");
   if (length > MAX_BODY_BYTES) return NextResponse.json({ error: "Message is too large" }, { status: 413 });
-  const rate = checkRateLimit(`message:${actor.actor.userId}`, 60, 60);
+  const rate = (await checkRateLimit(`message:${actor.actor.userId}`, 60, 60));
   if (!rate.allowed) return NextResponse.json({ error: "Message rate limit reached" }, { status: 429 });
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const receiverId = typeof body.receiverId === "string" ? body.receiverId : "";

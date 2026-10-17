@@ -3,12 +3,17 @@
  * Protects endpoints against brute force, bot crawlers, and automated messaging spam.
  */
 
+import { getServerSupabase } from "@/lib/supabase/server";
+
 interface RateLimitRecord {
   count: number;
   resetTime: number;
 }
 
 const rateLimitMap = new Map<string, RateLimitRecord>();
+// When the durable function is missing (migration not applied) or Postgres errors,
+// fall back to per-instance memory for a few minutes instead of failing requests.
+let durableUnavailableUntil = 0;
 
 export interface RateLimitCheckResult {
   allowed: boolean;
@@ -16,44 +21,39 @@ export interface RateLimitCheckResult {
   resetInSeconds: number;
 }
 
-/**
- * Checks per-client rate limit
- */
-export function checkRateLimit(
-  identifier: string,
-  limit: number = 30, // Default 30 requests
-  windowSeconds: number = 60 // Default 60 seconds window
-): RateLimitCheckResult {
+function checkInMemory(identifier: string, limit: number, windowSeconds: number): RateLimitCheckResult {
   const now = Math.floor(Date.now() / 1000);
   const record = rateLimitMap.get(identifier);
-
   if (!record || now > record.resetTime) {
-    const newRecord: RateLimitRecord = {
-      count: 1,
-      resetTime: now + windowSeconds,
-    };
-    rateLimitMap.set(identifier, newRecord);
-    return {
-      allowed: true,
-      remaining: limit - 1,
-      resetInSeconds: windowSeconds,
-    };
+    rateLimitMap.set(identifier, { count: 1, resetTime: now + windowSeconds });
+    return { allowed: true, remaining: limit - 1, resetInSeconds: windowSeconds };
   }
-
-  if (record.count >= limit) {
-    return {
-      allowed: false,
-      remaining: 0,
-      resetInSeconds: record.resetTime - now,
-    };
-  }
-
+  if (record.count >= limit) return { allowed: false, remaining: 0, resetInSeconds: record.resetTime - now };
   record.count += 1;
-  return {
-    allowed: true,
-    remaining: limit - record.count,
-    resetInSeconds: record.resetTime - now,
-  };
+  return { allowed: true, remaining: limit - record.count, resetInSeconds: record.resetTime - now };
+}
+
+/**
+ * Rate limit shared by every serverless instance (P1-13), via the Postgres
+ * function intimo_rate_limit_hit. Falls back to in-memory limiting if the
+ * database is unavailable, so a limiter outage never takes endpoints down.
+ */
+export async function checkRateLimit(
+  identifier: string,
+  limit: number = 30,
+  windowSeconds: number = 60
+): Promise<RateLimitCheckResult> {
+  const db = Date.now() >= durableUnavailableUntil ? getServerSupabase() : null;
+  if (db) {
+    const { data, error } = await db.rpc("intimo_rate_limit_hit", { p_key: identifier.slice(0, 200), p_limit: limit, p_window_seconds: windowSeconds });
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!error && row && typeof row.allowed === "boolean") {
+      return { allowed: row.allowed, remaining: Math.max(0, limit - Number(row.hits)), resetInSeconds: Number(row.reset_in_seconds) || windowSeconds };
+    }
+    durableUnavailableUntil = Date.now() + 5 * 60 * 1000;
+    console.error("Durable rate limit unavailable; using in-memory fallback", { code: error?.code });
+  }
+  return checkInMemory(identifier, limit, windowSeconds);
 }
 
 export interface DMTrustGateOptions {

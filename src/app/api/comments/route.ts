@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const actor = await resolveServerActor(req); if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
-  if (!checkRateLimit(`comment:${actor.actor.userId}`, 30, 60).allowed) return NextResponse.json({ error: "Comment rate limit reached" }, { status: 429 });
+  if (!(await checkRateLimit(`comment:${actor.actor.userId}`, 30, 60)).allowed) return NextResponse.json({ error: "Comment rate limit reached" }, { status: 429 });
   let body: unknown; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const input = body as { targetType?: unknown; targetId?: unknown; text?: unknown }; const targetType = typeof input.targetType === "string" ? input.targetType : ""; const targetId = typeof input.targetId === "string" ? input.targetId : ""; const text = typeof input.text === "string" ? input.text.trim() : "";
   if (!CONTENT_TARGET_TYPES.includes(targetType as ContentTargetType) || !UUID.test(targetId) || text.length < 1 || text.length > 2_000) return NextResponse.json({ error: "Invalid comment" }, { status: 400 });

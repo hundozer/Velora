@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   const ctx = await context(req, body.targetProfileId);
   if ("error" in ctx) return ctx.error;
   const { db, auth, targetId } = ctx;
-  if (!checkRateLimit(`interest:${auth.userId}`, 60, 60 * 60).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  if (!(await checkRateLimit(`interest:${auth.userId}`, 60, 60 * 60)).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
 
   const [{ data: target }, { data: block, error: blockError }, { data: me }] = await Promise.all([
     db.from("profiles").select("id,display_name,avatar_url,account_status").eq("id", targetId).maybeSingle(),

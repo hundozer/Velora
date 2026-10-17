@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Authentication required" }, { status: auth.status === "unauthenticated" ? 401 : 503 });
   }
   if (!hasAdultAccess(auth.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
-  if (!checkRateLimit(`member-feed:${auth.actor.userId}`, 120, 60).allowed) {
+  if (!(await checkRateLimit(`member-feed:${auth.actor.userId}`, 120, 60)).allowed) {
     return NextResponse.json({ error: "Too many feed requests" }, { status: 429 });
   }
   const db = getServerSupabase();

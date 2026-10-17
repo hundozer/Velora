@@ -12,7 +12,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const id = params.id?.trim();
   if (!id || !UUID.test(id)) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   const client = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  const rate = checkRateLimit(`public-profile:${client.slice(0, 80)}`, 90, 60);
+  const rate = (await checkRateLimit(`public-profile:${client.slice(0, 80)}`, 90, 60));
   if (!rate.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(rate.resetInSeconds) } });
 
   const db = getServerSupabase();

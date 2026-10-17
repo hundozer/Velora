@@ -12,7 +12,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!UUID.test(params.id)) return NextResponse.json({ error: "Media not found" }, { status: 404 });
   if (!verifyAgeDeclarationValue(req.cookies.get(AGE_DECLARATION_COOKIE)?.value)) return NextResponse.json({ error: "Adult declaration required" }, { status: 403 });
   const client = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  if (!checkRateLimit(`public-media-view:${client.slice(0, 80)}`, 120, 60).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  if (!(await checkRateLimit(`public-media-view:${client.slice(0, 80)}`, 120, 60)).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   const db = getServerSupabase();
   if (!db) return NextResponse.json({ error: "Public media unavailable" }, { status: 503 });
   const { data: media } = await db.from("media_objects").select("id,owner_id,object_key,content_rating").eq("id", params.id).eq("visibility", "PUBLIC").eq("upload_status", "AVAILABLE").eq("processing_status", "READY").eq("moderation_status", "APPROVED").maybeSingle();

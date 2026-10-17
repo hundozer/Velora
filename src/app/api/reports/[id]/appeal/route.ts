@@ -7,7 +7,7 @@ import { auditLogger } from "@/lib/auth/auditLogger";
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
-  const rate = checkRateLimit(`appeal:${actor.actor.userId}`, 5, 24 * 60 * 60);
+  const rate = (await checkRateLimit(`appeal:${actor.actor.userId}`, 5, 24 * 60 * 60));
   if (!rate.allowed) return NextResponse.json({ error: "Appeal limit reached" }, { status: 429 });
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const reason = typeof body.reason === "string" ? body.reason.trim() : "";

@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url); const page = Math.min(Math.max(Number(url.searchParams.get("page")) || 1, 1), 500); const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 18, 1), 36); const offset = (page - 1) * limit; const ownerId = url.searchParams.get("ownerId");
   if (ownerId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(ownerId)) return NextResponse.json({ error: "Invalid owner" }, { status: 400 });
   const client = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  if (!checkRateLimit(`public-albums:${client.slice(0,80)}`, 90, 60).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  if (!(await checkRateLimit(`public-albums:${client.slice(0,80)}`, 90, 60)).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Albums unavailable" }, { status: 503 });
   let query = db.from("media_albums").select("id,owner_id,title,description,category,tags,cover_media_id,published_at,created_at", { count: "exact" }).eq("visibility", "PUBLIC").eq("moderation_status", "APPROVED").order("published_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }).order("id", { ascending: true }).range(offset, offset + limit - 1);
   if (ownerId) query = query.eq("owner_id", ownerId);

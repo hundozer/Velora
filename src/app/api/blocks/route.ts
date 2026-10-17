@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
-  const rate = checkRateLimit(`block:${actor.actor.userId}`, 40, 60 * 60);
+  const rate = (await checkRateLimit(`block:${actor.actor.userId}`, 40, 60 * 60));
   if (!rate.allowed) return NextResponse.json({ error: "Too many block changes" }, { status: 429 });
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const targetProfileId = typeof body.targetProfileId === "string" ? body.targetProfileId : "";

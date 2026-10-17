@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const auth = await actor(req); if ("response" in auth) return auth.response;
-  if (!checkRateLimit(`notifications-update:${auth.actor.userId}`, 60, 60).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  if (!(await checkRateLimit(`notifications-update:${auth.actor.userId}`, 60, 60)).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   let body: unknown; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const input = body as { id?: unknown; all?: unknown };
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Notifications unavailable" }, { status: 503 });
@@ -54,7 +54,7 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const auth = await actor(req); if ("response" in auth) return auth.response;
-  if (!checkRateLimit(`notifications-delete:${auth.actor.userId}`, 40, 60).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  if (!(await checkRateLimit(`notifications-delete:${auth.actor.userId}`, 40, 60)).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   const url = new URL(req.url); const id = url.searchParams.get("id"); const all = url.searchParams.get("all") === "true";
   if (!all && (!id || !UUID.test(id))) return NextResponse.json({ error: "Invalid notification" }, { status: 400 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Notifications unavailable" }, { status: 503 });

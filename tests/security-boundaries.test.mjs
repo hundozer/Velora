@@ -745,7 +745,7 @@ test("demo profiles are staging-only, visibly labeled, reversible, and cannot im
 test("auth emails are server-sent, enumeration-safe and rate-limited", async () => {
   const route = await read("src/app/api/auth/email/route.ts");
   assert.match(route, /auth\.admin\.generateLink/);
-  assert.match(route, /checkRateLimit\(`auth-email:/);
+  assert.match(route, /await checkRateLimit\(`auth-email:/);
   assert.match(route, /safeReturnTo\(body\.next\)/);
   assert.match(route, /body\.adult !== true \|\| body\.terms !== true/);
   assert.match(route, /\/auth\/confirm\?token_hash=/);

@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   if (actorResult.status !== "authenticated") return NextResponse.json({ error: "Discovery unavailable" }, { status: actorResult.status === "unprovisioned" ? 403 : 503 });
   if (!hasAdultAccess(actorResult.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
 
-  const rate = checkRateLimit(`discovery:${actorResult.actor.userId}`, 120, 60);
+  const rate = (await checkRateLimit(`discovery:${actorResult.actor.userId}`, 120, 60));
   if (!rate.allowed) return NextResponse.json({ error: "Too many discovery requests" }, { status: 429, headers: { "Retry-After": String(rate.resetInSeconds) } });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Discovery unavailable" }, { status: 503 });

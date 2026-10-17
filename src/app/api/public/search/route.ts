@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const q = queryText(new URL(req.url).searchParams.get("q"));
   if (q.length < 2) return NextResponse.json({ error: "Enter at least two characters" }, { status: 400 });
   const client = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  const rate = checkRateLimit(`public-search:${client.slice(0, 80)}`, 45, 60);
+  const rate = (await checkRateLimit(`public-search:${client.slice(0, 80)}`, 45, 60));
   if (!rate.allowed) return NextResponse.json({ error: "Too many search requests" }, { status: 429, headers: { "Retry-After": String(rate.resetInSeconds) } });
   const db = getServerSupabase();
   if (!db) return NextResponse.json({ error: "Search unavailable" }, { status: 503 });

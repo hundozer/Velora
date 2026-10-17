@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const auth = await resolveServerActor(req);
   if (auth.status !== "authenticated") return NextResponse.json({ error: "Sign in to suggest a listing" }, { status: auth.status === "unauthenticated" ? 401 : 503 });
-  if (!checkRateLimit(`scene-suggest:${auth.actor.userId}`, 5, 24 * 60 * 60).allowed) return NextResponse.json({ error: "You've suggested several listings today. Thank you!" }, { status: 429 });
+  if (!(await checkRateLimit(`scene-suggest:${auth.actor.userId}`, 5, 24 * 60 * 60)).allowed) return NextResponse.json({ error: "You've suggested several listings today. Thank you!" }, { status: 429 });
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const validated = validateSceneEvent(body);

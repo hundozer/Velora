@@ -22,7 +22,7 @@ function positiveInteger(value: string | null, fallback: number, maximum: number
 }
 
 export async function GET(req: NextRequest) {
-  const rate = checkRateLimit(`public-community:${clientKey(req)}`, 90, 60);
+  const rate = (await checkRateLimit(`public-community:${clientKey(req)}`, 90, 60));
   if (!rate.allowed) {
     return NextResponse.json(
       { error: "Too many public discovery requests" },
