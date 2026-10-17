@@ -1,81 +1,79 @@
 # Intimo MVP definition
 
-> The smallest version of Intimo that a real group of adults in Prague could join
-> and use repeatedly.
+> The smallest product that 100–200 real Prague members can use repeatedly and that feels
+> **alive, private, safe and distinctly sex-positive.**
 
-This replaces the earlier MVP scope (adults-only onboarding, profile, media,
-Prague discovery, filters, favourites, messaging, blocking, reporting, settings).
-That list was **necessary but not sufficient**: it contained no intent mechanism and
-no return triggers. Compared with Amateri, three things are added (**Plans**,
-**feedback signals**, **email notifications**) and several are cut (friend graph,
-follow, feed, 28 ad categories, multi-role admin, retention engine).
+The MVP is Phase 1 of `ROADMAP.md` (milestone `M1-mvp`). Every capability below names the
+Phase 1 issues that deliver it. Phase 1 is closed: adding something means removing something of equal effort.
 
-## The 8 MVP capabilities
+## The 10 launch capabilities
 
-### 1. Account, 18+ and onboarding
-- **Story:** As a new visitor I confirm I'm 18+, create an account with email and password (or magic link), verify my email, and set up a profile in under 3 minutes.
-- **UX:** Age gate → sign-up → "check your email" → 4-step onboarding (who you are: single/couple; basics: nickname, DOB, gender(s), orientation; looking for: chips + Prague area; photo) → home. Back navigation, inline validation, progress bar.
-- **Backend:** Supabase Auth (email+password, magic link, confirm email, reset). On first sign-in a DB trigger creates the `profiles` row with `id = auth.uid()`. DOB is validated as ≥18 server-side, and for couples both partners must be ≥18.
-- **DB:** `profiles` (id = `auth.users.id`), `profile_partners` (couples), `age_declarations`.
-- **Moderation/privacy:** age declaration is stored with timestamp and IP hash; there is a self-service account deletion path that hard-deletes within 30 days.
-- **Acceptance:** a new user completes sign-up to home on a 375 px phone with no dead ends; an under-18 DOB is blocked server-side; unconfirmed email cannot reach member APIs; password reset and logout work; sessions persist across refreshes and devices.
+### 1. Account, 18+ and onboarding — P1-02, P1-03, P1-15
+- **Story:** As a newcomer I understand what Intimo is, confirm I'm 18+, sign up and set up a profile that says who I am, how I relate, and where in Prague I am, in a few minutes.
+- **UX:** Landing that explains "Prague's private sex-positive network" without showing emptiness → age gate → email + password or magic link → confirm email → onboarding: single/couple (partner DOB for couples), identity, relationship structure, looking-for chips, Prague area, first photo, privacy defaults.
+- **Backend/DB:** Supabase Auth (live); `profiles.id = auth.users.id`; `areas` table (Prague districts + nearby cities, centroid only); server-validated ≥18 for every person on the profile.
+- **Acceptance:** sign-up to home works on a 375 px phone with no dead ends; under-18 DOB blocked server-side; precise location never stored or shown.
 
-### 2. Profile and private photos
-- **Story:** As a member I show who I am and what I'm looking for, keep explicit photos private, and decide who sees them.
-- **UX:** Profile header (photo, name, age(s), area, online bucket, verified badge, looking-for chips), bio, public photos, a locked private album with "Request access", and actions: Message, Interest, Favourite, ⋯ (block/report).
-- **Backend:** R2 presigned upload → moderation queue → approved. Private album grants per viewer, revocable.
-- **DB:** `media_objects`, `media_albums`, `media_album_items`, `album_access_grants` (new: owner, viewer, status requested/granted/denied/revoked).
-- **Moderation/privacy:** every photo goes through the review queue before public visibility; private photos are only served through authenticated, grant-checked URLs; the explicit-media blur default is on.
-- **Acceptance:** upload works in production on a phone; a private photo is never served to a non-grantee (tested); revoking a grant removes access immediately; a member without an approved photo is hidden from discovery rails.
+### 2. Desires and boundaries — P1-19, P1-20
+- **Story:** As a member I say what I love, am into, am curious about, am not into, and what is a hard limit, and how I want to be approached, so others know before they reach out.
+- **UX:** Curated desire catalogue (no free-text kink lists at launch) with five states: `Love it / Into it / Curious / Not for me / Hard limit`. Approach preferences: `Comfortable with / Ask me first / Not interested` for messaging, explicit media and common interaction types. Profiles show shared desires first; hard limits are visible but never used to rank.
+- **Backend/DB:** `desires` (catalogue, admin-managed), `member_desires(profile_id, desire_id, state, visibility)`, `member_boundaries(profile_id, kind, preference)`. Boundaries are **enforced** in messaging and private-media requests, not just displayed.
+- **Acceptance:** a `Not interested` / hard-limit boundary blocks the matching unsolicited request server-side; desire filters work in People.
 
-### 3. Prague discovery
-- **Story:** As a member I see who's around, who's new and who's online, and I can filter for what I want.
-- **UX:** Home rails ("Online now", "New in Prague", "Plans near you", "Looking for what you're looking for"), plus a Browse grid with filter sheet (type, gender, age, looking-for, distance bucket, has-photo, verified, online). Empty rails hide; the recency window widens automatically.
-- **Backend:** one server-side query with filters, keyset pagination, approximate distance from a stored Prague-district centroid (never GPS precision), blocks excluded both ways.
-- **DB:** `profiles.area_id`, `areas` (Prague districts + nearby cities with centroid), `profiles.last_active_at` updated on authenticated requests (throttled to 1/5 min).
-- **Acceptance:** filters execute server-side with p95 < 300 ms at 10k profiles; blocked users never appear; no screen shows a zero count.
+### 3. Profile, private photos and the Album Handshake — P1-06, P1-12
+- **Story:** As a member I show who I am, keep explicit photos private, and decide exactly who sees them and for how long.
+- **UX:** Profile header (photo, name, age(s), area, presence bucket, trust signals), bio, shared desires, public photos, locked private album → *Request access*. Owner chooses **grant once / grant until revoked / deny**; revoke is immediate. Likes on approved photos.
+- **Backend/DB:** R2 media pipeline (live), moderation queue, `album_access_grants(owner, viewer, mode, status, expires_at)`, `content_reactions`.
+- **Acceptance:** private media is never served to a non-grantee; revoke takes effect on the next request; production upload verified end to end.
 
-### 4. Plans (intent posts)
-- **Story:** As a member I post what I'm looking for ("Tonight, Vinohrady, couple looking for a woman for drinks then…") and get replies from eligible people.
-- **UX:** ≤6 categories (Date, Casual, Couples & threesomes, Kink, Party/event, Chat & online); expiry 24 h / 72 h / 7 days; area; who may reply (gender/type, age range, verified only). Plans appear on home, on the profile and in a Plans tab.
-- **Backend:** reuse `dating_ads`; replies create a DM thread tagged with the plan; the first plan from a new member goes through moderation.
-- **DB:** `dating_ads` simplified (`category` enum of 6, `expires_at`, `area_id`); drop VIP/credit columns.
-- **Acceptance:** an ineligible member cannot reply (server-enforced, already exists); expired plans disappear; posting takes < 60 s on mobile.
+### 4. People: Prague discovery — P1-04, P1-05
+- **Story:** As a member I see who's around, new and online, and filter by what matters to me, including desires.
+- **UX:** Home rails (Online now, New in Prague, Tonight near you, Shares your desires) and the People grid with filters (type, gender, age, area distance bucket, desires, has photo, verified, online). Empty rails hide; recency windows widen.
+- **Backend/DB:** server-side filters with keyset pagination; approximate distance between area centroids; throttled `last_active_at`; blocks excluded both ways.
+- **Acceptance:** p95 < 300 ms at 10k profiles; blocked users never appear; no zero counts anywhere.
 
-### 5. Feedback signals
-- **Story:** As a member I see who looked at me, who's interested and who wants my private photos, and that makes me come back.
-- **UX:** an Activity tab with Visitors (last 30 days), Interest received, Access requests and Likes on my photos. Mutual interest is highlighted ("You're both interested").
-- **Backend:** record a profile view at most once per viewer per 24 h; "Interest" is a one-tap signal (replaces follow/friend); favourites stay private bookmarks.
-- **DB:** `profile_views`, `interests` (from, to, created_at, unique), `saved_items` (favourites), `content_reactions` (photo likes). **Delete** `connections` and `friendships` after migration.
-- **Privacy:** a "browse invisibly" setting suppresses my visits; blocked users never appear in my activity.
-- **Acceptance:** visiting a profile appears in the owner's Visitors within 5 s; mutual interest notifies both sides.
+### 5. Tonight / Plans — P1-07
+- **Story:** As a member I post what I'm looking for now ("Tonight, Vinohrady, couple looking for a third for drinks first") and get replies only from people I'd welcome.
+- **UX:** 6 intent categories, 24 h / 72 h / 7 d expiry, area, who may reply (type, age, verified only). Tonight is a bottom-nav tab, on Home and on the profile.
+- **Backend/DB:** `dating_ads` simplified into Plans (categories, `expires_at`, `area_id`); replies create a conversation tagged with the Plan; first Plan from a new member is reviewed.
+- **Acceptance:** ineligible replies rejected server-side; expired Plans disappear; posting takes < 60 s on a phone.
 
-### 6. Messaging
-- **Story:** As a member I chat in real time, send photos and know when I've been read.
-- **UX:** Inbox (unread first, filters: all / unread / from plans), thread with realtime messages, image attachment (from the private pipeline), read state, and block/report inside the thread. First messages from non-mutual members land in "Requests".
-- **Backend:** Supabase Realtime on `direct_messages` inserts (RLS by participant). Image messages reuse the media pipeline with `visibility=MESSAGE`. Rate limits live in Postgres, not in memory.
-- **DB:** `direct_messages` (+ `media_id`), `conversations` (participants, last_message_at, per-user unread count). Drop the per-read audit row.
-- **Acceptance:** message latency < 1 s; images arrive realtime and are never publicly addressable; blocked users can't message; the unread badge is correct across devices.
+### 6. Activity: interest and visitors — P1-08
+- **Story:** As a member I see who looked at me, who's interested, and who asked for my private photos, which is why I come back.
+- **UX:** Activity (inside Me and on Home): Visitors (30 days), Interest received, Access requests, Likes; mutual interest highlighted.
+- **Backend/DB:** `profile_views` (1 per viewer/day), `interests` (replaces `connections` + `friendships`); invisible browsing suppresses visits.
+- **Acceptance:** a view appears within 5 s; mutual interest notifies both; blocked users never appear.
 
-### 7. Notifications
-- **Story:** As a member who isn't on the site, I find out when something worth returning for happens.
-- **UX:** in-app bell; email for the first unread message (batched; no repeat until visited), mutual interest, access request/grant and plan replies; a weekly "New in Prague" digest. Unsubscribe per category.
-- **Backend:** `notifications` row plus an email outbox processed by a Vercel cron (every 5 min) via Resend. PWA push in Phase 2.
-- **DB:** `notifications`, `email_outbox`, `notification_preferences`.
-- **Acceptance:** an email arrives within 10 min of the first unread message; no member receives more than 1 email per category per 3 h; unsubscribe works without login.
+### 7. Messaging — P1-09, P1-10, P1-13
+- **Story:** As a member I chat in real time, send photos privately, and unwanted first messages don't land in my main inbox.
+- **UX:** Inbox (unread first; All / Unread / Requests / From Plans), realtime thread, image attachments, read state, block/report in thread.
+- **Backend/DB:** Supabase Realtime on `direct_messages` (publication + owner-read RLS live), `conversations` with per-user unread; image messages via private media; Postgres rate limits; boundaries checked on first message.
+- **Acceptance:** delivery < 1 s; images never publicly addressable; blocked users and `Not interested` boundaries stop delivery.
 
-### 8. Trust and safety
-- **Story:** As a member I can block or report anyone instantly; as a moderator I can act on reports and review photos fast.
-- **UX:** block/report everywhere (profile, thread, plan, photo). Settings → Privacy (visibility, discreet mode, who can message, browse invisibly). Settings → Account (email, password, delete account, data export).
-- **Backend:** keep the existing transactional block/report, moderation case queue and verification review. Admin = `admin` and `moderator` roles only, with Supabase Auth MFA required.
-- **Acceptance:** block takes effect everywhere immediately (discovery, messages, activity, plans); the report queue shows context; account deletion removes the profile from all surfaces at once.
+### 8. Return triggers and PWA — P1-11, P1-23
+- **Story:** When I'm not on Intimo, I hear about things worth coming back for, and I can install it like an app.
+- **UX:** in-app notifications (live); email for first unread message, mutual interest, access request/grant and Plan reply, batched, per-category unsubscribe; installable PWA with an app-like shell. Web push is Phase 2.
+- **Backend/DB:** `email_outbox` + Vercel cron via Resend; `notification_preferences`; manifest + service worker.
+- **Acceptance:** email within 10 min of the first unread message; ≤1 email per category per 3 h; installable on iOS and Android.
 
-## Explicitly out of MVP
-Feed/posts, comments (P1), follow/friends, chat rooms, groups, events, videos,
-webcam, stories, blogs, multi-language UI beyond EN + CS, monetization of any
-kind, AI features, God Mode, retention engine automation.
+### 9. Prague Scene v0 — P1-21
+- **Story:** As a member I see real sex-positive events in Prague (munches, workshops, parties) even before Intimo itself is busy.
+- **UX:** Scene section on Home: date, venue/area, organiser, short description, outbound link. Admin-curated; members can suggest a listing.
+- **Backend/DB:** `scene_events` (admin-managed, moderated).
+- **Acceptance:** at least 8 upcoming listings at launch; past events disappear automatically.
 
-## MVP definition of done
-All 16 success steps in the brief work **in production on a phone**, with
-Playwright end-to-end tests for: sign-up → onboarding → upload → discover →
-interest → message (realtime, image) → email notification → block → delete account.
+### 10. Trust, privacy and safety — P1-14, P1-18, P1-22
+- **Story:** As a member I control who sees me and can stop anyone instantly; as a moderator I can act fast.
+- **UX:** Privacy Center (discreet mode, invisible browsing, profile visibility, who can message me, activity visibility, export, delete); block/report everywhere; trust signals (photo verified, established profile, organiser), no public scores.
+- **Backend/DB:** existing transactional block/report, moderation cases, verification review; admin roles simplified (P0-10).
+- **Acceptance:** block takes effect everywhere immediately; median report-to-action < 12 h; deletion removes the profile from every surface at once.
+
+## Foundation for all of the above
+P1-01 member RLS (part 1 live), P1-16 navigation **Home · People · Tonight · Messages · Me** (Me tab live; `Dating` becomes `Tonight` with P1-07), P1-17 full-loop Playwright test, P1-00 benchmark validation.
+
+## Explicitly out of the MVP
+Compatibility summaries (P2-01), relationship links between profiles (P2-02), generic feed, web push, chat rooms, groups/forums, blogs, livestreaming, video calls, webcams, creator monetisation, credits, AI features, swipe decks, public popularity scores.
+
+## Definition of done
+Every capability works **in production on a phone**, verified by the P1-17 Playwright journey:
+register → onboard → desires/boundaries → upload → discover → interest → post Plan → private access → realtime message → email notification → block → delete account.
