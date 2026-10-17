@@ -480,6 +480,8 @@ export interface Conversation {
   unreadCount: number;
   updatedAt: string;
   isTyping?: boolean;
+  /** The member has never written in this conversation (Requests folder). */
+  isRequest?: boolean;
 }
 
 export interface VerificationRequest {
