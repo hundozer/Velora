@@ -1,7 +1,8 @@
 # Feature parity: Amateri → Intimo
 
-Amateri is the **functional** benchmark: behaviour, information architecture and
-loops. Do not copy branding, text, design assets or implementation.
+Amateri is the **functional** benchmark for local immediacy and explicit intent; Feeld (identity, relationship
+structure, desires) and FetLife (community and scene) complement it — see the thesis in `ROADMAP.md`.
+Do not copy branding, text, design assets or implementation. Hands-on validation of all three is P1-00.
 
 ## Sourcing caveat (read first)
 

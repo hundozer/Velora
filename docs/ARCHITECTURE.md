@@ -65,9 +65,12 @@ Resend: Supabase Auth SMTP + app email outbox
 |---|---|---|
 | `profiles` | person or couple | `user_id` (auth), `kind` SINGLE/COUPLE, `area_id`, `looking_for[]`, visibility/privacy flags, `last_active_at`. Remove monetization columns (`monthly_subscription_price`, `subscribers_count`, `member_tier`) |
 | `profile_partners` | second person on couple profiles | DOB ≥18 check |
-| `areas` | Prague districts + nearby cities | centroid lat/lng for approximate distance |
+| `areas` | Prague districts + nearby cities | centroid lat/lng for approximate distance (P1-03) |
+| `desires`, `member_desires` | Desire Graph v1 | curated catalogue; state `LOVE/INTO/CURIOUS/NOT_FOR_ME/HARD_LIMIT` (P1-19) |
+| `member_boundaries` | approach preferences | `COMFORTABLE/ASK_FIRST/NOT_INTERESTED`, enforced in messaging + media requests (P1-20) |
+| `scene_events` | Prague Scene v0 | admin-curated events with outbound link (P1-21) |
 | `media_objects`, `media_albums`, `media_album_items` | canonical media | keep |
-| `album_access_grants` | private album permissions | new |
+| `album_access_grants` | Private Album Handshake | mode `ONCE/UNTIL_REVOKED`, status, `expires_at` (P1-06) |
 | `dating_ads` → "Plans" | intent posts | 6 categories, `expires_at`, `area_id` |
 | `interests` | one-tap signal | replaces `connections` + `friendships` |
 | `saved_items` | private favourites | keep |

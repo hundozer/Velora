@@ -1,40 +1,61 @@
 # Intimo: product vision
 
-**Intimo** (`intimo.live`, formerly *Velora*) is an 18+ social discovery and
-community platform for consenting adults: singles and couples who want to meet,
-flirt, share and play. It is a modern, cleaner and mobile-first take on the
-Czech adult-community model popularised by Amateri. It is not a Tinder clone
-and not an OnlyFans clone.
+**Intimo** (`intimo.live`, formerly *Velora*) is a **local, private, sex-positive network for Prague**:
+a place for consenting adults (singles, couples, queer and kink-curious people) to be honest about
+what they are into, find people who understand it, and stay in control of how far things go.
+
+It is **not** an adult dating directory, a Tinder clone or an OnlyFans clone. It combines:
+- **Amateri's** local immediacy and explicit intent ("what do you want, and where?"),
+- **Feeld's** respect for identity, relationship structure and desire,
+- **FetLife's** community gravity (a real local scene),
+
+in a cleaner, more private, mobile-first product.
+
+> **A private place to be honest about what you are into, discover people who understand it, and stay in control of how far things go.**
 
 ## Who it is for (launch: Prague)
-- Couples and singles exploring casual, kink, swinging or FWB connections.
-- Women and couples who need **control**: who can see their photos, who can message them, and what happens when someone crosses a line.
-- Men looking for real local people rather than cam funnels.
+The scarce side of the market decides whether Intimo works. Design for them first:
+- **Women, couples and queer members** who need control over visibility, photos and who may contact them.
+- **Experienced community members and organisers** who bring the existing Prague scene with them.
+- **Curious newcomers** who want a safe, non-judgemental way in.
 
-Launch is **geographically concentrated (Prague)**. The product must feel alive
-with 200 members, so every surface is designed for low density first.
+Men seeking real local connection are welcome; product decisions never trade the scarce side's safety for more sign-ups.
 
 ## The loop
-**Create profile → discover people nearby → inspect profiles → express interest /
-request private photos → message → come back because someone viewed, liked,
-replied or posted a Plan.** A feature that does not strengthen this loop does not
-ship in Phase 1.
+**Create profile → express desires and boundaries → discover compatible people → show intent with a Tonight Plan → request private access / message → receive feedback → return because people, Plans and the local scene changed.**
+
+A capability that does not strengthen this loop does not ship in Phase 1.
+
+## What makes Intimo distinct
+1. **Desires and boundaries are first-class.** A member says what they love, what they're curious about and what is a hard limit, and how they want to be approached. Others see it before they reach out.
+2. **Intent over browsing.** Tonight / Plans makes current intent visible and gives a low-density city something fresh every day.
+3. **Control is the product.** Private albums open only through an explicit handshake; visibility, discreet mode and message permissions are easy to set.
+4. **A real scene, not just profiles.** Prague Scene lists actual munches, workshops and parties, so Intimo is useful before it has density.
+5. **Trust without scores.** Photo verification, established-profile and organiser signals; no public ratings.
 
 ## Principles
-1. **Intent over browsing.** "Plans" (time-boxed "looking for" posts) make intent visible and give low-density cities something fresh every day.
-2. **Feedback brings people back.** Visitors, interest, likes, access requests and replies are return triggers, delivered in-app, by email and later by push.
-3. **Control is the product for women and couples.** Private albums with explicit grants, message permissions, discreet mode, instant block/report.
-4. **Never expose emptiness.** No "0 members online" counters. Rails hide when empty. Recency windows widen automatically ("active this week" when nobody is online now).
-5. **Adult, private, modern.** Dark, warm, photographic, slightly provocative, never tacky. No SaaS dashboards, no stock "AI startup" gloss.
-6. **Free in Phase 1.** No subscriptions, wallets, credits, payouts, paid content or VIP. Monetization stays out of the code path until usage justifies it (Phase 5).
-7. **Fewer, finished capabilities.** Eight excellent, interconnected capabilities beat forty half-working modules.
+1. **Intent over endless swiping.**
+2. **Compatibility over proximity alone.**
+3. **Control is the product.**
+4. **Sex-positive does not mean boundary-free.** Consent and limits are visible and respected by the system, not only by etiquette.
+5. **Never expose emptiness.** No "0 online" counters; empty rails hide; recency windows widen.
+6. **Community before monetisation.** Phase 1 is free.
+7. **PWA/web first.**
+8. **Fewer, finished capabilities.**
+
+## Look and feel
+A private late-night Prague club: dark charcoal and warm neutrals with the **existing Intimo gold** as the primary
+accent, editorial typography and intimate editorial photography. Attraction through atmosphere, not explicit anatomy.
+No neon, no dashboards, no swipe decks.
 
 ## Not in scope until density exists
-Chat rooms, groups/forums, events, videos, webcams/video calls, stories, blogs,
-creator monetization, AI features, premium permissions.
+Generic feed, chat rooms, groups/forums, blogs, livestreaming, video calls, webcams, creator monetisation,
+AI features, premium tiers. (Order: `ROADMAP.md`.)
 
 ## Success metrics (first 90 days in Prague)
-- Activated member: has an approved photo and has completed "looking for". Target: ≥60% of sign-ups.
-- D7 return: ≥35% of activated members.
-- Messaging: ≥40% of activated members send a message in week 1; reply rate ≥30%.
-- Safety: median report-to-action time < 12 h; zero minors confirmed on platform.
+- **Activated member:** approved photo, Prague area, at least 5 desires/boundaries set. Target ≥60% of sign-ups.
+- **Composition:** ≥40% of activated members are women, couples or queer members.
+- **D7 return:** ≥35% of activated members.
+- **Intent:** ≥25% of activated members post a Plan or open a Scene listing in their first two weeks.
+- **Messaging:** reply rate ≥30%; boundary-related reports per 100 conversations trending down.
+- **Safety:** median report-to-action time < 12 h; zero minors confirmed on platform.
