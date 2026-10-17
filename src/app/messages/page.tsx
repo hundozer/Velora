@@ -7,9 +7,10 @@ import { Conversation } from "@/types";
 
 import { useAuth } from "@/context/AuthContext";
 import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
+import { useMessageRealtime } from "@/lib/messaging/useMessageRealtime";
 
 function MessagesContent() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const searchParams = useSearchParams();
   const targetUserId = searchParams.get("user") || searchParams.get("peerId");
   const targetDatingAdId = searchParams.get("datingAd");
@@ -28,9 +29,18 @@ function MessagesContent() {
     }).catch(() => setConversations([]));
   }, []);
 
+  // Realtime is the primary signal; the slow poll only covers dropped sockets.
+  const [threadVersion, setThreadVersion] = useState(0);
+  const activeIdRef = React.useRef<string | null>(null);
+  activeIdRef.current = activeConv?.id ?? null;
+  useMessageRealtime(profile?.id, (event) => {
+    syncConversations();
+    if (event.conversationId === activeIdRef.current) setThreadVersion((value) => value + 1);
+  });
+
   useEffect(() => {
     syncConversations();
-    const timer = window.setInterval(syncConversations, 15_000);
+    const timer = window.setInterval(syncConversations, 60_000);
     return () => window.clearInterval(timer);
   }, [syncConversations]);
 
@@ -102,6 +112,7 @@ function MessagesContent() {
         onLoadOlderConversations={nextConversationCursor ? loadOlderConversations : undefined}
         loadingOlderConversations={loadingOlderConversations}
         datingAdId={activeConv.participant.id === targetUserId ? targetDatingAdId : null}
+        threadVersion={threadVersion}
       />
     </div>
   );

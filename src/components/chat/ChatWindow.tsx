@@ -32,7 +32,11 @@ interface ChatWindowProps {
   onLoadOlderConversations?: () => void;
   loadingOlderConversations?: boolean;
   datingAdId?: string | null;
+  /** Bumped by the page on a realtime event for the open conversation. */
+  threadVersion?: number;
 }
+
+type Folder = "INBOX" | "UNREAD" | "REQUESTS";
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({
   conversations,
@@ -41,8 +45,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onLoadOlderConversations,
   loadingOlderConversations = false,
   datingAdId = null,
+  threadVersion = 0,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [folder, setFolder] = useState<Folder>("INBOX");
   const [messages, setMessages] = useState<Message[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loadingOlder, setLoadingOlder] = useState(false);
@@ -71,7 +77,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       })
       .catch(() => { if (active) setMessages([]); });
     return () => { active = false; };
-  }, [activeConversation]);
+  }, [activeConversation, threadVersion]);
 
   const [inputMessage, setInputMessage] = useState("");
   const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -125,8 +131,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
   };
 
+  const requestCount = conversations.filter((c) => c.isRequest).length;
+  const unreadCount = conversations.filter((c) => !c.isRequest && c.unreadCount > 0).length;
   const filteredConversations = conversations.filter((c) =>
     c.participant.displayName.toLowerCase().includes(searchQuery.toLowerCase())
+    && (folder === "REQUESTS" ? c.isRequest : !c.isRequest && (folder === "INBOX" || c.unreadCount > 0))
   );
 
   return (
@@ -145,13 +154,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           />
         </div>
 
-        <div className="flex items-center justify-between px-2 pt-1 border-t border-white/10">
-          <h2 className="text-[11px] font-bold uppercase tracking-wider text-velora-textMuted font-mono">
-            Messages ({filteredConversations.length})
-          </h2>
-          <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live Sync
-          </span>
+        <div className="flex gap-1.5 px-1 pt-1 border-t border-white/10" role="tablist" aria-label="Message folders">
+          {([["INBOX", "Inbox", 0], ["UNREAD", "Unread", unreadCount], ["REQUESTS", "Requests", requestCount]] as const).map(([value, label, count]) => (
+            <button key={value} type="button" role="tab" aria-selected={folder === value} onClick={() => setFolder(value)} className={`min-h-9 flex-1 rounded-full border px-2 text-[11px] font-semibold transition ${folder === value ? "border-amber-400/60 bg-amber-400/15 text-white" : "border-white/10 text-velora-textMuted hover:border-white/25"}`}>
+              {label}{count > 0 ? ` · ${count}` : ""}
+            </button>
+          ))}
         </div>
 
         <div className="space-y-1.5 overflow-y-auto flex-1 pr-1 custom-scrollbar">
@@ -282,6 +290,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             </button>
           </div>
         </div>
+
+        {activeConversation.isRequest && (
+          <div className="border-b border-amber-400/20 bg-amber-400/5 px-4 py-2 text-[11px] text-amber-100/80" role="note">
+            Message request: you haven&apos;t replied yet. Reply to move it to your inbox, or block or report from the menu.
+          </div>
+        )}
 
         {/* Message Thread History */}
         <div className="flex-1 p-6 overflow-y-auto space-y-4">

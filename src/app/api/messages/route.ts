@@ -61,15 +61,23 @@ export async function GET(req: NextRequest) {
     const latest = new Map<string, any>();
     for (const row of rows || []) if (!latest.has(row.conversation_id)) latest.set(row.conversation_id, row);
     const peerIds = [...latest.values()].map((row) => row.sender_id === actor.actor.profileId ? row.receiver_id : row.sender_id);
-    const { data: profiles, error: profileError } = peerIds.length ? await supabase.from("profiles").select("id,display_name,avatar_url,city,country,verification_status").in("id", peerIds) : { data: [], error: null };
-    if (profileError) return NextResponse.json({ error: "Conversation profiles lookup failed" }, { status: 502 });
+    const conversationIds = [...latest.keys()];
+    const [{ data: profiles, error: profileError }, { data: blockRows, error: blockError }, { data: sentRows, error: sentError }] = await Promise.all([
+      peerIds.length ? supabase.from("profiles").select("id,display_name,avatar_url,city,country,verification_status").in("id", peerIds).eq("account_status", "ACTIVE") : Promise.resolve({ data: [], error: null }),
+      supabase.from("user_blocks").select("blocker_id,blocked_profile_id").or(`blocker_id.eq.${actor.actor.profileId},blocked_profile_id.eq.${actor.actor.profileId}`),
+      // Requests: conversations the member has never written in. Replying moves them to the inbox.
+      conversationIds.length ? supabase.from("direct_messages").select("conversation_id").eq("sender_id", actor.actor.profileId).in("conversation_id", conversationIds) : Promise.resolve({ data: [], error: null }),
+    ]);
+    if (profileError || blockError || sentError) return NextResponse.json({ error: "Conversation profiles lookup failed" }, { status: 502 });
+    const blockedPeers = new Set((blockRows || []).map((block) => block.blocker_id === actor.actor.profileId ? block.blocked_profile_id : block.blocker_id));
+    const repliedIn = new Set((sentRows || []).map((row) => row.conversation_id as string));
     const byId = new Map((profiles || []).map((profile) => [profile.id, profile]));
     const conversations = [...latest.values()].flatMap((row) => {
       const id = row.sender_id === actor.actor.profileId ? row.receiver_id : row.sender_id;
       const profile = byId.get(id);
-      if (!profile) return [];
+      if (!profile || blockedPeers.has(id)) return [];
       const unreadCount = (rows || []).filter((message) => message.conversation_id === row.conversation_id && message.receiver_id === actor.actor.profileId && message.is_opened === false).length;
-      return [{ id: row.conversation_id, participant: { id: profile.id, userId: profile.id, displayName: profile.display_name, avatarUrl: profile.avatar_url || "", location: [profile.city,profile.country].filter(Boolean).join(", "), verified: profile.verification_status === "VERIFIED", isOnline: false }, lastMessage: { id: row.id, conversationId: row.conversation_id, senderId: row.sender_id, senderName: row.sender_id === actor.actor.profileId ? "You" : profile.display_name, senderAvatar: profile.avatar_url || "", content: row.content, status: row.status, createdAt: row.created_at }, updatedAt: row.created_at, unreadCount }];
+      return [{ id: row.conversation_id, participant: { id: profile.id, userId: profile.id, displayName: profile.display_name, avatarUrl: profile.avatar_url || "", location: [profile.city,profile.country].filter(Boolean).join(", "), verified: profile.verification_status === "VERIFIED", isOnline: false }, lastMessage: { id: row.id, conversationId: row.conversation_id, senderId: row.sender_id, senderName: row.sender_id === actor.actor.profileId ? "You" : profile.display_name, senderAvatar: profile.avatar_url || "", content: row.content, status: row.status, createdAt: row.created_at }, updatedAt: row.created_at, unreadCount, isRequest: !repliedIn.has(row.conversation_id) }];
     });
     return NextResponse.json({ conversations, pagination: { limit, hasMore, nextCursor: hasMore ? rows.at(-1)?.created_at || null : null } }, { headers: { "Cache-Control": "private, no-store" } });
   }
