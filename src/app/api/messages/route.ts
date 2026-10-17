@@ -5,6 +5,7 @@ import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
 import { firstMessageDecision, resolveBoundaries } from "@/lib/boundaries.mjs";
+import { presenceBucket } from "@/lib/presence.mjs";
 import { areFriends } from "@/lib/social/friendship";
 
 export const dynamic = "force-dynamic";
@@ -63,7 +64,7 @@ export async function GET(req: NextRequest) {
     const peerIds = [...latest.values()].map((row) => row.sender_id === actor.actor.profileId ? row.receiver_id : row.sender_id);
     const conversationIds = [...latest.keys()];
     const [{ data: profiles, error: profileError }, { data: blockRows, error: blockError }, { data: sentRows, error: sentError }] = await Promise.all([
-      peerIds.length ? supabase.from("profiles").select("id,display_name,avatar_url,city,country,verification_status").in("id", peerIds).eq("account_status", "ACTIVE") : Promise.resolve({ data: [], error: null }),
+      peerIds.length ? supabase.from("profiles").select("id,display_name,avatar_url,city,country,verification_status,last_active_at,show_online_status").in("id", peerIds).eq("account_status", "ACTIVE") : Promise.resolve({ data: [], error: null }),
       supabase.from("user_blocks").select("blocker_id,blocked_profile_id").or(`blocker_id.eq.${actor.actor.profileId},blocked_profile_id.eq.${actor.actor.profileId}`),
       // Requests: conversations the member has never written in. Replying moves them to the inbox.
       conversationIds.length ? supabase.from("direct_messages").select("conversation_id").eq("sender_id", actor.actor.profileId).in("conversation_id", conversationIds) : Promise.resolve({ data: [], error: null }),
@@ -77,7 +78,7 @@ export async function GET(req: NextRequest) {
       const profile = byId.get(id);
       if (!profile || blockedPeers.has(id)) return [];
       const unreadCount = (rows || []).filter((message) => message.conversation_id === row.conversation_id && message.receiver_id === actor.actor.profileId && message.is_opened === false).length;
-      return [{ id: row.conversation_id, participant: { id: profile.id, userId: profile.id, displayName: profile.display_name, avatarUrl: profile.avatar_url || "", location: [profile.city,profile.country].filter(Boolean).join(", "), verified: profile.verification_status === "VERIFIED", isOnline: false }, lastMessage: { id: row.id, conversationId: row.conversation_id, senderId: row.sender_id, senderName: row.sender_id === actor.actor.profileId ? "You" : profile.display_name, senderAvatar: profile.avatar_url || "", content: row.content, status: row.status, createdAt: row.created_at }, updatedAt: row.created_at, unreadCount, isRequest: !repliedIn.has(row.conversation_id) }];
+      return [{ id: row.conversation_id, participant: { id: profile.id, userId: profile.id, displayName: profile.display_name, avatarUrl: profile.avatar_url || "", location: [profile.city,profile.country].filter(Boolean).join(", "), verified: profile.verification_status === "VERIFIED", isOnline: presenceBucket(profile.last_active_at, profile.show_online_status === true) === "ONLINE" }, lastMessage: { id: row.id, conversationId: row.conversation_id, senderId: row.sender_id, senderName: row.sender_id === actor.actor.profileId ? "You" : profile.display_name, senderAvatar: profile.avatar_url || "", content: row.content, status: row.status, createdAt: row.created_at }, updatedAt: row.created_at, unreadCount, isRequest: !repliedIn.has(row.conversation_id) }];
     });
     return NextResponse.json({ conversations, pagination: { limit, hasMore, nextCursor: hasMore ? rows.at(-1)?.created_at || null : null } }, { headers: { "Cache-Control": "private, no-store" } });
   }
