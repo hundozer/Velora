@@ -33,6 +33,7 @@ Verified 2026-10-17 against `supabase_migrations.schema_migrations`.
 | 20261020 | prague_areas | SQL editor (owner) |
 | 20261021 | desire_graph | SQL editor (owner) |
 | 20261022 | member_boundaries | SQL editor (owner) |
+| 20261023 | tonight_plans | SQL editor (owner) |
 | 20260922033815 | 001_initial_schema | legacy bootstrap, superseded by 20260805 |
 
 ## Staging — Supabase `Intimo Staging` (`fuczjjcwtxzzvoxilrme`)
