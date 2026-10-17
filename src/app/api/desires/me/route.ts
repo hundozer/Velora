@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const auth = await resolveServerActor(req);
   if (auth.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: auth.status === "unauthenticated" ? 401 : 503 });
-  const rate = checkRateLimit(`desires:${auth.actor.userId}`, 30, 60);
+  const rate = (await checkRateLimit(`desires:${auth.actor.userId}`, 30, 60));
   if (!rate.allowed) return NextResponse.json({ error: "Too many updates" }, { status: 429, headers: { "Retry-After": String(rate.resetInSeconds) } });
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }

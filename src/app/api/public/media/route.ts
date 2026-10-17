@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 18, 1), MAX_LIMIT);
   const offset = (page - 1) * limit;
   const client = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  if (!checkRateLimit(`public-media-list:${client.slice(0, 80)}`, 90, 60).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  if (!(await checkRateLimit(`public-media-list:${client.slice(0, 80)}`, 90, 60)).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   const db = getServerSupabase();
   if (!db) return NextResponse.json({ error: "Public media unavailable" }, { status: 503 });
 

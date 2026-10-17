@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   const auth = await resolveServerActor(req);
   if (auth.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: auth.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(auth.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
-  if (!checkRateLimit(`album-create:${auth.actor.userId}`, 20, 60 * 60).allowed) return NextResponse.json({ error: "Album creation limit reached" }, { status: 429 });
+  if (!(await checkRateLimit(`album-create:${auth.actor.userId}`, 20, 60 * 60)).allowed) return NextResponse.json({ error: "Album creation limit reached" }, { status: 429 });
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const title = typeof body.title === "string" ? body.title.trim() : "";
   const description = typeof body.description === "string" ? body.description.trim() : "";

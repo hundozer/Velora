@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   const identity = await getVerifiedIdentity(req);
   if (!identity) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
 
-  const rate = checkRateLimit(`delete-account:${identity.sub}`, 3, 60 * 60);
+  const rate = (await checkRateLimit(`delete-account:${identity.sub}`, 3, 60 * 60));
   if (!rate.allowed) {
     return NextResponse.json({ error: "Too many deletion attempts" }, { status: 429, headers: { "Retry-After": String(rate.resetInSeconds) } });
   }

@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
   if (!identity.emailVerified) return NextResponse.json({ error: "Email verification required" }, { status: 403 });
   if (!supabase) return NextResponse.json({ error: "Profile service unavailable" }, { status: 503 });
 
-  const rate = checkRateLimit(`profile-create:${identity.sub}`, 5, 60 * 60);
+  const rate = (await checkRateLimit(`profile-create:${identity.sub}`, 5, 60 * 60));
   if (!rate.allowed) return NextResponse.json({ error: "Too many profile creation attempts" }, { status: 429, headers: { "Retry-After": String(rate.resetInSeconds) } });
 
   let body: any;
@@ -202,7 +202,7 @@ export async function PUT(req: NextRequest) {
   if (!identity) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   if (!supabase) return NextResponse.json({ error: "Profile service unavailable" }, { status: 503 });
 
-  const rate = checkRateLimit(`profile-update:${identity.sub}`, 20, 60);
+  const rate = (await checkRateLimit(`profile-update:${identity.sub}`, 20, 60));
   if (!rate.allowed) return NextResponse.json({ error: "Too many profile updates" }, { status: 429, headers: { "Retry-After": String(rate.resetInSeconds) } });
 
   let body: unknown;

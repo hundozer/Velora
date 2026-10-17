@@ -30,8 +30,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Enter a valid email address" }, { status: 400 });
   }
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  const perEmail = checkRateLimit(`auth-email:${email}`, 5, 60 * 60);
-  const perIp = checkRateLimit(`auth-email-ip:${ip}`, 20, 60 * 60);
+  const perEmail = (await checkRateLimit(`auth-email:${email}`, 5, 60 * 60));
+  const perIp = (await checkRateLimit(`auth-email-ip:${ip}`, 20, 60 * 60));
   if (!perEmail.allowed || !perIp.allowed) {
     return NextResponse.json({ error: "Too many emails requested. Try again later." }, { status: 429 });
   }

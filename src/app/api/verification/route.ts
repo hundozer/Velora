@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Active adult access required" }, { status: 403 });
-  if (!checkRateLimit(`identity-verification:${actor.actor.userId}`, 3, 24 * 60 * 60).allowed) return NextResponse.json({ error: "Verification submission limit reached" }, { status: 429 });
+  if (!(await checkRateLimit(`identity-verification:${actor.actor.userId}`, 3, 24 * 60 * 60)).allowed) return NextResponse.json({ error: "Verification submission limit reached" }, { status: 429 });
   let body: unknown; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const mediaId = typeof (body as { mediaId?: unknown }).mediaId === "string" ? (body as { mediaId: string }).mediaId : "";
   if (!UUID.test(mediaId)) return NextResponse.json({ error: "Invalid verification media" }, { status: 400 });

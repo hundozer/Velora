@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
-  const rate = checkRateLimit(`report:${actor.actor.userId}`, 15, 24 * 60 * 60);
+  const rate = (await checkRateLimit(`report:${actor.actor.userId}`, 15, 24 * 60 * 60));
   if (!rate.allowed) return NextResponse.json({ error: "Report limit reached; contact support for urgent safety concerns" }, { status: 429 });
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const contentType = typeof body.contentType === "string" ? body.contentType : "";
