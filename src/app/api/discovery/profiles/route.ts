@@ -4,6 +4,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { toMemberVisibleProfile } from "@/lib/supabase/publicProfile";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import type { ProfileRow } from "@/lib/supabase/profileService";
+import { POSITIVE_STATES, parseDesireFilter } from "@/lib/desires.mjs";
 
 export const dynamic = "force-dynamic";
 const MAX_RESULTS = 100;
@@ -34,6 +35,25 @@ export async function GET(req: NextRequest) {
   if (friendshipError) return NextResponse.json({ error: "Discovery friends lookup failed" }, { status: 502 });
   const friendIds = new Set((friendshipRows || []).map((row) => row.requester_id === actorResult.actor.profileId ? row.addressee_id : row.requester_id));
 
+  // Desire filter: members who want any of the chosen desires (members-visible rows only).
+  // P1-05 moves this into a single SQL query; an id list is fine at launch density.
+  const desireFilter = parseDesireFilter(new URL(req.url).searchParams.get("desires"));
+  let desireMatchIds: string[] | null = null;
+  if (desireFilter.length > 0) {
+    const { data: matches, error: matchError } = await supabase
+      .from("member_desires")
+      .select("profile_id")
+      .in("desire_id", desireFilter)
+      .in("state", POSITIVE_STATES)
+      .eq("visibility", "MEMBERS")
+      .limit(1000);
+    if (matchError) return NextResponse.json({ error: "Discovery lookup failed" }, { status: 502 });
+    desireMatchIds = [...new Set((matches || []).map((row) => row.profile_id as string))];
+    if (desireMatchIds.length === 0) {
+      return NextResponse.json({ profiles: [], ranking: { algorithm: "created_at_desc_then_id_asc", limit: MAX_RESULTS, desires: desireFilter } }, { headers: { "Cache-Control": "private, no-store" } });
+    }
+  }
+
   let query = supabase
     .from("profiles")
     .select("*")
@@ -43,6 +63,7 @@ export async function GET(req: NextRequest) {
     .order("id", { ascending: true })
     .limit(MAX_RESULTS);
   if (excludedIds.length > 0) query = query.not("id", "in", `(${excludedIds.join(",")})`);
+  if (desireMatchIds) query = query.in("id", desireMatchIds);
   const { data, error } = await query;
 
   if (error) return NextResponse.json({ error: "Discovery lookup failed" }, { status: 502 });
@@ -50,7 +71,7 @@ export async function GET(req: NextRequest) {
     .filter((row) => row.profile_visibility !== "FRIENDS_ONLY" || friendIds.has(row.id))
     .map((row) => toMemberVisibleProfile(row as ProfileRow, { friends: friendIds.has(row.id) }));
   return NextResponse.json(
-    { profiles, ranking: { algorithm: "created_at_desc_then_id_asc", limit: MAX_RESULTS } },
+    { profiles, ranking: { algorithm: "created_at_desc_then_id_asc", limit: MAX_RESULTS, desires: desireFilter } },
     { headers: { "Cache-Control": "private, no-store" } }
   );
 }

@@ -8,6 +8,7 @@ const DELETE_TABLES: Array<[string, string]> = [
   ["content_posts", "author_id"], ["dating_ads", "author_id"], ["notifications", "user_id"],
   ["connections", "follower_id"], ["connections", "followed_id"], ["user_blocks", "blocker_id"],
   ["user_blocks", "blocked_profile_id"], ["photo_albums", "owner_id"], ["videos", "owner_id"],
+  ["member_desires", "profile_id"],
 ];
 
 async function record(db: SupabaseClient, runId: string, result: Result) {

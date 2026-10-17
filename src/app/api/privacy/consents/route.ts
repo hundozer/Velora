@@ -4,10 +4,11 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
+import { DESIRE_CONSENT_TYPE } from "@/lib/privacy/desireConsent";
 
 export const dynamic = "force-dynamic";
 const CONSENT_VERSION = "sensitive-profile-v1-draft";
-const CONSENT_TYPES = new Set(["SPECIAL_CATEGORY_PROFILE", "PERSONALIZED_DISCOVERY"]);
+const CONSENT_TYPES = new Set(["SPECIAL_CATEGORY_PROFILE", "PERSONALIZED_DISCOVERY", DESIRE_CONSENT_TYPE]);
 
 function noStore(response: NextResponse) {
   response.headers.set("Cache-Control", "private, no-store");
@@ -48,6 +49,11 @@ export async function POST(req: NextRequest) {
     source: "PRIVACY_CENTER",
   });
   if (error) return NextResponse.json({ error: "Consent update failed" }, { status: 502 });
+  // Withdrawing desire consent erases the data it covered.
+  if (!granted && consentType === DESIRE_CONSENT_TYPE) {
+    const { error: eraseError } = await supabase.from("member_desires").delete().eq("profile_id", actor.actor.profileId);
+    if (eraseError) return NextResponse.json({ error: "Consent withdrawn but desires could not be erased; contact support" }, { status: 502 });
+  }
   auditLogger.logEvent({ actorId: actor.actor.userId, actorRole: actor.actor.role as any, action: granted ? "CONSENT_GRANTED" : "CONSENT_WITHDRAWN", resourceType: "CONSENT", status: "SUCCESS", details: { consentType, consentVersion: CONSENT_VERSION } });
   const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: granted ? "CONSENT_GRANTED" : "CONSENT_WITHDRAWN", resourceType: "CONSENT", resourceId: consentType, outcome: "SUCCESS", metadata: { consentVersion: CONSENT_VERSION } });
   if (!audited) return NextResponse.json({ error: "Consent saved but audit evidence failed; contact support" }, { status: 502 });

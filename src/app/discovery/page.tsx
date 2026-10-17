@@ -30,6 +30,7 @@ import {
 
 import { useAuth } from "@/context/AuthContext";
 import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
+import { DESIRES, MAX_DESIRE_FILTERS } from "@/lib/desires.mjs";
 
 export default function DiscoveryMarketplacePage() {
   const { t } = useTranslation();
@@ -39,6 +40,7 @@ export default function DiscoveryMarketplacePage() {
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [discoveryProfiles, setDiscoveryProfiles] = useState<Profile[]>([]);
   const [discoveryError, setDiscoveryError] = useState("");
+  const [desireFilter, setDesireFilter] = useState<string[]>([]);
 
 
   // Sidebar Filter State
@@ -63,14 +65,19 @@ export default function DiscoveryMarketplacePage() {
 
   useEffect(() => {
     if (!user) return;
-    fetch("/api/discovery/profiles", { cache: "no-store", credentials: "same-origin" })
+    const query = desireFilter.length > 0 ? `?desires=${encodeURIComponent(desireFilter.join(","))}` : "";
+    setDiscoveryError("");
+    fetch(`/api/discovery/profiles${query}`, { cache: "no-store", credentials: "same-origin" })
       .then(async (response) => {
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Discovery unavailable");
         setDiscoveryProfiles(Array.isArray(payload.profiles) ? payload.profiles : []);
       })
       .catch((error) => setDiscoveryError(error instanceof Error ? error.message : "Discovery unavailable"));
-  }, [user]);
+  }, [user, desireFilter]);
+
+  const toggleDesire = (id: string) => setDesireFilter((current) =>
+    current.includes(id) ? current.filter((item) => item !== id) : current.length >= MAX_DESIRE_FILTERS ? current : [...current, id]);
 
   const allProfiles = React.useMemo(() => discoveryProfiles, [discoveryProfiles]);
 
@@ -224,6 +231,24 @@ export default function DiscoveryMarketplacePage() {
           </div>
           <SearchBar onSearchQueryChange={setSearchQuery} />
         </div>
+
+        {/* Desire filter (P1-19): members who want any of the chosen desires */}
+        <details className="rounded-3xl border border-white/10 bg-velora-card p-4" open={desireFilter.length > 0}>
+          <summary className="cursor-pointer list-none text-xs font-bold uppercase tracking-wider text-amber-300">
+            Into {desireFilter.length > 0 ? `(${desireFilter.length})` : ""} <span className="font-normal normal-case tracking-normal text-velora-textMuted">· pick up to {MAX_DESIRE_FILTERS}</span>
+          </summary>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {DESIRES.map((desire) => {
+              const active = desireFilter.includes(desire.id);
+              return (
+                <button key={desire.id} type="button" aria-pressed={active} onClick={() => toggleDesire(desire.id)} className={`min-h-9 rounded-full border px-3 text-xs transition ${active ? "border-velora-gold bg-velora-gold/15 text-velora-textPrimary" : "border-white/10 text-velora-textSecondary hover:border-white/25"}`}>
+                  {desire.label}
+                </button>
+              );
+            })}
+          </div>
+          {desireFilter.length > 0 && <button type="button" onClick={() => setDesireFilter([])} className="mt-3 text-xs text-velora-textMuted underline">Clear</button>}
+        </details>
 
         {/* Horizontal Filter Bar */}
         <FilterSidebar

@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Bell, Bookmark, ChevronRight, Image as ImageIcon, LogOut, Settings, Shield, User } from "lucide-react";
+import { Bell, Bookmark, ChevronRight, Flame, Image as ImageIcon, LogOut, Settings, Shield, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation, LANGUAGES } from "@/context/LanguageContext";
 import { useDurableNotifications } from "@/lib/notifications/useDurableNotifications";
@@ -60,6 +60,7 @@ export default function MePage() {
       <nav aria-label="Account" className="divide-y divide-white/5 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
         <Row href={`/profile/${profile?.id || "me"}`} icon={User} label="My profile" />
         <Row href="/notifications" icon={Bell} label="Notifications" detail={notifications.unreadCount > 0 ? <span className="rounded-full bg-velora-gold px-2 py-0.5 text-[11px] font-bold text-velora-bg">{notifications.unreadCount}</span> : null} />
+        <Row href="/me/desires" icon={Flame} label="My desires" />
         <Row href="/albums/manage" icon={ImageIcon} label="My photos & albums" />
         <Row href="/favorites" icon={Bookmark} label="Saved" />
         <Row href="/settings" icon={Settings} label="Settings & privacy" />
