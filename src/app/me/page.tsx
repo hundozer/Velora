@@ -6,6 +6,7 @@ import { Bell, Bookmark, ChevronRight, Flame, Hand, Image as ImageIcon, LogOut, 
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation, LANGUAGES } from "@/context/LanguageContext";
 import { useDurableNotifications } from "@/lib/notifications/useDurableNotifications";
+import { AppOnThisDevice } from "@/components/pwa/AppOnThisDevice";
 
 const ADMIN_ROLES = new Set(["SUPER_ADMIN", "SYSTEM_ADMIN", "TRUST_AND_SAFETY_ADMIN", "CONTENT_MODERATOR", "PRIVACY_ADMIN", "SUPPORT_ADMIN", "COMMUNITY_ADMIN"]);
 
@@ -67,6 +68,8 @@ export default function MePage() {
         <Row href="/settings" icon={Settings} label="Settings & privacy" />
         {ADMIN_ROLES.has(String(role)) && <Row href="/admin" icon={Shield} label="Admin" />}
       </nav>
+
+      <AppOnThisDevice />
 
       <label className="block rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3">
         <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">Language</span>
