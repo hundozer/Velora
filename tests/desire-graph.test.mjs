@@ -67,7 +67,7 @@ test("desire APIs require consent, hide private rows, honour blocks, and erase o
   assert.match(me, /consentRequired: true/);
   assert.match(me, /metadata: \{ count: rows\.length \}/);
   assert.match(other, /eq\("visibility", "MEMBERS"\)/);
-  assert.match(other, /from\("user_blocks"\)/);
+  assert.match(other, /resolveMemberProfileAccess\(req, params\.id\)/);
   assert.match(consents, /consentType === DESIRE_CONSENT_TYPE[\s\S]*from\("member_desires"\)\.delete\(\)/);
   assert.match(retention, /\["member_desires", "profile_id"\]/);
   assert.match(discovery, /\.eq\("visibility", "MEMBERS"\)/);

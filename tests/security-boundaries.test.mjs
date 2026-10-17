@@ -649,7 +649,8 @@ test("messaging entry points use the durable message screen, not a local chat st
   assert.match(dating, /\/messages\?user=/);
   assert.doesNotMatch(chat, /Hello! Glad to connect|images\.unsplash\.com|setTimeout|Disappearing Mode|encrypted message/i);
   assert.match(chat, /useState<Message\[]>\(\[\]\)/);
-  assert.match(messages, /require_verification_to_message/);
+  // Verification-only messaging is now the opt-in FIRST_MESSAGE_UNVERIFIED boundary (P1-20).
+  assert.match(messages, /firstMessageDecision\(resolveBoundaries\(boundaryRows\), \{ gender: sender\.gender, isCoupleProfile: sender\.is_couple_profile, verified: verifiedSender \}\)/);
   assert.match(messages, /Recipient accepts messages from verified members only/);
   assert.match(messages, /appendDurableAudit/);
   assert.match(messages, /limit \+ 1/);
