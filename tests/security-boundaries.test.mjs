@@ -489,15 +489,11 @@ test("production member surfaces do not inject fabricated profiles, feeds, relat
   const profile = await read("src/app/profile/[id]/page.tsx");
   const search = await read("src/components/discovery/SearchBar.tsx");
   const features = await read("src/lib/features.ts");
-  const connections = await read("src/lib/social/connectionStore.ts");
-  const visitors = await read("src/lib/social/visitorStore.ts");
   assert.doesNotMatch(dashboard, /MOCK_PROFILES|INITIAL_FEED_POSTS|RECENT_VISITORS|localStorage/);
   assert.doesNotMatch(profile, /MOCK_PROFILES\[0\]/);
   assert.doesNotMatch(search, /MOCK_PROFILES/);
   assert.match(features, /"\/creators"/);
   assert.match(features, /"\/communities"/);
-  assert.match(connections, /new Set\(\)/);
-  assert.match(visitors, /visitors: ProfileVisitor\[\] = \[\]/);
 });
 
 test("legacy admin route cannot mount browser authority or fabricated operational data", async () => {
@@ -616,16 +612,11 @@ test("identity verification evidence is owner-submitted, private, and admin-audi
   const submission = await read("src/app/api/verification/route.ts");
   const evidence = await read("src/app/api/admin/verification/[id]/evidence/route.ts");
   const context = await read("src/context/AuthContext.tsx");
-  const verificationModal = await read("src/components/profile/GetVerifiedModal.tsx");
   assert.match(submission, /eq\("owner_id", actor\.actor\.profileId\)/);
   assert.match(submission, /media\.visibility !== "PRIVATE"/);
   assert.match(submission, /verification_type: "IDENTITY"/);
   assert.match(evidence, /requireAdminPermission\(req, "verification:view"\)/);
   assert.match(evidence, /VERIFICATION_EVIDENCE_VIEW/);
-  assert.match(verificationModal, /Get Photo Verified/);
-  assert.match(verificationModal, /your username/);
-  assert.match(verificationModal, /not government-ID or biometric verification/);
-  assert.doesNotMatch(verificationModal, /Get Biometric Verified|Biometric Verified Badge/);
   assert.doesNotMatch(context, /impersonateUser|fallbackUser|intimo_original_admin_user/);
 });
 

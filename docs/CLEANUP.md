@@ -27,16 +27,8 @@ enabled route. The routes in `MVP_SAFETY_DISABLED_ROUTES` and
 - Vercel project **`intimo`** (`prj_SMHQhKvme8yDlsmmtXFYtYBuKPsx`): zero deployments; only two Supabase env vars. Delete it, then **rename `velora` → `intimo`** (domains and deployments are kept).
 - Vercel Preview env `MONETIZATION_ENABLED` (hard-coded in source; the env var is unused).
 
-### One-command execution
-The audit session's permission policy blocked bulk deletion, so this is pending
-owner approval. From the repo root on branch `claude/phase0-audit-cleanup`:
-```bash
-git rm -q $(cat docs/cleanup-delete-now.txt) \
-  && git rm -rq prisma db supabase/migration.sql src/lib/auth/__tests__ src/lib/storage/__tests__ tests/authentication.test.ts \
-  && npm uninstall prisma @prisma/client \
-  && npm run check
-```
-(Then remove the three dead-file assertions in `tests/security-boundaries.test.mjs`.)
+### Status
+**Done 2026-10-17** (issue #6): all items above except the Vercel actions were deleted; `npm test`, `tsc`, lint and build pass.
 
 ## MIGRATE THEN DELETE
 | Item | Replacement | Delete when |
