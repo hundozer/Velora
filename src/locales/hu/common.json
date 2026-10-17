@@ -10,7 +10,11 @@
     "wallet": "Széf",
     "settings": "Beállítások",
     "membership": "Tagság",
-    "home": "Kezdőlap", "people": "Emberek", "dating": "Ismerkedés", "search": "Keresés"
+    "home": "Kezdőlap",
+    "people": "Emberek",
+    "dating": "Ismerkedés",
+    "search": "Keresés",
+    "me": "Én"
   },
   "hero": {
     "tag": "Felnőtt Közösségi Felfedező Piactér",

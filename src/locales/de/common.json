@@ -10,7 +10,11 @@
     "wallet": "Tresor",
     "settings": "Einstellungen",
     "membership": "Mitgliedschaft",
-    "home": "Start", "people": "Menschen", "dating": "Dating", "search": "Suche"
+    "home": "Start",
+    "people": "Menschen",
+    "dating": "Dating",
+    "search": "Suche",
+    "me": "Ich"
   },
   "hero": {
     "tag": "Adults-Only Social Discovery Marketplace",

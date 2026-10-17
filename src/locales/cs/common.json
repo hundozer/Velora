@@ -10,7 +10,11 @@
     "wallet": "Trezor",
     "settings": "Nastavení",
     "membership": "Členství",
-    "home": "Domů", "people": "Lidé", "dating": "Seznamování", "search": "Hledat"
+    "home": "Domů",
+    "people": "Lidé",
+    "dating": "Seznamování",
+    "search": "Hledat",
+    "me": "Já"
   },
   "hero": {
     "tag": "Tržiště sociálního objevování pro dospělé",

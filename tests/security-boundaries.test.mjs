@@ -758,3 +758,14 @@ test("member reads run under RLS with owner-only policies", async () => {
   assert.match(profile, /export async function GET[\s\S]*?createSessionClient\(\)[\s\S]*?export async function POST/);
   assert.match(notifications, /export async function GET[\s\S]*?createSessionClient\(\)[\s\S]*?export async function PATCH/);
 });
+
+test("sign-out ends the server session and phones can reach account pages", async () => {
+  const navbar = await read("src/components/layout/Navbar.tsx");
+  const mobile = await read("src/components/layout/MobileNavigation.tsx");
+  const me = await read("src/app/me/page.tsx");
+  assert.match(navbar, /onClick=\{\(\) => signOut\("\/"\)\}/);
+  assert.doesNotMatch(navbar, /onClick=\{logout\}/);
+  assert.match(mobile, /href: "\/me"/);
+  for (const href of ["/notifications", "/settings", "/albums/manage", "/favorites"]) assert.ok(me.includes(`"${href}"`), href);
+  assert.match(me, /signOut\("\/"\)/);
+});
