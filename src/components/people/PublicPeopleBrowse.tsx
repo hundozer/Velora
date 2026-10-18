@@ -101,7 +101,7 @@ export function PublicPeopleBrowse() {
 
       <section aria-label="People filters" className="mt-7 overflow-hidden rounded-2xl border border-ink/10 bg-velora-surface shadow-2xl shadow-black/20">
         <div className="flex items-center justify-between border-b border-ink/10 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-2 text-sm font-semibold text-ink"><SlidersHorizontal className="h-4 w-4 text-velora-accent" />Find your match</div>
+          <div className="flex items-center gap-2 text-sm font-semibold text-ink"><SlidersHorizontal className="h-4 w-4 text-velora-accent" />Who to show</div>
           <button type="button" onClick={resetFilters} className="inline-flex min-h-9 items-center gap-2 rounded-full px-3 text-xs font-semibold text-velora-textSecondary transition hover:bg-ink/5 hover:text-ink"><RotateCcw className="h-3.5 w-3.5" />Reset</button>
         </div>
 

@@ -3,18 +3,23 @@
 @tailwind utilities;
 
 :root {
-  /* Warm light editorial palette (RGB channels). */
-  --paper: 246 241 234;      /* #F6F1EA */
-  --surface: 255 253 249;    /* #FFFDF9 */
-  --sunken: 238 231 221;     /* #EEE7DD */
-  --ink: 29 26 23;           /* #1D1A17 */
-  --ink-2: 74 67 60;         /* #4A433C */
-  --muted: 110 101 92;       /* #6E655C */
-  --line: 231 222 211;       /* #E7DED3 */
-  --accent: 122 46 58;       /* #7A2E3A deep wine */
-  --accent-hover: 99 34 45;  /* #63222D */
-  --blush: 242 226 222;      /* #F2E2DE */
-  --danger: 176 42 42;
+  /* Approved editorial palette (v33): ivory, ink, copper, sage. RGB channels. */
+  --paper: 244 240 232;      /* #F4F0E8 ivory — page */
+  --surface: 251 248 242;    /* #FBF8F2 paper — raised surfaces */
+  --sunken: 236 229 217;     /* #ECE5D9 */
+  --ink: 30 34 32;           /* #1E2220 */
+  --ink-2: 74 79 75;         /* #4A4F4B */
+  --muted: 106 111 107;      /* #6A6F6B (4.9:1 on ivory) */
+  --line: 228 221 209;       /* #E4DDD1 */
+  --accent: 30 34 32;        /* primary actions are ink */
+  --accent-hover: 0 0 0;
+  --blush: 241 230 218;      /* #F1E6DA warm selected fill */
+  --copper: 177 120 84;      /* #B17854 rules, dots — not for text */
+  --copper-ink: 138 82 47;   /* #8A522F copper text on light */
+  --copper-light: 217 162 124; /* #D9A27C copper text on dark */
+  --sage: 62 77 67;          /* #3E4D43 */
+  --night: 21 23 22;         /* #151716 photographic dark */
+  --danger: 158 64 44;
   --font-display: 'Instrument Serif', Georgia, serif;
   --font-sans: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, sans-serif;
   color-scheme: light;
