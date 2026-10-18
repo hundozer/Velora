@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
-import { inspectStoredObject } from "@/lib/storage/r2";
+import { getStoredObject, inspectStoredObject, putStoredObject } from "@/lib/storage/r2";
+import { processMediaVariants } from "@/lib/media/variants.mjs";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
@@ -34,7 +35,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if (processingError) return NextResponse.json({ error: "Media processing state could not be initialized" }, { status: 502 });
     const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MEDIA_UPLOAD_COMPLETED", resourceType: "MEDIA", resourceId: media.id, outcome: "SUCCESS", metadata: { mimeType: media.mime_type, byteSize: media.byte_size } });
     if (!audited) return NextResponse.json({ error: "Upload finalized but audit recording failed; contact support" }, { status: 503 });
-    return NextResponse.json({ success: true });
+    // Resized copies for fast photography. Best effort: on failure or timeout the original
+    // is served as before and scripts/backfill-media-variants.mjs can retry.
+    const variants = await processMediaVariants({
+      media,
+      readObject: getStoredObject,
+      writeObject: putStoredObject,
+      recordResult: async (result: { status: string; variants?: Record<string, string>; dominantColor?: string; lqip?: string }) => {
+        const { error: variantError } = await supabase.from("media_objects").update({ variants_status: result.status, variants: result.variants ?? null, dominant_color: result.dominantColor ?? null, lqip: result.lqip ?? null }).eq("id", media.id);
+        if (variantError) throw variantError;
+      },
+    });
+    return NextResponse.json({ success: true, variants: variants.status });
   } catch {
     return NextResponse.json({ error: "Stored object could not be verified" }, { status: 502 });
   }

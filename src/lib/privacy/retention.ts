@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { deleteStoredObject } from "@/lib/storage/r2";
+import { deleteStoredObject, deleteVariantObjects } from "@/lib/storage/r2";
 import { EmailNotificationService } from "@/lib/notifications/emailService";
 
 type Result = { profileId: string; status: "COMPLETED" | "SKIPPED" | "FAILED"; reason?: string };
@@ -26,7 +26,7 @@ export async function anonymizeDeletedProfile(db: SupabaseClient, runId: string,
 
   const { data: media, error: mediaError } = await db.from("media_objects").select("id,object_key").eq("owner_id", profileId);
   if (mediaError) return { profileId, status: "FAILED", reason: "Media inventory failed" };
-  try { for (const item of media || []) await deleteStoredObject(String(item.object_key)); }
+  try { for (const item of media || []) { await deleteStoredObject(String(item.object_key)); await deleteVariantObjects(String(item.id)); } }
   catch { const result: Result = { profileId, status: "FAILED", reason: "Object-store deletion failed" }; await record(db, runId, result); return result; }
 
   const startedAt = new Date().toISOString();

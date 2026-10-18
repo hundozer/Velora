@@ -1,4 +1,4 @@
-import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, ListObjectsV2Command, S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID || "";
@@ -95,6 +95,35 @@ export async function getPresignedDownloadUrl(objectKey: string): Promise<string
   return getSignedUrl(r2Client, command, { expiresIn: 300 });
 }
 
+/**
+ * Signed URL that stays identical for a whole time window, so the browser can cache
+ * the image instead of re-downloading it on every render. Only used for media the
+ * caller has already authorised and that is not private-album or chat media.
+ * The URL remains valid for at least `windowSeconds` after the window ends.
+ */
+export async function getCacheableDownloadUrl(objectKey: string, windowSeconds = 1800, now = Date.now()): Promise<{ url: string; maxAgeSeconds: number }> {
+  if (!isR2Configured || !r2Client) throw new Error("Private media storage is unavailable");
+  const windowMs = windowSeconds * 1000;
+  const windowStart = Math.floor(now / windowMs) * windowMs;
+  const command = new GetObjectCommand({ Bucket: bucketName, Key: objectKey });
+  const url = await getSignedUrl(r2Client, command, { expiresIn: windowSeconds * 2, signingDate: new Date(windowStart) });
+  const maxAgeSeconds = Math.max(0, Math.floor((windowStart + windowMs - now) / 1000));
+  return { url, maxAgeSeconds };
+}
+
+export async function getStoredObject(objectKey: string): Promise<Buffer> {
+  if (!isR2Configured || !r2Client) throw new Error("Private media storage is unavailable");
+  const result = await r2Client.send(new GetObjectCommand({ Bucket: bucketName, Key: objectKey }));
+  if (!result.Body) throw new Error("Stored object is empty");
+  return Buffer.from(await result.Body.transformToByteArray());
+}
+
+export async function putStoredObject(objectKey: string, body: Buffer, contentType: string, cacheControl: string): Promise<void> {
+  if (!isR2Configured || !r2Client) throw new Error("Private media storage is unavailable");
+  if (!objectKey.startsWith("variants/") || objectKey.includes("..")) throw new Error("Invalid variant key");
+  await r2Client.send(new PutObjectCommand({ Bucket: bucketName, Key: objectKey, Body: body, ContentType: contentType, CacheControl: cacheControl }));
+}
+
 export async function inspectStoredObject(objectKey: string) {
   if (!isR2Configured || !r2Client) return null;
   const result = await r2Client.send(new HeadObjectCommand({ Bucket: bucketName, Key: objectKey }));
@@ -105,4 +134,14 @@ export async function deleteStoredObject(objectKey: string): Promise<void> {
   if (!isR2Configured || !r2Client) throw new Error("Private media storage is unavailable");
   if (!objectKey || objectKey.includes("..") || objectKey.startsWith("/")) throw new Error("Invalid object key");
   await r2Client.send(new DeleteObjectCommand({ Bucket: bucketName, Key: objectKey }));
+}
+
+/** Removes every resized copy of a media object (variants/{mediaId}/...). */
+export async function deleteVariantObjects(mediaId: string): Promise<void> {
+  if (!isR2Configured || !r2Client) throw new Error("Private media storage is unavailable");
+  if (!/^[0-9a-f-]{36}$/i.test(mediaId)) throw new Error("Invalid media identifier");
+  const listed = await r2Client.send(new ListObjectsV2Command({ Bucket: bucketName, Prefix: `variants/${mediaId}/` }));
+  for (const item of listed.Contents ?? []) {
+    if (item.Key) await r2Client.send(new DeleteObjectCommand({ Bucket: bucketName, Key: item.Key }));
+  }
 }
