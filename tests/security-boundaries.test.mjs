@@ -107,7 +107,7 @@ test("public media pages use member-focused copy rather than internal moderation
 });
 
 test("people discovery prioritizes age, location, profile type, verification, and activity", async () => {
-  const page = await read("src/app/people/page.tsx");
+  const page = await read("src/components/people/PublicPeopleBrowse.tsx");
   const route = await read("src/app/api/public/community/route.ts");
   for (const label of ["I want to meet", "Man", "Woman", "Couples", "Country", "City or region", "Age range", "Verified", "Online recently"]) assert.match(page, new RegExp(label));
   assert.doesNotMatch(page, /Name or headline|Country \(exact\)/);
@@ -251,7 +251,7 @@ test("onboarding creates a verified-session-owned adult profile without self-gra
 
 test("discovery is authenticated, visibility-filtered, and deterministically ordered", async () => {
   const route = await read("src/app/api/discovery/profiles/route.ts");
-  const page = await read("src/app/discovery/page.tsx");
+  const page = await read("src/components/people/MemberPeople.tsx");
   assert.match(route, /resolveServerActor\(req\)/);
   assert.match(route, /\.in\("profile_visibility", \["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY"\]\)/);
   assert.match(route, /\.from\("friendships"\)/);
@@ -259,7 +259,7 @@ test("discovery is authenticated, visibility-filtered, and deterministically ord
   assert.match(route, /created_at.*ascending: false/);
   assert.match(route, /id.*ascending: true/);
   assert.match(route, /\.neq\("auth_id", actorResult\.actor\.userId\)/);
-  assert.match(page, /fetch\(`\/api\/discovery\/profiles\$\{query\}`/);
+  assert.match(page, /fetch\(`\/api\/discovery\/profiles\?\$\{query\}`/);
   assert.doesNotMatch(page, /MOCK_PROFILES/);
 });
 
@@ -494,7 +494,7 @@ test("God Mode is a short-lived, MFA-backed, audited SUPER_ADMIN elevation witho
 test("production member surfaces do not inject fabricated profiles, feeds, relationships, or visitors", async () => {
   const dashboard = await read("src/app/dashboard/page.tsx");
   const profile = await read("src/app/profile/[id]/page.tsx");
-  const search = await read("src/components/discovery/SearchBar.tsx");
+  const search = await read("src/components/people/MemberPeople.tsx");
   const features = await read("src/lib/features.ts");
   assert.doesNotMatch(dashboard, /MOCK_PROFILES|INITIAL_FEED_POSTS|RECENT_VISITORS|localStorage/);
   assert.doesNotMatch(profile, /MOCK_PROFILES\[0\]/);
@@ -721,7 +721,7 @@ test("demo profiles are staging-only, visibly labeled, reversible, and cannot im
   const migration = await read("supabase/migrations/20260819_demo_content_marker.sql");
   const publicRoute = await read("src/app/api/public/community/route.ts");
   const home = await read("src/components/community/PublicCommunityHome.tsx");
-  const people = await read("src/app/people/page.tsx");
+  const people = await read("src/components/people/PublicPeopleBrowse.tsx");
   assert.match(seed, /const DEMO_COUNT = 100/);
   assert.match(seed, /INTIMO_ENVIRONMENT.*staging/);
   assert.match(seed, /INTIMO_STAGING_SUPABASE_PROJECT_REF/);
