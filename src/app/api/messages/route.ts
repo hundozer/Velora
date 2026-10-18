@@ -6,6 +6,7 @@ import { auditLogger } from "@/lib/auth/auditLogger";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
 import { firstMessageDecision, resolveBoundaries } from "@/lib/boundaries.mjs";
 import { presenceBucket } from "@/lib/presence.mjs";
+import { maybeSendReturnEmail } from "@/lib/notifications/returnEmails";
 import { areFriends } from "@/lib/social/friendship";
 
 export const dynamic = "force-dynamic";
@@ -164,6 +165,7 @@ export async function POST(req: NextRequest) {
   const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MESSAGE_SEND", resourceType: "MESSAGE", resourceId: data.id, outcome: "SUCCESS", metadata: { receiverId, datingAdId } });
   if (!audited) return NextResponse.json({ error: "Message sent but audit recording failed; contact support" }, { status: 503 });
   await supabase.from("notifications").insert({ user_id: receiverId, type: "NEW_MESSAGE", title: "New message", message: `${sender.display_name} sent you a message.`, actor_name: sender.display_name, actor_avatar: sender.avatar_url, target_link: `/messages?peerId=${actor.actor.profileId}`, is_read: false });
+  await maybeSendReturnEmail(supabase, receiverId, datingAdId ? "PLAN_REPLY" : "MESSAGE");
   auditLogger.logEvent({ actorId: actor.actor.userId, actorRole: actor.actor.role as any, action: "MESSAGE_SEND", resourceId: data.id, resourceType: "MESSAGE", status: "SUCCESS" });
   return NextResponse.json({ message: data }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
 }

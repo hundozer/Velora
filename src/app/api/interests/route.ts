@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
+import { maybeSendReturnEmail } from "@/lib/notifications/returnEmails";
 
 // Interest (P1-08): a one-tap signal. Mutual interest notifies both members.
 export const dynamic = "force-dynamic";
@@ -59,6 +60,7 @@ export async function POST(req: NextRequest) {
       : [{ user_id: targetId, type: "INTEREST", title: "Someone is interested", message: `${me.display_name} is interested in you.`, actor_name: me.display_name, actor_avatar: me.avatar_url, target_link: "/activity", is_read: false }];
     const { error: notifyError } = await db.from("notifications").insert(notifications);
     if (notifyError) console.error("Interest notification failed", { code: notifyError.code });
+    await maybeSendReturnEmail(db, targetId, "INTEREST");
   }
   return NextResponse.json(result, { status: 201, headers: noStore });
 }
