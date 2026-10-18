@@ -1,5 +1,6 @@
 import { dbRowToProfile, ProfileRow } from "./profileService";
 import { PRESENCE_LABELS, presenceBucket } from "@/lib/presence.mjs";
+import { trustSignals } from "@/lib/trust.mjs";
 
 export function toMemberVisibleProfile(row: ProfileRow, audience: { friends?: boolean } = {}) {
   const profile = dbRowToProfile(row);
@@ -31,6 +32,7 @@ export function toMemberVisibleProfile(row: ProfileRow, audience: { friends?: bo
     coverPhotoUrl: profile.coverPhotoUrl,
     galleryImages: row.photo_visibility_default === "PUBLIC" ? profile.galleryImages : [],
     verified: profile.verified,
+    trustSignals: trustSignals({ verificationStatus: row.verification_status, createdAt: row.created_at, hasAvatar: Boolean(row.avatar_url), accountStatus: row.account_status }),
     followersCount: profile.followersCount,
     totalContentCount: profile.totalContentCount,
     showDistance: profile.showDistance && locationVisible,

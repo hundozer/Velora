@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Bookmark, Flag, Heart, ImageIcon, MapPin, MessageSquare, ShieldCheck, UserMinus } from "lucide-react";
+import { Bookmark, Clock, Flag, Heart, ImageIcon, MapPin, MessageSquare, ShieldCheck, UserMinus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 import { ReportModal } from "@/components/safety/ReportModal";
@@ -14,12 +14,13 @@ import { ProfilePlans } from "@/components/plans/ProfilePlans";
 import { ProfilePrivatePhotos } from "@/components/profile/ProfilePrivatePhotos";
 import { LikeButton } from "@/components/media/LikeButton";
 import { LOOKING_FOR } from "@/lib/onboardingPolicy.mjs";
+import { TRUST_SIGNALS, type TrustSignal } from "@/lib/trust.mjs";
 
 const LOOKING_FOR_LABELS = new Map(LOOKING_FOR.map((item) => [item.value, item.label]));
 
 type VisibleProfile = {
   id: string; displayName: string; age?: number; location?: string; headline?: string; bio?: string;
-  profileType?: "COUPLE" | "INDIVIDUAL"; isCoupleProfile?: boolean; verified?: boolean; recentlyActive?: boolean; presenceLabel?: string | null;
+  profileType?: "COUPLE" | "INDIVIDUAL"; isCoupleProfile?: boolean; verified?: boolean; trustSignals?: TrustSignal[]; recentlyActive?: boolean; presenceLabel?: string | null;
   avatarUrl?: string; coverPhotoUrl?: string; interests?: string[]; lifestyleTags?: string[]; hobbies?: string[];
   lookingFor?: string[]; languages?: string[]; followersCount?: number; totalContentCount?: number;
 };
@@ -107,7 +108,7 @@ export default function CanonicalProfilePage() {
           <div className="relative h-32 w-32 shrink-0 overflow-hidden rounded-full border-4 border-[#111722] bg-slate-800">
             {profile.avatarUrl ? <Image src={profile.avatarUrl} alt={`${profile.displayName}'s profile photo`} fill className="object-cover" unoptimized /> : <div className="flex h-full items-center justify-center text-4xl font-bold text-amber-300">{profile.displayName.slice(0,1).toUpperCase()}</div>}
           </div>
-          <div className="min-w-0 flex-1 pb-1"><div className="flex flex-wrap items-center gap-2"><h1 className="text-3xl font-bold text-white">{profile.displayName}{profile.age ? `, ${profile.age}` : ""}</h1>{profile.verified && <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/10 px-2.5 py-1 text-xs font-bold text-emerald-300"><ShieldCheck className="h-4 w-4" /> Verified</span>}</div>{profile.headline && <p className="mt-2 text-lg text-white/75">{profile.headline}</p>}<div className="mt-2 flex flex-wrap gap-3 text-sm text-white/55">{profile.location && <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" />{profile.location}</span>}<span>{profile.isCoupleProfile || profile.profileType === "COUPLE" ? "Couple profile" : "Individual profile"}</span>{profile.presenceLabel && <span className="text-emerald-300">{profile.presenceLabel}</span>}</div></div>
+          <div className="min-w-0 flex-1 pb-1"><div className="flex flex-wrap items-center gap-2"><h1 className="text-3xl font-bold text-white">{profile.displayName}{profile.age ? `, ${profile.age}` : ""}</h1>{(profile.trustSignals || (profile.verified ? ["PHOTO_VERIFIED" as const] : [])).map((signal) => <span key={signal} title={TRUST_SIGNALS[signal].description} className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${signal === "PHOTO_VERIFIED" ? "bg-emerald-400/10 text-emerald-300" : "bg-amber-300/10 text-amber-200"}`}>{signal === "PHOTO_VERIFIED" ? <ShieldCheck className="h-4 w-4" aria-hidden /> : <Clock className="h-4 w-4" aria-hidden />} {TRUST_SIGNALS[signal].label}</span>)}</div>{profile.headline && <p className="mt-2 text-lg text-white/75">{profile.headline}</p>}<div className="mt-2 flex flex-wrap gap-3 text-sm text-white/55">{profile.location && <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" />{profile.location}</span>}<span>{profile.isCoupleProfile || profile.profileType === "COUPLE" ? "Couple profile" : "Individual profile"}</span>{profile.presenceLabel && <span className="text-emerald-300">{profile.presenceLabel}</span>}</div></div>
           <div className="flex flex-wrap gap-2 pb-1">
             {isOwner ? <><Link href="/settings"><Button variant="outline">Edit profile</Button></Link><Link href="/albums/manage"><Button>Manage albums</Button></Link></> : authenticated ? <><Button variant={interest.interested ? "glass" : "gold"} onClick={() => void toggleInterest()} aria-pressed={interest.interested}><Heart className={`mr-2 h-4 w-4 ${interest.interested ? "fill-current" : ""}`} />{interest.mutual ? "You're both interested" : interest.interested ? "Interested" : "I'm interested"}</Button><Button variant={favorite ? "glass" : "outline"} onClick={() => void setConnection("favorite", favorite)} aria-label={favorite ? "Remove saved profile" : "Save profile"}><Bookmark className="h-4 w-4" /></Button><Link href={`/messages?user=${encodeURIComponent(id)}`}><Button variant="glass"><MessageSquare className="mr-2 h-4 w-4" />Message</Button></Link></> : <Button onClick={() => signIn()}>Sign in to connect</Button>}
           </div>
