@@ -9,5 +9,6 @@ import { PublicPeopleBrowse } from "@/components/people/PublicPeopleBrowse";
 export default function PeoplePage() {
   const { user, isAuthLoading } = useAuth();
   if (isAuthLoading) return <main className="mx-auto max-w-5xl px-4 py-10 text-sm text-velora-textMuted">Loading…</main>;
-  return user ? <MemberPeople /> : <PublicPeopleBrowse />;
+  // MemberPeople reads its filters from the URL (useSearchParams needs a Suspense boundary).
+  return user ? <React.Suspense fallback={null}><MemberPeople /></React.Suspense> : <PublicPeopleBrowse />;
 }

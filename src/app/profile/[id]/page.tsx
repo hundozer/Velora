@@ -92,11 +92,11 @@ export default function CanonicalProfilePage() {
     const response = await fetch("/api/blocks", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ targetProfileId: id }) });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) return setActionError(payload.error || "Block failed");
-    router.push("/discover");
+    router.push("/people");
   };
 
   if (loading) return <main className="mx-auto max-w-6xl px-4 py-16 text-center text-ink/70" aria-live="polite">Loading profile…</main>;
-  if (error || !profile) return <main className="mx-auto max-w-xl px-4 py-20 text-center"><h1 className="font-display text-5xl leading-none text-velora-ink">Profile unavailable</h1><p className="mt-3 text-ink/60">{error || "This profile is private, blocked, or no longer available."}</p><Link href="/discover" className="mt-6 inline-block text-velora-accent underline">Browse members</Link></main>;
+  if (error || !profile) return <main className="mx-auto max-w-xl px-4 py-20 text-center"><h1 className="font-display text-5xl leading-none text-velora-ink">Profile unavailable</h1><p className="mt-3 text-ink/60">{error || "This profile is private, blocked, or no longer available."}</p><Link href="/people" className="mt-6 inline-block text-velora-accent underline">Browse members</Link></main>;
 
   return <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
     <section className="overflow-hidden rounded-3xl border border-ink/10 bg-velora-surface">

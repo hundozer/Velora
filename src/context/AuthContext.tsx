@@ -9,6 +9,7 @@ import {
   ProfileRow,
 } from "@/lib/supabase/profileService";
 import { destinationForAccountState } from "@/lib/auth/accountState.mjs";
+import { clearPeopleSnapshots } from "@/lib/peopleSession.mjs";
 
 interface AuthContextType {
   user: User | null;
@@ -191,6 +192,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = (returnTo?: string) => {
     logout();
     if (typeof window !== "undefined") {
+      clearPeopleSnapshots(window.sessionStorage);
       window.location.href = returnTo ? `/auth/logout?returnTo=${encodeURIComponent(returnTo)}` : "/auth/logout";
     }
   };
