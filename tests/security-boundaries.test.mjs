@@ -291,8 +291,9 @@ test("friendships are mutual, accepted, server-owned, block-aware, and enforce p
   assert.match(messages, /await areFriends\(actor\.actor\.profileId, receiverId\)/);
   assert.match(privacy, /"FRIENDS_ONLY"/);
   assert.doesNotMatch(privacy, /MATCHING_USERS/);
-  assert.match(profile, /Add friend/);
-  assert.match(profile, /Accept friend/);
+  // P1-08: the profile's one-tap signal is Interest; the friendship API stays for FRIENDS_ONLY audiences.
+  assert.match(profile, /I\'m interested/);
+  assert.match(profile, /api\/interests/);
   assert.doesNotMatch(profile, />Follow</);
 });
 
