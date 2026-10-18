@@ -8,6 +8,7 @@ import { MobileNavigation } from "@/components/layout/MobileNavigation";
 import { AgeVerificationModal } from "@/components/common/AgeVerificationModal";
 import { CookieConsent } from "@/components/privacy/CookieConsent";
 import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration";
+import { DiscreetMode } from "@/components/privacy/DiscreetMode";
 
 export const metadata: Metadata = {
   title: "Intimo | Prague's private, sex-positive network",
@@ -60,6 +61,7 @@ export default function RootLayout({
           </AuthProvider>
         </LanguageProvider>
         <ServiceWorkerRegistration />
+        <DiscreetMode />
       </body>
     </html>
   );
