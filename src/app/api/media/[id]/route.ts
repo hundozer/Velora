@@ -4,6 +4,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { deleteStoredObject, getPresignedDownloadUrl } from "@/lib/storage/r2";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
+import { grantIsActive } from "@/lib/privateAccess.mjs";
 
 export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -39,6 +40,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!allowed && media.visibility === "APPROVED_USERS_ONLY") {
     const { data: approved } = await supabase.from("connections").select("id").eq("follower_id", media.owner_id).eq("followed_id", actor.actor.profileId).eq("connection_type", "favorite").maybeSingle();
     allowed = Boolean(approved);
+  }
+  if (!allowed && media.visibility === "PRIVATE") {
+    // Private Album Handshake (P1-06): checked on every read, so revoking is immediate.
+    const { data: grant } = await supabase.from("album_access_grants").select("status,grant_type,expires_at").eq("owner_id", media.owner_id).eq("viewer_id", actor.actor.profileId).maybeSingle();
+    allowed = grantIsActive(grant);
   }
   if (!allowed) return NextResponse.json({ error: "Media not found" }, { status: 404 });
   try {
