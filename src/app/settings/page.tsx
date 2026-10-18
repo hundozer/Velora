@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { AreaSelect } from "@/components/profile/AreaSelect";
 import { EmailPreferences } from "@/components/settings/EmailPreferences";
+import { readDiscreet, writeDiscreet } from "@/lib/discreet";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { VerificationWizard } from "@/components/verification/VerificationWizard";
@@ -50,6 +51,8 @@ export default function SettingsPage() {
     showDistance: true,
   });
   const [sensitiveConsentGranted, setSensitiveConsentGranted] = useState(false);
+  const [discreet, setDiscreet] = useState(false);
+  React.useEffect(() => setDiscreet(readDiscreet()), []);
   const [verificationWizardOpen, setVerificationWizardOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -403,9 +406,9 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      <Card variant="glass" className="p-6 space-y-5">
+      <Card variant="glass" className="p-6 space-y-5 scroll-mt-24" id="privacy">
         <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
-          <EyeOff className="w-4 h-4 text-emerald-400" /> Who can see what
+          <EyeOff className="w-4 h-4 text-emerald-400" /> Privacy Center
         </h2>
         <p className="text-xs text-velora-textSecondary">Choose an audience for your profile and each kind of information. New intimate details and media stay private until you change them.</p>
 
@@ -447,6 +450,7 @@ export default function SettingsPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           <PrivacyToggle title="Show activity" description="Members see a rough status (Online now, Active today, Active this week), never an exact time." checked={privacy.showOnlineStatus} onChange={(checked) => setPrivacy({ ...privacy, showOnlineStatus: checked })} />
           <PrivacyToggle title="Browse invisibly" description="Your visits don't appear in other members' Visitors. You also won't see who visited you." checked={privacy.browseInvisibly} onChange={(checked) => setPrivacy({ ...privacy, browseInvisibly: checked })} />
+          <PrivacyToggle title="Discreet mode on this device" description="Neutral tab title and photos blurred until you tap them. Applies right away, only in this browser." checked={discreet} onChange={(checked) => { setDiscreet(checked); writeDiscreet(checked); }} />
           <PrivacyToggle title="Approximate distance" description="Never reveals your precise position." checked={privacy.showDistance} disabled={privacy.locationPrecision === "HIDDEN"} onChange={(checked) => setPrivacy({ ...privacy, showDistance: checked })} />
         </div>
 
