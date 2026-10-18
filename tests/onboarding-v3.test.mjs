@@ -48,9 +48,9 @@ test("profile creation enforces onboarding v3 server-side and keeps only the par
   assert.doesNotMatch(route, /"CREATOR", "LIFESTYLE"/);
 });
 
-test("wizard has five steps ending in an optional first photo", async () => {
+test("wizard asks one question per screen and ends in an optional first photo", async () => {
   const page = await read("src/app/onboarding/page.tsx");
-  assert.match(page, /const TOTAL_STEPS = 5;/);
+  assert.match(page, /return \["kind", "identity", "relationship", "name", "birthday", \.\.\.\(kind === "COUPLE" \? \["partner" as const\] : \[\]\), "looking", "area", "photo"\];/);
   assert.match(page, /uploadFileToR2\(file, "avatars"/);
   assert.match(page, /Skip for now/);
   assert.match(page, /whoIsHereError\(/);

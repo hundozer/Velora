@@ -2,9 +2,13 @@
 
 import React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { isFlowPath } from "@/lib/flowRoutes";
 import { ShieldCheck, Lock, EyeOff } from "lucide-react";
 
 export const Footer: React.FC = () => {
+  const pathname = usePathname();
+  if (isFlowPath(pathname)) return null;
   return (
     <footer className="w-full glass-panel border-t border-white/10 mt-20 bg-velora-bg/90">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { isFlowPath } from "@/lib/flowRoutes";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation, LANGUAGES, SupportedLanguage } from "@/context/LanguageContext";
 import { NotificationDrawer } from "@/components/notifications/NotificationDrawer";
@@ -36,6 +37,8 @@ export const Navbar: React.FC = () => {
     fetch("/api/notifications", { cache: "no-store", credentials: "same-origin" }).then((response) => response.ok ? response.json() : null).then((payload) => { if (payload) setUnreadCount(payload.unreadCount || 0); }).catch(() => {});
   }, [user]);
 
+  if (isFlowPath(pathname)) return null;
+
   return (
     <header className="sticky top-0 z-40 w-full glass-panel border-b border-white/10 bg-velora-bg/85 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
@@ -47,7 +50,7 @@ export const Navbar: React.FC = () => {
             </div>
           </div>
           <div>
-            <span className="font-serif text-2xl font-bold tracking-widest gold-gradient-text uppercase">
+            <span className="hidden font-serif text-2xl font-bold tracking-widest gold-gradient-text uppercase min-[400px]:inline">
               Intimo
             </span>
             <span className="hidden sm:block text-[10px] tracking-[0.25em] text-velora-textMuted uppercase font-sans">
@@ -275,16 +278,16 @@ export const Navbar: React.FC = () => {
             </div>
           ) : (
             /* CLEAN & HIGH-CONVERTING GUEST CTAS */
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <a
                 href="/auth/login"
-                className="px-4 py-2 rounded-full border border-velora-gold/40 text-velora-gold font-bold text-xs uppercase tracking-wider hover:bg-velora-gold/10 transition-all"
+                className="px-3 sm:px-4 py-2 rounded-full border border-velora-gold/40 text-velora-gold font-bold text-xs uppercase tracking-wider whitespace-nowrap hover:bg-velora-gold/10 transition-all"
               >
                 {t("auth.login")}
               </a>
               <a
                 href="/auth/login?screen_hint=signup"
-                className="px-6 py-2.5 rounded-full bg-gold-gradient text-velora-bg font-serif font-bold text-xs uppercase tracking-wider shadow-gold-glow hover:scale-105 transition-all"
+                className="px-4 sm:px-6 py-2.5 rounded-full bg-gold-gradient text-velora-bg font-serif font-bold text-xs uppercase tracking-wider whitespace-nowrap shadow-gold-glow hover:scale-105 transition-all"
               >
                 Join Intimo
               </a>

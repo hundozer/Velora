@@ -1,4 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import "@fontsource-variable/inter";
+import "@fontsource/playfair-display/600.css";
+import "@fontsource/playfair-display/700.css";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
@@ -6,7 +9,6 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { MobileNavigation } from "@/components/layout/MobileNavigation";
 import { AgeVerificationModal } from "@/components/common/AgeVerificationModal";
-import { CookieConsent } from "@/components/privacy/CookieConsent";
 import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration";
 import { DiscreetMode } from "@/components/privacy/DiscreetMode";
 
@@ -54,7 +56,6 @@ export default function RootLayout({
           <AuthProvider>
             <Navbar />
             <AgeVerificationModal />
-            <CookieConsent />
             <main className="flex-1 w-full">{children}</main>
             <MobileNavigation />
             <Footer />
