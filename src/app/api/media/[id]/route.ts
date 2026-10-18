@@ -18,7 +18,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!rate.allowed) return NextResponse.json({ error: "Media access rate limit reached" }, { status: 429 });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Media service unavailable" }, { status: 503 });
-  const modern = await supabase.from("media_objects").select("id,owner_id,object_key,visibility,upload_status,moderation_status,processing_status").eq("id", params.id).maybeSingle();
+  const modern = await supabase.from("media_objects").select("id,owner_id,object_key,visibility,upload_status,moderation_status,processing_status,category").eq("id", params.id).maybeSingle();
   const legacy = modern.error
     ? await supabase.from("media_objects").select("id,owner_id,object_key,visibility,upload_status").eq("id", params.id).maybeSingle()
     : null;
@@ -27,12 +27,20 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const isOwner = media.owner_id === actor.actor.profileId;
   const moderationStatus = "moderation_status" in media ? media.moderation_status : null;
   const processingStatus = "processing_status" in media ? media.processing_status : null;
-  if (moderationStatus === "REMOVED" || (!isOwner && (moderationStatus !== "APPROVED" || processingStatus !== "READY"))) {
+  // Chat photos (P1-10) are private 1:1 media: visible to the two participants without
+  // waiting for proactive review, unless a moderator rejected, hid or removed them.
+  const isChatImage = "category" in media && media.category === "MESSAGE";
+  let chatParticipant = false;
+  if (isChatImage && !isOwner && !["REJECTED", "HIDDEN", "REMOVED"].includes(String(moderationStatus))) {
+    const { data: message } = await supabase.from("direct_messages").select("id").eq("media_url", `/api/media/${media.id}`).eq("sender_id", media.owner_id).eq("receiver_id", actor.actor.profileId).limit(1).maybeSingle();
+    chatParticipant = Boolean(message) && processingStatus === "READY";
+  }
+  if (moderationStatus === "REMOVED" || (!isOwner && !chatParticipant && (moderationStatus !== "APPROVED" || processingStatus !== "READY"))) {
     return NextResponse.json({ error: "Media not found" }, { status: 404 });
   }
   const { data: block } = isOwner ? { data: null } : await supabase.from("user_blocks").select("id").or(`and(blocker_id.eq.${actor.actor.profileId},blocked_profile_id.eq.${media.owner_id}),and(blocker_id.eq.${media.owner_id},blocked_profile_id.eq.${actor.actor.profileId})`).limit(1).maybeSingle();
   if (block) return NextResponse.json({ error: "Media not found" }, { status: 404 });
-  let allowed = isOwner || media.visibility === "PUBLIC" || media.visibility === "MEMBERS_ONLY";
+  let allowed = isOwner || chatParticipant || (!isChatImage && (media.visibility === "PUBLIC" || media.visibility === "MEMBERS_ONLY"));
   if (!allowed && media.visibility === "FOLLOWERS_ONLY") {
     const { data: follow } = await supabase.from("connections").select("id").eq("follower_id", actor.actor.profileId).eq("followed_id", media.owner_id).eq("connection_type", "follow").maybeSingle();
     allowed = Boolean(follow);
@@ -41,7 +49,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const { data: approved } = await supabase.from("connections").select("id").eq("follower_id", media.owner_id).eq("followed_id", actor.actor.profileId).eq("connection_type", "favorite").maybeSingle();
     allowed = Boolean(approved);
   }
-  if (!allowed && media.visibility === "PRIVATE") {
+  if (!allowed && media.visibility === "PRIVATE" && !isChatImage) {
     // Private Album Handshake (P1-06): checked on every read, so revoking is immediate.
     const { data: grant } = await supabase.from("album_access_grants").select("status,grant_type,expires_at").eq("owner_id", media.owner_id).eq("viewer_id", actor.actor.profileId).maybeSingle();
     allowed = grantIsActive(grant);

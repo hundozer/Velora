@@ -14,6 +14,8 @@ export async function GET(req: NextRequest) {
   if (!db) return NextResponse.json({ error: "Content service unavailable" }, { status: 503 });
   let query = db.from("media_objects").select("id,owner_id,media_type,mime_type,byte_size,visibility,upload_status,processing_status,moderation_status,title,description,category,tags,moderator_note,created_at,updated_at,published_at").order("created_at", { ascending: true }).limit(200);
   if (status && DECISIONS.has(status)) query = query.eq("moderation_status", status);
+  // Chat photos are private 1:1 media: moderated when reported, not queued proactively.
+  query = query.or("category.is.null,category.neq.MESSAGE");
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: "Content queue lookup failed; confirm migration 20260814 is applied" }, { status: 502 });
   return NextResponse.json({ media: data || [] }, { headers: { "Cache-Control": "private, no-store" } });

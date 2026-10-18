@@ -57,7 +57,7 @@ export function AlbumManager() {
     if (!mediaResponse.ok) throw new Error(mediaPayload.error || "Photos unavailable");
     setAlbums(albumPayload.albums || []);
     // Only finished uploads can go into an album; abandoned or failed uploads stay out of the picker.
-    setMedia((mediaPayload.media || []).filter((item: Media) => item.upload_status === "AVAILABLE"));
+    setMedia((mediaPayload.media || []).filter((item: Media & { category?: string | null }) => item.upload_status === "AVAILABLE" && item.category !== "MESSAGE"));
     setSelected((current) => current && albumPayload.albums?.some((album: Album) => album.id === current) ? current : albumPayload.albums?.[0]?.id || null);
   }, []);
 
