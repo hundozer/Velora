@@ -23,13 +23,13 @@ export const Button: React.FC<ButtonProps> = ({
   const variants = {
     gold: "bg-gold-gradient text-velora-bg hover:brightness-110 shadow-gold-glow border border-velora-amber/40 active:scale-[0.98]",
     glass:
-      "bg-white/5 text-velora-textPrimary hover:bg-white/10 border border-white/10 backdrop-blur-md hover:border-velora-gold/40 active:scale-[0.98]",
+      "bg-ink/5 text-velora-textPrimary hover:bg-ink/10 border border-ink/10 backdrop-blur-md hover:border-velora-gold/40 active:scale-[0.98]",
     outline:
       "bg-transparent text-velora-gold border border-velora-gold/50 hover:bg-velora-gold/10 hover:border-velora-gold active:scale-[0.98]",
     danger:
-      "bg-velora-crimson/80 text-white hover:bg-velora-crimson border border-red-500/30 active:scale-[0.98]",
+      "bg-velora-crimson/80 text-ink hover:bg-velora-crimson border border-red-500/30 active:scale-[0.98]",
     ghost:
-      "bg-transparent text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 active:scale-[0.98]",
+      "bg-transparent text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 active:scale-[0.98]",
   };
 
   const sizes = {

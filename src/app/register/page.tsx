@@ -31,11 +31,11 @@ export default function RegisterPage() {
         <AuthField id="email" label="Email" type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <div className="space-y-2">
           <AuthField id="password" label="Password" type="password" autoComplete="new-password" required minLength={MIN_PASSWORD} value={password} onChange={(e) => setPassword(e.target.value)} aria-describedby="password-hint" />
-          <p id="password-hint" className={`text-base ${password.length >= MIN_PASSWORD ? "text-emerald-300" : "text-velora-textMuted"}`}>{password.length >= MIN_PASSWORD ? "Good" : `${MIN_PASSWORD}+ characters`}</p>
+          <p id="password-hint" className={`text-base ${password.length >= MIN_PASSWORD ? "text-emerald-700" : "text-velora-textMuted"}`}>{password.length >= MIN_PASSWORD ? "Good" : `${MIN_PASSWORD}+ characters`}</p>
         </div>
-        <label className={`flex w-full cursor-pointer items-center gap-4 rounded-3xl border-2 px-5 py-4 text-base transition ${agreed ? "border-velora-gold bg-velora-gold/10 text-velora-textPrimary" : "border-white/10 text-velora-textSecondary"}`}>
+        <label className={`flex w-full cursor-pointer items-center gap-4 rounded-3xl border-2 px-5 py-4 text-base transition ${agreed ? "border-velora-accent bg-velora-accent/[0.06] text-velora-ink" : "border-velora-line bg-velora-surface text-velora-ink2"}`}>
           <input type="checkbox" className="peer sr-only" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
-          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-lg font-bold peer-focus-visible:ring-2 peer-focus-visible:ring-velora-gold ${agreed ? "border-velora-gold bg-velora-gold text-velora-bg" : "border-white/30"}`} aria-hidden>{agreed ? "✓" : ""}</span>
+          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-lg font-bold peer-focus-visible:ring-2 peer-focus-visible:ring-velora-gold ${agreed ? "border-velora-accent bg-velora-accent text-velora-paper" : "border-velora-ink/30"}`} aria-hidden>{agreed ? "✓" : ""}</span>
           <span>I&apos;m 18+ and accept the <Link href="/legal/terms" className="text-velora-gold underline">Terms</Link> and <Link href="/legal/privacy-policy" className="text-velora-gold underline">Privacy Policy</Link></span>
         </label>
         {error && <AuthMessage tone="error">{error}</AuthMessage>}

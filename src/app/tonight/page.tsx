@@ -47,7 +47,7 @@ export default function TonightPage() {
       <header className="flex items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">Tonight</p>
-          <h1 className="font-serif text-3xl font-bold text-velora-textPrimary">What&apos;s happening</h1>
+          <h1 className="font-serif font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">What&apos;s happening</h1>
           <p className="mt-1 text-sm text-velora-textSecondary">Plans from members nearby. They disappear when they expire.</p>
         </div>
         <Link href="/tonight/new" className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full bg-gold-gradient px-5 text-sm font-bold text-velora-bg"><Plus className="h-4 w-4" aria-hidden />Post a plan</Link>
@@ -62,18 +62,18 @@ export default function TonightPage() {
 
       <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Plan categories">
         {[{ value: "", label: "All" }, ...PLAN_CATEGORIES].map((item) => (
-          <button key={item.value || "all"} type="button" role="tab" aria-selected={category === item.value} onClick={() => setCategory(item.value)} className={`min-h-9 shrink-0 rounded-full border px-3 text-xs transition ${category === item.value ? "border-velora-gold bg-velora-gold/15 text-velora-textPrimary" : "border-white/10 text-velora-textSecondary hover:border-white/25"}`}>
+          <button key={item.value || "all"} type="button" role="tab" aria-selected={category === item.value} onClick={() => setCategory(item.value)} className={`min-h-9 shrink-0 rounded-full border px-3 text-xs transition ${category === item.value ? "border-velora-gold bg-velora-gold/15 text-velora-textPrimary" : "border-ink/10 text-velora-textSecondary hover:border-ink/25"}`}>
             {item.label}
           </button>
         ))}
       </div>
 
-      {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-300">{error}</p>}
+      {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-700">{error}</p>}
       {plans === null ? (
         <p className="text-sm text-velora-textMuted">Loading plans…</p>
       ) : plans.length === 0 ? (
-        <section className="rounded-3xl border border-dashed border-white/15 p-8 text-center">
-          <h2 className="font-serif text-xl font-bold text-velora-textPrimary">Be the first tonight</h2>
+        <section className="rounded-3xl border border-dashed border-ink/15 p-8 text-center">
+          <h2 className="font-serif text-3xl font-bold text-velora-textPrimary">Be the first tonight</h2>
           <p className="mt-2 text-sm text-velora-textSecondary">Say what you&apos;re in the mood for. Only the people you choose can reply.</p>
           <Link href="/tonight/new" className="mt-4 inline-block text-sm font-semibold text-velora-gold underline">Post a plan</Link>
         </section>

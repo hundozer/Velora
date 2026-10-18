@@ -31,18 +31,18 @@ export const AgeVerificationModal: React.FC = () => {
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="age-gate-title" className="fixed inset-0 z-[200] flex flex-col bg-velora-bg">
       <div className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center px-6 py-10">
-        <p className="font-serif text-2xl font-bold gold-gradient-text">Intimo</p>
-        <h1 id="age-gate-title" className="mt-6 font-serif text-5xl font-bold leading-tight text-velora-textPrimary">Are you 18 or older?</h1>
+        <p className="font-display text-3xl text-velora-ink">Intimo</p>
+        <h1 id="age-gate-title" className="mt-6 font-display text-6xl leading-[1.02] text-velora-ink">Are you 18 or older?</h1>
         <p className="mt-4 text-lg text-velora-textSecondary">Intimo is for consenting adults. What you see here stays here.</p>
         <div className="mt-10 space-y-3">
-          <button type="button" autoFocus disabled={submitting} onClick={confirm} className="flex min-h-20 w-full items-center justify-center rounded-3xl bg-gold-gradient px-6 text-xl font-bold text-velora-bg shadow-gold-glow transition active:scale-[0.98] disabled:opacity-60">
+          <button type="button" autoFocus disabled={submitting} onClick={confirm} className="flex min-h-20 w-full items-center justify-center rounded-3xl bg-velora-accent px-6 text-xl font-semibold text-velora-paper transition active:scale-[0.98] disabled:opacity-60">
             {submitting ? "One moment…" : "Yes, I'm 18+"}
           </button>
-          <a href="https://www.google.com" className="flex min-h-20 w-full items-center justify-center rounded-3xl border-2 border-white/10 px-6 text-xl font-semibold text-velora-textSecondary transition hover:border-white/30">
+          <a href="https://www.google.com" className="flex min-h-20 w-full items-center justify-center rounded-3xl border border-velora-line bg-velora-surface px-6 text-xl font-semibold text-velora-ink2 transition hover:border-velora-ink/30">
             No, take me out
           </a>
         </div>
-        {error && <p role="alert" className="mt-4 text-base text-red-300">{error}</p>}
+        {error && <p role="alert" className="mt-4 text-base text-red-700">{error}</p>}
       </div>
     </div>
   );

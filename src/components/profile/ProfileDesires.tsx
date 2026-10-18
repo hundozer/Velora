@@ -34,10 +34,10 @@ export function ProfileDesires({ profileId, isOwner }: { profileId: string; isOw
   const visible = rows.filter((row) => desireById(row.desire_id));
   if (visible.length === 0) {
     return isOwner ? (
-      <section className="rounded-3xl border border-dashed border-white/15 p-6">
-        <h2 className="text-xl font-bold text-white">Desires</h2>
-        <p className="mt-2 text-sm text-white/55">Tell members what you&apos;re into, curious about, and where your limits are.</p>
-        <Link href="/me/desires" className="mt-3 inline-block text-amber-300 underline">Add desires</Link>
+      <section className="rounded-3xl border border-dashed border-ink/15 p-6">
+        <h2 className="text-xl font-bold text-ink">Desires</h2>
+        <p className="mt-2 text-sm text-ink/55">Tell members what you&apos;re into, curious about, and where your limits are.</p>
+        <Link href="/me/desires" className="mt-3 inline-block text-velora-accent underline">Add desires</Link>
       </section>
     ) : null;
   }
@@ -45,19 +45,19 @@ export function ProfileDesires({ profileId, isOwner }: { profileId: string; isOw
   const sharedSet = new Set(shared);
   const label = (id: string) => desireById(id)?.label ?? id;
   const chip = (id: string, tone: "shared" | "plain" | "limit") => (
-    <span key={id} className={`rounded-full border px-3 py-1 text-sm ${tone === "shared" ? "border-amber-300/60 bg-amber-300/15 text-amber-100" : tone === "limit" ? "border-red-400/40 bg-red-500/10 text-red-200" : "border-white/15 bg-white/5 text-white/75"}`}>{label(id)}</span>
+    <span key={id} className={`rounded-full border px-3 py-1 text-sm ${tone === "shared" ? "border-velora-accent/60 bg-velora-accent/15 text-velora-accent" : tone === "limit" ? "border-red-400/40 bg-red-500/10 text-red-700" : "border-ink/15 bg-ink/5 text-ink/75"}`}>{label(id)}</span>
   );
   const limits = visible.filter((row) => row.state === "HARD_LIMIT");
 
   return (
-    <section className="space-y-4 rounded-3xl border border-white/10 bg-[#111722] p-6">
+    <section className="space-y-4 rounded-3xl border border-ink/10 bg-velora-surface p-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white">Desires</h2>
-        {isOwner && <Link href="/me/desires" className="text-sm text-amber-300">Edit</Link>}
+        <h2 className="text-xl font-bold text-ink">Desires</h2>
+        {isOwner && <Link href="/me/desires" className="text-sm text-velora-accent">Edit</Link>}
       </div>
       {shared.length > 0 && (
         <div>
-          <p className="text-xs uppercase tracking-wide text-amber-300/80">You both want</p>
+          <p className="text-xs uppercase tracking-wide text-velora-accent">You both want</p>
           <div className="mt-2 flex flex-wrap gap-2">{shared.map((id) => chip(id, "shared"))}</div>
         </div>
       )}
@@ -65,7 +65,7 @@ export function ProfileDesires({ profileId, isOwner }: { profileId: string; isOw
         const ids = visible.filter((row) => row.state === group.state && !sharedSet.has(row.desire_id)).map((row) => row.desire_id);
         return ids.length > 0 ? (
           <div key={group.state}>
-            <p className="text-xs uppercase tracking-wide text-white/40">{group.label}</p>
+            <p className="text-xs uppercase tracking-wide text-ink/40">{group.label}</p>
             <div className="mt-2 flex flex-wrap gap-2">{ids.map((id) => chip(id, "plain"))}</div>
           </div>
         ) : null;

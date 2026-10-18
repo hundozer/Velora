@@ -176,13 +176,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search conversations..."
-            className="w-full pl-9 pr-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-white placeholder-velora-textMuted focus:outline-none focus:border-amber-400/60 transition-all"
+            className="w-full pl-9 pr-4 py-1.5 bg-ink/5 border border-ink/10 rounded-full text-xs text-ink placeholder-velora-textMuted focus:outline-none focus:border-velora-accent/60 transition-all"
           />
         </div>
 
-        <div className="flex gap-1.5 px-1 pt-1 border-t border-white/10" role="tablist" aria-label="Message folders">
+        <div className="flex gap-1.5 px-1 pt-1 border-t border-ink/10" role="tablist" aria-label="Message folders">
           {([["INBOX", "Inbox", 0], ["UNREAD", "Unread", unreadCount], ["REQUESTS", "Requests", requestCount]] as const).map(([value, label, count]) => (
-            <button key={value} type="button" role="tab" aria-selected={folder === value} onClick={() => setFolder(value)} className={`min-h-9 flex-1 rounded-full border px-2 text-[11px] font-semibold transition ${folder === value ? "border-amber-400/60 bg-amber-400/15 text-white" : "border-white/10 text-velora-textMuted hover:border-white/25"}`}>
+            <button key={value} type="button" role="tab" aria-selected={folder === value} onClick={() => setFolder(value)} className={`min-h-9 flex-1 rounded-full border px-2 text-[11px] font-semibold transition ${folder === value ? "border-velora-accent/60 bg-velora-accent/15 text-ink" : "border-ink/10 text-velora-textMuted hover:border-ink/25"}`}>
               {label}{count > 0 ? ` · ${count}` : ""}
             </button>
           ))}
@@ -201,11 +201,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 onClick={() => onSelectConversation(c)}
                 className={`p-2.5 rounded-2xl cursor-pointer transition-all flex items-center gap-3 ${
                   isActive
-                    ? "bg-gradient-to-r from-amber-500/20 to-amber-900/20 border border-amber-400/40 shadow-gold-glow"
-                    : "hover:bg-white/5 border border-transparent"
+                    ? "bg-gradient-to-r from-velora-accent/20 to-velora-accent/20 border border-velora-accent/40 shadow-gold-glow"
+                    : "hover:bg-ink/5 border border-transparent"
                 }`}
               >
-                <div className="w-11 h-11 rounded-full border border-white/20 overflow-hidden bg-velora-card shrink-0 relative">
+                <div className="w-11 h-11 rounded-full border border-ink/20 overflow-hidden bg-velora-card shrink-0 relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={c.participant.avatarUrl}
@@ -222,7 +222,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1 min-w-0">
-                      <h3 className="text-xs font-bold text-white truncate">
+                      <h3 className="text-xs font-bold text-ink truncate">
                         {c.participant.displayName}
                       </h3>
                       <span className="text-[10px] text-pink-400 font-bold shrink-0">{genderSymbol}</span>
@@ -244,7 +244,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             );
           })}
           {onLoadOlderConversations && !searchQuery && (
-            <button type="button" onClick={onLoadOlderConversations} disabled={loadingOlderConversations} className="w-full rounded-xl border border-white/10 px-3 py-2 text-[11px] font-semibold text-velora-textMuted hover:border-amber-400/40 hover:text-amber-300 disabled:opacity-50">
+            <button type="button" onClick={onLoadOlderConversations} disabled={loadingOlderConversations} className="w-full rounded-xl border border-ink/10 px-3 py-2 text-[11px] font-semibold text-velora-textMuted hover:border-velora-accent/40 hover:text-velora-accent disabled:opacity-50">
               {loadingOlderConversations ? "Loading older conversations…" : "Load older conversations"}
             </button>
           )}
@@ -254,7 +254,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       {/* Main Chat Thread Window */}
       <Card variant="glass" className="md:col-span-2 p-0 flex flex-col h-full overflow-hidden relative">
         {/* Chat Thread Header */}
-        <div className="p-4 border-b border-white/10 flex items-center justify-between bg-velora-card/60">
+        <div className="p-4 border-b border-ink/10 flex items-center justify-between bg-velora-card/60">
           <div
             className="flex items-center gap-3 cursor-pointer"
             onClick={() => setShowProfilePreview(!showProfilePreview)}
@@ -274,7 +274,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               </h3>
               <p className="text-[10px] text-velora-textMuted">
                 {activeConversation.participant.isOnline ? (
-                  <span className="text-emerald-400 flex items-center gap-1">
+                  <span className="text-emerald-700 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     {activeConversation.participant.location
                       ? `${activeConversation.participant.location} • Active Now`
@@ -301,7 +301,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
             <button
               onClick={() => setReportModalOpen(true)}
-              className="p-2 rounded-full glass-panel text-velora-textMuted hover:text-red-400 hover:border-red-500/40 transition-colors"
+              className="p-2 rounded-full glass-panel text-velora-textMuted hover:text-red-600 hover:border-red-500/40 transition-colors"
               title="Report User"
             >
               <ShieldAlert className="w-4 h-4" />
@@ -309,7 +309,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
             <button
               onClick={() => setBlockModalOpen(true)}
-              className="p-2 rounded-full glass-panel text-velora-textMuted hover:text-red-400 hover:border-red-500/40 transition-colors"
+              className="p-2 rounded-full glass-panel text-velora-textMuted hover:text-red-600 hover:border-red-500/40 transition-colors"
               title="Block User"
             >
               <Ban className="w-4 h-4" />
@@ -318,7 +318,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         </div>
 
         {activeConversation.isRequest && (
-          <div className="border-b border-amber-400/20 bg-amber-400/5 px-4 py-2 text-[11px] text-amber-100/80" role="note">
+          <div className="border-b border-velora-accent/20 bg-velora-accent/5 px-4 py-2 text-[11px] text-velora-accent" role="note">
             Message request: you haven&apos;t replied yet. Reply to move it to your inbox, or block or report from the menu.
           </div>
         )}
@@ -342,7 +342,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   className={`max-w-md p-4 rounded-2xl text-xs leading-relaxed relative ${
                     isMe
                       ? "bg-gold-gradient text-velora-bg font-medium shadow-gold-glow rounded-tr-none"
-                      : "glass-panel text-velora-textPrimary border-white/10 rounded-tl-none"
+                      : "glass-panel text-velora-textPrimary border-ink/10 rounded-tl-none"
                   }`}
                 >
                   {m.mediaUrl && <div className={m.content ? "mb-2" : ""}><ChatPhoto src={m.mediaUrl} mine={isMe} /></div>}
@@ -365,9 +365,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         </div>
 
         {/* Photos are private chat media (P1-10): served only to the two participants. */}
-        <div className="p-4 border-t border-white/10 bg-velora-card/60 space-y-2">
-          {datingAdId && <p className="text-[11px] text-amber-300">Replying to a dating ad. Its audience requirements are checked securely when you send.</p>}
-          {sendError && <p role="alert" className="text-[11px] text-rose-300">{sendError}</p>}
+        <div className="p-4 border-t border-ink/10 bg-velora-card/60 space-y-2">
+          {datingAdId && <p className="text-[11px] text-velora-accent">Replying to a dating ad. Its audience requirements are checked securely when you send.</p>}
+          {sendError && <p role="alert" className="text-[11px] text-rose-700">{sendError}</p>}
           <label className="flex items-center gap-2 text-[11px] text-velora-textMuted"><input type="checkbox" className="h-3.5 w-3.5 accent-velora-gold" checked={photoExplicit} onChange={(event) => setPhotoExplicit(event.target.checked)} />Next photo is explicit (respects their boundaries)</label>
           <div className="flex items-center gap-3">
             <input
@@ -376,7 +376,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && void handleSendMessage()}
-              className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
+              className="flex-1 bg-ink/5 border border-ink/10 rounded-2xl px-4 py-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
             />
             <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => void sendPhoto(event.target.files?.[0])} />
             <Button variant="ghost" size="sm" className="p-3 rounded-2xl" onClick={() => photoInputRef.current?.click()} disabled={uploadingPhoto !== null} aria-label="Send a photo">

@@ -29,7 +29,7 @@ export function EmailPreferences() {
     if (!response.ok) { setOptOut(previous); setError("Email settings could not be saved."); }
   }
 
-  if (!optOut) return error ? <p className="text-xs text-red-300">{error}</p> : null;
+  if (!optOut) return error ? <p className="text-xs text-red-700">{error}</p> : null;
   const allOff = optOut.includes("ALL");
   return (
     <div className="space-y-3">
@@ -37,17 +37,17 @@ export function EmailPreferences() {
       {CATEGORIES.map((category) => {
         const on = !allOff && !optOut.includes(category.value);
         return (
-          <label key={category.value} className={`flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/15 p-4 ${allOff ? "opacity-50" : "cursor-pointer"}`}>
+          <label key={category.value} className={`flex items-center justify-between gap-4 rounded-2xl border border-ink/10 bg-ink/5 p-4 ${allOff ? "opacity-50" : "cursor-pointer"}`}>
             <span className="text-sm text-velora-textPrimary">{category.label}</span>
             <input type="checkbox" className="h-4 w-4 accent-velora-gold" checked={on} disabled={allOff} onChange={() => save(on ? [...optOut, category.value] : optOut.filter((value) => value !== category.value))} />
           </label>
         );
       })}
-      <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/15 p-4">
+      <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-ink/10 bg-ink/5 p-4">
         <span className="text-sm text-velora-textPrimary">Pause all Intimo emails</span>
         <input type="checkbox" className="h-4 w-4 accent-velora-gold" checked={allOff} onChange={() => save(allOff ? optOut.filter((value) => value !== "ALL") : [...optOut, "ALL"])} />
       </label>
-      {error && <p className="text-xs text-red-300" role="alert">{error}</p>}
+      {error && <p className="text-xs text-red-700" role="alert">{error}</p>}
     </div>
   );
 }

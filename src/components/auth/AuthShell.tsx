@@ -5,7 +5,7 @@ export function AuthShell({ title, subtitle, children, footer }: { title: string
   return (
     <div className="mx-auto flex min-h-[100dvh] w-full max-w-xl flex-col justify-center px-5 py-10">
       <Link href="/" className="mb-10 font-serif text-2xl font-bold gold-gradient-text">Intimo</Link>
-      <h1 className="font-serif text-4xl font-bold leading-tight text-velora-textPrimary sm:text-5xl">{title}</h1>
+      <h1 className="font-display text-5xl leading-[1.02] text-velora-ink sm:text-6xl">{title}</h1>
       {subtitle && <p className="mt-3 text-lg text-velora-textSecondary">{subtitle}</p>}
       <div className="mt-10 space-y-5">{children}</div>
       {footer && <div className="mt-8 text-lg text-velora-textSecondary">{footer}</div>}
@@ -17,20 +17,20 @@ export function AuthField({ id, label, ...props }: { id: string; label: string }
   return (
     <div className="space-y-2">
       <label htmlFor={id} className="block text-base font-semibold text-velora-textSecondary">{label}</label>
-      <input id={id} name={id} className="min-h-16 w-full rounded-3xl border-2 border-white/10 bg-white/[0.04] px-6 text-xl text-velora-textPrimary placeholder:text-velora-textMuted focus:border-velora-gold focus:outline-none" {...props} />
+      <input id={id} name={id} className="min-h-16 w-full rounded-3xl border border-velora-line bg-velora-surface px-6 text-xl text-velora-textPrimary placeholder:text-velora-textMuted focus:border-velora-gold focus:outline-none" {...props} />
     </div>
   );
 }
 
 export function AuthMessage({ tone, children }: { tone: "error" | "info"; children: React.ReactNode }) {
   return (
-    <p role={tone === "error" ? "alert" : "status"} className={tone === "error" ? "rounded-2xl bg-red-500/10 px-5 py-4 text-base text-red-200" : "rounded-2xl bg-velora-gold/10 px-5 py-4 text-base text-velora-textPrimary"}>
+    <p role={tone === "error" ? "alert" : "status"} className={tone === "error" ? "rounded-2xl bg-red-500/10 px-5 py-4 text-base text-red-700" : "rounded-2xl bg-velora-gold/10 px-5 py-4 text-base text-velora-textPrimary"}>
       {children}
     </p>
   );
 }
 
-export const submitClass = "flex min-h-16 w-full items-center justify-center rounded-full bg-gold-gradient px-8 text-lg font-bold text-velora-bg shadow-gold-glow transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none";
+export const submitClass = "flex min-h-16 w-full items-center justify-center rounded-full bg-velora-accent px-8 text-lg font-semibold text-velora-paper transition hover:bg-velora-accentHover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-35";
 
 /** Supabase error messages are user-safe but terse; map the common ones. */
 export function friendlyAuthError(message: string | undefined): string {

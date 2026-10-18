@@ -9,9 +9,12 @@ const read = (file) => fs.readFile(path.join(root, file), "utf8");
 
 test("landing explains Intimo as Prague's private sex-positive network without counts", async () => {
   const home = await read("src/components/community/PublicCommunityHome.tsx");
-  assert.match(home, /Prague · private · sex-positive/);
-  assert.match(home, /How Intimo works/);
-  for (const pillar of ["Desires & boundaries", "Tonight", "Private by design", "Prague Scene"]) assert.match(home, new RegExp(pillar));
+  assert.match(home, /Prague · 18\+ · Members only/);
+  // Story structure: two journeys, four numbered chapters, privacy, one closing action.
+  assert.match(home, /Meet someone,<br \/>or go out tonight\./);
+  for (let index = 1; index <= 4; index += 1) assert.match(home, new RegExp(`<NumberedChapter index=\\{${index}\\} total=\\{4\\}`));
+  for (const pillar of ["Say what you're into.", "Set your boundaries.", "Meet tonight, or whenever.", "Share privately.", "Discreet by design", "Prague Scene"]) assert.ok(home.includes(pillar), pillar);
+  assert.match(home, /<ContextualCTA /);
   assert.doesNotMatch(home, /members online|total members|\{data\.pagination\.total\}/i);
   const layout = await read("src/app/layout.tsx");
   assert.match(layout, /title: "Intimo \| Prague's private, sex-positive network"/);

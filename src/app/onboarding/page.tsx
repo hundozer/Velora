@@ -122,7 +122,7 @@ export default function OnboardingPage() {
     }
   }
 
-  const errorLine = error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-5 py-4 text-base text-red-200">{error}</p> : null;
+  const errorLine = error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-5 py-4 text-base text-red-700">{error}</p> : null;
 
   if (step === "kind") return (
     <FlowScreen {...screen} title="Who's joining?">
@@ -186,7 +186,7 @@ export default function OnboardingPage() {
       {submitting && <p role="status" className="text-lg text-velora-textSecondary">Creating your profile…</p>}
       <div className={`grid grid-cols-2 gap-3 ${submitting ? "pointer-events-none opacity-50" : ""}`}>
         {AREAS.filter((area) => area.kind === "PRAGUE_DISTRICT").map((area) => (
-          <button key={area.id} type="button" aria-pressed={areaId === area.id} onClick={() => createProfile(area.id)} className={`min-h-20 rounded-3xl border-2 px-4 py-3 text-left transition active:scale-[0.98] ${areaId === area.id ? "border-velora-gold bg-velora-gold/15" : "border-white/10 bg-white/[0.04] hover:border-white/30"}`}>
+          <button key={area.id} type="button" aria-pressed={areaId === area.id} onClick={() => createProfile(area.id)} className={`min-h-20 rounded-3xl border-2 px-4 py-3 text-left transition active:scale-[0.98] ${areaId === area.id ? "border-velora-accent bg-velora-accent/[0.06]" : "border-velora-line bg-velora-surface hover:border-velora-ink/30"}`}>
             <span className="block text-lg font-semibold text-velora-textPrimary">{area.name}</span>
             <span className="block truncate text-sm text-velora-textMuted">{area.label}</span>
           </button>

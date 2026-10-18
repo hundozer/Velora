@@ -47,7 +47,7 @@ function LoginForm() {
         {info && <AuthMessage tone="info">{info}</AuthMessage>}
         <button type="submit" disabled={busy || !email || !password} className={submitClass}>{busy ? "Signing in…" : "Sign in"}</button>
       </form>
-      <div className="flex flex-col items-center gap-3 border-t border-white/[0.06] pt-4 text-sm">
+      <div className="flex flex-col items-center gap-3 border-t border-ink/[0.06] pt-4 text-sm">
         <button type="button" onClick={sendMagicLink} disabled={busy} className="font-semibold text-velora-gold hover:underline disabled:opacity-50">Email me a sign-in link instead</button>
         <Link href="/reset-password" className="text-velora-textSecondary hover:text-velora-textPrimary">Forgot your password?</Link>
       </div>

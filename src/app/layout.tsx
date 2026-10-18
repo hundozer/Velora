@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import "@fontsource-variable/inter";
-import "@fontsource/playfair-display/600.css";
-import "@fontsource/playfair-display/700.css";
+import "@fontsource/instrument-serif";
+import "@fontsource/instrument-serif/400-italic.css";
+import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0A0B0E",
+  themeColor: "#F6F1EA",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",

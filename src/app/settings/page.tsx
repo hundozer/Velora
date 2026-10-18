@@ -257,11 +257,11 @@ export default function SettingsPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-left">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-ink/10 pb-6">
         <div className="flex items-center gap-3">
           <Settings className="w-8 h-8 text-velora-gold" />
           <div>
-            <h1 className="text-3xl font-serif font-bold text-velora-textPrimary">
+            <h1 className="font-serif font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">
               Privacy, Safety & Regional Settings
             </h1>
             <p className="text-xs text-velora-textSecondary mt-1">
@@ -281,28 +281,28 @@ export default function SettingsPage() {
       </div>
 
       {saveSuccess && (
-        <div className="p-4 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl text-xs text-emerald-300 font-semibold flex items-center gap-2">
+        <div className="p-4 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl text-xs text-emerald-700 font-semibold flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4" /> Settings updated successfully!
         </div>
       )}
-      {settingsError && <div role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-xs text-red-300">{settingsError}</div>}
+      {settingsError && <div role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-xs text-red-700">{settingsError}</div>}
 
       {/* SECTION 0: PRIVATE IDENTITY, AVATAR & BANNER */}
       <Card variant="glass" className="p-6 space-y-6">
         <input type="file" ref={avatarInputRef} accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarUpload} />
         <input type="file" ref={coverInputRef} accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleCoverUpload} />
 
-        <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
+        <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-ink/10 pb-3">
           <UserCheck className="w-4 h-4 text-velora-gold" />
           Private Identity, Avatar & Cover Banner
         </h2>
 
         <div className="space-y-6">
           {/* Avatar & Cover Upload Buttons */}
-          <div className="flex flex-wrap items-center gap-6 pb-2 border-b border-white/5">
+          <div className="flex flex-wrap items-center gap-6 pb-2 border-b border-ink/5">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-2xl border-2 border-velora-gold/60 overflow-hidden bg-velora-card relative group shrink-0">
-                <span className="absolute inset-0 flex items-center justify-center bg-amber-300/5"><UserCheck className="h-7 w-7 text-amber-300/60" /></span>
+                <span className="absolute inset-0 flex items-center justify-center bg-velora-accent/5"><UserCheck className="h-7 w-7 text-velora-accent" /></span>
                 {avatarUrl && !avatarImageFailed && <img src={avatarUrl} alt="Your profile avatar" onError={() => setAvatarImageFailed(true)} className="relative h-full w-full object-cover" />}
                 <button
                   type="button"
@@ -314,7 +314,7 @@ export default function SettingsPage() {
                 </button>
               </div>
               <div>
-                <p className="text-xs font-bold text-white">Profile Picture / Avatar</p>
+                <p className="text-xs font-bold text-ink">Profile Picture / Avatar</p>
                 <p className="text-[10px] text-velora-textMuted mb-2">JPEG, PNG or WebP · non-explicit · max 15 MB</p>
                 <Button variant="glass" size="sm" disabled={Boolean(mediaUpload)} onClick={() => avatarInputRef.current?.click()} className="text-[11px] gap-1.5">
                   <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUpload?.kind === "avatar" ? `Uploading ${mediaUpload.progress}%` : "Upload New Avatar"}
@@ -322,9 +322,9 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 border-l border-white/10 pl-6">
-              <div className="w-24 h-16 rounded-2xl border border-white/20 overflow-hidden bg-velora-card relative group shrink-0">
-                <span className="absolute inset-0 flex items-center justify-center bg-white/[0.03]"><ImageIcon className="h-7 w-7 text-slate-500" /></span>
+            <div className="flex items-center gap-4 border-l border-ink/10 pl-6">
+              <div className="w-24 h-16 rounded-2xl border border-ink/20 overflow-hidden bg-velora-card relative group shrink-0">
+                <span className="absolute inset-0 flex items-center justify-center bg-ink/[0.03]"><ImageIcon className="h-7 w-7 text-velora-textMuted" /></span>
                 {coverUrl && !coverImageFailed && <img src={coverUrl} alt="Your profile cover" onError={() => setCoverImageFailed(true)} className="relative h-full w-full object-cover" />}
                 <button
                   type="button"
@@ -336,7 +336,7 @@ export default function SettingsPage() {
                 </button>
               </div>
               <div>
-                <p className="text-xs font-bold text-white">Cover Banner Image</p>
+                <p className="text-xs font-bold text-ink">Cover Banner Image</p>
                 <p className="text-[10px] text-velora-textMuted mb-2">JPEG, PNG or WebP · non-explicit · max 15 MB</p>
                 <Button variant="glass" size="sm" disabled={Boolean(mediaUpload)} onClick={() => coverInputRef.current?.click()} className="text-[11px] gap-1.5">
                   <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUpload?.kind === "cover" ? `Uploading ${mediaUpload.progress}%` : "Upload New Banner"}
@@ -369,7 +369,7 @@ export default function SettingsPage() {
               id="settings-area"
               value={areaId}
               onChange={setAreaId}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-xs text-velora-textPrimary outline-none focus:border-velora-gold/60"
+              className="w-full rounded-xl border border-ink/10 bg-ink/5 px-3 py-2.5 text-xs text-velora-textPrimary outline-none focus:border-velora-gold/60"
             />
             <p className="text-[10px] text-velora-textMuted mt-1.5">
               Members see your district and a rough distance, never your position.
@@ -380,7 +380,7 @@ export default function SettingsPage() {
 
       {/* SECTION 1: GLOBAL & REGIONAL SETTINGS */}
       <Card variant="glass" className="p-6 space-y-6">
-        <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
+        <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-ink/10 pb-3">
           <Globe className="w-4 h-4 text-velora-gold" />
           Language
         </h2>
@@ -393,10 +393,10 @@ export default function SettingsPage() {
             <select
               value={selectedLanguage}
               onChange={(e) => setSelectedLanguage(e.target.value as LanguageCode)}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
+              className="w-full bg-ink/5 border border-ink/10 rounded-2xl px-4 py-2.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
             >
               {SUPPORTED_LANGUAGES.map((lang) => (
-                <option key={lang.code} value={lang.code} className="bg-velora-card text-white">
+                <option key={lang.code} value={lang.code} className="bg-velora-card text-ink">
                   {lang.flag} {lang.name}
                 </option>
               ))}
@@ -407,8 +407,8 @@ export default function SettingsPage() {
       </Card>
 
       <Card variant="glass" className="p-6 space-y-5 scroll-mt-24" id="privacy">
-        <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
-          <EyeOff className="w-4 h-4 text-emerald-400" /> Privacy Center
+        <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-ink/10 pb-3">
+          <EyeOff className="w-4 h-4 text-emerald-700" /> Privacy Center
         </h2>
         <p className="text-xs text-velora-textSecondary">Choose an audience for your profile and each kind of information. New intimate details and media stay private until you change them.</p>
 
@@ -454,9 +454,9 @@ export default function SettingsPage() {
           <PrivacyToggle title="Approximate distance" description="Never reveals your precise position." checked={privacy.showDistance} disabled={privacy.locationPrecision === "HIDDEN"} onChange={(checked) => setPrivacy({ ...privacy, showDistance: checked })} />
         </div>
 
-        <div className="flex flex-col gap-3 rounded-2xl border border-amber-300/20 bg-amber-300/[0.04] p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div><p className="text-xs font-bold text-white">Photos, videos, and albums</p><p className="mt-1 text-[11px] leading-5 text-velora-textMuted">Choose Public, Members, Followers, or Private separately for every album. Switch an album to Private to hide it without deleting it.</p></div>
-          <Link href="/albums/manage" className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-amber-300/40 px-4 text-xs font-bold text-amber-200 transition hover:bg-amber-300/10">Manage media visibility</Link>
+        <div className="flex flex-col gap-3 rounded-2xl border border-velora-accent/20 bg-velora-accent/[0.04] p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div><p className="text-xs font-bold text-ink">Photos, videos, and albums</p><p className="mt-1 text-[11px] leading-5 text-velora-textMuted">Choose Public, Members, Followers, or Private separately for every album. Switch an album to Private to hide it without deleting it.</p></div>
+          <Link href="/albums/manage" className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-velora-accent/40 px-4 text-xs font-bold text-velora-accent transition hover:bg-velora-accent/10">Manage media visibility</Link>
         </div>
         <div className="p-4 border border-emerald-500/30 rounded-xl space-y-3">
           <p className="text-xs font-bold">Explicit sensitive-data consent</p>
@@ -467,14 +467,14 @@ export default function SettingsPage() {
 
       {/* Emails (P1-11) */}
       <Card variant="glass" className="p-6 space-y-4">
-        <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider border-b border-white/10 pb-3">Emails</h2>
+        <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider border-b border-ink/10 pb-3">Emails</h2>
         <EmailPreferences />
       </Card>
 
       {/* SECTION 3: GDPR DATA PRIVACY & ACCOUNT ERASURE */}
       <Card variant="glass" className="p-6 space-y-6">
-        <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-3">
-          <Shield className="w-4 h-4 text-emerald-400" />
+        <h2 className="text-sm font-serif font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-ink/10 pb-3">
+          <Shield className="w-4 h-4 text-emerald-700" />
           GDPR Data Rights & Account Management
         </h2>
 
@@ -489,26 +489,26 @@ export default function SettingsPage() {
             <Button
               variant="glass"
               size="sm"
-              className="text-xs font-bold border-emerald-500/40 text-emerald-300 shrink-0 gap-2"
+              className="text-xs font-bold border-emerald-500/40 text-emerald-700 shrink-0 gap-2"
               onClick={handleExportGdprData}
             >
               <Download className="w-4 h-4" /> Download Data Archive
             </Button>
           </div>
 
-          <div className="space-y-3 rounded-2xl border border-white/10 p-4">
+          <div className="space-y-3 rounded-2xl border border-ink/10 p-4">
             <div><h4 className="text-xs font-bold text-velora-textPrimary">Exercise another privacy right</h4><p className="mt-1 text-[11px] text-velora-textMuted">Request access, correction, restriction of processing, or object to specific processing. Each request receives a durable reference and reviewed response.</p></div>
-            <label className="block text-xs text-velora-textSecondary"><span className="mb-2 block font-semibold">Right requested</span><select value={rightsType} onChange={(event) => setRightsType(event.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white"><option className="bg-velora-card" value="CORRECTION">Correct my data</option><option className="bg-velora-card" value="RESTRICTION">Restrict processing</option><option className="bg-velora-card" value="OBJECTION">Object to processing</option><option className="bg-velora-card" value="ACCESS">Reviewed access request</option></select></label>
-            <label className="block text-xs text-velora-textSecondary"><span className="mb-2 block font-semibold">What should Intimo review?</span><textarea value={rightsDetails} onChange={(event) => setRightsDetails(event.target.value)} rows={4} maxLength={4000} className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" placeholder="Describe the data or processing involved (minimum 20 characters)." /></label>
-            {rightsMessage && <p role="status" className="text-xs text-emerald-300">{rightsMessage}</p>}
+            <label className="block text-xs text-velora-textSecondary"><span className="mb-2 block font-semibold">Right requested</span><select value={rightsType} onChange={(event) => setRightsType(event.target.value)} className="w-full rounded-xl border border-ink/10 bg-ink/5 p-3 text-ink"><option className="bg-velora-card" value="CORRECTION">Correct my data</option><option className="bg-velora-card" value="RESTRICTION">Restrict processing</option><option className="bg-velora-card" value="OBJECTION">Object to processing</option><option className="bg-velora-card" value="ACCESS">Reviewed access request</option></select></label>
+            <label className="block text-xs text-velora-textSecondary"><span className="mb-2 block font-semibold">What should Intimo review?</span><textarea value={rightsDetails} onChange={(event) => setRightsDetails(event.target.value)} rows={4} maxLength={4000} className="w-full rounded-xl border border-ink/10 bg-ink/5 p-3 text-ink" placeholder="Describe the data or processing involved (minimum 20 characters)." /></label>
+            {rightsMessage && <p role="status" className="text-xs text-emerald-700">{rightsMessage}</p>}
             <Button variant="glass" size="sm" disabled={rightsPending || rightsDetails.trim().length < 20} onClick={submitRightsRequest}>{rightsPending ? "Submitting…" : "Submit privacy request"}</Button>
           </div>
 
-          {reportHistory.some((item) => item.relationship === "AFFECTED_USER") && <div className="space-y-3 rounded-2xl border border-white/10 p-4">
+          {reportHistory.some((item) => item.relationship === "AFFECTED_USER") && <div className="space-y-3 rounded-2xl border border-ink/10 p-4">
             <div><h4 className="text-xs font-bold text-velora-textPrimary">Moderation decisions and appeals</h4><p className="mt-1 text-[11px] text-velora-textMuted">Eligible resolved decisions can be appealed once. Give a specific reason for independent review.</p></div>
-            {reportHistory.filter((item) => item.relationship === "AFFECTED_USER").map((item) => <div key={item.id} className="rounded-xl bg-white/5 p-3 text-xs"><div className="flex flex-wrap justify-between gap-2"><span>{item.content_type} · {item.reason.replaceAll("_", " ")}</span><strong>{item.status}</strong></div>{item.decision_reason && <p className="mt-2 text-velora-textMuted">Decision reason: {item.decision_reason}</p>}{["RESOLVED", "REJECTED"].includes(item.status) && item.appeal_status === "NONE" && <Button variant="glass" size="sm" className="mt-3" onClick={() => setAppealCaseId(item.id)}>Appeal this decision</Button>}</div>)}
-            {appealCaseId && <div className="space-y-2"><label className="block text-xs"><span className="mb-2 block font-semibold">Why should this decision be reviewed?</span><textarea value={appealReason} onChange={(event) => setAppealReason(event.target.value)} rows={4} maxLength={4000} className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" /></label><div className="flex gap-2"><Button variant="ghost" size="sm" onClick={() => { setAppealCaseId(""); setAppealReason(""); }}>Cancel appeal</Button><Button variant="glass" size="sm" disabled={appealReason.trim().length < 20} onClick={submitAppeal}>Submit appeal</Button></div></div>}
-            {appealMessage && <p role="status" className="text-xs text-emerald-300">{appealMessage}</p>}
+            {reportHistory.filter((item) => item.relationship === "AFFECTED_USER").map((item) => <div key={item.id} className="rounded-xl bg-ink/5 p-3 text-xs"><div className="flex flex-wrap justify-between gap-2"><span>{item.content_type} · {item.reason.replaceAll("_", " ")}</span><strong>{item.status}</strong></div>{item.decision_reason && <p className="mt-2 text-velora-textMuted">Decision reason: {item.decision_reason}</p>}{["RESOLVED", "REJECTED"].includes(item.status) && item.appeal_status === "NONE" && <Button variant="glass" size="sm" className="mt-3" onClick={() => setAppealCaseId(item.id)}>Appeal this decision</Button>}</div>)}
+            {appealCaseId && <div className="space-y-2"><label className="block text-xs"><span className="mb-2 block font-semibold">Why should this decision be reviewed?</span><textarea value={appealReason} onChange={(event) => setAppealReason(event.target.value)} rows={4} maxLength={4000} className="w-full rounded-xl border border-ink/10 bg-ink/5 p-3 text-ink" /></label><div className="flex gap-2"><Button variant="ghost" size="sm" onClick={() => { setAppealCaseId(""); setAppealReason(""); }}>Cancel appeal</Button><Button variant="glass" size="sm" disabled={appealReason.trim().length < 20} onClick={submitAppeal}>Submit appeal</Button></div></div>}
+            {appealMessage && <p role="status" className="text-xs text-emerald-700">{appealMessage}</p>}
           </div>}
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl border border-velora-gold/30">
@@ -530,7 +530,7 @@ export default function SettingsPage() {
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl border border-red-500/30">
             <div>
-              <h4 className="text-xs font-bold text-red-400">Permanently Delete Intimo Account (GDPR Right to be Forgotten)</h4>
+              <h4 className="text-xs font-bold text-red-600">Permanently Delete Intimo Account (GDPR Right to be Forgotten)</h4>
               <p className="text-[11px] text-velora-textMuted mt-0.5">
                 Start permanent deletion of your profile data, messages, and media, subject to documented safety/legal retention exceptions.
               </p>
@@ -551,8 +551,8 @@ export default function SettingsPage() {
       <Modal isOpen={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Confirm Account Deletion">
         <div className="space-y-4 text-left">
           <div className="p-4 bg-red-500/10 border border-red-500/40 rounded-2xl flex items-center gap-3">
-            <AlertTriangle className="w-6 h-6 text-red-400 shrink-0" />
-            <p className="text-xs text-red-300 leading-relaxed">
+            <AlertTriangle className="w-6 h-6 text-red-600 shrink-0" />
+            <p className="text-xs text-red-700 leading-relaxed">
               This action is permanent and cannot be undone. Your profile, messages, and media will be deleted or anonymized through the documented deletion workflow, subject to legitimate safety or legal retention duties.
             </p>
           </div>
@@ -585,13 +585,13 @@ function VisibilityChoice({ icon, title, description, value, options, onChange }
   options: Array<[string, string]>;
   onChange: (value: string) => void;
 }) {
-  return <section className="rounded-2xl border border-white/10 bg-black/15 p-4">
+  return <section className="rounded-2xl border border-ink/10 bg-ink/5 p-4">
     <div className="flex gap-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-amber-300">{icon}</div>
-      <div><h3 className="text-sm font-bold text-white">{title}</h3><p className="mt-1 text-[11px] leading-5 text-velora-textMuted">{description}</p></div>
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ink/5 text-velora-accent">{icon}</div>
+      <div><h3 className="text-sm font-bold text-ink">{title}</h3><p className="mt-1 text-[11px] leading-5 text-velora-textMuted">{description}</p></div>
     </div>
     <div className="mt-4 flex flex-wrap gap-2">
-      {options.map(([optionValue, label]) => <button key={optionValue} type="button" aria-pressed={value === optionValue} onClick={() => onChange(optionValue)} className={`min-h-9 rounded-full border px-3.5 text-xs font-semibold transition ${value === optionValue ? "border-amber-300 bg-amber-300 text-slate-950" : "border-white/10 bg-white/[0.02] text-slate-300 hover:border-white/25 hover:text-white"}`}>{label}</button>)}
+      {options.map(([optionValue, label]) => <button key={optionValue} type="button" aria-pressed={value === optionValue} onClick={() => onChange(optionValue)} className={`min-h-9 rounded-full border px-3.5 text-xs font-semibold transition ${value === optionValue ? "border-velora-accent bg-velora-accent text-velora-paper" : "border-ink/10 bg-ink/[0.02] text-ink hover:border-ink/25 hover:text-ink"}`}>{label}</button>)}
     </div>
   </section>;
 }
@@ -603,8 +603,8 @@ function PrivacyToggle({ title, description, checked, disabled = false, onChange
   disabled?: boolean;
   onChange: (checked: boolean) => void;
 }) {
-  return <label className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/15 p-4 ${disabled ? "cursor-not-allowed opacity-50" : ""}`}>
-    <span><strong className="block text-xs text-white">{title}</strong><span className="mt-1 block text-[11px] leading-4 text-velora-textMuted">{description}</span></span>
-    <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${checked ? "bg-amber-300" : "bg-white/10"}`}><input className="sr-only" type="checkbox" checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} /><span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition ${checked ? "left-6" : "left-1"}`} /></span>
+  return <label className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-ink/10 bg-ink/5 p-4 ${disabled ? "cursor-not-allowed opacity-50" : ""}`}>
+    <span><strong className="block text-xs text-ink">{title}</strong><span className="mt-1 block text-[11px] leading-4 text-velora-textMuted">{description}</span></span>
+    <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${checked ? "bg-velora-accent" : "bg-ink/10"}`}><input className="sr-only" type="checkbox" checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} /><span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition ${checked ? "left-6" : "left-1"}`} /></span>
   </label>;
 }

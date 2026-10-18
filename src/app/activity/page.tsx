@@ -42,16 +42,16 @@ export default function ActivityPage() {
     <main className="mx-auto max-w-4xl space-y-6 px-4 pb-24 pt-6">
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">Activity</p>
-        <h1 className="font-serif text-3xl font-bold text-velora-textPrimary">Who&apos;s noticed you</h1>
+        <h1 className="font-serif font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">Who&apos;s noticed you</h1>
       </header>
-      {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-300">{error}</p>}
+      {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-700">{error}</p>}
       {!data ? (
         <p className="text-sm text-velora-textMuted">Loading…</p>
       ) : (
         <>
           <div className="flex gap-2 overflow-x-auto" role="tablist" aria-label="Activity">
             {tabs.map((item) => (
-              <button key={item.id} type="button" role="tab" aria-selected={tab === item.id} onClick={() => setTab(item.id)} className={`min-h-9 shrink-0 rounded-full border px-4 text-xs font-semibold transition ${tab === item.id ? "border-velora-gold bg-velora-gold/15 text-velora-textPrimary" : "border-white/10 text-velora-textSecondary hover:border-white/25"}`}>
+              <button key={item.id} type="button" role="tab" aria-selected={tab === item.id} onClick={() => setTab(item.id)} className={`min-h-9 shrink-0 rounded-full border px-4 text-xs font-semibold transition ${tab === item.id ? "border-velora-gold bg-velora-gold/15 text-velora-textPrimary" : "border-ink/10 text-velora-textSecondary hover:border-ink/25"}`}>
                 {item.label}{item.items.length > 0 ? ` · ${item.items.length}` : ""}
               </button>
             ))}
@@ -66,12 +66,12 @@ export default function ActivityPage() {
               ))}
             </div>
           ) : (
-            <div className="rounded-3xl border border-dashed border-white/15 p-8 text-center">
+            <div className="rounded-3xl border border-dashed border-ink/15 p-8 text-center">
               {tab === "VISITORS" && data.browseInvisibly ? (
                 <p className="text-sm text-velora-textSecondary">You browse invisibly, so visitors are hidden for you too. Change it in <Link href="/settings" className="text-velora-gold underline">Settings → Privacy</Link>.</p>
               ) : (
                 <>
-                  <h2 className="font-serif text-xl font-bold text-velora-textPrimary">{tab === "MUTUAL" ? "No matches yet" : tab === "INTERESTED" ? "Nobody yet" : "No visitors yet"}</h2>
+                  <h2 className="font-serif text-3xl font-bold text-velora-textPrimary">{tab === "MUTUAL" ? "No matches yet" : tab === "INTERESTED" ? "Nobody yet" : "No visitors yet"}</h2>
                   <p className="mt-2 text-sm text-velora-textSecondary">A photo, your desires and a plan for tonight get you noticed faster.</p>
                   <div className="mt-4 flex justify-center gap-4 text-sm font-semibold"><Link href="/people" className="text-velora-gold underline">Find people</Link><Link href="/tonight/new" className="text-velora-gold underline">Post a plan</Link></div>
                 </>

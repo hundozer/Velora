@@ -34,21 +34,21 @@ export default function PrivatePhotosPage() {
       <Link href="/me" className="inline-flex items-center gap-1 text-xs text-velora-textMuted hover:text-velora-textPrimary"><ArrowLeft className="h-3.5 w-3.5" aria-hidden />Me</Link>
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">Private photos</p>
-        <h1 className="font-serif text-3xl font-bold text-velora-textPrimary">Who can see them</h1>
+        <h1 className="font-serif font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">Who can see them</h1>
         <p className="mt-1 text-sm text-velora-textSecondary">Photos in your private albums are visible only to people you approve here. Stopping access takes effect immediately.</p>
       </header>
-      {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-300">{error}</p>}
+      {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-700">{error}</p>}
       {!data ? <p className="text-sm text-velora-textMuted">Loading…</p> : (
         <>
           <section className="space-y-3">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">Requests</h2>
             {data.requests.length === 0 ? <p className="text-sm text-velora-textMuted">No requests waiting.</p> : data.requests.map((entry) => (
-              <div key={entry.viewer.id} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] p-3">
+              <div key={entry.viewer.id} className="flex items-center gap-4 rounded-2xl border border-ink/10 bg-ink/[0.02] p-3">
                 <div className="w-24 shrink-0"><PersonTile person={entry.viewer} /></div>
                 <div className="flex flex-1 flex-wrap gap-2">
                   <button type="button" onClick={() => decide(entry.viewer.id, "GRANT_ONCE")} className={`${button} bg-gold-gradient text-velora-bg`}>Share for 24 h</button>
                   <button type="button" onClick={() => decide(entry.viewer.id, "GRANT")} className={`${button} border border-velora-gold/50 text-velora-textPrimary`}>Share until I stop</button>
-                  <button type="button" onClick={() => decide(entry.viewer.id, "DENY")} className={`${button} border border-white/15 text-velora-textSecondary`}>Decline</button>
+                  <button type="button" onClick={() => decide(entry.viewer.id, "DENY")} className={`${button} border border-ink/15 text-velora-textSecondary`}>Decline</button>
                 </div>
               </div>
             ))}
@@ -56,11 +56,11 @@ export default function PrivatePhotosPage() {
           <section className="space-y-3">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">Currently shared with</h2>
             {data.grants.length === 0 ? <p className="text-sm text-velora-textMuted">Nobody right now.</p> : data.grants.map((entry) => (
-              <div key={entry.viewer.id} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] p-3">
+              <div key={entry.viewer.id} className="flex items-center gap-4 rounded-2xl border border-ink/10 bg-ink/[0.02] p-3">
                 <div className="w-24 shrink-0"><PersonTile person={entry.viewer} /></div>
                 <div className="flex-1 space-y-2">
                   <p className="text-xs text-velora-textMuted">{entry.grantType === "ONCE" && entry.expiresAt ? `Until ${new Date(entry.expiresAt).toLocaleString()}` : "Until you stop sharing"}</p>
-                  <button type="button" onClick={() => decide(entry.viewer.id, "REVOKE")} className={`${button} border border-red-400/40 text-red-200`}>Stop sharing</button>
+                  <button type="button" onClick={() => decide(entry.viewer.id, "REVOKE")} className={`${button} border border-red-400/40 text-red-700`}>Stop sharing</button>
                 </div>
               </div>
             ))}

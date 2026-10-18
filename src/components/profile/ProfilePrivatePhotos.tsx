@@ -40,21 +40,21 @@ export function ProfilePrivatePhotos({ profileId }: { profileId: string }) {
   if (!status) return null;
   if (status.isOwner) {
     return status.privateCount > 0 ? (
-      <section className="rounded-3xl border border-white/10 bg-[#111722] p-5">
-        <h2 className="flex items-center gap-2 font-bold text-white"><Lock className="h-4 w-4 text-amber-300" aria-hidden />Private photos</h2>
-        <p className="mt-2 text-sm text-white/60">Only members you approve can see them.</p>
-        <Link href="/me/private-photos" className="mt-3 inline-block text-sm text-amber-300 underline">Manage access</Link>
+      <section className="rounded-3xl border border-ink/10 bg-velora-surface p-5">
+        <h2 className="flex items-center gap-2 font-bold text-ink"><Lock className="h-4 w-4 text-velora-accent" aria-hidden />Private photos</h2>
+        <p className="mt-2 text-sm text-ink/60">Only members you approve can see them.</p>
+        <Link href="/me/private-photos" className="mt-3 inline-block text-sm text-velora-accent underline">Manage access</Link>
       </section>
     ) : null;
   }
   if (status.privateCount === 0) return null; // nothing to request; never show an empty lock
 
   return (
-    <section className="space-y-3 rounded-3xl border border-white/10 bg-[#111722] p-5">
-      <h2 className="flex items-center gap-2 font-bold text-white">{status.active ? <Unlock className="h-4 w-4 text-emerald-300" aria-hidden /> : <Lock className="h-4 w-4 text-amber-300" aria-hidden />}Private photos</h2>
+    <section className="space-y-3 rounded-3xl border border-ink/10 bg-velora-surface p-5">
+      <h2 className="flex items-center gap-2 font-bold text-ink">{status.active ? <Unlock className="h-4 w-4 text-emerald-700" aria-hidden /> : <Lock className="h-4 w-4 text-velora-accent" aria-hidden />}Private photos</h2>
       {status.active ? (
         <>
-          <p className="text-xs text-white/50">{status.grantType === "ONCE" && status.expiresAt ? `Shared with you until ${new Date(status.expiresAt).toLocaleString()}.` : "Shared with you. The owner can stop sharing at any time."} Please don&apos;t save or share them.</p>
+          <p className="text-xs text-ink/50">{status.grantType === "ONCE" && status.expiresAt ? `Shared with you until ${new Date(status.expiresAt).toLocaleString()}.` : "Shared with you. The owner can stop sharing at any time."} Please don&apos;t save or share them.</p>
           <div className="grid grid-cols-3 gap-2">
             {media.map((item) => (
               // eslint-disable-next-line @next/next/no-img-element
@@ -64,13 +64,13 @@ export function ProfilePrivatePhotos({ profileId }: { profileId: string }) {
         </>
       ) : (
         <>
-          <p className="text-sm text-white/60">This member keeps some photos private.</p>
+          <p className="text-sm text-ink/60">This member keeps some photos private.</p>
           {status.status === "REQUESTED" ? (
-            <p className="text-sm text-amber-200">Request sent. Waiting for an answer.</p>
+            <p className="text-sm text-velora-accent">Request sent. Waiting for an answer.</p>
           ) : status.canRequest ? (
             <button type="button" onClick={request} disabled={busy} className="min-h-10 rounded-full bg-gold-gradient px-5 text-xs font-bold text-velora-bg disabled:opacity-50">Request access</button>
           ) : null}
-          {message && <p className="text-xs text-white/60" role="status">{message}</p>}
+          {message && <p className="text-xs text-ink/60" role="status">{message}</p>}
         </>
       )}
     </section>

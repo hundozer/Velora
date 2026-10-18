@@ -8,7 +8,7 @@ const dateFormat = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "nu
 /** One Prague Scene listing. Links out to the organiser; Intimo doesn't run events. */
 export function SceneEventCard({ event }: { event: SceneEvent }) {
   return (
-    <article className="space-y-2 rounded-3xl border border-white/10 bg-velora-card/70 p-5">
+    <article className="space-y-2 rounded-3xl border border-ink/10 bg-velora-card/70 p-5">
       <div className="flex items-center justify-between gap-3 text-[11px]">
         <span className="rounded-full border border-velora-gold/40 bg-velora-gold/10 px-2.5 py-1 font-semibold uppercase tracking-wider text-velora-gold">{event.kindLabel}</span>
         <span className="inline-flex items-center gap-1 text-velora-textMuted"><CalendarDays className="h-3.5 w-3.5" aria-hidden />{dateFormat.format(new Date(event.startsAt))}</span>

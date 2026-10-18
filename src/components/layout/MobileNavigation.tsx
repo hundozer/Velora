@@ -26,7 +26,7 @@ export const MobileNavigation: React.FC = () => {
   if (isFlowPath(pathname)) return null;
 
   return (
-    <nav aria-label="Mobile navigation" className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-velora-bg/95 backdrop-blur-xl border-t border-white/10 px-2 py-2 flex items-center justify-around">
+    <nav aria-label="Mobile navigation" className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-velora-paper border-t border-velora-line pb-[env(safe-area-inset-bottom)] px-2 py-2 flex items-center justify-around">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
@@ -36,7 +36,7 @@ export const MobileNavigation: React.FC = () => {
             key={item.href}
             href={item.href}
             className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all ${
-              isActive ? "text-velora-gold" : "text-velora-textMuted hover:text-white"
+              isActive ? "text-velora-gold" : "text-velora-textMuted hover:text-ink"
             }`}
           >
             <Icon className={`w-5 h-5 ${isActive ? "text-velora-gold scale-110" : ""}`} />

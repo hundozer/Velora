@@ -5,7 +5,8 @@ import Link from "next/link";
 import { ScenePreview } from "@/components/scene/ScenePreview";
 import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
-import { BadgeCheck, CalendarHeart, MapPin, Search } from "lucide-react";
+import { BadgeCheck, EyeOff, Lock, Mail, MapPin, ShieldCheck } from "lucide-react";
+import { ContextualCTA, EditorialHero, NumberedChapter, OversizedChoiceCard, PrimaryAction, SecondaryAction, SectionTitle, Showcase, StorySection } from "@/components/editorial/Editorial";
 import { MemberActivityFeed } from "@/components/community/MemberActivityFeed";
 
 interface PublicProfile {
@@ -41,7 +42,7 @@ interface CommunityResponse {
 function Initials({ name }: { name: string }) {
   const initials = name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
   return (
-    <div aria-hidden="true" className="h-14 w-14 shrink-0 rounded-full border border-amber-300/30 bg-amber-300/10 flex items-center justify-center font-serif text-lg font-bold text-amber-200">
+    <div aria-hidden="true" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-velora-accent/10 font-display text-xl text-velora-accent">
       {initials || "I"}
     </div>
   );
@@ -69,82 +70,152 @@ export function PublicCommunityHome() {
     return () => controller.abort();
   }, []);
 
-  if (isAuthLoading) return <div className="min-h-screen animate-pulse bg-[#090b10]" />;
+  if (isAuthLoading) return <div className="min-h-screen" />;
   if (user) return <MemberActivityFeed />;
 
   return (
-    <div className="min-h-screen bg-[#090b10]">
-      <section className="relative isolate min-h-[440px] overflow-hidden border-b border-white/10 bg-[#0e1118] sm:min-h-[520px]">
-        <Image src="/marketing/intimo-community-hero.jpg" alt="Adults socializing in an elegant lounge" fill priority sizes="100vw" className="-z-20 object-cover object-center" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black via-black/75 to-black/15" />
-        <div className="mx-auto flex min-h-[440px] max-w-7xl items-end px-4 py-10 sm:min-h-[520px] sm:px-6 sm:py-14 lg:px-8">
-          <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-300">Prague · private · sex-positive</p>
-            <h1 className="mt-3 font-serif text-5xl font-semibold leading-[0.98] text-white sm:text-6xl lg:text-7xl">Find your people.</h1>
-            <p className="mt-5 max-w-lg text-base leading-7 text-slate-200 sm:text-lg">Prague&apos;s private network for singles and couples who are open about what they want. Say what you&apos;re into and where your limits are, see who&apos;s out tonight, and share private photos only with people you choose.</p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <a href="/auth/login?screen_hint=signup" className="inline-flex min-h-11 items-center rounded-lg bg-amber-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-amber-200">Join free</a>
-              <Link href="/people" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-white/15 px-5 py-3 text-sm font-semibold text-white hover:bg-white/5"><Search className="h-4 w-4" /> Browse people</Link>
+    <div>
+      <EditorialHero
+        eyebrow="Prague · 18+ · Members only"
+        title={<>Find your people.<br /><em className="text-velora-accent">Openly, privately.</em></>}
+        lead="A private network for singles and couples in Prague who know what they want — and say so."
+        actions={<><PrimaryAction href="/auth/login?screen_hint=signup">Join free</PrimaryAction><SecondaryAction href="#how">See how it works</SecondaryAction></>}
+        note="Free · No exact locations · Leave anytime"
+        media={
+          <div className="relative aspect-[4/5] overflow-hidden rounded-card shadow-card sm:aspect-[5/4] lg:aspect-[4/5]">
+            <Image src="/marketing/intimo-community-hero.jpg" alt="Adults talking over drinks in a candle-lit Prague bar" fill priority sizes="(max-width: 1024px) 100vw, 45vw" className="object-cover" style={{ objectPosition: "72% center" }} />
+            <div className="absolute inset-x-4 bottom-4 rounded-2xl bg-velora-surface/95 p-4 shadow-card backdrop-blur sm:inset-x-6 sm:bottom-6 sm:p-5">
+              <p className="text-sm font-semibold text-velora-ink">Nina &amp; Tom, Vinohrady</p>
+              <p className="mt-1 text-sm text-velora-ink2">“Drinks tonight, see where it goes.” · ends in 5 h</p>
             </div>
-            <p className="mt-4 text-xs text-slate-400">18+ only · Free · Members-only by default · No exact locations</p>
           </div>
+        }
+      />
+
+      <StorySection tone="sunken" id="journeys">
+        <SectionTitle eyebrow="Two ways in" title={<>Meet someone,<br />or go out tonight.</>} />
+        <div className="mt-12 grid gap-6 lg:grid-cols-2">
+          <OversizedChoiceCard href="/people" eyebrow="People" title="Meet people who want what you want" body="Profiles show desires and limits up front, so the first message is never a guess." cta="Browse people" visual={<PeopleDemo />} />
+          <OversizedChoiceCard href="/tonight" eyebrow="Tonight" title="See who's out tonight" body="Post a plan for tonight or the weekend. It disappears on its own." cta="See tonight's plans" visual={<PlanDemo />} />
         </div>
-      </section>
+      </StorySection>
 
-      <main className="mx-auto max-w-7xl space-y-10 px-4 py-7 sm:px-6 lg:px-8">
-        {data?.demoContentPresent && <div role="status" className="rounded-xl border border-sky-300/30 bg-sky-300/10 px-4 py-3 text-sm text-sky-100"><strong>Staging demo content:</strong> profiles labeled Demo are fictional test records, not real members or activity.</div>}
-        <section aria-labelledby="explore-intimo">
-          <h2 id="explore-intimo" className="sr-only">Explore Intimo</h2>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {[
-              ["People", "/people", "20% center"], ["Tonight", "/tonight", "42% center"],
-              ["Photos", "/photos", "68% center"], ["Videos", "/videos", "88% center"],
-            ].map(([label, href, position]) => <Link key={label} href={href} className="group relative min-h-32 overflow-hidden rounded-xl border border-white/10 bg-[#11151e] sm:min-h-40"><Image src="/marketing/intimo-community-hero.jpg" alt="" aria-hidden="true" fill sizes="(max-width: 1024px) 50vw, 25vw" className="scale-125 object-cover opacity-65 transition duration-500 group-hover:scale-110 group-hover:opacity-80" style={{ objectPosition: position }} /><span className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" /><span className="absolute bottom-4 left-4 text-lg font-bold text-white sm:text-xl">{label}</span></Link>)}
-          </div>
-        </section>
+      <StorySection id="how">
+        <SectionTitle eyebrow="How it works" title="Four steps. No guesswork." />
+        <NumberedChapter index={1} total={4} title="Say what you're into." body="Love it, curious, or a hard limit. Members see what you share — nothing more." visual={<Showcase><DesireDemo /></Showcase>} />
+        <NumberedChapter index={2} total={4} reverse title="Set your boundaries." body="Not just shown — enforced. If you only want first messages from couples, that's all you get." visual={<Showcase><BoundaryDemo /></Showcase>} />
+        <NumberedChapter index={3} total={4} title="Meet tonight, or whenever." body="Plans expire by themselves. Reply only if the plan is meant for you." visual={<Showcase><PlanDemo /></Showcase>} />
+        <NumberedChapter index={4} total={4} reverse title="Share privately." body="Private photos open only for people you approve — once, or until you say stop." visual={<Showcase><PrivateDemo /></Showcase>} />
+      </StorySection>
 
-        <section aria-labelledby="how-it-works" className="space-y-4">
-          <h2 id="how-it-works" className="text-xl font-bold text-white">How Intimo works</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              ["Desires & boundaries", "Mark what you love, what you're curious about and your hard limits. People see what you share first, and your boundaries are enforced, not just shown."],
-              ["Tonight", "Post a plan for tonight or this weekend and choose who may reply. It disappears on its own."],
-              ["Private by design", "Profiles are members-only by default. Private photos only for people you approve, browse invisibly, and emails never contain names or messages."],
-              ["Prague Scene", "Munches, workshops and parties from the city's sex-positive community, hand-picked and linked to the organisers."],
-            ].map(([title, body]) => (
-              <div key={title} className="rounded-xl border border-white/10 bg-[#11151e] p-5">
-                <h3 className="font-semibold text-amber-200">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-300">{body}</p>
+      <StorySection tone="sunken">
+        <SectionTitle eyebrow="Discreet by design" title={<>Your privacy is<br />the default.</>} />
+        <div className="mt-12 grid gap-6 md:grid-cols-3">
+          {[
+            [MapPin, "Area, never position", "Members see your district. Your location is never stored."],
+            [EyeOff, "Members only", "Profiles and photos stay behind sign-in unless you choose otherwise."],
+            [Mail, "Quiet emails", "Notifications never contain names, photos or messages."],
+          ].map(([Icon, title, body]) => {
+            const I = Icon as typeof MapPin;
+            return (
+              <div key={title as string} className="rounded-card border border-velora-line bg-velora-surface p-8 sm:p-10">
+                <I className="h-7 w-7 text-velora-accent" aria-hidden />
+                <h3 className="mt-6 font-display text-3xl text-velora-ink">{title as string}</h3>
+                <p className="mt-3 text-base leading-relaxed text-velora-ink2">{body as string}</p>
               </div>
-            ))}
-          </div>
-        </section>
+            );
+          })}
+        </div>
+      </StorySection>
 
+      <div className="mx-auto max-w-7xl space-y-16 px-5 py-16 sm:px-8">
+        {data?.demoContentPresent && <div role="status" className="rounded-2xl bg-sky-100 px-5 py-4 text-sm text-sky-900"><strong>Staging demo content:</strong> profiles labeled Demo are fictional test records.</div>}
         <ScenePreview />
-        {(loading || Boolean(data?.profiles.length)) && <section aria-labelledby="new-members">
-          <div className="mb-4 flex items-end justify-between gap-4">
-            <div>
-              <h2 id="new-members" className="text-xl font-bold text-white">New public members</h2>
+        {Boolean(data?.profiles.length) && !loading && (
+          <section aria-labelledby="new-members">
+            <div className="mb-8 flex items-end justify-between gap-4">
+              <h2 id="new-members" className="font-display text-4xl text-velora-ink sm:text-5xl">New this week</h2>
+              <Link href="/people" className="text-base font-semibold text-velora-accent">View all</Link>
             </div>
-            <Link href="/people" className="text-sm font-semibold text-amber-300 hover:text-amber-200">View all</Link>
-          </div>
-          {loading ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Loading public members">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-44 animate-pulse rounded-xl border border-white/10 bg-white/5" />)}</div>
-          ) : data?.profiles.length ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {data.profiles.map((profile) => (
-                <Link key={profile.id} href={`/profile/${profile.id}`} className="rounded-xl border border-white/10 bg-[#121620] p-5 transition hover:border-amber-300/40 hover:bg-[#151a25]">
-                  <div className="flex items-start gap-3"><Initials name={profile.displayName} /><div className="min-w-0"><div className="flex items-center gap-1.5"><h3 className="truncate font-semibold text-white">{profile.displayName}</h3>{profile.isDemo && <span className="rounded bg-sky-300/15 px-1.5 py-0.5 text-[10px] font-bold uppercase text-sky-200">Demo</span>}{profile.verified && <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-400" aria-label="Verified" />}</div><p className="mt-1 text-xs uppercase tracking-wide text-slate-500">{profile.profileType === "COUPLE" ? "Couple" : "Individual"}{profile.age ? ` · ${profile.age}` : ""}</p></div></div>
-                  {profile.location && <p className="mt-4 flex items-center gap-1.5 text-xs text-slate-400"><MapPin className="h-3.5 w-3.5" />{profile.location}</p>}
-                  <p className="mt-3 line-clamp-2 text-sm leading-5 text-slate-300">{profile.headline || profile.bio || "This member has made their basic profile public."}</p>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {data!.profiles.slice(0, 4).map((profile) => (
+                <Link key={profile.id} href={`/profile/${profile.id}`} className="rounded-card border border-velora-line bg-velora-surface p-7 transition hover:-translate-y-0.5 hover:border-velora-accent/40">
+                  <div className="flex items-center gap-3"><Initials name={profile.displayName} /><div className="min-w-0"><p className="flex items-center gap-1.5 truncate text-lg font-semibold text-velora-ink">{profile.displayName}{profile.verified && <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-700" aria-label="Verified" />}</p><p className="text-sm text-velora-muted">{profile.profileType === "COUPLE" ? "Couple" : "Individual"}{profile.age ? ` · ${profile.age}` : ""}</p></div></div>
+                  <p className="mt-5 line-clamp-2 text-base text-velora-ink2">{profile.headline || profile.bio || "New to Intimo."}</p>
                 </Link>
               ))}
             </div>
-          ) : null}
-        </section>}
+          </section>
+        )}
+        <ContextualCTA title="Ready when you are." body="Two minutes to join. You decide what anyone sees." action={<a href="/auth/login?screen_hint=signup" className="inline-flex min-h-14 items-center rounded-full bg-velora-paper px-9 text-base font-semibold text-velora-ink transition hover:bg-velora-surface">Join free</a>} />
+        <nav aria-label="Explore" className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-base text-velora-ink2">
+          <Link href="/people" className="hover:text-velora-ink">People</Link><Link href="/tonight" className="hover:text-velora-ink">Tonight</Link><Link href="/photos" className="hover:text-velora-ink">Photos</Link><Link href="/videos" className="hover:text-velora-ink">Videos</Link><Link href="/scene" className="hover:text-velora-ink">Prague Scene</Link>
+        </nav>
+      </div>
+    </div>
+  );
+}
 
+/* Visual demonstrations: show the feature, don't describe it. Static, illustrative content. */
 
-      </main>
+function Chip({ children, tone }: { children: React.ReactNode; tone: "love" | "curious" | "limit" | "plain" }) {
+  const tones = { love: "bg-velora-accent text-velora-paper", curious: "border border-velora-accent/40 text-velora-accent", limit: "bg-velora-ink text-velora-paper", plain: "border border-velora-line text-velora-ink2" };
+  return <span className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold ${tones[tone]}`}>{children}</span>;
+}
+
+function DesireDemo() {
+  return (
+    <div className="space-y-5" aria-hidden>
+      <div><p className="mb-3 text-sm text-velora-muted">Love it</p><div className="flex flex-wrap gap-2"><Chip tone="love">Sensual massage</Chip><Chip tone="love">Slow burn</Chip></div></div>
+      <div><p className="mb-3 text-sm text-velora-muted">Curious</p><div className="flex flex-wrap gap-2"><Chip tone="curious">Couples</Chip><Chip tone="curious">Parties</Chip></div></div>
+      <div><p className="mb-3 text-sm text-velora-muted">Hard limit</p><div className="flex flex-wrap gap-2"><Chip tone="limit">Pain play</Chip></div></div>
+    </div>
+  );
+}
+
+function BoundaryDemo() {
+  return (
+    <div className="space-y-3" aria-hidden>
+      {[["First messages from men", "Ask first"], ["First messages from couples", "Welcome"], ["Explicit photos in chat", "Not interested"]].map(([label, value]) => (
+        <div key={label} className="flex items-center justify-between gap-4 rounded-2xl border border-velora-line px-5 py-4"><span className="text-base text-velora-ink">{label}</span><span className="shrink-0 text-sm font-semibold text-velora-accent">{value}</span></div>
+      ))}
+      <p className="flex items-center gap-2 pt-2 text-sm text-velora-muted"><ShieldCheck className="h-4 w-4 text-velora-accent" />Enforced before a message is sent</p>
+    </div>
+  );
+}
+
+function PlanDemo() {
+  return (
+    <div className="rounded-2xl border border-velora-line bg-velora-surface p-6" aria-hidden>
+      <div className="flex items-center justify-between text-sm"><span className="font-semibold text-velora-accent">Drinks &amp; a date</span><span className="text-velora-muted">ends in 5 h</span></div>
+      <p className="mt-3 font-display text-3xl leading-tight text-velora-ink">Wine in Vinohrady, then see where it goes</p>
+      <div className="mt-5 flex items-center justify-between"><span className="text-sm text-velora-ink2">Nina &amp; Tom · Praha 2</span><span className="rounded-full bg-velora-accent px-4 py-2 text-sm font-semibold text-velora-paper">Reply</span></div>
+    </div>
+  );
+}
+
+function PeopleDemo() {
+  return (
+    <div className="flex gap-3" aria-hidden>
+      {[["Lena", "29 · Praha 7", "Online now"], ["Marek & Eva", "Couple · Praha 2", "Active today"]].map(([name, meta, presence]) => (
+        <div key={name} className="flex-1 rounded-2xl border border-velora-line bg-velora-surface p-5">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-velora-accent/10 font-display text-xl text-velora-accent">{name[0]}</div>
+          <p className="mt-4 text-base font-semibold text-velora-ink">{name}</p>
+          <p className="text-sm text-velora-muted">{meta}</p>
+          <p className="mt-3 text-xs font-semibold text-emerald-700">{presence}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PrivateDemo() {
+  return (
+    <div aria-hidden>
+      <div className="grid grid-cols-3 gap-3">
+        {[0, 1, 2].map((item) => <div key={item} className="flex aspect-square items-center justify-center rounded-2xl bg-gradient-to-br from-velora-blush to-velora-sunken"><Lock className="h-6 w-6 text-velora-accent/60" /></div>)}
+      </div>
+      <div className="mt-5 flex items-center justify-between rounded-2xl border border-velora-line px-5 py-4"><span className="text-base text-velora-ink">Lena asked to see your photos</span><span className="shrink-0 rounded-full bg-velora-accent px-4 py-2 text-sm font-semibold text-velora-paper">Allow once</span></div>
     </div>
   );
 }

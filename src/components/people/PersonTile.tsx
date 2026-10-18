@@ -12,7 +12,7 @@ export type Person = {
 /** Compact member tile for the People grid and rails. Shows only coarse location and activity. */
 export function PersonTile({ person, compact = false }: { person: Person; compact?: boolean }) {
   return (
-    <Link href={`/profile/${person.id}`} className={`group block overflow-hidden rounded-2xl border border-white/10 bg-velora-card/70 transition hover:border-velora-gold/40 ${compact ? "w-36 shrink-0" : ""}`}>
+    <Link href={`/profile/${person.id}`} className={`group block overflow-hidden rounded-2xl border border-ink/10 bg-velora-card/70 transition hover:border-velora-gold/40 ${compact ? "w-36 shrink-0" : ""}`}>
       <div className="relative aspect-[4/5] bg-velora-bg">
         {person.avatarUrl
           ? // eslint-disable-next-line @next/next/no-img-element
@@ -23,7 +23,7 @@ export function PersonTile({ person, compact = false }: { person: Person; compac
       <div className="space-y-0.5 p-3">
         <p className="flex items-center gap-1 truncate text-sm font-semibold text-velora-textPrimary">
           <span className="truncate">{person.displayName}{person.age ? `, ${person.age}` : ""}</span>
-          {person.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-emerald-300" aria-label="Verified" />}
+          {person.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-emerald-700" aria-label="Verified" />}
         </p>
         <p className="truncate text-[11px] text-velora-textMuted">{person.isCoupleProfile ? "Couple" : person.presenceLabel || " "}</p>
         {(person.areaName || person.distance) && (
