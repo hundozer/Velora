@@ -79,17 +79,14 @@ export function PublicCommunityHome() {
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black via-black/75 to-black/15" />
         <div className="mx-auto flex min-h-[440px] max-w-7xl items-end px-4 py-10 sm:min-h-[520px] sm:px-6 sm:py-14 lg:px-8">
           <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-300">The Intimo community</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-300">Prague · private · sex-positive</p>
             <h1 className="mt-3 font-serif text-5xl font-semibold leading-[0.98] text-white sm:text-6xl lg:text-7xl">Find your people.</h1>
-            <p className="mt-5 max-w-lg text-base leading-7 text-slate-200 sm:text-lg">Profiles, dating, photos, and videos in one adults-only community.</p>
+            <p className="mt-5 max-w-lg text-base leading-7 text-slate-200 sm:text-lg">Prague&apos;s private network for singles and couples who are open about what they want. Say what you&apos;re into and where your limits are, see who&apos;s out tonight, and share private photos only with people you choose.</p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link href="/people" className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-amber-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-amber-200"><Search className="h-4 w-4" /> Browse people</Link>
-              {user ? (
-                <Link href="/dashboard" className="inline-flex min-h-11 items-center rounded-lg border border-white/15 px-5 py-3 text-sm font-semibold text-white hover:bg-white/5">My dashboard</Link>
-              ) : (
-                <a href="/auth/login?screen_hint=signup" className="inline-flex min-h-11 items-center rounded-lg border border-white/15 px-5 py-3 text-sm font-semibold text-white hover:bg-white/5">Join free</a>
-              )}
+              <a href="/auth/login?screen_hint=signup" className="inline-flex min-h-11 items-center rounded-lg bg-amber-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-amber-200">Join free</a>
+              <Link href="/people" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-white/15 px-5 py-3 text-sm font-semibold text-white hover:bg-white/5"><Search className="h-4 w-4" /> Browse people</Link>
             </div>
+            <p className="mt-4 text-xs text-slate-400">18+ only · Free · Members-only by default · No exact locations</p>
           </div>
         </div>
       </section>
@@ -103,6 +100,23 @@ export function PublicCommunityHome() {
               ["People", "/people", "20% center"], ["Tonight", "/tonight", "42% center"],
               ["Photos", "/photos", "68% center"], ["Videos", "/videos", "88% center"],
             ].map(([label, href, position]) => <Link key={label} href={href} className="group relative min-h-32 overflow-hidden rounded-xl border border-white/10 bg-[#11151e] sm:min-h-40"><Image src="/marketing/intimo-community-hero.jpg" alt="" aria-hidden="true" fill sizes="(max-width: 1024px) 50vw, 25vw" className="scale-125 object-cover opacity-65 transition duration-500 group-hover:scale-110 group-hover:opacity-80" style={{ objectPosition: position }} /><span className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" /><span className="absolute bottom-4 left-4 text-lg font-bold text-white sm:text-xl">{label}</span></Link>)}
+          </div>
+        </section>
+
+        <section aria-labelledby="how-it-works" className="space-y-4">
+          <h2 id="how-it-works" className="text-xl font-bold text-white">How Intimo works</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              ["Desires & boundaries", "Mark what you love, what you're curious about and your hard limits. People see what you share first, and your boundaries are enforced, not just shown."],
+              ["Tonight", "Post a plan for tonight or this weekend and choose who may reply. It disappears on its own."],
+              ["Private by design", "Profiles are members-only by default. Private photos only for people you approve, browse invisibly, and emails never contain names or messages."],
+              ["Prague Scene", "Munches, workshops and parties from the city's sex-positive community, hand-picked and linked to the organisers."],
+            ].map(([title, body]) => (
+              <div key={title} className="rounded-xl border border-white/10 bg-[#11151e] p-5">
+                <h3 className="font-semibold text-amber-200">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{body}</p>
+              </div>
+            ))}
           </div>
         </section>
 
