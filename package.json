@@ -11,7 +11,8 @@
     "test": "node --test tests/*.test.mjs",
     "demo:seed:staging": "node scripts/seed-staging-demo.mjs",
     "demo:remove:staging": "node scripts/seed-staging-demo.mjs --remove",
-    "check": "npm run test && npm run typecheck && npm run lint && npm run build"
+    "check": "npm run test && npm run typecheck && npm run lint && npm run build",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1102.0",
@@ -28,6 +29,7 @@
     "ws": "^8.21.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@types/node": "^20.17.1",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",
