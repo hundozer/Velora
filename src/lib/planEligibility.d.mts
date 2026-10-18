@@ -1,0 +1,10 @@
+export type PlanForEligibility = { author_id: string; status: string; moderation_status?: string | null; expires_at: string; allowed_reply_genders?: string[] | null; min_age: number; max_age: number; require_verified?: boolean | null; require_media?: boolean | null };
+export type ViewerForEligibility = { id?: string; gender?: string | null; is_couple_profile?: boolean | null; date_of_birth?: string | null; verification_status?: string | null; verification_level?: string | null };
+export type EligibilityReason = "NOT_LIVE" | "OWN_PLAN" | "PROFILE_TYPE" | "AGE" | "VERIFIED" | "MEDIA";
+export type Eligibility = { canReply: boolean; reason: EligibilityReason | null };
+export declare function replySymbolFor(gender: unknown, isCouple: unknown): string | null;
+export declare function ageFromDateOfBirth(value: unknown, now?: Date): number | null;
+export declare function isVerifiedMember(profile: { verification_status?: string | null; verification_level?: string | null } | null | undefined): boolean;
+export declare function planAudienceText(plan: Partial<PlanForEligibility>): string;
+export declare function planReplyEligibility(args: { plan: PlanForEligibility; viewer: ViewerForEligibility; viewerHasApprovedMedia?: boolean; now?: Date }): Eligibility;
+export declare function eligibilityText(plan: Partial<PlanForEligibility>, result: Eligibility): string;

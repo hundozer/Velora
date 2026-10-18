@@ -4,7 +4,8 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
-import { MAX_LIVE_PLANS, endsInLabel, planCategoryLabel, validatePlanInput } from "@/lib/plans.mjs";
+import { MAX_LIVE_PLANS, endsInLabel, planCategoryLabel, planStartsAt, validatePlanInput } from "@/lib/plans.mjs";
+import { eligibilityText, planAudienceText, planReplyEligibility, type Eligibility } from "@/lib/planEligibility.mjs";
 import { areaById, distanceBucket, DISTANCE_BUCKET_LABELS } from "@/lib/areas.mjs";
 
 // Tonight / Plans (P1-07). Stored in dating_ads; members-only, server-mediated.
@@ -12,12 +13,15 @@ export const dynamic = "force-dynamic";
 const MAX_BODY_BYTES = 16 * 1024;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const noStore = { "Cache-Control": "private, no-store" };
-const PLAN_COLUMNS = "id,author_id,category,title,text,validity_days,expires_at,area_id,allowed_reply_genders,min_age,max_age,require_verified,require_media,status,moderation_status,created_at";
+const LEGACY_PLAN_COLUMNS = "id,author_id,category,title,text,validity_days,expires_at,area_id,allowed_reply_genders,min_age,max_age,require_verified,require_media,status,moderation_status,created_at";
+// starts_at arrives with migration 20261102; until it is applied, reads and writes fall back.
+const PLAN_COLUMNS = `${LEGACY_PLAN_COLUMNS},starts_at`;
+const UNDEFINED_COLUMN = "42703";
 
-type PlanRow = { id: string; author_id: string; category: string; title: string; text: string; expires_at: string; area_id: string | null; allowed_reply_genders: string[]; min_age: number; max_age: number; require_verified: boolean; require_media: boolean; status: string; moderation_status: string; created_at: string };
+type PlanRow = { id: string; author_id: string; category: string; title: string; text: string; expires_at: string; starts_at?: string | null; area_id: string | null; allowed_reply_genders: string[]; min_age: number; max_age: number; require_verified: boolean; require_media: boolean; status: string; moderation_status: string; created_at: string };
 type Author = { id: string; display_name: string; avatar_url: string | null; age: number | null; is_couple_profile: boolean; verification_status: string; area_id: string | null };
 
-function toPlan(row: PlanRow, author: Author | undefined, viewerAreaId: string | null, viewerId: string, now: Date) {
+function toPlan(row: PlanRow, author: Author | undefined, viewerAreaId: string | null, viewerId: string, now: Date, eligibility?: Eligibility) {
   const bucket = viewerAreaId && row.area_id ? distanceBucket(viewerAreaId, row.area_id) : null;
   return {
     id: row.id,
@@ -33,8 +37,14 @@ function toPlan(row: PlanRow, author: Author | undefined, viewerAreaId: string |
     text: row.text,
     areaName: areaById(row.area_id)?.name || null,
     distance: bucket ? DISTANCE_BUCKET_LABELS[bucket] : null,
+    startsAt: planStartsAt(row),
     expiresAt: row.expires_at,
     endsIn: endsInLabel(row.expires_at, now),
+    audience: planAudienceText(row),
+    // Computed by the same rule POST /api/messages enforces; display only.
+    canReply: eligibility?.canReply ?? false,
+    replyReason: eligibility?.reason ?? null,
+    eligibilityText: eligibility ? eligibilityText(row, eligibility) : null,
     replyTypes: row.allowed_reply_genders || [],
     minAge: row.min_age,
     maxAge: row.max_age,
@@ -61,23 +71,30 @@ export async function GET(req: NextRequest) {
   if (authorId && !UUID.test(authorId)) return NextResponse.json({ error: "Invalid member" }, { status: 400 });
   const category = params.get("category");
 
-  let query = supabase.from("dating_ads").select(PLAN_COLUMNS).order("created_at", { ascending: false }).limit(mine ? 20 : 100);
-  if (mine) {
-    query = query.eq("author_id", viewerId);
-  } else {
-    query = query.eq("status", "active").gt("expires_at", now.toISOString()).neq("moderation_status", "REJECTED");
-    if (authorId) query = query.eq("author_id", authorId);
-    if (category) query = query.eq("category", category);
-  }
+  const buildQuery = (columns: string, withStart: boolean) => {
+    let query = supabase.from("dating_ads").select(columns).order(mine || !withStart ? "created_at" : "starts_at", { ascending: !mine && withStart }).limit(mine ? 20 : 100);
+    if (mine) {
+      query = query.eq("author_id", viewerId);
+    } else {
+      query = query.eq("status", "active").gt("expires_at", now.toISOString()).neq("moderation_status", "REJECTED");
+      if (authorId) query = query.eq("author_id", authorId);
+      if (category) query = query.eq("category", category);
+    }
+    return query;
+  };
+  const runQuery = async () => {
+    const first = await buildQuery(PLAN_COLUMNS, true);
+    return first.error?.code === UNDEFINED_COLUMN ? buildQuery(LEGACY_PLAN_COLUMNS, false) : first;
+  };
 
   const [{ data: rows, error }, { data: viewer }, { data: blockRows, error: blockError }] = await Promise.all([
-    query,
-    supabase.from("profiles").select("area_id").eq("id", viewerId).maybeSingle(),
+    runQuery(),
+    supabase.from("profiles").select("area_id,gender,is_couple_profile,date_of_birth,verification_status,verification_level").eq("id", viewerId).maybeSingle(),
     supabase.from("user_blocks").select("blocker_id,blocked_profile_id").or(`blocker_id.eq.${viewerId},blocked_profile_id.eq.${viewerId}`),
   ]);
   if (error || blockError) return NextResponse.json({ error: "Plans lookup failed" }, { status: 502 });
   const blocked = new Set((blockRows || []).map((block) => block.blocker_id === viewerId ? block.blocked_profile_id : block.blocker_id));
-  const visibleRows = ((rows || []) as PlanRow[]).filter((row) => !blocked.has(row.author_id));
+  const visibleRows = ((rows || []) as unknown as PlanRow[]).filter((row) => !blocked.has(row.author_id));
 
   const authorIds = [...new Set(visibleRows.map((row) => row.author_id))];
   const { data: authors, error: authorError } = authorIds.length
@@ -86,9 +103,15 @@ export async function GET(req: NextRequest) {
   if (authorError) return NextResponse.json({ error: "Plans lookup failed" }, { status: 502 });
   const activeAuthors = new Map((authors || []).filter((author) => mine || (author.account_status === "ACTIVE" && !author.discovery_disabled)).map((author) => [author.id, author as Author]));
 
+  let viewerHasApprovedMedia = false;
+  if (visibleRows.some((row) => row.require_media)) {
+    const { data: media } = await supabase.from("media_objects").select("id").eq("owner_id", viewerId).eq("upload_status", "AVAILABLE").eq("moderation_status", "APPROVED").limit(1).maybeSingle();
+    viewerHasApprovedMedia = Boolean(media);
+  }
+  const viewerForEligibility = { ...(viewer || {}), id: viewerId };
   const plans = visibleRows
     .filter((row) => activeAuthors.has(row.author_id))
-    .map((row) => toPlan(row, activeAuthors.get(row.author_id), viewer?.area_id ?? null, viewerId, now));
+    .map((row) => toPlan(row, activeAuthors.get(row.author_id), viewer?.area_id ?? null, viewerId, now, planReplyEligibility({ plan: row, viewer: viewerForEligibility, viewerHasApprovedMedia, now })));
   return NextResponse.json({ plans, maxLivePlans: MAX_LIVE_PLANS }, { headers: noStore });
 }
 
@@ -133,10 +156,15 @@ export async function POST(req: NextRequest) {
     status: "active",
     moderation_status: moderationStatus,
   };
-  const { data, error } = await supabase.from("dating_ads").insert(row).select(PLAN_COLUMNS).single();
+  let { data, error } = await supabase.from("dating_ads").insert(row).select(PLAN_COLUMNS).single();
+  if (error?.code === UNDEFINED_COLUMN) {
+    // Before migration 20261102: store the plan without its start time (it starts when posted).
+    const { starts_at: _startsAt, ...legacyRow } = row;
+    ({ data, error } = await supabase.from("dating_ads").insert(legacyRow).select(LEGACY_PLAN_COLUMNS).single());
+  }
   if (error || !data) return NextResponse.json({ error: "Your plan could not be posted" }, { status: 502 });
-  const audited = await appendDurableAudit(supabase, { actorProfileId: profileId, actorUserId: actor.actor.userId, action: "PLAN_CREATE", resourceType: "DATING_AD", resourceId: String(data.id), outcome: "SUCCESS", metadata: { category: row.category, validityDays: row.validity_days, moderationStatus } });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: profileId, actorUserId: actor.actor.userId, action: "PLAN_CREATE", resourceType: "DATING_AD", resourceId: String(data.id), outcome: "SUCCESS", metadata: { category: row.category, startsAt: row.starts_at, endsAt: row.expires_at, moderationStatus } });
   if (!audited) return NextResponse.json({ error: "Plan posted but audit recording failed; contact support" }, { status: 503 });
   auditLogger.logEvent({ actorId: actor.actor.userId, actorRole: actor.actor.role as any, action: "PLAN_CREATE", resourceId: String(data.id), resourceType: "DATING_AD", status: "SUCCESS" });
-  return NextResponse.json({ plan: toPlan(data as PlanRow, undefined, null, profileId, new Date()) }, { status: 201, headers: noStore });
+  return NextResponse.json({ plan: toPlan(data as unknown as PlanRow, undefined, null, profileId, new Date()) }, { status: 201, headers: noStore });
 }

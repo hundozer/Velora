@@ -8,6 +8,7 @@ import { establishedDecision, firstMessageDecision, resolveBoundaries } from "@/
 import { presenceBucket } from "@/lib/presence.mjs";
 import { maybeSendReturnEmail } from "@/lib/notifications/returnEmails";
 import { areFriends } from "@/lib/social/friendship";
+import { isVerifiedMember, planReplyEligibility } from "@/lib/planEligibility.mjs";
 
 export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -15,25 +16,6 @@ const MAX_BODY_BYTES = 16 * 1024;
 
 function conversationId(first: string, second: string) {
   return [first, second].sort().join(":");
-}
-
-function profileReplySymbol(gender: unknown, isCouple: unknown) {
-  if (isCouple === true || String(gender || "").toUpperCase().startsWith("COUPLE")) return "👫";
-  const value = String(gender || "").toUpperCase();
-  if (value.includes("TRANS") || value.includes("NON_BINARY")) return "⚧";
-  if (value.includes("FEMALE") || value === "WOMAN") return "♀";
-  if (value.includes("MALE") || value === "MAN") return "♂";
-  return null;
-}
-
-function ageFromDateOfBirth(value: unknown) {
-  if (typeof value !== "string") return null;
-  const birth = new Date(`${value.slice(0, 10)}T00:00:00Z`);
-  if (Number.isNaN(birth.getTime())) return null;
-  const now = new Date();
-  let age = now.getUTCFullYear() - birth.getUTCFullYear();
-  if (now.getUTCMonth() < birth.getUTCMonth() || (now.getUTCMonth() === birth.getUTCMonth() && now.getUTCDate() < birth.getUTCDate())) age -= 1;
-  return age;
 }
 
 async function blocked(supabase: ReturnType<typeof getServerSupabase>, first: string, second: string) {
@@ -126,21 +108,31 @@ export async function POST(req: NextRequest) {
   if (!recipient || recipient.allow_direct_messages === false) return NextResponse.json({ error: "Recipient is not accepting messages" }, { status: 403 });
   const { data: sender } = await supabase.from("profiles").select("display_name,avatar_url,verification_level,verification_status,gender,is_couple_profile,date_of_birth").eq("id", actor.actor.profileId).single();
   if (!sender) return NextResponse.json({ error: "Sender profile unavailable" }, { status: 502 });
-  const verifiedSender = sender.verification_status === "VERIFIED" || ["LEVEL_3_PROFILE_BIOMETRIC", "LEVEL_4_CREATOR"].includes(sender.verification_level || "");
+  const verifiedSender = isVerifiedMember(sender);
   if (datingAdId) {
     const { data: ad, error: adError } = await supabase.from("dating_ads").select("id,author_id,status,expires_at,moderation_status,allowed_reply_genders,min_age,max_age,require_media,require_verified").eq("id", datingAdId).maybeSingle();
     if (adError) return NextResponse.json({ error: "Dating ad eligibility could not be checked" }, { status: 502 });
-    if (!ad || ad.status !== "active" || ad.moderation_status === "REJECTED" || new Date(ad.expires_at) <= new Date() || ad.author_id !== receiverId) return NextResponse.json({ error: "This plan is no longer available" }, { status: 404 });
-    const replySymbol = profileReplySymbol(sender.gender, sender.is_couple_profile);
-    const allowed = Array.isArray(ad.allowed_reply_genders) ? ad.allowed_reply_genders : [];
-    if (!replySymbol || (allowed.length > 0 && !allowed.includes(replySymbol))) return NextResponse.json({ error: "Your profile does not match this ad's allowed reply profiles" }, { status: 403 });
-    const senderAge = ageFromDateOfBirth(sender.date_of_birth);
-    if (senderAge === null || senderAge < Number(ad.min_age) || senderAge > Number(ad.max_age)) return NextResponse.json({ error: "Your profile does not match this ad's age range" }, { status: 403 });
-    if (ad.require_verified === true && !verifiedSender) return NextResponse.json({ error: "This dating ad accepts verified members only" }, { status: 403 });
+    if (!ad) return NextResponse.json({ error: "This plan is no longer available" }, { status: 404 });
+    if (ad.author_id !== receiverId) return NextResponse.json({ error: "This plan is no longer available" }, { status: 404 });
+    let hasApprovedMedia = false;
     if (ad.require_media === true) {
       const { data: media, error: mediaError } = await supabase.from("media_objects").select("id").eq("owner_id", actor.actor.profileId).eq("upload_status", "AVAILABLE").eq("moderation_status", "APPROVED").limit(1).maybeSingle();
       if (mediaError) return NextResponse.json({ error: "Dating ad media eligibility could not be checked" }, { status: 502 });
-      if (!media) return NextResponse.json({ error: "This dating ad accepts replies from members with approved profile media only" }, { status: 403 });
+      hasApprovedMedia = Boolean(media);
+    }
+    // Same rule GET /api/dating-ads uses for its "You can reply" indicator.
+    const eligibility = planReplyEligibility({ plan: ad, viewer: { ...sender, id: actor.actor.profileId }, viewerHasApprovedMedia: hasApprovedMedia });
+    if (!eligibility.canReply) {
+      const denial: Record<string, [string, number]> = {
+        NOT_LIVE: ["This plan is no longer available", 404],
+        OWN_PLAN: ["This plan is no longer available", 404],
+        PROFILE_TYPE: ["Your profile does not match this ad's allowed reply profiles", 403],
+        AGE: ["Your profile does not match this ad's age range", 403],
+        VERIFIED: ["This dating ad accepts verified members only", 403],
+        MEDIA: ["This dating ad accepts replies from members with approved profile media only", 403],
+      };
+      const [message, status] = denial[eligibility.reason ?? "NOT_LIVE"] ?? denial.NOT_LIVE;
+      return NextResponse.json({ error: message }, { status });
     }
   }
 
