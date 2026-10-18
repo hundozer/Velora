@@ -352,8 +352,15 @@ test("dating-ad reply requirements are enforced by the server, not browser claim
   const messages = await read("src/app/api/messages/route.ts");
   const dating = await read("src/components/plans/PlanCard.tsx");
   const messagesPage = await read("src/app/messages/page.tsx");
+  const eligibility = await read("src/lib/planEligibility.mjs");
   assert.match(dating, /datingAd=\$\{encodeURIComponent\(plan\.id\)\}/);
-  assert.match(messages, /new Date\(ad\.expires_at\) <= new Date\(\)/);
+  // The rule lives in one shared module; the messages route enforces it before sending.
+  assert.match(messages, /planReplyEligibility\(\{ plan: ad, viewer: \{ \.\.\.sender, id: actor\.actor\.profileId \}/);
+  assert.match(messages, /if \(!eligibility\.canReply\)/);
+  assert.match(eligibility, /new Date\(plan\.expires_at\)\.getTime\(\) <= now\.getTime\(\)/);
+  assert.match(eligibility, /allowed_reply_genders/);
+  assert.match(eligibility, /plan\.require_verified === true && !isVerifiedMember\(viewer\)/);
+  assert.match(eligibility, /plan\.require_media === true && !viewerHasApprovedMedia/);
   assert.match(messages, /plan_id: datingAdId/);
   assert.match(messagesPage, /searchParams\.get\("datingAd"\)/);
   assert.match(messages, /dating_ads/);

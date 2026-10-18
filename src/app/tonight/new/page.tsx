@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { AreaSelect } from "@/components/profile/AreaSelect";
-import { PLAN_CATEGORIES, PLAN_DURATIONS, PLAN_REPLY_TYPES } from "@/lib/plans.mjs";
+import { PLAN_CATEGORIES, PLAN_REPLY_TYPES } from "@/lib/plans.mjs";
 
 const fieldClass = "w-full rounded-2xl border border-ink/10 bg-ink/5 px-4 py-3 text-sm text-velora-textPrimary outline-none focus:border-velora-gold/60 focus:ring-1 focus:ring-velora-gold/60";
 const labelClass = "block space-y-2 text-xs font-semibold uppercase tracking-wider text-velora-textSecondary";
@@ -19,7 +19,9 @@ export default function NewPlanPage() {
   const [category, setCategory] = React.useState("");
   const [title, setTitle] = React.useState("");
   const [text, setText] = React.useState("");
-  const [validityDays, setValidityDays] = React.useState(1);
+  // Explicit start and end (local time). Defaults: the next half hour, for three hours.
+  const [startsAt, setStartsAt] = React.useState(() => toLocalInput(nextHalfHour(new Date())));
+  const [endsAt, setEndsAt] = React.useState(() => toLocalInput(new Date(nextHalfHour(new Date()).getTime() + 3 * 3_600_000)));
   const [areaId, setAreaId] = React.useState("");
   const [replyTypes, setReplyTypes] = React.useState<string[]>([]);
   const [minAge, setMinAge] = React.useState(18);
@@ -41,7 +43,7 @@ export default function NewPlanPage() {
       method: "POST",
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ category, title: title.trim(), text: text.trim(), validityDays, areaId: areaId || undefined, allowedReplyGenders: replyTypes, minAge, maxAge, requireVerified }),
+      body: JSON.stringify({ category, title: title.trim(), text: text.trim(), startsAt: new Date(startsAt).toISOString(), endsAt: new Date(endsAt).toISOString(), areaId: areaId || undefined, allowedReplyGenders: replyTypes, minAge, maxAge, requireVerified }),
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) { setError(payload.error || "Your plan could not be posted."); setSubmitting(false); return; }
@@ -72,11 +74,15 @@ export default function NewPlanPage() {
           <span className="block text-[11px] font-normal normal-case tracking-normal text-velora-textMuted">No payment, services or contact details. Plans offering paid services are removed.</span>
         </label>
 
-        <fieldset className="space-y-3">
-          <legend className={labelClass}>How long it stays up</legend>
-          <div className="flex flex-wrap gap-2">
-            {PLAN_DURATIONS.map((item) => <button key={item.days} type="button" aria-pressed={validityDays === item.days} onClick={() => setValidityDays(item.days)} className={chip(validityDays === item.days)}>{item.label}</button>)}
-          </div>
+        <fieldset className="grid grid-cols-2 gap-3">
+          <legend className={`${labelClass} col-span-2`}>When</legend>
+          <label className={labelClass}>Starts
+            <input type="datetime-local" className={fieldClass} value={startsAt} min={toLocalInput(new Date())} max={toLocalInput(new Date(Date.now() + 36 * 3_600_000))} onChange={(event) => setStartsAt(event.target.value)} required />
+          </label>
+          <label className={labelClass}>Ends
+            <input type="datetime-local" className={fieldClass} value={endsAt} min={startsAt} onChange={(event) => setEndsAt(event.target.value)} required />
+          </label>
+          <span className="col-span-2 block text-[13px] text-velora-textMuted">Plans start within the next 36 hours and last up to 12 hours. Yours disappears when it ends.</span>
         </fieldset>
 
         <label className={labelClass}>Area
@@ -108,4 +114,17 @@ export default function NewPlanPage() {
       </form>
     </main>
   );
+}
+
+function nextHalfHour(date: Date) {
+  const next = new Date(date);
+  next.setSeconds(0, 0);
+  next.setMinutes(next.getMinutes() <= 30 ? 30 : 60);
+  return next;
+}
+
+/** Formats a Date for <input type="datetime-local"> in the member's own time zone. */
+function toLocalInput(date: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }

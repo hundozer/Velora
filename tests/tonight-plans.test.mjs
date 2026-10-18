@@ -8,7 +8,7 @@ import { PLAN_CATEGORIES, PLAN_DURATIONS, endsInLabel, isPlanLive, validatePlanI
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (file) => fs.readFile(path.join(root, file), "utf8");
 const now = new Date("2026-10-17T18:00:00Z");
-const base = { category: "DATE", title: "Drinks in Vinohrady", text: "Drinks first, then see where it goes.", validityDays: 1 };
+const base = { category: "DATE", title: "Drinks in Vinohrady", text: "Drinks first, then see where it goes.", startsAt: "2026-10-17T19:00:00Z", endsAt: "2026-10-17T22:30:00Z" };
 
 test("migration constraints match the plan categories and durations", async () => {
   const sql = await read("supabase/migrations/20261023_tonight_plans.sql");
@@ -20,13 +20,27 @@ test("migration constraints match the plan categories and durations", async () =
   assert.match(sql, /revoke all on public\.dating_ads from anon, authenticated;/);
 });
 
-test("plan input is validated and expiry computed server-side", () => {
+test("plan input is validated with explicit start and end times", () => {
   const { plan } = validatePlanInput({ ...base, allowedReplyGenders: ["♀", "👫", "♀", "VIP"] }, now);
-  assert.equal(plan.expires_at, "2026-10-18T18:00:00.000Z");
+  assert.equal(plan.starts_at, "2026-10-17T19:00:00.000Z");
+  assert.equal(plan.expires_at, "2026-10-17T22:30:00.000Z");
+  assert.equal(plan.validity_days, 1);
   assert.deepEqual(plan.allowed_reply_genders, ["♀", "👫"]);
   assert.equal(plan.min_age, 18);
   assert.match(validatePlanInput({ ...base, category: "Erotic services" }, now).error, /what kind/);
-  assert.match(validatePlanInput({ ...base, validityDays: 30 }, now).error, /how long/);
+  // Start and end are required; a duration alone is no longer accepted.
+  assert.match(validatePlanInput({ category: base.category, title: base.title, text: base.text, validityDays: 1 }, now).error, /starts and ends/);
+  assert.match(validatePlanInput({ ...base, startsAt: "not a date" }, now).error, /starts and ends/);
+  // Starts within the next 36 hours (a few minutes of grace for slow forms).
+  assert.ok(validatePlanInput({ ...base, startsAt: "2026-10-17T17:55:00Z", endsAt: "2026-10-17T20:00:00Z" }, now).plan);
+  assert.match(validatePlanInput({ ...base, startsAt: "2026-10-17T17:30:00Z", endsAt: "2026-10-17T20:00:00Z" }, now).error, /36 hours/);
+  assert.ok(validatePlanInput({ ...base, startsAt: "2026-10-19T06:00:00Z", endsAt: "2026-10-19T08:00:00Z" }, now).plan);
+  assert.match(validatePlanInput({ ...base, startsAt: "2026-10-19T06:01:00Z", endsAt: "2026-10-19T08:00:00Z" }, now).error, /36 hours/);
+  // Lasts between 30 minutes and 12 hours, and ends after it starts.
+  assert.ok(validatePlanInput({ ...base, endsAt: "2026-10-18T07:00:00Z" }, now).plan);
+  assert.match(validatePlanInput({ ...base, endsAt: "2026-10-18T07:01:00Z" }, now).error, /12 hours/);
+  assert.match(validatePlanInput({ ...base, endsAt: "2026-10-17T19:20:00Z" }, now).error, /30 minutes/);
+  assert.match(validatePlanInput({ ...base, endsAt: "2026-10-17T18:30:00Z" }, now).error, /30 minutes/);
   assert.match(validatePlanInput({ ...base, minAge: 17 }, now).error, /18\+/);
   assert.match(validatePlanInput({ ...base, text: "short" }, now).error, /10–1000/);
 });

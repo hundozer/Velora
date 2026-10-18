@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
     .eq("account_status", "ACTIVE").eq("discovery_disabled", false)
     .in("profile_visibility", scope === "friends" ? ["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY"] : ["EVERYONE", "MEMBERS_ONLY"])
     .order("created_at", { ascending: false }).limit(40);
-  let adQuery = db.from("dating_ads").select("id,author_id,title,text,category,created_at,validity_days")
+  let adQuery = db.from("dating_ads").select("id,author_id,title,text,category,created_at,expires_at")
     .eq("status", "active").order("created_at", { ascending: false }).limit(40);
   let postQuery = db.from("content_posts").select("id,author_id,title,body,category,visibility,published_at,created_at")
     .in("visibility", scope === "followed" ? ["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY"] : ["PUBLIC", "MEMBERS_ONLY"])
@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
   }
   const now = Date.now();
   for (const ad of adRows || []) {
-    const actor = actorFor(ad.author_id); if (!actor || new Date(ad.created_at).getTime() + Number(ad.validity_days || 0) * 86_400_000 <= now) continue;
+    const actor = actorFor(ad.author_id); if (!actor || new Date(ad.expires_at).getTime() <= now) continue;
     items.push({ id: `DATING_AD:${ad.id}`, type: "DATING_AD", actor, title: ad.title, body: ad.text, category: ad.category, href: "/tonight", occurredAt: ad.created_at });
   }
   for (const post of postRows || []) {
