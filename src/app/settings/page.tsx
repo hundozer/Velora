@@ -442,7 +442,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <PrivacyToggle title="Online now" description="Let members see when you were recently active." checked={privacy.showOnlineStatus} onChange={(checked) => setPrivacy({ ...privacy, showOnlineStatus: checked })} />
+          <PrivacyToggle title="Show activity" description="Members see a rough status (Online now, Active today, Active this week), never an exact time." checked={privacy.showOnlineStatus} onChange={(checked) => setPrivacy({ ...privacy, showOnlineStatus: checked })} />
           <PrivacyToggle title="Approximate distance" description="Never reveals your precise position." checked={privacy.showDistance} disabled={privacy.locationPrecision === "HIDDEN"} onChange={(checked) => setPrivacy({ ...privacy, showDistance: checked })} />
         </div>
 

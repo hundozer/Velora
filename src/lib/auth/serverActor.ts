@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getVerifiedIdentity } from "@/lib/auth/serverSession";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { shouldTouchActivity } from "@/lib/presence.mjs";
 import { hasValidAdminMfaSession } from "./adminMfaSession";
 
 export const ADMIN_ROLES = new Set(["ADMIN", "SUPER_ADMIN", "SYSTEM_ADMIN", "TRUST_AND_SAFETY_ADMIN", "CONTENT_MODERATOR", "PRIVACY_ADMIN", "SUPPORT_ADMIN", "COMMUNITY_ADMIN"]);
@@ -34,7 +35,7 @@ export async function resolveServerActor(req?: NextRequest): Promise<ServerActor
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id,auth_id,email,role,verification_status,age_verification_status,account_status")
+    .select("id,auth_id,email,role,verification_status,age_verification_status,account_status,last_active_at")
     .eq("auth_id", identity.sub)
     .maybeSingle();
 
@@ -43,6 +44,13 @@ export async function resolveServerActor(req?: NextRequest): Promise<ServerActor
     return { status: "unavailable" };
   }
   if (!data) return { status: "unprovisioned", identity };
+
+  // Presence (P1-04): record activity at most once per 5 minutes per member.
+  if (data.account_status === "ACTIVE" && shouldTouchActivity(data.last_active_at)) {
+    const nowIso = new Date().toISOString();
+    const { error: touchError } = await supabase.from("profiles").update({ last_active_at: nowIso }).eq("id", data.id);
+    if (touchError) console.error("Activity touch failed", { code: touchError.code });
+  }
 
   // profiles.role never grants admin. Admin comes only from admin_assignments or
   // the INTIMO_ADMIN_* bootstrap env (Supabase user ids), pending issue #10.

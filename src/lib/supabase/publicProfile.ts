@@ -1,4 +1,5 @@
 import { dbRowToProfile, ProfileRow } from "./profileService";
+import { PRESENCE_LABELS, presenceBucket } from "@/lib/presence.mjs";
 
 export function toMemberVisibleProfile(row: ProfileRow, audience: { friends?: boolean } = {}) {
   const profile = dbRowToProfile(row);
@@ -6,6 +7,8 @@ export function toMemberVisibleProfile(row: ProfileRow, audience: { friends?: bo
     || row.sensitive_fields_visibility === "MEMBERS_ONLY"
     || (row.sensitive_fields_visibility === "FRIENDS_ONLY" && audience.friends === true);
   const locationVisible = row.location_precision !== "HIDDEN";
+  // Coarse bucket only, and only when the member allows it.
+  const presence = presenceBucket(row.last_active_at, row.show_online_status === true);
   return {
     id: profile.id,
     displayName: profile.displayName,
@@ -31,9 +34,11 @@ export function toMemberVisibleProfile(row: ProfileRow, audience: { friends?: bo
     followersCount: profile.followersCount,
     totalContentCount: profile.totalContentCount,
     showDistance: profile.showDistance && locationVisible,
-    // Presence, compatibility, and distance are not yet backed by trustworthy
-    // durable signals. Do not synthesize them at the API boundary.
-    isOnline: false,
+    presence,
+    presenceLabel: presence ? PRESENCE_LABELS[presence] : null,
+    recentlyActive: presence === "ONLINE" || presence === "TODAY",
+    isOnline: presence === "ONLINE",
+    // Compatibility is not backed by a trustworthy signal yet; never synthesise it.
     compatibilityScore: 0,
   };
 }

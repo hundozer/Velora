@@ -158,6 +158,8 @@ export async function POST(req: NextRequest) {
     profile_visibility: "MEMBERS_ONLY",
     sensitive_fields_visibility: "PRIVATE",
     location_precision: "CITY",
+    // Coarse activity ("Active today") is visible by default; members can hide it in Settings → Privacy.
+    show_online_status: true,
     message_permission: cleanFirstMessagePermission(body.messagePermission),
     public_profile_visibility: false,
     updated_at: new Date().toISOString(),
