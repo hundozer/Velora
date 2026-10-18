@@ -30,7 +30,7 @@ test("re-requests: no duplicates, cooldown after a decline", () => {
 
 test("every private media read re-checks the grant and blocks", async () => {
   const media = await read("src/app/api/media/[id]/route.ts");
-  assert.match(media, /if \(!allowed && media\.visibility === "PRIVATE"\) \{[\s\S]*album_access_grants[\s\S]*allowed = grantIsActive\(grant\);/);
+  assert.match(media, /if \(!allowed && media\.visibility === "PRIVATE" && !isChatImage\) \{[\s\S]*album_access_grants[\s\S]*allowed = grantIsActive\(grant\);/);
   assert.match(media, /getPresignedDownloadUrl/);
   const list = await read("src/app/api/private-access/media/route.ts");
   assert.match(list, /if \(!grantIsActive\(grant\)\) return NextResponse\.json\(\{ error: "No access" \}, \{ status: 403 \}\);/);

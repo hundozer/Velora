@@ -101,7 +101,8 @@ export async function uploadFileToR2(
   onProgress?: UploadProgressCallback,
   participantDeclaration?: ParticipantDeclaration,
   visibility?: "PUBLIC" | "MEMBERS_ONLY" | "FOLLOWERS_ONLY" | "PRIVATE" | "APPROVED_USERS_ONLY",
-  contentRating: "EXPLICIT" | "NON_EXPLICIT" = "EXPLICIT"
+  contentRating: "EXPLICIT" | "NON_EXPLICIT" = "EXPLICIT",
+  category?: string
 ): Promise<DirectUploadResult> {
   if (!participantDeclaration) throw new Error("Participant declaration is required before upload");
   // 1. Request presigned upload URL from API
@@ -117,6 +118,7 @@ export async function uploadFileToR2(
       folder,
       visibility: visibility || (folder === "avatars" || folder === "covers" ? "MEMBERS_ONLY" : "PRIVATE"),
       contentRating: folder === "avatars" || folder === "covers" ? "NON_EXPLICIT" : contentRating,
+      category,
       participantDeclaration,
     }),
   });

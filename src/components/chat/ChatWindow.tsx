@@ -23,7 +23,10 @@ import {
   MapPin,
   X,
   Search,
+  ImagePlus,
 } from "lucide-react";
+import { ChatPhoto } from "@/components/chat/ChatPhoto";
+import { requestParticipantDeclaration, uploadFileToR2 } from "@/lib/storage/clientUpload";
 
 interface ChatWindowProps {
   conversations: Conversation[];
@@ -70,6 +73,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           senderName: item.sender_id === participantId ? activeConversation.participant.displayName : "You",
           senderAvatar: item.sender_id === participantId ? activeConversation.participant.avatarUrl : "",
           content: item.content,
+          mediaUrl: item.attachment_type === "IMAGE" ? item.media_url || undefined : undefined,
           status: item.status,
           createdAt: new Date(item.created_at).toLocaleString(),
         })));
@@ -91,21 +95,42 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     const response = await fetch(`/api/messages?peerId=${encodeURIComponent(participantId)}&before=${encodeURIComponent(nextCursor)}`, { credentials: "same-origin", cache: "no-store" });
     const payload = await response.json().catch(() => ({}));
     if (response.ok) {
-      const older = (payload.messages || []).map((item: any) => ({ id: item.id, conversationId: item.conversation_id, senderId: item.sender_id === participantId ? participantId : "user-current", senderName: item.sender_id === participantId ? activeConversation.participant.displayName : "You", senderAvatar: item.sender_id === participantId ? activeConversation.participant.avatarUrl : "", content: item.content, status: item.status, createdAt: new Date(item.created_at).toLocaleString() }));
+      const older = (payload.messages || []).map((item: any) => ({ id: item.id, conversationId: item.conversation_id, senderId: item.sender_id === participantId ? participantId : "user-current", senderName: item.sender_id === participantId ? activeConversation.participant.displayName : "You", senderAvatar: item.sender_id === participantId ? activeConversation.participant.avatarUrl : "", content: item.content, mediaUrl: item.attachment_type === "IMAGE" ? item.media_url || undefined : undefined, status: item.status, createdAt: new Date(item.created_at).toLocaleString() }));
       setMessages((current) => [...older, ...current.filter((message) => !older.some((item: Message) => item.id === message.id))]);
       setNextCursor(payload.pagination?.nextCursor || null);
     }
     setLoadingOlder(false);
   };
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
+  const [photoExplicit, setPhotoExplicit] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState<number | null>(null);
+  const photoInputRef = React.useRef<HTMLInputElement>(null);
+
+  const sendPhoto = async (file?: File) => {
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 15 * 1024 * 1024) { setSendError("Choose a JPEG, PNG or WebP photo under 15 MB."); return; }
+    setSendError("");
+    try {
+      const declaration = await requestParticipantDeclaration();
+      setUploadingPhoto(0);
+      const result = await uploadFileToR2(file, "photos", setUploadingPhoto, declaration, "PRIVATE", photoExplicit ? "EXPLICIT" : "NON_EXPLICIT", "MESSAGE");
+      await handleSendMessage(result.mediaId);
+    } catch (error) {
+      setSendError(error instanceof Error ? error.message : "Photo could not be sent.");
+    } finally {
+      setUploadingPhoto(null);
+      if (photoInputRef.current) photoInputRef.current.value = "";
+    }
+  };
+
+  const handleSendMessage = async (mediaId?: string) => {
+    if (!inputMessage.trim() && !mediaId) return;
     setSendError("");
 
     const participantId = activeConversation.participant.id || activeConversation.participant.userId;
     const response = await fetch("/api/messages", {
       method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ receiverId: participantId, content: inputMessage.trim(), datingAdId }),
+      body: JSON.stringify({ receiverId: participantId, content: inputMessage.trim(), datingAdId, mediaId }),
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -121,6 +146,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       senderName: "You",
       senderAvatar: "",
       content: inputMessage.trim(),
+      mediaUrl: payload.message?.media_url || undefined,
       status: "SENT",
       createdAt: nowTime,
     };
@@ -319,7 +345,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                       : "glass-panel text-velora-textPrimary border-white/10 rounded-tl-none"
                   }`}
                 >
-                  <p>{m.content}</p>
+                  {m.mediaUrl && <div className={m.content ? "mb-2" : ""}><ChatPhoto src={m.mediaUrl} mine={isMe} /></div>}
+                  {m.content && <p>{m.content}</p>}
 
                   {/* Delivery Status Indicator for sent messages */}
                   {isMe && (
@@ -337,20 +364,25 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
         </div>
 
-        {/* Text messaging only until attachments have a moderated durable lifecycle. */}
+        {/* Photos are private chat media (P1-10): served only to the two participants. */}
         <div className="p-4 border-t border-white/10 bg-velora-card/60 space-y-2">
           {datingAdId && <p className="text-[11px] text-amber-300">Replying to a dating ad. Its audience requirements are checked securely when you send.</p>}
           {sendError && <p role="alert" className="text-[11px] text-rose-300">{sendError}</p>}
+          <label className="flex items-center gap-2 text-[11px] text-velora-textMuted"><input type="checkbox" className="h-3.5 w-3.5 accent-velora-gold" checked={photoExplicit} onChange={(event) => setPhotoExplicit(event.target.checked)} />Next photo is explicit (respects their boundaries)</label>
           <div className="flex items-center gap-3">
             <input
               type="text"
               placeholder="Write a private message…"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+              onKeyDown={(e) => e.key === "Enter" && void handleSendMessage()}
               className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
             />
-            <Button variant="gold" size="sm" className="p-3 rounded-2xl" onClick={handleSendMessage}>
+            <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => void sendPhoto(event.target.files?.[0])} />
+            <Button variant="ghost" size="sm" className="p-3 rounded-2xl" onClick={() => photoInputRef.current?.click()} disabled={uploadingPhoto !== null} aria-label="Send a photo">
+              {uploadingPhoto !== null ? <span className="text-[10px]">{uploadingPhoto}%</span> : <ImagePlus className="w-4 h-4" />}
+            </Button>
+            <Button variant="gold" size="sm" className="p-3 rounded-2xl" onClick={() => void handleSendMessage()}>
               <Send className="w-4 h-4" />
             </Button>
           </div>
