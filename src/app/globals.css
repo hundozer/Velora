@@ -3,68 +3,61 @@
 @tailwind utilities;
 
 :root {
-  --font-inter: 'Inter', sans-serif;
-  --font-playfair: 'Playfair Display', serif;
+  /* Approved editorial palette (v33): ivory, ink, copper, sage. RGB channels. */
+  --paper: 244 240 232;      /* #F4F0E8 ivory — page */
+  --surface: 251 248 242;    /* #FBF8F2 paper — raised surfaces */
+  --sunken: 236 229 217;     /* #ECE5D9 */
+  --ink: 30 34 32;           /* #1E2220 */
+  --ink-2: 74 79 75;         /* #4A4F4B */
+  --muted: 106 111 107;      /* #6A6F6B (4.9:1 on ivory) */
+  --line: 228 221 209;       /* #E4DDD1 */
+  --accent: 30 34 32;        /* primary actions are ink */
+  --accent-hover: 0 0 0;
+  --blush: 241 230 218;      /* #F1E6DA warm selected fill */
+  --copper: 177 120 84;      /* #B17854 rules, dots — not for text */
+  --copper-ink: 138 82 47;   /* #8A522F copper text on light */
+  --copper-light: 217 162 124; /* #D9A27C copper text on dark */
+  --sage: 62 77 67;          /* #3E4D43 */
+  --night: 21 23 22;         /* #151716 photographic dark */
+  --danger: 158 64 44;
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, sans-serif;
+  color-scheme: light;
 }
 
 body {
-  background-color: #0A0B0E;
-  color: #F9FAFB;
-  font-family: var(--font-inter);
+  background-color: rgb(var(--paper));
+  color: rgb(var(--ink));
+  font-family: var(--font-sans);
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Custom Scrollbar for Luxury Dark Theme */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+/* The display serif has a single weight; keep headlines from faux-bolding. */
+.font-serif, .font-display { font-weight: 400 !important; letter-spacing: -0.01em; }
 
-::-webkit-scrollbar-track {
-  background: #0A0B0E;
-}
+::selection { background: rgb(var(--accent) / 0.15); color: rgb(var(--ink)); }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 55, 0.25);
-  border-radius: 9999px;
-}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: rgb(var(--paper)); }
+::-webkit-scrollbar-thumb { background: rgb(var(--ink) / 0.15); border-radius: 9999px; }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(212, 175, 55, 0.5);
-}
-
-/* Intimo Ambient Glass Effects */
-.glass-panel {
-  background: rgba(18, 21, 30, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
+/* Legacy surface classes now render as soft paper cards. */
+.glass-panel,
 .glass-panel-gold {
-  background: rgba(18, 21, 30, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: rgb(var(--surface));
+  border: 1px solid rgb(var(--line));
 }
+.glass-panel-gold { border-color: rgb(var(--accent) / 0.25); }
 
-.gold-gradient-text {
-  background: linear-gradient(135deg, #F3E5AB 0%, #D4AF37 50%, #E5B869 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
+.gold-gradient-text { color: rgb(var(--accent)); }
+.gold-border-glow { box-shadow: 0 0 0 1px rgb(var(--accent) / 0.2); }
 
-.gold-border-glow {
-  box-shadow: 0 0 20px -3px rgba(212, 175, 55, 0.25);
-}
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Hide scrollbar utility */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
 
 /* Discreet mode (P1-14): photos stay blurred until tapped. */

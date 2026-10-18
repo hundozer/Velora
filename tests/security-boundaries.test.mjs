@@ -84,11 +84,12 @@ test("shared modal provides dialog semantics, escape handling, and keyboard focu
   assert.match(modal, /showCloseButton/);
 });
 
-test("mandatory age gate has balanced responsive actions and no inert close control", async () => {
+test("mandatory age gate is a full screen with no way around it", async () => {
   const gate = await read("src/components/common/AgeVerificationModal.tsx");
-  assert.match(gate, /maxWidth="lg"/);
-  assert.match(gate, /showCloseButton=\{false\}/);
-  assert.match(gate, /sm:grid-cols-\[1\.65fr_1fr\]/);
+  assert.match(gate, /if \(isAgeVerified\) return null;/);
+  assert.match(gate, /fixed inset-0 z-\[200\]/);
+  assert.match(gate, /await confirmAge\(\)/);
+  assert.doesNotMatch(gate, /onClose|Close dialog/);
 });
 
 test("public home is content-first rather than implementation-focused", async () => {
@@ -245,6 +246,7 @@ test("onboarding creates a verified-session-owned adult profile without self-gra
   assert.match(onboarding, /method: "POST"/);
   assert.match(onboarding, /label="Date of birth"/);
   assert.match(onboarding, /const basicsValid =/);
+  assert.match(onboarding, /const basicsValid = onboardingBasicsAreValid\(displayName, dateOfBirth\);/);
   assert.match(onboarding, /disabled=\{!basicsValid\}/);
   assert.match(onboarding, /Intimo is only available to adults aged 18 or older/);
 });
@@ -318,7 +320,10 @@ test("onboarding records declared age separately from stronger verification and 
   assert.match(route, /age_verification_method: "DATE_OF_BIRTH_DECLARATION"/);
   assert.match(route, /explicitSensitiveDataConsent !== true/);
   assert.match(route, /consent_type: "SPECIAL_CATEGORY_PROFILE"/);
-  assert.match(onboarding, /I explicitly consent/);
+  // Onboarding no longer collects special-category data; it is added later
+  // in settings behind the explicit-consent control.
+  assert.match(onboarding, /explicitSensitiveDataConsent: false/);
+  assert.doesNotMatch(onboarding, /sexualOrientation/);
 });
 
 test("privacy APIs derive ownership from the server actor and public profiles minimize sensitive data", async () => {

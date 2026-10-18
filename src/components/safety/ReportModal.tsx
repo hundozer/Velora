@@ -54,7 +54,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
     <Modal isOpen={isOpen} onClose={resetAndClose} title="Security & Compliance Report">
       {submitted ? (
         <div className="text-center space-y-4 py-6 text-left">
-          <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
+          <CheckCircle2 className="w-12 h-12 text-emerald-700 mx-auto" />
           <h3 className="text-lg font-serif font-bold text-velora-textPrimary text-center">
             Report Submitted & Logged
           </h3>
@@ -68,7 +68,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
       ) : (
         <div className="space-y-6 text-left">
           <div className="flex items-center gap-3 p-4 glass-panel rounded-2xl border border-red-500/30">
-            <ShieldAlert className="w-6 h-6 text-red-400 shrink-0" />
+            <ShieldAlert className="w-6 h-6 text-red-600 shrink-0" />
             <div>
               <h4 className="text-sm font-bold text-velora-textPrimary">Report @{targetUsername}</h4>
               <p className="text-[11px] text-velora-textMuted">
@@ -84,7 +84,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             <select
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full bg-velora-card border border-white/10 rounded-2xl p-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
+              className="w-full bg-velora-card border border-ink/10 rounded-2xl p-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
             >
               <option value="SUSPECTED_MINOR">Suspected minor (critical)</option>
               <option value="NON_CONSENSUAL_INTIMATE_CONTENT">Non-consensual intimate content (critical)</option>
@@ -111,12 +111,12 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               placeholder="Provide specific details about messages or behavior..."
-              className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
+              className="w-full bg-ink/5 border border-ink/10 rounded-2xl p-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
             />
           </div>
 
           <p className="text-[11px] text-velora-textMuted">Do not upload or redistribute illegal material. Moderators can preserve existing platform content by its reference. Additional evidence may be requested securely.</p>
-          {submitError && <p className="text-xs text-red-400" role="alert">{submitError}</p>}
+          {submitError && <p className="text-xs text-red-600" role="alert">{submitError}</p>}
 
           <div className="flex gap-3 pt-2">
             <Button variant="ghost" className="w-1/3 text-xs" onClick={resetAndClose}>

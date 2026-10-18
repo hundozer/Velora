@@ -32,12 +32,12 @@ export const Badge: React.FC<BadgeProps> = ({ type, label, className }) => {
         <span
           className={twMerge(
             clsx(
-              "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 backdrop-blur-md",
+              "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-velora-accent/15 text-velora-accent border border-velora-accent/30 backdrop-blur-md",
               className
             )
           )}
         >
-          <Crown className="w-3.5 h-3.5 text-amber-400" />
+          <Crown className="w-3.5 h-3.5 text-velora-accent" />
           {label || "Creator"}
         </span>
       );
@@ -46,12 +46,12 @@ export const Badge: React.FC<BadgeProps> = ({ type, label, className }) => {
         <span
           className={twMerge(
             clsx(
-              "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30 backdrop-blur-md",
+              "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/15 text-purple-800 border border-purple-500/30 backdrop-blur-md",
               className
             )
           )}
         >
-          <Users className="w-3.5 h-3.5 text-purple-400" />
+          <Users className="w-3.5 h-3.5 text-purple-800" />
           {label || "Couple"}
         </span>
       );
@@ -60,18 +60,18 @@ export const Badge: React.FC<BadgeProps> = ({ type, label, className }) => {
         <span
           className={twMerge(
             clsx(
-              "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/15 text-red-400 border border-red-500/30 backdrop-blur-md",
+              "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/15 text-red-600 border border-red-500/30 backdrop-blur-md",
               className
             )
           )}
         >
-          <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
+          <ShieldAlert className="w-3.5 h-3.5 text-red-600" />
           {label || "Admin"}
         </span>
       );
     case "online":
       return (
-        <span className={twMerge("inline-flex items-center gap-1.5 text-xs text-emerald-400 font-medium", className)}>
+        <span className={twMerge("inline-flex items-center gap-1.5 text-xs text-emerald-700 font-medium", className)}>
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -84,7 +84,7 @@ export const Badge: React.FC<BadgeProps> = ({ type, label, className }) => {
         <span
           className={twMerge(
             clsx(
-              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/10 text-velora-textPrimary border border-white/10",
+              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-ink/10 text-velora-textPrimary border border-ink/10",
               className
             )
           )}

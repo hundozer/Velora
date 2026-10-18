@@ -102,7 +102,7 @@ export function MemberPeople() {
     }
   }
 
-  const chip = (on: boolean) => `min-h-9 rounded-full border px-3 text-xs transition ${on ? "border-velora-gold bg-velora-gold/15 text-velora-textPrimary" : "border-white/10 text-velora-textSecondary hover:border-white/25"}`;
+  const chip = (on: boolean) => `min-h-9 rounded-full border px-3 text-xs transition ${on ? "border-velora-gold bg-velora-gold/15 text-velora-textPrimary" : "border-ink/10 text-velora-textSecondary hover:border-ink/25"}`;
   const toggle = (list: string[], value: string, max = 99) => list.includes(value) ? list.filter((item) => item !== value) : list.length >= max ? list : [...list, value];
 
   return (
@@ -110,9 +110,9 @@ export function MemberPeople() {
       <header className="flex items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">People</p>
-          <h1 className="font-serif text-3xl font-bold text-velora-textPrimary">Who&apos;s around</h1>
+          <h1 className="font-serif font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">Who&apos;s around</h1>
         </div>
-        <button type="button" onClick={() => { setDraft(filters); setSheetOpen(true); }} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4 text-sm font-semibold text-velora-textPrimary hover:border-velora-gold/50">
+        <button type="button" onClick={() => { setDraft(filters); setSheetOpen(true); }} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-ink/15 px-4 text-sm font-semibold text-velora-textPrimary hover:border-velora-gold/50">
           <SlidersHorizontal className="h-4 w-4" aria-hidden />Filters{filtersActive ? " ·" : ""}
         </button>
       </header>
@@ -139,11 +139,11 @@ export function MemberPeople() {
           <h2 className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">{filtersActive ? "Matching your filters" : "Everyone"}</h2>
           {filtersActive && <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)} className="text-xs text-velora-textMuted underline">Clear filters</button>}
         </div>
-        {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-300">{error}</p>}
+        {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-700">{error}</p>}
         {people === null ? (
           <p className="text-sm text-velora-textMuted">Loading…</p>
         ) : people.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-white/15 p-8 text-center">
+          <div className="rounded-3xl border border-dashed border-ink/15 p-8 text-center">
             <h3 className="font-serif text-xl font-bold text-velora-textPrimary">{filtersActive ? "Nobody matches just yet" : "Members are on their way"}</h3>
             <p className="mt-2 text-sm text-velora-textSecondary">{filtersActive ? "Try a wider distance or fewer filters." : "Post a plan for tonight so new members find you first."}</p>
             {filtersActive
@@ -153,16 +153,16 @@ export function MemberPeople() {
         ) : (
           <>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{people.map((person) => <PersonTile key={person.id} person={person} />)}</div>
-            {cursor && <button type="button" onClick={loadMore} disabled={loadingMore} className="mx-auto block min-h-11 rounded-full border border-white/15 px-6 text-sm text-velora-textSecondary disabled:opacity-50">{loadingMore ? "Loading…" : "Show more"}</button>}
+            {cursor && <button type="button" onClick={loadMore} disabled={loadingMore} className="mx-auto block min-h-11 rounded-full border border-ink/15 px-6 text-sm text-velora-textSecondary disabled:opacity-50">{loadingMore ? "Loading…" : "Show more"}</button>}
           </>
         )}
       </section>
 
       {sheetOpen && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 md:items-center" role="dialog" aria-modal="true" aria-label="Filters">
-          <div className="max-h-[85vh] w-full max-w-lg space-y-5 overflow-y-auto rounded-t-3xl border border-white/10 bg-velora-bg p-5 md:rounded-3xl">
+          <div className="max-h-[85vh] w-full max-w-lg space-y-5 overflow-y-auto rounded-t-3xl border border-ink/10 bg-velora-bg p-5 md:rounded-3xl">
             <div className="flex items-center justify-between">
-              <h2 className="font-serif text-xl font-bold text-velora-textPrimary">Filters</h2>
+              <h2 className="font-serif text-3xl font-bold text-velora-textPrimary">Filters</h2>
               <button type="button" onClick={() => setSheetOpen(false)} aria-label="Close filters" className="rounded-full p-2 text-velora-textMuted hover:text-velora-textPrimary"><X className="h-5 w-5" /></button>
             </div>
             <fieldset className="space-y-2"><legend className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">Who</legend>
@@ -170,9 +170,9 @@ export function MemberPeople() {
             </fieldset>
             <fieldset className="space-y-2"><legend className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">Age</legend>
               <div className="flex items-center gap-3 text-sm text-velora-textSecondary">
-                <input type="number" min={18} max={99} value={draft.minAge} onChange={(event) => setDraft({ ...draft, minAge: Math.max(18, Number(event.target.value) || 18) })} className="w-20 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-velora-textPrimary" aria-label="Minimum age" />
+                <input type="number" min={18} max={99} value={draft.minAge} onChange={(event) => setDraft({ ...draft, minAge: Math.max(18, Number(event.target.value) || 18) })} className="w-20 rounded-xl border border-ink/10 bg-ink/5 px-3 py-2 text-velora-textPrimary" aria-label="Minimum age" />
                 to
-                <input type="number" min={18} max={99} value={draft.maxAge} onChange={(event) => setDraft({ ...draft, maxAge: Math.min(99, Number(event.target.value) || 99) })} className="w-20 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-velora-textPrimary" aria-label="Maximum age" />
+                <input type="number" min={18} max={99} value={draft.maxAge} onChange={(event) => setDraft({ ...draft, maxAge: Math.min(99, Number(event.target.value) || 99) })} className="w-20 rounded-xl border border-ink/10 bg-ink/5 px-3 py-2 text-velora-textPrimary" aria-label="Maximum age" />
               </div>
             </fieldset>
             <fieldset className="space-y-2"><legend className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">Distance</legend>
@@ -193,7 +193,7 @@ export function MemberPeople() {
               </div>
             </fieldset>
             <div className="flex gap-3 pt-2">
-              <button type="button" onClick={() => setDraft(DEFAULT_FILTERS)} className="min-h-11 flex-1 rounded-full border border-white/15 text-sm text-velora-textSecondary">Reset</button>
+              <button type="button" onClick={() => setDraft(DEFAULT_FILTERS)} className="min-h-11 flex-1 rounded-full border border-ink/15 text-sm text-velora-textSecondary">Reset</button>
               <button type="button" onClick={() => { setFilters({ ...draft, maxAge: Math.max(draft.minAge, draft.maxAge) }); setSheetOpen(false); }} className="min-h-11 flex-1 rounded-full bg-gold-gradient text-sm font-bold text-velora-bg">Show people</button>
             </div>
           </div>

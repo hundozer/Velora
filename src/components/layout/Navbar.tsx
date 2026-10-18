@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { isFlowPath } from "@/lib/flowRoutes";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation, LANGUAGES, SupportedLanguage } from "@/context/LanguageContext";
 import { NotificationDrawer } from "@/components/notifications/NotificationDrawer";
@@ -36,85 +37,26 @@ export const Navbar: React.FC = () => {
     fetch("/api/notifications", { cache: "no-store", credentials: "same-origin" }).then((response) => response.ok ? response.json() : null).then((payload) => { if (payload) setUnreadCount(payload.unreadCount || 0); }).catch(() => {});
   }, [user]);
 
+  if (isFlowPath(pathname)) return null;
+
   return (
-    <header className="sticky top-0 z-40 w-full glass-panel border-b border-white/10 bg-velora-bg/85 backdrop-blur-xl">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-        {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-3 group shrink-0">
-          <div className="w-10 h-10 rounded-full bg-gold-gradient p-[1px] shadow-gold-glow flex items-center justify-center">
-            <div className="w-full h-full bg-velora-bg rounded-full flex items-center justify-center group-hover:bg-velora-bg/80 transition-colors">
-              <span className="font-serif font-bold text-lg text-velora-gold">I</span>
-            </div>
-          </div>
-          <div>
-            <span className="font-serif text-2xl font-bold tracking-widest gold-gradient-text uppercase">
-              Intimo
-            </span>
-            <span className="hidden sm:block text-[10px] tracking-[0.25em] text-velora-textMuted uppercase font-sans">
-              Adult Social Community
-            </span>
-          </div>
-        </Link>
+    <header className="sticky top-0 z-40 w-full border-b border-velora-line/70 bg-velora-paper/85 backdrop-blur-xl">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 lg:h-20 flex items-center justify-between gap-4">
+        <Link href="/" className="shrink-0 font-display text-3xl leading-none text-velora-ink">Intimo</Link>
 
-        {/* Stable public navigation; member-only destinations are additive. */}
-          <nav className="hidden lg:flex items-center gap-1" aria-label="Primary navigation">
-            <Link
-              href="/"
-              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-                pathname === "/"
-                  ? "bg-white/10 text-velora-gold border border-velora-gold/30"
-                  : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
-              }`}
-            >
-              <Compass className="w-4 h-4 text-amber-400" />
-              Home
+        {/* Home · People · Tonight · Messages; Me lives in the account menu. */}
+        <nav className="hidden lg:flex items-center gap-1" aria-label="Primary navigation">
+          {[
+            { href: "/", label: "Home", active: pathname === "/" },
+            { href: "/people", label: "People", active: pathname.startsWith("/people") },
+            { href: "/tonight", label: "Tonight", active: pathname.startsWith("/tonight") },
+            ...(user ? [{ href: "/messages", label: t("nav.messages"), active: pathname.startsWith("/messages") }] : []),
+          ].map((item) => (
+            <Link key={item.href} href={item.href} aria-current={item.active ? "page" : undefined} className={`rounded-full px-4 py-2 text-[15px] font-medium transition ${item.active ? "bg-velora-ink text-velora-paper" : "text-velora-ink2 hover:bg-velora-ink/5 hover:text-velora-ink"}`}>
+              {item.label}
             </Link>
-
-            <Link
-              href="/tonight"
-              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-                pathname.startsWith("/tonight")
-                  ? "bg-white/10 text-velora-gold border border-velora-gold/30"
-                  : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
-              }`}
-            >
-              <Heart className="w-4 h-4 text-rose-400 fill-rose-400/20" />
-              Tonight
-            </Link>
-
-            <Link href="/photos" className={`hidden xl:flex px-3 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all items-center gap-2 ${pathname === "/photos" ? "bg-white/10 text-velora-gold border border-velora-gold/30" : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"}`}>
-              <ImageIcon className="w-4 h-4" /> Photos
-            </Link>
-            <Link href="/videos" className={`hidden xl:flex px-3 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all items-center gap-2 ${pathname === "/videos" ? "bg-white/10 text-velora-gold border border-velora-gold/30" : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"}`}>
-              <Video className="w-4 h-4" /> Videos
-            </Link>
-
-            <Link
-              href="/people"
-              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-                pathname === "/people"
-                  ? "bg-white/10 text-velora-gold border border-velora-gold/30"
-                  : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
-              }`}
-            >
-              <User className="w-4 h-4" />
-              People
-            </Link>
-
-            {user && (
-            <Link
-              href="/messages"
-              className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-                pathname === "/messages"
-                  ? "bg-white/10 text-velora-gold border border-velora-gold/30"
-                  : "text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5"
-              }`}
-            >
-              <MessageSquare className="w-4 h-4" />
-              {t("nav.messages")}
-            </Link>
-            )}
-          </nav>
+          ))}
+        </nav>
 
         {/* Right Section: Language Selector & Auth / Avatar Controls */}
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
@@ -123,7 +65,7 @@ export const Navbar: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className="p-2.5 rounded-full bg-white/5 border border-white/10 text-velora-textSecondary hover:text-velora-gold hover:bg-white/10 transition-colors relative"
+                className="p-2.5 rounded-full bg-ink/5 border border-ink/10 text-velora-textSecondary hover:text-velora-gold hover:bg-ink/10 transition-colors relative"
                 title="Notifications"
               >
                 <Bell className="w-4 h-4" />
@@ -146,7 +88,7 @@ export const Navbar: React.FC = () => {
           <div className="relative hidden sm:block">
             <button
               onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-velora-textPrimary hover:bg-white/10 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-ink/5 border border-ink/10 text-xs font-semibold text-velora-textPrimary hover:bg-ink/10 transition-colors"
               title="Change platform language"
             >
               <span>{LANGUAGES.find((l) => l.code === language)?.flag || "🇬🇧"}</span>
@@ -159,7 +101,7 @@ export const Navbar: React.FC = () => {
                 className="absolute right-0 mt-2 w-44 glass-panel-gold rounded-2xl p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2"
                 onClick={() => setIsLangDropdownOpen(false)}
               >
-                <div className="px-3 py-1 text-[10px] uppercase font-bold text-velora-textMuted border-b border-white/10 mb-1">
+                <div className="px-3 py-1 text-[10px] uppercase font-bold text-velora-textMuted border-b border-ink/10 mb-1">
                   Language / Jazyk
                 </div>
                 {LANGUAGES.map((lang) => (
@@ -169,7 +111,7 @@ export const Navbar: React.FC = () => {
                     className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-xl transition-all ${
                       language === lang.code
                         ? "bg-gold-gradient text-velora-bg font-bold"
-                        : "text-velora-textPrimary hover:bg-white/10"
+                        : "text-velora-textPrimary hover:bg-ink/10"
                     }`}
                   >
                     <span className="flex items-center gap-2">
@@ -188,7 +130,7 @@ export const Navbar: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                className="flex items-center gap-2.5 p-1 rounded-full hover:bg-white/5 transition-colors"
+                className="flex items-center gap-2.5 p-1 rounded-full hover:bg-ink/5 transition-colors"
               >
                 <div className="w-10 h-10 rounded-full border-2 border-velora-gold/50 overflow-hidden bg-velora-card">
                   {profile?.avatarUrl ? (
@@ -207,7 +149,7 @@ export const Navbar: React.FC = () => {
                   className="absolute right-0 mt-2 w-56 glass-panel-gold rounded-2xl p-2 shadow-2xl z-50"
                   onClick={() => setIsUserDropdownOpen(false)}
                 >
-                  <div className="px-4 py-3 border-b border-white/10 mb-1">
+                  <div className="px-4 py-3 border-b border-ink/10 mb-1">
                     <p className="text-sm font-bold text-velora-textPrimary">{profile?.displayName || user.username}</p>
                     <p className="text-xs text-velora-textMuted truncate">{user.email}</p>
                     <div className="mt-2">
@@ -217,7 +159,7 @@ export const Navbar: React.FC = () => {
 
                   <Link
                     href={`/profile/${profile?.id || "me"}`}
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl font-medium"
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
                   >
                     <User className="w-4 h-4 text-velora-gold" />
                     My Profile
@@ -225,23 +167,23 @@ export const Navbar: React.FC = () => {
 
                   <Link
                     href="/albums/manage"
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl font-medium"
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
                   >
-                    <ImageIcon className="w-4 h-4 text-amber-300" />
+                    <ImageIcon className="w-4 h-4 text-velora-accent" />
                     My Photos
                   </Link>
 
                   <Link
                     href={`/profile/${profile?.id || "me"}?tab=VIDEOS`}
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl font-medium"
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
                   >
-                    <Video className="w-4 h-4 text-emerald-400" />
+                    <Video className="w-4 h-4 text-emerald-700" />
                     My Videos
                   </Link>
 
                   <Link
                     href={`/profile/${profile?.id || "me"}?tab=ADS`}
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl font-medium"
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
                   >
                     <Megaphone className="w-4 h-4 text-rose-400" />
                     My Dating Ads
@@ -249,15 +191,15 @@ export const Navbar: React.FC = () => {
 
                   <Link
                     href="/favorites"
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl font-medium"
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
                   >
-                    <Bookmark className="w-4 h-4 text-amber-300" />
+                    <Bookmark className="w-4 h-4 text-velora-accent" />
                     Saved items
                   </Link>
 
                   <Link
                     href="/settings"
-                    className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-white/5 rounded-xl"
+                    className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl"
                   >
                     <Settings className="w-4 h-4 text-velora-textMuted" />
                     Account Settings
@@ -265,7 +207,7 @@ export const Navbar: React.FC = () => {
 
                   <button
                     onClick={() => signOut("/")}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-red-400 hover:bg-red-500/10 rounded-xl mt-1 border-t border-white/5"
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-red-600 hover:bg-red-500/10 rounded-xl mt-1 border-t border-ink/5"
                   >
                     <LogOut className="w-4 h-4" />
                     Sign Out
@@ -275,18 +217,18 @@ export const Navbar: React.FC = () => {
             </div>
           ) : (
             /* CLEAN & HIGH-CONVERTING GUEST CTAS */
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <a
                 href="/auth/login"
-                className="px-4 py-2 rounded-full border border-velora-gold/40 text-velora-gold font-bold text-xs uppercase tracking-wider hover:bg-velora-gold/10 transition-all"
+                className="whitespace-nowrap rounded-full px-4 py-2.5 text-[15px] font-medium text-velora-ink hover:bg-velora-ink/5"
               >
                 {t("auth.login")}
               </a>
               <a
                 href="/auth/login?screen_hint=signup"
-                className="px-6 py-2.5 rounded-full bg-gold-gradient text-velora-bg font-serif font-bold text-xs uppercase tracking-wider shadow-gold-glow hover:scale-105 transition-all"
+                className="whitespace-nowrap rounded-full bg-velora-accent px-5 py-2.5 text-[15px] font-semibold text-velora-paper transition hover:bg-velora-accentHover"
               >
-                Join Intimo
+                Join free
               </a>
             </div>
           )}

@@ -83,13 +83,13 @@ export const Modal: React.FC<ModalProps> = ({
             transition={{ duration: 0.2 }}
             className={`relative w-full ${maxWidthClasses[maxWidth]} glass-panel-gold rounded-3xl p-6 sm:p-8 shadow-2xl shadow-black z-10`}
           >
-            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
+            <div className="flex items-center justify-between pb-4 border-b border-ink/10 mb-6">
               {title && <h3 id={titleId} className="text-xl font-semibold tracking-wide text-velora-textPrimary font-serif">{title}</h3>}
               {showCloseButton && (
                 <button
                   onClick={onClose}
                   aria-label="Close dialog"
-                  className="p-1 rounded-full text-velora-textSecondary hover:text-velora-gold hover:bg-white/5 transition-colors ml-auto"
+                  className="p-1 rounded-full text-velora-textSecondary hover:text-velora-gold hover:bg-ink/5 transition-colors ml-auto"
                 >
                   <X className="w-5 h-5" />
                 </button>

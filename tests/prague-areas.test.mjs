@@ -54,6 +54,7 @@ test("profile API validates area ids and derives location fields server-side", a
 
 test("onboarding asks for an area, not a free-form city", async () => {
   const page = await read("src/app/onboarding/page.tsx");
-  assert.match(page, /<AreaSelect/);
+  assert.match(page, /AREAS\.filter\(\(area\) => area\.kind === "PRAGUE_DISTRICT"\)/);
+  assert.match(page, /areaId: area,/);
   assert.doesNotMatch(page, /LOCATION_DATA/);
 });

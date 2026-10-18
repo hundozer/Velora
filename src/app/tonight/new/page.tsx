@@ -8,9 +8,9 @@ import { useAuth } from "@/context/AuthContext";
 import { AreaSelect } from "@/components/profile/AreaSelect";
 import { PLAN_CATEGORIES, PLAN_DURATIONS, PLAN_REPLY_TYPES } from "@/lib/plans.mjs";
 
-const fieldClass = "w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-velora-textPrimary outline-none focus:border-velora-gold/60 focus:ring-1 focus:ring-velora-gold/60";
+const fieldClass = "w-full rounded-2xl border border-ink/10 bg-ink/5 px-4 py-3 text-sm text-velora-textPrimary outline-none focus:border-velora-gold/60 focus:ring-1 focus:ring-velora-gold/60";
 const labelClass = "block space-y-2 text-xs font-semibold uppercase tracking-wider text-velora-textSecondary";
-const chip = (on: boolean) => `min-h-10 rounded-full border px-4 text-sm transition ${on ? "border-velora-gold bg-velora-gold/15 text-velora-textPrimary" : "border-white/10 text-velora-textSecondary hover:border-white/25"}`;
+const chip = (on: boolean) => `min-h-10 rounded-full border px-4 text-sm transition ${on ? "border-velora-gold bg-velora-gold/15 text-velora-textPrimary" : "border-ink/10 text-velora-textSecondary hover:border-ink/25"}`;
 
 /** Post a Plan (P1-07). Built to take well under a minute on a phone. */
 export default function NewPlanPage() {
@@ -52,7 +52,7 @@ export default function NewPlanPage() {
     <main className="mx-auto max-w-2xl space-y-6 px-4 pb-24 pt-6">
       <Link href="/tonight" className="inline-flex items-center gap-1 text-xs text-velora-textMuted hover:text-velora-textPrimary"><ArrowLeft className="h-3.5 w-3.5" aria-hidden />Tonight</Link>
       <header>
-        <h1 className="font-serif text-3xl font-bold text-velora-textPrimary">Post a plan</h1>
+        <h1 className="font-serif font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">Post a plan</h1>
         <p className="mt-1 text-sm text-velora-textSecondary">Say what you&apos;re up for. It expires on its own, and only the people you choose can reply.</p>
       </header>
 
@@ -103,7 +103,7 @@ export default function NewPlanPage() {
           </label>
         </fieldset>
 
-        {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-300">{error}</p>}
+        {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-700">{error}</p>}
         <button type="submit" disabled={!valid || submitting} className="min-h-12 w-full rounded-full bg-gold-gradient text-sm font-bold text-velora-bg disabled:opacity-50">{submitting ? "Posting…" : "Post plan"}</button>
       </form>
     </main>

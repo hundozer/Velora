@@ -1,19 +1,40 @@
 import type { Config } from "tailwindcss";
 
+// Warm light editorial palette. Values live as RGB channels in globals.css so
+// opacity modifiers (bg-intimo-accent/10) keep working.
+const token = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
+
+// Legacy names (bg, card, gold, textPrimary…) are kept and mapped onto the new
+// semantic tokens so existing screens adopt the palette without rewrites.
 const intimoColors = {
-  bg: "#0A0B0E",
-  card: "#12151E",
-  cardHover: "#181C2A",
-  border: "rgba(255, 255, 255, 0.08)",
-  borderGold: "rgba(212, 175, 55, 0.25)",
-  gold: "#D4AF37",
-  goldHover: "#C59B27",
-  amber: "#E5B869",
-  roseGold: "#E0A96D",
-  crimson: "#9E2A2B",
-  textPrimary: "#F9FAFB",
-  textSecondary: "#9CA3AF",
-  textMuted: "#6B7280",
+  paper: token("paper"),
+  surface: token("surface"),
+  sunken: token("sunken"),
+  ink: token("ink"),
+  ink2: token("ink-2"),
+  muted: token("muted"),
+  line: token("line"),
+  accent: token("accent"),
+  accentHover: token("accent-hover"),
+  blush: token("blush"),
+  copper: token("copper"),
+  copperInk: token("copper-ink"),
+  copperLight: token("copper-light"),
+  sage: token("sage"),
+  night: token("night"),
+  bg: token("paper"),
+  card: token("surface"),
+  cardHover: token("sunken"),
+  border: token("line"),
+  borderGold: token("accent"),
+  gold: token("accent"),
+  goldHover: token("accent-hover"),
+  amber: token("accent"),
+  roseGold: token("accent"),
+  crimson: token("danger"),
+  textPrimary: token("ink"),
+  textSecondary: token("ink-2"),
+  textMuted: token("muted"),
 };
 
 const config: Config = {
@@ -27,20 +48,30 @@ const config: Config = {
       colors: {
         intimo: intimoColors,
         velora: intimoColors, // Alias for backward compatibility
+        ink: token("ink"),
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "sans-serif"],
-        serif: ["var(--font-playfair)", "serif"],
+        sans: ["var(--font-sans)"],
+        serif: ["var(--font-display)"],
+        display: ["var(--font-display)"],
       },
       backgroundImage: {
-        "gold-gradient": "linear-gradient(135deg, #D4AF37 0%, #E5B869 50%, #C59B27 100%)",
-        "gold-radial": "radial-gradient(circle at center, rgba(212, 175, 55, 0.15) 0%, transparent 70%)",
-        "dark-gradient": "linear-gradient(180deg, #12151E 0%, #0A0B0E 100%)",
-        "glass-gradient": "linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%)",
+        // Kept as names for existing markup; flat accent, no gradients.
+        "gold-gradient": "linear-gradient(rgb(var(--accent)), rgb(var(--accent)))",
+        "gold-radial": "none",
+        "dark-gradient": "none",
+        "glass-gradient": "none",
       },
       boxShadow: {
-        "gold-glow": "0 0 25px -5px rgba(212, 175, 55, 0.3)",
-        "glass": "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
+        "gold-glow": "0 10px 30px -12px rgb(var(--accent) / 0.45)",
+        glass: "0 1px 2px rgb(var(--ink) / 0.04), 0 12px 40px -18px rgb(var(--ink) / 0.18)",
+        card: "0 1px 2px rgb(var(--ink) / 0.04), 0 18px 50px -24px rgb(var(--ink) / 0.22)",
+      },
+      borderRadius: {
+        card: "1.75rem",
+      },
+      transitionDuration: {
+        DEFAULT: "200ms",
       },
     },
   },
