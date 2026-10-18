@@ -4,7 +4,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
-import { firstMessageDecision, resolveBoundaries } from "@/lib/boundaries.mjs";
+import { establishedDecision, firstMessageDecision, resolveBoundaries } from "@/lib/boundaries.mjs";
 import { presenceBucket } from "@/lib/presence.mjs";
 import { maybeSendReturnEmail } from "@/lib/notifications/returnEmails";
 import { areFriends } from "@/lib/social/friendship";
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 100, 25), 250);
     const before = url.searchParams.get("before");
     if (before && Number.isNaN(new Date(before).getTime())) return NextResponse.json({ error: "Invalid conversation cursor" }, { status: 400 });
-    let conversationQuery = supabase.from("direct_messages").select("id,conversation_id,sender_id,receiver_id,content,status,is_opened,created_at").or(`sender_id.eq.${actor.actor.profileId},receiver_id.eq.${actor.actor.profileId}`).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(limit + 1);
+    let conversationQuery = supabase.from("direct_messages").select("id,conversation_id,sender_id,receiver_id,content,attachment_type,status,is_opened,created_at").or(`sender_id.eq.${actor.actor.profileId},receiver_id.eq.${actor.actor.profileId}`).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(limit + 1);
     if (before) conversationQuery = conversationQuery.lt("created_at", before);
     const { data: rawRows, error } = await conversationQuery;
     if (error) return NextResponse.json({ error: "Conversations lookup failed" }, { status: 502 });
@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
       const profile = byId.get(id);
       if (!profile || blockedPeers.has(id)) return [];
       const unreadCount = (rows || []).filter((message) => message.conversation_id === row.conversation_id && message.receiver_id === actor.actor.profileId && message.is_opened === false).length;
-      return [{ id: row.conversation_id, participant: { id: profile.id, userId: profile.id, displayName: profile.display_name, avatarUrl: profile.avatar_url || "", location: [profile.city,profile.country].filter(Boolean).join(", "), verified: profile.verification_status === "VERIFIED", isOnline: presenceBucket(profile.last_active_at, profile.show_online_status === true) === "ONLINE" }, lastMessage: { id: row.id, conversationId: row.conversation_id, senderId: row.sender_id, senderName: row.sender_id === actor.actor.profileId ? "You" : profile.display_name, senderAvatar: profile.avatar_url || "", content: row.content, status: row.status, createdAt: row.created_at }, updatedAt: row.created_at, unreadCount, isRequest: !repliedIn.has(row.conversation_id) }];
+      return [{ id: row.conversation_id, participant: { id: profile.id, userId: profile.id, displayName: profile.display_name, avatarUrl: profile.avatar_url || "", location: [profile.city,profile.country].filter(Boolean).join(", "), verified: profile.verification_status === "VERIFIED", isOnline: presenceBucket(profile.last_active_at, profile.show_online_status === true) === "ONLINE" }, lastMessage: { id: row.id, conversationId: row.conversation_id, senderId: row.sender_id, senderName: row.sender_id === actor.actor.profileId ? "You" : profile.display_name, senderAvatar: profile.avatar_url || "", content: row.content || (row.attachment_type === "IMAGE" ? "Photo" : ""), status: row.status, createdAt: row.created_at }, updatedAt: row.created_at, unreadCount, isRequest: !repliedIn.has(row.conversation_id) }];
     });
     return NextResponse.json({ conversations, pagination: { limit, hasMore, nextCursor: hasMore ? rows.at(-1)?.created_at || null : null } }, { headers: { "Cache-Control": "private, no-store" } });
   }
@@ -115,7 +115,9 @@ export async function POST(req: NextRequest) {
   const receiverId = typeof body.receiverId === "string" ? body.receiverId : "";
   const content = typeof body.content === "string" ? body.content.trim() : "";
   const datingAdId = typeof body.datingAdId === "string" ? body.datingAdId : null;
-  if (!UUID.test(receiverId) || receiverId === actor.actor.profileId || content.length < 1 || content.length > 4_000) return NextResponse.json({ error: "Invalid message" }, { status: 400 });
+  const mediaId = typeof body.mediaId === "string" && UUID.test(body.mediaId) ? body.mediaId : null;
+  // A message needs text, a photo, or both (P1-10).
+  if (!UUID.test(receiverId) || receiverId === actor.actor.profileId || (content.length < 1 && !mediaId) || content.length > 4_000) return NextResponse.json({ error: "Invalid message" }, { status: 400 });
   if (datingAdId && !UUID.test(datingAdId)) return NextResponse.json({ error: "Invalid dating ad context" }, { status: 400 });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Messaging unavailable" }, { status: 503 });
@@ -159,8 +161,25 @@ export async function POST(req: NextRequest) {
     const decision = firstMessageDecision(resolveBoundaries(boundaryRows), { gender: sender.gender, isCoupleProfile: sender.is_couple_profile, verified: verifiedSender });
     if (!decision.allowed) return NextResponse.json({ error: decision.reason, boundary: true }, { status: 403 });
   }
-  const row = { conversation_id: conversationId(actor.actor.profileId, receiverId), sender_id: actor.actor.profileId, receiver_id: receiverId, sender_name: sender.display_name, sender_avatar: sender.avatar_url, content, media_url: null, attachment_type: null, plan_id: datingAdId, is_disappearing: false, is_opened: false, status: "SENT", is_locked: false, unlock_price: null, is_unlocked: true };
-  const { data, error } = await supabase.from("direct_messages").insert(row).select("id,conversation_id,sender_id,receiver_id,content,status,created_at").single();
+  if (mediaId) {
+    // Chat photo: the sender's own finished upload, tagged for messages.
+    const { data: media, error: mediaError } = await supabase.from("media_objects").select("id,owner_id,media_type,upload_status,category,content_rating,moderation_status").eq("id", mediaId).maybeSingle();
+    if (mediaError) return NextResponse.json({ error: "Photo could not be checked" }, { status: 502 });
+    if (!media || media.owner_id !== actor.actor.profileId || media.media_type !== "IMAGE" || media.upload_status !== "AVAILABLE" || media.category !== "MESSAGE" || ["REJECTED", "HIDDEN", "REMOVED"].includes(media.moderation_status)) {
+      return NextResponse.json({ error: "That photo can't be sent" }, { status: 400 });
+    }
+    if (media.content_rating === "EXPLICIT") {
+      // Boundary (P1-20): explicit photos need the recipient's consent pattern.
+      const { data: rows, error: rowsError } = await supabase.from("member_boundaries").select("kind,preference").eq("profile_id", receiverId);
+      if (rowsError) return NextResponse.json({ error: "Messaging eligibility could not be checked" }, { status: 502 });
+      const preference = resolveBoundaries(rows).EXPLICIT_MEDIA_IN_CHAT;
+      if (!establishedDecision(preference, Boolean(repliedBefore))) {
+        return NextResponse.json({ error: preference === "NOT_INTERESTED" ? "This member doesn't accept explicit photos in chat." : "This member accepts explicit photos once they've written back.", boundary: true }, { status: 403 });
+      }
+    }
+  }
+  const row = { conversation_id: conversationId(actor.actor.profileId, receiverId), sender_id: actor.actor.profileId, receiver_id: receiverId, sender_name: sender.display_name, sender_avatar: sender.avatar_url, content, media_url: mediaId ? `/api/media/${mediaId}` : null, attachment_type: mediaId ? "IMAGE" : null, plan_id: datingAdId, is_disappearing: false, is_opened: false, status: "SENT", is_locked: false, unlock_price: null, is_unlocked: true };
+  const { data, error } = await supabase.from("direct_messages").insert(row).select("id,conversation_id,sender_id,receiver_id,content,media_url,attachment_type,status,created_at").single();
   if (error || !data) return NextResponse.json({ error: "Message could not be sent" }, { status: 502 });
   const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MESSAGE_SEND", resourceType: "MESSAGE", resourceId: data.id, outcome: "SUCCESS", metadata: { receiverId, datingAdId } });
   if (!audited) return NextResponse.json({ error: "Message sent but audit recording failed; contact support" }, { status: 503 });

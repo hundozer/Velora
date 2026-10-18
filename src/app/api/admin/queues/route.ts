@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     return { count: count ?? 0, oldestHours: data?.[0] ? Math.round(((Date.now() - new Date(data[0].created_at).getTime()) / HOUR) * 10) / 10 : null };
   };
   const [photos, plans, scene, reports, urgent] = await Promise.all([
-    oldest("media_objects", (query) => query.eq("moderation_status", "PENDING_REVIEW").eq("upload_status", "AVAILABLE")),
+    oldest("media_objects", (query) => query.eq("moderation_status", "PENDING_REVIEW").eq("upload_status", "AVAILABLE").or("category.is.null,category.neq.MESSAGE")),
     oldest("dating_ads", (query) => query.eq("moderation_status", "PENDING_REVIEW").eq("status", "active")),
     oldest("scene_events", (query) => query.eq("status", "PENDING_REVIEW")),
     oldest("moderation_cases", (query) => query.in("status", OPEN_STATUSES)),
