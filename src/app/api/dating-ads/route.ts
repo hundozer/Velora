@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
-  const rate = checkRateLimit(`plan-create:${actor.actor.userId}`, 10, 60 * 60);
+  const rate = (await checkRateLimit(`plan-create:${actor.actor.userId}`, 10, 60 * 60));
   if (!rate.allowed) return NextResponse.json({ error: "Too many plans posted" }, { status: 429, headers: { "Retry-After": String(rate.resetInSeconds) } });
   if (Number(req.headers.get("content-length") || "0") > MAX_BODY_BYTES) return NextResponse.json({ error: "Payload too large" }, { status: 413 });
 

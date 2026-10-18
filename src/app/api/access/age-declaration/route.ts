@@ -4,7 +4,7 @@ import { checkRateLimit } from "@/lib/security/rateLimiter";
 
 export async function POST(req: NextRequest) {
   const client = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  if (!checkRateLimit(`age-declaration:${client.slice(0, 80)}`, 10, 60 * 60).allowed) {
+  if (!(await checkRateLimit(`age-declaration:${client.slice(0, 80)}`, 10, 60 * 60)).allowed) {
     return NextResponse.json({ error: "Too many declarations" }, { status: 429 });
   }
   let body: unknown;

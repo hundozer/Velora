@@ -14,7 +14,7 @@ const rows = (result: { data: unknown }) => Array.isArray(result.data) ? result.
 export async function GET(req: NextRequest) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
-  const rate = checkRateLimit(`privacy-export:${actor.actor.userId}`, 3, 24 * 60 * 60);
+  const rate = (await checkRateLimit(`privacy-export:${actor.actor.userId}`, 3, 24 * 60 * 60));
   if (!rate.allowed) return NextResponse.json({ error: "Export limit reached; try again later" }, { status: 429 });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Privacy service unavailable" }, { status: 503 });

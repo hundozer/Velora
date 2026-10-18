@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const auth = await resolveServerActor(req);
   if (auth.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: auth.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(auth.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
-  const rate = checkRateLimit(`friend:${auth.actor.userId}`, 40, 60 * 60); if (!rate.allowed) return NextResponse.json({ error: "Too many friend actions" }, { status: 429 });
+  const rate = (await checkRateLimit(`friend:${auth.actor.userId}`, 40, 60 * 60)); if (!rate.allowed) return NextResponse.json({ error: "Too many friend actions" }, { status: 429 });
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const targetId = typeof body.targetProfileId === "string" ? body.targetProfileId : "";
   const action = typeof body.action === "string" ? body.action : "";

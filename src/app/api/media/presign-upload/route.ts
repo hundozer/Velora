@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
 
-  const rate = checkRateLimit(`media-presign:${actor.actor.userId}`, 20, 60);
+  const rate = (await checkRateLimit(`media-presign:${actor.actor.userId}`, 20, 60));
   if (!rate.allowed) return NextResponse.json({ error: "Too many upload requests" }, { status: 429, headers: { "Retry-After": String(rate.resetInSeconds) } });
 
   try {

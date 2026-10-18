@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return noStore(NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 }));
-  const rate = checkRateLimit(`consent:${actor.actor.userId}`, 20, 60 * 60);
+  const rate = (await checkRateLimit(`consent:${actor.actor.userId}`, 20, 60 * 60));
   if (!rate.allowed) return NextResponse.json({ error: "Too many consent changes" }, { status: 429 });
   let body: unknown;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }

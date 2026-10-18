@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const actor = await resolveServerActor(req); if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
-  if (!checkRateLimit(`saved-items:${actor.actor.userId}`, 80, 60 * 60).allowed) return NextResponse.json({ error: "Too many save requests" }, { status: 429 });
+  if (!(await checkRateLimit(`saved-items:${actor.actor.userId}`, 80, 60 * 60)).allowed) return NextResponse.json({ error: "Too many save requests" }, { status: 429 });
   let body: unknown; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const input = body as { targetType?: unknown; targetId?: unknown };
   const targetType = typeof input.targetType === "string" ? input.targetType : ""; const targetId = typeof input.targetId === "string" ? input.targetId : "";

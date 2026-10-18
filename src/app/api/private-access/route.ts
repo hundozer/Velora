@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
   const ctx = await actorAndDb(req);
   if ("error" in ctx) return ctx.error;
   const { actor, db } = ctx;
-  if (!checkRateLimit(`private-access-request:${actor.userId}`, 20, 60 * 60).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  if (!(await checkRateLimit(`private-access-request:${actor.userId}`, 20, 60 * 60)).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const ownerId = typeof body.ownerId === "string" ? body.ownerId : "";

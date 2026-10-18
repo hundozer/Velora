@@ -13,7 +13,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Active adult access required" }, { status: 403 });
   if (!uuid.test(params.id)) return NextResponse.json({ error: "Invalid ad identifier" }, { status: 400 });
-  if (!checkRateLimit(`plan-end:${actor.actor.userId}`, 20, 60 * 60).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  if (!(await checkRateLimit(`plan-end:${actor.actor.userId}`, 20, 60 * 60)).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   let body: unknown; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   // Plans expire on their own; the only member action is ending one early.
   if ((body as { action?: unknown }).action !== "END") return NextResponse.json({ error: "Invalid action" }, { status: 400 });

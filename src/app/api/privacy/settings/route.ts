@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
-  const rate = checkRateLimit(`privacy-settings:${actor.actor.userId}`, 30, 60 * 60);
+  const rate = (await checkRateLimit(`privacy-settings:${actor.actor.userId}`, 30, 60 * 60));
   if (!rate.allowed) return NextResponse.json({ error: "Too many settings changes" }, { status: 429 });
   let body: unknown;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
