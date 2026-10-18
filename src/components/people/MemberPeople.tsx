@@ -2,14 +2,22 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SlidersHorizontal, X } from "lucide-react";
 import { PersonTile, type Person } from "@/components/people/PersonTile";
 import { PlanCard, type Plan } from "@/components/plans/PlanCard";
 import { DESIRES, MAX_DESIRE_FILTERS, POSITIVE_STATES } from "@/lib/desires.mjs";
-import { DISTANCE_OPTIONS, WHO_OPTIONS } from "@/lib/people.mjs";
+import { DISTANCE_OPTIONS, WHO_OPTIONS, parsePeopleFilters } from "@/lib/people.mjs";
+import { takeSnapshot, writeSnapshot } from "@/lib/peopleSession.mjs";
 
 type Filters = { who: string[]; minAge: number; maxAge: number; withinKm: number | null; desires: string[]; hasPhoto: boolean; verified: boolean; online: boolean };
 const DEFAULT_FILTERS: Filters = { who: [], minAge: 18, maxAge: 99, withinKm: null, desires: [], hasPhoto: false, verified: false, online: false };
+
+/** Reads filters from the page URL with the same validation the discovery API applies. */
+function filtersFromParams(params: URLSearchParams): Filters {
+  const parsed = parsePeopleFilters(params);
+  return { who: parsed.who, minAge: parsed.minAge, maxAge: parsed.maxAge, withinKm: parsed.withinKm, desires: parsed.desires, hasPhoto: parsed.hasPhoto, verified: parsed.verified, online: parsed.active === "ONLINE" };
+}
 
 function toQuery(filters: Filters, extra: Record<string, string> = {}) {
   const params = new URLSearchParams(extra);
@@ -46,8 +54,11 @@ function Rail({ title, people, href }: { title: string; people: Person[]; href?:
 
 /** People v3 (P1-05): rails for a low-density city, then the filtered grid. */
 export function MemberPeople() {
-  const [filters, setFilters] = React.useState<Filters>(DEFAULT_FILTERS);
-  const [draft, setDraft] = React.useState<Filters>(DEFAULT_FILTERS);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  // Filters live in the URL, so reloads, links and the back button keep them.
+  const [filters, setFilters] = React.useState<Filters>(() => filtersFromParams(new URLSearchParams(searchParams?.toString() ?? "")));
+  const [draft, setDraft] = React.useState<Filters>(filters);
   const [sheetOpen, setSheetOpen] = React.useState(false);
   const [people, setPeople] = React.useState<Person[] | null>(null);
   const [cursor, setCursor] = React.useState<string | null>(null);
@@ -56,8 +67,48 @@ export function MemberPeople() {
   const [rails, setRails] = React.useState<{ activeTitle: string; active: Person[]; fresh: Person[]; shared: Person[]; plans: Plan[] }>({ activeTitle: "Online now", active: [], fresh: [], shared: [], plans: [] });
 
   const filtersActive = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
+  const firstLoad = React.useRef(true);
+  const restoredQuery = React.useRef<string | null>(null);
+  const railsRestored = React.useRef(false);
+  const latest = React.useRef({ filters, people, cursor, rails });
+  latest.current = { filters, people, cursor, rails };
+
+  /** Remembers loaded people, rails and scroll position before leaving for a profile. */
+  const saveSnapshot = React.useCallback(() => {
+    const { filters: current, people: loaded, cursor: next, rails: currentRails } = latest.current;
+    if (loaded) writeSnapshot(window.sessionStorage, toQuery(current), { people: loaded, cursor: next, rails: currentRails, scrollY: window.scrollY });
+  }, []);
+
+  // Save when following any in-app link (a profile, Tonight, Messages…), not on reload,
+  // so coming back restores the place while a deliberate reload fetches fresh results.
+  React.useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      const link = (event.target as HTMLElement | null)?.closest?.("a[href^='/']");
+      if (link && !link.getAttribute("href")?.startsWith("/people")) saveSnapshot();
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [saveSnapshot]);
 
   React.useEffect(() => {
+    const query = toQuery(filters);
+    router.replace(query ? `/people?${query}` : "/people", { scroll: false });
+    if (firstLoad.current) {
+      firstLoad.current = false;
+      // Coming back from a profile: restore the same people and scroll position once.
+      const snapshot = takeSnapshot<Person, typeof rails>(window.sessionStorage, query);
+      if (snapshot) {
+        restoredQuery.current = query;
+        setPeople(snapshot.people);
+        setCursor(snapshot.cursor);
+        if (snapshot.rails) { setRails(snapshot.rails); railsRestored.current = true; }
+        requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, snapshot.scrollY)));
+        return;
+      }
+    }
+    // Effects can run twice for the same filters (React Strict Mode); keep restored results.
+    if (restoredQuery.current === query) return;
+    restoredQuery.current = null;
     let cancelled = false;
     setPeople(null);
     setError("");
@@ -65,9 +116,12 @@ export function MemberPeople() {
       .then((result) => { if (!cancelled) { setPeople(result.profiles); setCursor(result.nextCursor); } })
       .catch((cause) => { if (!cancelled) { setError(cause.message); setPeople([]); } });
     return () => { cancelled = true; };
+    // router is stable; the URL follows filters, not the other way round.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
   React.useEffect(() => {
+    if (railsRestored.current) return;
     let cancelled = false;
     (async () => {
       // Widen the recency window until something shows, so a quiet hour never looks empty.
@@ -136,7 +190,7 @@ export function MemberPeople() {
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">{filtersActive ? "Matching your filters" : "Everyone"}</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">{filtersActive ? "With your filters" : "Everyone"}</h2>
           {filtersActive && <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)} className="text-xs text-velora-textMuted underline">Clear filters</button>}
         </div>
         {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-700">{error}</p>}
@@ -144,7 +198,7 @@ export function MemberPeople() {
           <p className="text-sm text-velora-textMuted">Loading…</p>
         ) : people.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-ink/15 p-8 text-center">
-            <h3 className="font-serif text-xl font-bold text-velora-textPrimary">{filtersActive ? "Nobody matches just yet" : "Members are on their way"}</h3>
+            <h3 className="font-serif text-xl font-bold text-velora-textPrimary">{filtersActive ? "Nobody here with these filters yet" : "Members are on their way"}</h3>
             <p className="mt-2 text-sm text-velora-textSecondary">{filtersActive ? "Try a wider distance or fewer filters." : "Post a plan for tonight so new members find you first."}</p>
             {filtersActive
               ? <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)} className="mt-4 text-sm font-semibold text-velora-gold underline">Clear filters</button>
