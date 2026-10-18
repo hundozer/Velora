@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { deleteStoredObject, getPresignedDownloadUrl } from "@/lib/storage/r2";
+import { deleteStoredObject, deleteVariantObjects, getCacheableDownloadUrl, getPresignedDownloadUrl } from "@/lib/storage/r2";
+import { parseRequestedWidth, pickVariantWidth } from "@/lib/media/variants.mjs";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
 import { grantIsActive } from "@/lib/privateAccess.mjs";
@@ -14,7 +15,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
   if (!UUID.test(params.id)) return NextResponse.json({ error: "Invalid media identifier" }, { status: 400 });
-  const rate = (await checkRateLimit(`media-view:${actor.actor.userId}`, 120, 60));
+  const requestedWidth = parseRequestedWidth(req.nextUrl.searchParams.get("w"));
+  // Thumbnails are small and requested in bulk by lists; they get their own budget.
+  const rate = requestedWidth === 160
+    ? (await checkRateLimit(`media-view-thumb:${actor.actor.userId}`, 600, 60))
+    : (await checkRateLimit(`media-view:${actor.actor.userId}`, 120, 60));
   if (!rate.allowed) return NextResponse.json({ error: "Media access rate limit reached" }, { status: 429 });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Media service unavailable" }, { status: 503 });
@@ -55,8 +60,25 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     allowed = grantIsActive(grant);
   }
   if (!allowed) return NextResponse.json({ error: "Media not found" }, { status: 404 });
+  // Authorisation is complete. Pick a resized variant when one exists (variants are read
+  // separately so this route keeps working before the variants migration is applied).
+  let objectKey = media.object_key;
+  if (requestedWidth) {
+    const { data: stored } = await supabase.from("media_objects").select("variants").eq("id", media.id).maybeSingle();
+    const variants = (stored as { variants?: Record<string, string> | null } | null)?.variants;
+    const width = pickVariantWidth(variants, requestedWidth);
+    if (width && variants?.[String(width)]) objectKey = variants[String(width)];
+  }
+  // Grant-based and chat media stay uncached so revoking access is immediate.
+  const cacheable = !isChatImage && (media.visibility === "PUBLIC" || media.visibility === "MEMBERS_ONLY");
   try {
-    const signedUrl = await getPresignedDownloadUrl(media.object_key);
+    if (cacheable) {
+      const { url, maxAgeSeconds } = await getCacheableDownloadUrl(objectKey);
+      const response = NextResponse.redirect(url, 307);
+      response.headers.set("Cache-Control", `private, max-age=${maxAgeSeconds}`);
+      return response;
+    }
+    const signedUrl = await getPresignedDownloadUrl(objectKey);
     const response = NextResponse.redirect(signedUrl, 307);
     response.headers.set("Cache-Control", "private, no-store");
     return response;
@@ -86,7 +108,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   if (!UUID.test(params.id)) return NextResponse.json({ error: "Media not found" }, { status: 404 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Media service unavailable" }, { status: 503 });
   const { data: media } = await db.from("media_objects").select("id,object_key").eq("id", params.id).eq("owner_id", actor.actor.profileId).maybeSingle(); if (!media) return NextResponse.json({ error: "Media not found" }, { status: 404 });
-  try { await deleteStoredObject(media.object_key); } catch { return NextResponse.json({ error: "Stored media could not be removed" }, { status: 502 }); }
+  try { await deleteStoredObject(media.object_key); await deleteVariantObjects(media.id); } catch { return NextResponse.json({ error: "Stored media could not be removed" }, { status: 502 }); }
   const { error } = await db.from("media_objects").delete().eq("id", media.id).eq("owner_id", actor.actor.profileId); if (error) return NextResponse.json({ error: "Media metadata could not be removed" }, { status: 502 });
   const audited = await appendDurableAudit(db, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MEDIA_DELETE", resourceType: "MEDIA", resourceId: media.id, outcome: "SUCCESS" });
   if (!audited) return NextResponse.json({ error: "Media was deleted but audit evidence failed", mediaId: media.id }, { status: 502 });

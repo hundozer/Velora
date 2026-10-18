@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { BadgeCheck, MapPin } from "lucide-react";
+import { Portrait } from "@/components/media/Portrait";
 
 export type Person = {
   id: string; displayName: string; age?: number; isCoupleProfile?: boolean; avatarUrl?: string; verified?: boolean;
@@ -14,10 +15,7 @@ export function PersonTile({ person, compact = false }: { person: Person; compac
   return (
     <Link href={`/profile/${person.id}`} className={`group block overflow-hidden rounded-2xl border border-ink/10 bg-velora-card/70 transition hover:border-velora-gold/40 ${compact ? "w-36 shrink-0" : ""}`}>
       <div className="relative aspect-[4/5] bg-velora-bg">
-        {person.avatarUrl
-          ? // eslint-disable-next-line @next/next/no-img-element
-            <img src={person.avatarUrl} alt="" className="h-full w-full object-cover transition group-hover:scale-[1.02]" loading="lazy" />
-          : <div className="flex h-full items-center justify-center font-serif text-4xl text-velora-gold/60">{person.displayName.slice(0, 1).toUpperCase()}</div>}
+        <Portrait src={person.avatarUrl} name={person.displayName} sizes={compact ? "144px" : "(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"} className="h-full w-full" monogramClassName="text-4xl" />
         {person.presence === "ONLINE" && <span className="absolute left-2 top-2 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-velora-bg" aria-label="Online now" />}
       </div>
       <div className="space-y-0.5 p-3">
