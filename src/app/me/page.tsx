@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Activity, Bell, Bookmark, ChevronRight, Flame, Hand, Lock, Image as ImageIcon, LogOut, Settings, Shield, User } from "lucide-react";
+import { Activity, Bell, Bookmark, ChevronRight, EyeOff, Flame, Hand, Lock, Image as ImageIcon, LogOut, Settings, Shield, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation, LANGUAGES } from "@/context/LanguageContext";
 import { useDurableNotifications } from "@/lib/notifications/useDurableNotifications";
@@ -67,7 +67,8 @@ export default function MePage() {
         <Row href="/albums/manage" icon={ImageIcon} label="My photos & albums" />
         <Row href="/me/private-photos" icon={Lock} label="Private photo access" />
         <Row href="/favorites" icon={Bookmark} label="Saved" />
-        <Row href="/settings" icon={Settings} label="Settings & privacy" />
+        <Row href="/settings#privacy" icon={EyeOff} label="Privacy Center" />
+        <Row href="/settings" icon={Settings} label="Settings" />
         {ADMIN_ROLES.has(String(role)) && <Row href="/admin" icon={Shield} label="Admin" />}
       </nav>
 

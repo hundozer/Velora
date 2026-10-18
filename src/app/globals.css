@@ -66,3 +66,10 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Discreet mode (P1-14): photos stay blurred until tapped. */
+html[data-discreet="on"] main img:not([data-revealed]),
+html[data-discreet="on"] main video:not([data-revealed]) {
+  filter: blur(24px) saturate(0.4);
+  cursor: pointer;
+}

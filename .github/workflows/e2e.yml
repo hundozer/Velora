@@ -1,0 +1,27 @@
+name: E2E
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Staging or preview URL (never production)"
+        required: true
+
+jobs:
+  full-loop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+        env:
+          E2E_BASE_URL: ${{ inputs.base_url }}
+          E2E_A_EMAIL: ${{ secrets.E2E_A_EMAIL }}
+          E2E_A_PASSWORD: ${{ secrets.E2E_A_PASSWORD }}
+          E2E_B_EMAIL: ${{ secrets.E2E_B_EMAIL }}
+          E2E_B_PASSWORD: ${{ secrets.E2E_B_PASSWORD }}

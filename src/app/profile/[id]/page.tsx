@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Bookmark, Flag, Heart, ImageIcon, MapPin, MessageSquare, ShieldCheck, UserMinus } from "lucide-react";
+import { Bookmark, Clock, Flag, Heart, ImageIcon, MapPin, MessageSquare, ShieldCheck, UserMinus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 import { ReportModal } from "@/components/safety/ReportModal";
@@ -12,13 +12,15 @@ import { ProfileDesires } from "@/components/profile/ProfileDesires";
 import { ProfileBoundaries } from "@/components/profile/ProfileBoundaries";
 import { ProfilePlans } from "@/components/plans/ProfilePlans";
 import { ProfilePrivatePhotos } from "@/components/profile/ProfilePrivatePhotos";
+import { LikeButton } from "@/components/media/LikeButton";
 import { LOOKING_FOR } from "@/lib/onboardingPolicy.mjs";
+import { TRUST_SIGNALS, type TrustSignal } from "@/lib/trust.mjs";
 
 const LOOKING_FOR_LABELS = new Map(LOOKING_FOR.map((item) => [item.value, item.label]));
 
 type VisibleProfile = {
   id: string; displayName: string; age?: number; location?: string; headline?: string; bio?: string;
-  profileType?: "COUPLE" | "INDIVIDUAL"; isCoupleProfile?: boolean; verified?: boolean; recentlyActive?: boolean; presenceLabel?: string | null;
+  profileType?: "COUPLE" | "INDIVIDUAL"; isCoupleProfile?: boolean; verified?: boolean; trustSignals?: TrustSignal[]; recentlyActive?: boolean; presenceLabel?: string | null;
   avatarUrl?: string; coverPhotoUrl?: string; interests?: string[]; lifestyleTags?: string[]; hobbies?: string[];
   lookingFor?: string[]; languages?: string[]; followersCount?: number; totalContentCount?: number;
 };
@@ -106,7 +108,7 @@ export default function CanonicalProfilePage() {
           <div className="relative h-32 w-32 shrink-0 overflow-hidden rounded-full border-4 border-[#111722] bg-slate-800">
             {profile.avatarUrl ? <Image src={profile.avatarUrl} alt={`${profile.displayName}'s profile photo`} fill className="object-cover" unoptimized /> : <div className="flex h-full items-center justify-center text-4xl font-bold text-amber-300">{profile.displayName.slice(0,1).toUpperCase()}</div>}
           </div>
-          <div className="min-w-0 flex-1 pb-1"><div className="flex flex-wrap items-center gap-2"><h1 className="text-3xl font-bold text-white">{profile.displayName}{profile.age ? `, ${profile.age}` : ""}</h1>{profile.verified && <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/10 px-2.5 py-1 text-xs font-bold text-emerald-300"><ShieldCheck className="h-4 w-4" /> Verified</span>}</div>{profile.headline && <p className="mt-2 text-lg text-white/75">{profile.headline}</p>}<div className="mt-2 flex flex-wrap gap-3 text-sm text-white/55">{profile.location && <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" />{profile.location}</span>}<span>{profile.isCoupleProfile || profile.profileType === "COUPLE" ? "Couple profile" : "Individual profile"}</span>{profile.presenceLabel && <span className="text-emerald-300">{profile.presenceLabel}</span>}</div></div>
+          <div className="min-w-0 flex-1 pb-1"><div className="flex flex-wrap items-center gap-2"><h1 className="text-3xl font-bold text-white">{profile.displayName}{profile.age ? `, ${profile.age}` : ""}</h1>{(profile.trustSignals || (profile.verified ? ["PHOTO_VERIFIED" as const] : [])).map((signal) => <span key={signal} title={TRUST_SIGNALS[signal].description} className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${signal === "PHOTO_VERIFIED" ? "bg-emerald-400/10 text-emerald-300" : "bg-amber-300/10 text-amber-200"}`}>{signal === "PHOTO_VERIFIED" ? <ShieldCheck className="h-4 w-4" aria-hidden /> : <Clock className="h-4 w-4" aria-hidden />} {TRUST_SIGNALS[signal].label}</span>)}</div>{profile.headline && <p className="mt-2 text-lg text-white/75">{profile.headline}</p>}<div className="mt-2 flex flex-wrap gap-3 text-sm text-white/55">{profile.location && <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" />{profile.location}</span>}<span>{profile.isCoupleProfile || profile.profileType === "COUPLE" ? "Couple profile" : "Individual profile"}</span>{profile.presenceLabel && <span className="text-emerald-300">{profile.presenceLabel}</span>}</div></div>
           <div className="flex flex-wrap gap-2 pb-1">
             {isOwner ? <><Link href="/settings"><Button variant="outline">Edit profile</Button></Link><Link href="/albums/manage"><Button>Manage albums</Button></Link></> : authenticated ? <><Button variant={interest.interested ? "glass" : "gold"} onClick={() => void toggleInterest()} aria-pressed={interest.interested}><Heart className={`mr-2 h-4 w-4 ${interest.interested ? "fill-current" : ""}`} />{interest.mutual ? "You're both interested" : interest.interested ? "Interested" : "I'm interested"}</Button><Button variant={favorite ? "glass" : "outline"} onClick={() => void setConnection("favorite", favorite)} aria-label={favorite ? "Remove saved profile" : "Save profile"}><Bookmark className="h-4 w-4" /></Button><Link href={`/messages?user=${encodeURIComponent(id)}`}><Button variant="glass"><MessageSquare className="mr-2 h-4 w-4" />Message</Button></Link></> : <Button onClick={() => signIn()}>Sign in to connect</Button>}
           </div>
@@ -122,7 +124,7 @@ export default function CanonicalProfilePage() {
         {memberView && <ProfilePrivatePhotos profileId={profile.id} />}
         {memberView && <ProfileDesires profileId={profile.id} isOwner={isOwner} />}
         {albums.length > 0 && <section><div className="mb-3 flex items-center justify-between"><h2 className="text-xl font-bold text-white">Public albums</h2><Link href="/albums" className="text-sm text-amber-300">Browse all</Link></div><div className="grid gap-4 sm:grid-cols-2">{albums.map((album) => <Link key={album.id} href={`/album/${album.id}`} className="overflow-hidden rounded-2xl border border-white/10 bg-[#111722] transition hover:border-amber-300/40">{album.coverUrl ? <div className="relative aspect-[16/10]"><Image src={album.coverUrl} alt="" fill className="object-cover" unoptimized /></div> : <div className="flex aspect-[16/10] items-center justify-center bg-slate-900"><ImageIcon className="h-9 w-9 text-white/30" /></div>}<div className="p-4"><h3 className="font-bold text-white">{album.title}</h3><p className="mt-1 text-sm text-white/55">{album.photoCount} item{album.photoCount === 1 ? "" : "s"}</p></div></Link>)}</div></section>}
-        {media.length > 0 && <section><h2 className="mb-3 text-xl font-bold text-white">Public media</h2><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{media.map((item) => <a key={item.id} href={item.mediaUrl} target="_blank" rel="noreferrer" className="group relative aspect-square overflow-hidden rounded-2xl border border-white/10 bg-slate-900">{item.type === "IMAGE" ? <Image src={item.mediaUrl} alt={item.title} fill className="object-cover transition group-hover:scale-105" unoptimized /> : <video src={item.mediaUrl} className="h-full w-full object-cover" preload="metadata" aria-label={item.title} />}</a>)}</div></section>}
+        {media.length > 0 && <section><h2 className="mb-3 text-xl font-bold text-white">Public media</h2><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{media.map((item) => <div key={item.id} className="relative"><a href={item.mediaUrl} target="_blank" rel="noreferrer" className="group relative block aspect-square overflow-hidden rounded-2xl border border-white/10 bg-slate-900">{item.type === "IMAGE" ? <Image src={item.mediaUrl} alt={item.title} fill className="object-cover transition group-hover:scale-105" unoptimized /> : <video src={item.mediaUrl} className="h-full w-full object-cover" preload="metadata" aria-label={item.title} />}</a>{memberView && !isOwner && <LikeButton mediaId={item.id} className="absolute bottom-2 right-2" />}</div>)}</div></section>}
         {albums.length === 0 && media.length === 0 && isOwner && <section className="rounded-3xl border border-dashed border-white/15 p-8 text-center"><ImageIcon className="mx-auto h-8 w-8 text-white/30" /><h2 className="mt-3 font-bold text-white">No public media yet</h2><p className="mt-1 text-sm text-white/55">Create an album and publish approved media when you are ready.</p><Link href="/albums/manage" className="mt-4 inline-block text-amber-300 underline">Manage albums</Link></section>}
       </div>
       <aside className="space-y-4">
