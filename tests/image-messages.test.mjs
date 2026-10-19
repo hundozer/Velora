@@ -18,7 +18,7 @@ test("chat photos are served only to the recipient of that message, never public
   const media = await read("src/app/api/media/[id]/route.ts");
   assert.match(media, /\.eq\("media_url", `\/api\/media\/\$\{media\.id\}`\)\.eq\("sender_id", media\.owner_id\)\.eq\("receiver_id", actor\.actor\.profileId\)/);
   assert.match(media, /\(!isChatImage && \(media\.visibility === "PUBLIC" \|\| media\.visibility === "MEMBERS_ONLY"\)\)/);
-  assert.match(media, /getPresignedDownloadUrl/);
+  assert.match(media, /deliverMedia/);
   const chat = await read("src/components/chat/ChatWindow.tsx");
   assert.match(chat, /uploadFileToR2\(file, "photos", setUploadingPhoto, declaration, "PRIVATE"/);
   assert.match(await read("src/components/chat/ChatPhoto.tsx"), /useState\(mine\)/);

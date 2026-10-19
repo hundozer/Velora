@@ -145,3 +145,12 @@ export async function deleteVariantObjects(mediaId: string): Promise<void> {
     if (item.Key) await r2Client.send(new DeleteObjectCommand({ Bucket: bucketName, Key: item.Key }));
   }
 }
+
+/** Proxy non-image media without buffering the entire upload in a Function. */
+export async function getStoredObjectStream(objectKey: string, range?: string) {
+  if (!r2Client) throw new Error("Private media storage is unavailable");
+  const result = await r2Client.send(new GetObjectCommand({ Bucket: bucketName, Key: objectKey, Range: range }));
+  if (!result.Body) throw new Error("Stored object is empty");
+  return { body: result.Body.transformToWebStream(), contentType: result.ContentType,
+    contentLength: result.ContentLength, contentRange: result.ContentRange };
+}

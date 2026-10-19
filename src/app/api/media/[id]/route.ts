@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { deleteStoredObject, deleteVariantObjects, getCacheableDownloadUrl, getPresignedDownloadUrl } from "@/lib/storage/r2";
+import { deleteStoredObject, deleteVariantObjects } from "@/lib/storage/r2";
 import { parseRequestedWidth, pickVariantWidth } from "@/lib/media/variants.mjs";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
+import { deliverMedia } from "@/lib/media/delivery";
 import { grantIsActive } from "@/lib/privateAccess.mjs";
 
 export const dynamic = "force-dynamic";
@@ -23,9 +24,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!rate.allowed) return NextResponse.json({ error: "Media access rate limit reached" }, { status: 429 });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Media service unavailable" }, { status: 503 });
-  const modern = await supabase.from("media_objects").select("id,owner_id,object_key,visibility,upload_status,moderation_status,processing_status,category").eq("id", params.id).maybeSingle();
+  const modern = await supabase.from("media_objects").select("id,owner_id,object_key,visibility,upload_status,moderation_status,processing_status,category,mime_type").eq("id", params.id).maybeSingle();
   const legacy = modern.error
-    ? await supabase.from("media_objects").select("id,owner_id,object_key,visibility,upload_status").eq("id", params.id).maybeSingle()
+    ? await supabase.from("media_objects").select("id,owner_id,object_key,visibility,upload_status,mime_type").eq("id", params.id).maybeSingle()
     : null;
   const media = modern.data || legacy?.data;
   if (!media || media.upload_status !== "AVAILABLE") return NextResponse.json({ error: "Media not found" }, { status: 404 });
@@ -43,8 +44,15 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (moderationStatus === "REMOVED" || (!isOwner && !chatParticipant && (moderationStatus !== "APPROVED" || processingStatus !== "READY"))) {
     return NextResponse.json({ error: "Media not found" }, { status: 404 });
   }
-  const { data: block } = isOwner ? { data: null } : await supabase.from("user_blocks").select("id").or(`and(blocker_id.eq.${actor.actor.profileId},blocked_profile_id.eq.${media.owner_id}),and(blocker_id.eq.${media.owner_id},blocked_profile_id.eq.${actor.actor.profileId})`).limit(1).maybeSingle();
-  if (block) return NextResponse.json({ error: "Media not found" }, { status: 404 });
+  const { data: block, error: blockError } = isOwner ? { data: null, error: null } : await supabase.from("user_blocks").select("id").or(`and(blocker_id.eq.${actor.actor.profileId},blocked_profile_id.eq.${media.owner_id}),and(blocker_id.eq.${media.owner_id},blocked_profile_id.eq.${actor.actor.profileId})`).limit(1).maybeSingle();
+  if (blockError || block) return NextResponse.json({ error: "Media not found" }, { status: 404 });
+  if (!isOwner) {
+    const { data: owner, error: ownerError } = await supabase.from("profiles")
+      .select("account_status,discovery_disabled").eq("id", media.owner_id).maybeSingle();
+    if (ownerError || !owner || owner.account_status !== "ACTIVE" || owner.discovery_disabled) {
+      return NextResponse.json({ error: "Media not found" }, { status: 404 });
+    }
+  }
   let allowed = isOwner || chatParticipant || (!isChatImage && (media.visibility === "PUBLIC" || media.visibility === "MEMBERS_ONLY"));
   if (!allowed && media.visibility === "FOLLOWERS_ONLY") {
     const { data: follow } = await supabase.from("connections").select("id").eq("follower_id", actor.actor.profileId).eq("followed_id", media.owner_id).eq("connection_type", "follow").maybeSingle();
@@ -69,21 +77,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const width = pickVariantWidth(variants, requestedWidth);
     if (width && variants?.[String(width)]) objectKey = variants[String(width)];
   }
-  // Grant-based and chat media stay uncached so revoking access is immediate.
-  const cacheable = !isChatImage && (media.visibility === "PUBLIC" || media.visibility === "MEMBERS_ONLY");
+  // Recheck authorization on every fetch. A no-store redirect still leaked a reusable
+  // five-minute storage URL; proxy bytes instead so revoke/block/delete stop future reads.
   try {
-    if (cacheable) {
-      const { url, maxAgeSeconds } = await getCacheableDownloadUrl(objectKey);
-      const response = NextResponse.redirect(url, 307);
-      response.headers.set("Cache-Control", `private, max-age=${maxAgeSeconds}`);
-      return response;
-    }
-    const signedUrl = await getPresignedDownloadUrl(objectKey);
-    const response = NextResponse.redirect(signedUrl, 307);
-    response.headers.set("Cache-Control", "private, no-store");
-    return response;
+    return await deliverMedia(objectKey, media.mime_type, req.headers.get("range") || undefined);
   } catch {
-    return NextResponse.json({ error: "Private media unavailable" }, { status: 503 });
+    return NextResponse.json({ error: "Private media unavailable" }, { status: 503, headers: { "Cache-Control": "private, no-store" } });
   }
 }
 

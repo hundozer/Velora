@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AGE_DECLARATION_COOKIE, verifyAgeDeclarationValue } from "@/lib/auth/ageDeclaration";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { getPresignedDownloadUrl } from "@/lib/storage/r2";
+import { deliverMedia } from "@/lib/media/delivery";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 
@@ -15,21 +15,23 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!(await checkRateLimit(`public-media-view:${client.slice(0, 80)}`, 120, 60)).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   const db = getServerSupabase();
   if (!db) return NextResponse.json({ error: "Public media unavailable" }, { status: 503 });
-  const { data: media } = await db.from("media_objects").select("id,owner_id,object_key,content_rating").eq("id", params.id).eq("visibility", "PUBLIC").eq("upload_status", "AVAILABLE").eq("processing_status", "READY").eq("moderation_status", "APPROVED").maybeSingle();
+  const { data: media } = await db.from("media_objects").select("id,owner_id,object_key,content_rating,mime_type").eq("id", params.id).eq("visibility", "PUBLIC").eq("upload_status", "AVAILABLE").eq("processing_status", "READY").eq("moderation_status", "APPROVED").maybeSingle();
   if (!media) return NextResponse.json({ error: "Media not found" }, { status: 404 });
+  const actor = await resolveServerActor(req);
   if (media.content_rating !== "NON_EXPLICIT") {
-    const actor = await resolveServerActor(req);
     if (actor.status !== "authenticated") return NextResponse.json({ error: "Sign in to view explicit media" }, { status: 401 });
     if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult member access required" }, { status: 403 });
   }
   const { data: owner } = await db.from("profiles").select("id").eq("id", media.owner_id).eq("profile_visibility", "EVERYONE").eq("public_profile_visibility", true).eq("account_status", "ACTIVE").eq("discovery_disabled", false).maybeSingle();
   if (!owner) return NextResponse.json({ error: "Media not found" }, { status: 404 });
+  if (actor.status === "authenticated" && actor.actor.profileId !== media.owner_id) {
+    const viewerId = actor.actor.profileId;
+    const { data: block, error: blockError } = await db.from("user_blocks").select("id")
+      .or(`and(blocker_id.eq.${viewerId},blocked_profile_id.eq.${media.owner_id}),and(blocker_id.eq.${media.owner_id},blocked_profile_id.eq.${viewerId})`).limit(1).maybeSingle();
+    if (blockError || block) return NextResponse.json({ error: "Media not found" }, { status: 404 });
+  }
   try {
-    const signedUrl = await getPresignedDownloadUrl(media.object_key);
-    const response = NextResponse.redirect(signedUrl, 307);
-    response.headers.set("Cache-Control", "private, no-store");
-    response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
-    return response;
+    return await deliverMedia(media.object_key, media.mime_type, req.headers.get("range") || undefined);
   } catch {
     return NextResponse.json({ error: "Public media unavailable" }, { status: 503 });
   }

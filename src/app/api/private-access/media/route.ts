@@ -18,10 +18,12 @@ export async function GET(req: NextRequest) {
   const db = getServerSupabase();
   if (!db) return NextResponse.json({ error: "Private photos unavailable" }, { status: 503 });
   if (ownerId !== auth.actor.profileId) {
+    const { data: owner, error: ownerError } = await db.from("profiles").select("account_status,discovery_disabled").eq("id", ownerId).maybeSingle();
+    if (ownerError || !owner || owner.account_status !== "ACTIVE" || owner.discovery_disabled) return NextResponse.json({ error: "No access" }, { status: 403 });
     const { data: grant } = await db.from("album_access_grants").select("status,grant_type,expires_at").eq("owner_id", ownerId).eq("viewer_id", auth.actor.profileId).maybeSingle();
     if (!grantIsActive(grant)) return NextResponse.json({ error: "No access" }, { status: 403 });
-    const { data: block } = await db.from("user_blocks").select("id").or(`and(blocker_id.eq.${auth.actor.profileId},blocked_profile_id.eq.${ownerId}),and(blocker_id.eq.${ownerId},blocked_profile_id.eq.${auth.actor.profileId})`).limit(1).maybeSingle();
-    if (block) return NextResponse.json({ error: "No access" }, { status: 403 });
+    const { data: block, error: blockError } = await db.from("user_blocks").select("id").or(`and(blocker_id.eq.${auth.actor.profileId},blocked_profile_id.eq.${ownerId}),and(blocker_id.eq.${ownerId},blocked_profile_id.eq.${auth.actor.profileId})`).limit(1).maybeSingle();
+    if (blockError || block) return NextResponse.json({ error: "No access" }, { status: 403 });
   }
   const { data, error } = await db.from("media_objects").select("id,title,created_at").eq("owner_id", ownerId).eq("visibility", "PRIVATE").eq("upload_status", "AVAILABLE").eq("moderation_status", "APPROVED").or("category.is.null,category.neq.MESSAGE").order("created_at", { ascending: false }).limit(60);
   if (error) return NextResponse.json({ error: "Private photos lookup failed" }, { status: 502 });
