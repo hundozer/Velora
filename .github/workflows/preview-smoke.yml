@@ -1,0 +1,37 @@
+name: Preview smoke
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Preview URL to verify (no member credentials sent)"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    if: github.event_name == 'workflow_dispatch' || (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Preview')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.deployment.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Verify the real deployment
+        run: npx playwright test --config=playwright.smoke.config.ts
+        env:
+          E2E_BASE_URL: ${{ github.event.deployment_status.environment_url || inputs.base_url }}
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: preview-smoke-failure
+          path: test-results/
+          retention-days: 3
