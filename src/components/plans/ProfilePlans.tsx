@@ -18,8 +18,8 @@ export function ProfilePlans({ profileId }: { profileId: string }) {
 
   if (plans.length === 0) return null;
   return (
-    <section className="space-y-3">
-      <h2 className="text-xl font-bold text-ink">Tonight</h2>
+    <section aria-label="Invitations">
+      <h2 className="mb-2 font-display text-[34px] leading-tight text-velora-ink">{plans.length === 1 ? "An invitation" : "Invitations"}</h2>
       {plans.map((plan) => <PlanCard key={plan.id} plan={plan} />)}
     </section>
   );

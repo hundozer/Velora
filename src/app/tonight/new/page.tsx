@@ -5,126 +5,199 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { AreaSelect } from "@/components/profile/AreaSelect";
+import { Sheet } from "@/components/editorial/Sheet";
+import { AREAS, areaById } from "@/lib/areas.mjs";
 import { PLAN_CATEGORIES, PLAN_REPLY_TYPES } from "@/lib/plans.mjs";
+import { untilWords, windowFromClock } from "@/lib/tonight.mjs";
 
-const fieldClass = "w-full rounded-2xl border border-ink/10 bg-ink/5 px-4 py-3 text-sm text-velora-textPrimary outline-none focus:border-velora-gold/60 focus:ring-1 focus:ring-velora-gold/60";
-const labelClass = "block space-y-2 text-xs font-semibold uppercase tracking-wider text-velora-textSecondary";
-const chip = (on: boolean) => `min-h-10 rounded-full border px-4 text-sm transition ${on ? "border-velora-gold bg-velora-gold/15 text-velora-textPrimary" : "border-ink/10 text-velora-textSecondary hover:border-ink/25"}`;
+const WELCOME_WORDS: Record<string, string> = { "♀": "women", "♂": "men", "👫": "couples", "⚧": "trans and non-binary people" };
+const listWords = (words: string[]) => words.length <= 1 ? words.join("") : `${words.slice(0, -1).join(", ")} and ${words[words.length - 1]}`;
+type SheetName = "day" | "area" | "welcome" | "kind" | null;
 
-/** Post a Plan (P1-07). Built to take well under a minute on a phone. */
-export default function NewPlanPage() {
+function Blank({ children, onClick, label }: { children: React.ReactNode; onClick: () => void; label: string }) {
+  return (
+    <button type="button" onClick={onClick} aria-label={label} className="inline text-velora-copperInk underline decoration-velora-copper decoration-dotted decoration-2 underline-offset-[6px] hover:decoration-solid">
+      {children}
+    </button>
+  );
+}
+
+function pad(n: number) { return String(n).padStart(2, "0"); }
+const SLOTS = Array.from({ length: 48 }, (_, i) => `${pad(Math.floor(i / 2))}:${i % 2 ? "30" : "00"}`);
+
+/** A 24-hour time in half-hour steps that reads as part of the sentence. */
+function TimeSelect({ value, onChange, className }: { value: string; onChange: (value: string) => void; className: string }) {
+  const options = value && !SLOTS.includes(value) ? [value, ...SLOTS] : SLOTS;
+  return (
+    <select value={value} onChange={(event) => onChange(event.target.value)} className={className} required>
+      {!value && <option value="">--:--</option>}
+      {options.map((slot) => <option key={slot} value={slot}>{slot}</option>)}
+    </select>
+  );
+}
+/** The next half hour as "HH:MM", local time. */
+function nextHalfHour(now: Date) {
+  const next = new Date(now);
+  next.setSeconds(0, 0);
+  next.setMinutes(next.getMinutes() <= 30 ? 30 : 60);
+  return `${pad(next.getHours())}:${pad(next.getMinutes())}`;
+}
+function plusHours(time: string, hours: number) {
+  const [h, m] = time.split(":").map(Number);
+  return `${pad((h + hours) % 24)}:${pad(m)}`;
+}
+
+/**
+ * Extend an invitation (approved v33): one sentence with tappable blanks —
+ * "Tonight I'd like to … in …, from … until …. I'd welcome …." The server validates
+ * everything again (start within 36 hours, 30 minutes to 12 hours, 18+ ages).
+ */
+export default function NewInvitationPage() {
   const router = useRouter();
   const { profile } = useAuth();
-  const [category, setCategory] = React.useState("");
+  const [day, setDay] = React.useState<"tonight" | "tomorrow">("tonight");
   const [title, setTitle] = React.useState("");
-  const [text, setText] = React.useState("");
-  // Explicit start and end (local time). Defaults: the next half hour, for three hours.
-  const [startsAt, setStartsAt] = React.useState(() => toLocalInput(nextHalfHour(new Date())));
-  const [endsAt, setEndsAt] = React.useState(() => toLocalInput(new Date(nextHalfHour(new Date()).getTime() + 3 * 3_600_000)));
   const [areaId, setAreaId] = React.useState("");
+  // Defaults depend on the clock, so they're set after mount (no server/browser mismatch).
+  const [from, setFrom] = React.useState("");
+  const [until, setUntil] = React.useState("");
+  React.useEffect(() => { const start = nextHalfHour(new Date()); setFrom(start); setUntil(plusHours(start, 3)); }, []);
   const [replyTypes, setReplyTypes] = React.useState<string[]>([]);
   const [minAge, setMinAge] = React.useState(18);
   const [maxAge, setMaxAge] = React.useState(99);
   const [requireVerified, setRequireVerified] = React.useState(false);
+  const [category, setCategory] = React.useState("DATE");
+  const [text, setText] = React.useState("");
+  const [sheet, setSheet] = React.useState<SheetName>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState("");
 
   React.useEffect(() => { if (!areaId && profile?.areaId) setAreaId(profile.areaId); }, [profile?.areaId, areaId]);
 
-  const valid = Boolean(category) && title.trim().length >= 3 && text.trim().length >= 10 && minAge <= maxAge;
+  const slot = windowFromClock({ day, from, until });
+  const hours = slot ? (new Date(slot.endsAt).getTime() - new Date(slot.startsAt).getTime()) / 3_600_000 : 0;
+  const startsPast = slot ? new Date(slot.startsAt).getTime() < Date.now() - 10 * 60_000 : false;
+  const timeProblem = !slot ? "Choose a start and an end." : startsPast ? "That start has passed. Choose a later time, or tomorrow." : hours < 0.5 ? "Make it at least half an hour." : hours > 12 ? "Invitations last up to 12 hours." : "";
+  const welcome = replyTypes.length === 0 ? "everyone" : listWords(replyTypes.map((value) => WELCOME_WORDS[value]));
+  const welcomeLine = `${requireVerified ? (replyTypes.length ? "verified " : "verified members, ") : ""}${welcome}${minAge > 18 || maxAge < 99 ? `, ${minAge} to ${maxAge}` : ""}`.replace(/^verified members, everyone/, "verified members");
+  const area = areaById(areaId);
+  const valid = title.trim().length >= 3 && text.trim().length >= 10 && !timeProblem && minAge <= maxAge;
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!valid) return;
+    if (!valid || !slot) return;
     setSubmitting(true);
     setError("");
     const response = await fetch("/api/dating-ads", {
       method: "POST",
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ category, title: title.trim(), text: text.trim(), startsAt: new Date(startsAt).toISOString(), endsAt: new Date(endsAt).toISOString(), areaId: areaId || undefined, allowedReplyGenders: replyTypes, minAge, maxAge, requireVerified }),
+      body: JSON.stringify({ category, title: title.trim(), text: text.trim(), startsAt: slot.startsAt, endsAt: slot.endsAt, areaId: areaId || undefined, allowedReplyGenders: replyTypes, minAge, maxAge, requireVerified }),
     });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok) { setError(payload.error || "Your plan could not be posted."); setSubmitting(false); return; }
+    if (!response.ok) { setError(payload.error || "Your invitation could not be sent."); setSubmitting(false); return; }
     router.push("/tonight");
   }
 
+  const timeInput = "mx-1 inline-block cursor-pointer appearance-none border-b-2 border-dotted border-velora-copper bg-transparent px-0.5 text-center text-velora-copperInk focus:border-solid focus:outline-none";
+
   return (
-    <main className="mx-auto max-w-2xl space-y-6 px-4 pb-24 pt-6">
-      <Link href="/tonight" className="inline-flex items-center gap-1 text-xs text-velora-textMuted hover:text-velora-textPrimary"><ArrowLeft className="h-3.5 w-3.5" aria-hidden />Tonight</Link>
-      <header>
-        <h1 className="font-serif font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">Post a plan</h1>
-        <p className="mt-1 text-sm text-velora-textSecondary">Say what you&apos;re up for. It expires on its own, and only the people you choose can reply.</p>
-      </header>
+    <main className="mx-auto min-h-screen max-w-2xl bg-velora-surface px-6 pb-28 pt-4 sm:px-10 md:my-6 md:rounded-[28px] md:pt-8">
+      <Link href="/tonight" className="inline-flex min-h-11 items-center gap-1.5 text-[15px] font-semibold text-velora-ink"><ArrowLeft className="h-4 w-4" aria-hidden />Tonight</Link>
+      <h1 className="mt-4 font-display text-[44px] leading-none text-velora-ink">Extend an invitation</h1>
 
-      <form onSubmit={submit} className="space-y-6">
-        <fieldset className="space-y-3">
-          <legend className={labelClass}>What kind of plan</legend>
-          <div className="flex flex-wrap gap-2">
-            {PLAN_CATEGORIES.map((item) => <button key={item.value} type="button" aria-pressed={category === item.value} onClick={() => setCategory(item.value)} className={chip(category === item.value)}>{item.label}</button>)}
-          </div>
-        </fieldset>
+      <form onSubmit={submit} className="mt-8">
+        <p className="font-display text-[clamp(1.6rem,7vw,2.1rem)] leading-[1.75] text-velora-ink">
+          <Blank onClick={() => setSheet("day")} label={`Day: ${day}`}>{day === "tonight" ? "Tonight" : "Tomorrow"}</Blank> I&apos;d like to{" "}
+          <label className="inline">
+            <span className="sr-only">What you&apos;d like to do</span>
+            <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} placeholder="have a quiet drink" size={Math.max(14, title.length + 1)} className="max-w-full border-b-2 border-dotted border-velora-copper bg-transparent text-velora-copperInk placeholder:text-velora-copper/60 focus:border-solid focus:outline-none" />
+          </label>{" "}
+          in <Blank onClick={() => setSheet("area")} label={`Area: ${area?.name || "choose"}`}>{area?.kind === "PRAGUE_DISTRICT" ? area.label.split(" · ")[0] : area?.name || "Prague"}</Blank>, from
+          <label className="inline"><span className="sr-only">Starts at</span><TimeSelect value={from} onChange={setFrom} className={timeInput} /></label>
+          until
+          <label className="inline"><span className="sr-only">Ends at</span><TimeSelect value={until} onChange={setUntil} className={timeInput} /></label>.
+          {" "}I&apos;d welcome <Blank onClick={() => setSheet("welcome")} label={`Who may reply: ${welcomeLine}`}>{welcomeLine}</Blank>.
+        </p>
 
-        <label className={labelClass}>Title
-          <input className={fieldClass} value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} placeholder="Drinks in Vinohrady, then see where it goes" />
-        </label>
-        <label className={labelClass}>Details
-          <textarea className={`${fieldClass} min-h-28`} value={text} onChange={(event) => setText(event.target.value)} maxLength={1000} placeholder="Who you are, what you have in mind, anything people should know before replying." />
-          <span className="block text-[11px] font-normal normal-case tracking-normal text-velora-textMuted">No payment, services or contact details. Plans offering paid services are removed.</span>
-        </label>
+        {timeProblem ? <p role="status" className="mt-3 text-[15px] text-velora-crimson">{timeProblem}</p> : (
+          <p className="mt-3 text-[15px] text-velora-muted">It disappears at {untilWords(until)}{hours > 0 && new Date(slot!.endsAt).getDate() !== new Date(slot!.startsAt).getDate() ? " (after midnight)" : ""}. Only the neighbourhood is shown.</p>
+        )}
 
-        <fieldset className="grid grid-cols-2 gap-3">
-          <legend className={`${labelClass} col-span-2`}>When</legend>
-          <label className={labelClass}>Starts
-            <input type="datetime-local" className={fieldClass} value={startsAt} min={toLocalInput(new Date())} max={toLocalInput(new Date(Date.now() + 36 * 3_600_000))} onChange={(event) => setStartsAt(event.target.value)} required />
-          </label>
-          <label className={labelClass}>Ends
-            <input type="datetime-local" className={fieldClass} value={endsAt} min={startsAt} onChange={(event) => setEndsAt(event.target.value)} required />
-          </label>
-          <span className="col-span-2 block text-[13px] text-velora-textMuted">Plans start within the next 36 hours and last up to 12 hours. Yours disappears when it ends.</span>
-        </fieldset>
-
-        <label className={labelClass}>Area
-          <AreaSelect className={fieldClass} value={areaId} onChange={setAreaId} />
+        <label className="mt-8 block">
+          <span className="text-[13px] font-semibold uppercase tracking-[0.18em] text-velora-ink2">A few words for whoever reads it</span>
+          <textarea value={text} onChange={(event) => setText(event.target.value)} maxLength={1000} rows={4} placeholder="Who you are, the place or the mood, anything people should know before replying." className="mt-2 w-full resize-y border-b border-velora-ink/50 bg-transparent py-2 text-[17px] leading-relaxed text-velora-ink placeholder:text-velora-muted focus:border-velora-ink focus:outline-none" />
+          <span className="block text-[14px] text-velora-muted">No payment, services or contact details. Invitations offering paid services are removed.</span>
         </label>
 
-        <fieldset className="space-y-3">
-          <legend className={labelClass}>Who may reply <span className="font-normal normal-case tracking-normal text-velora-textMuted">· none selected = everyone</span></legend>
-          <div className="flex flex-wrap gap-2">
-            {PLAN_REPLY_TYPES.map((item) => {
-              const on = replyTypes.includes(item.value);
-              return <button key={item.value} type="button" aria-pressed={on} onClick={() => setReplyTypes((current) => on ? current.filter((value) => value !== item.value) : [...current, item.value])} className={chip(on)}>{item.label}</button>;
-            })}
-          </div>
-          <div className="flex items-center gap-3 text-sm text-velora-textSecondary">
-            <span>Ages</span>
-            <input type="number" min={18} max={99} value={minAge} onChange={(event) => setMinAge(Number(event.target.value))} className={`${fieldClass} w-20`} aria-label="Minimum age" />
-            <span>to</span>
-            <input type="number" min={18} max={99} value={maxAge} onChange={(event) => setMaxAge(Number(event.target.value))} className={`${fieldClass} w-20`} aria-label="Maximum age" />
-          </div>
-          <label className="flex items-center gap-3 text-sm text-velora-textSecondary">
-            <input type="checkbox" className="h-4 w-4 accent-velora-gold" checked={requireVerified} onChange={(event) => setRequireVerified(event.target.checked)} />
-            Verified members only
-          </label>
-        </fieldset>
+        <p className="mt-6 text-[16px] text-velora-ink2">Kind of evening: <Blank onClick={() => setSheet("kind")} label="Kind of evening">{PLAN_CATEGORIES.find((item) => item.value === category)?.label.toLowerCase()}</Blank></p>
 
-        {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-700">{error}</p>}
-        <button type="submit" disabled={!valid || submitting} className="min-h-12 w-full rounded-full bg-gold-gradient text-sm font-bold text-velora-bg disabled:opacity-50">{submitting ? "Posting…" : "Post plan"}</button>
+        {error && <p role="alert" className="mt-6 border-l-2 border-velora-crimson pl-4 text-[15px] text-velora-crimson">{error}</p>}
+        <button type="submit" disabled={!valid || submitting} className="mt-8 min-h-14 w-full rounded-full bg-velora-ink text-[16px] font-semibold text-velora-paper disabled:opacity-40">{submitting ? "Sending…" : "Send the invitation"}</button>
+        {!valid && !timeProblem && <p className="mt-2 text-center text-[14px] text-velora-muted">Say what you&apos;d like to do and add a few words.</p>}
       </form>
+
+      <Sheet open={sheet === "day"} onClose={() => setSheet(null)} label="When">
+        <h2 className="font-display text-[40px] leading-none text-velora-ink">When</h2>
+        <div role="radiogroup" aria-label="When" className="mt-4">
+          {(["tonight", "tomorrow"] as const).map((value) => (
+            <button key={value} type="button" role="radio" aria-checked={day === value} onClick={() => { setDay(value); setSheet(null); }} className={`flex w-full items-baseline justify-between py-1.5 text-left font-display text-[30px] ${day === value ? "text-velora-ink" : "text-velora-muted"}`}>
+              {value === "tonight" ? "Tonight" : "Tomorrow"}{day === value && <span className="font-sans text-[14px] text-velora-copperInk">Selected</span>}
+            </button>
+          ))}
+        </div>
+        <p className="mt-3 text-[14px] text-velora-muted">Invitations start within the next 36 hours.</p>
+      </Sheet>
+
+      <Sheet open={sheet === "area"} onClose={() => setSheet(null)} label="Where">
+        <h2 className="font-display text-[40px] leading-none text-velora-ink">Where</h2>
+        <p className="mt-2 text-[14px] text-velora-muted">Only the neighbourhood is shown, never an address.</p>
+        <div role="radiogroup" aria-label="Where" className="mt-4">
+          {AREAS.filter((item) => item.kind === "PRAGUE_DISTRICT" || item.kind === "NEAR_PRAGUE").map((item) => (
+            <button key={item.id} type="button" role="radio" aria-checked={areaId === item.id} onClick={() => { setAreaId(item.id); setSheet(null); }} className={`flex w-full items-baseline justify-between gap-4 py-1.5 text-left ${areaId === item.id ? "text-velora-ink" : "text-velora-muted"}`}>
+              <span className="font-display text-[24px]">{item.kind === "PRAGUE_DISTRICT" ? item.label : item.name}</span>
+              <span className="shrink-0 text-[14px]">{item.kind === "PRAGUE_DISTRICT" ? item.name : "Near Prague"}</span>
+            </button>
+          ))}
+        </div>
+      </Sheet>
+
+      <Sheet open={sheet === "welcome"} onClose={() => setSheet(null)} label="Who may reply" footer={<button type="button" onClick={() => setSheet(null)} className="min-h-14 w-full rounded-full bg-velora-ink text-[16px] font-semibold text-velora-paper">Done</button>}>
+        <h2 className="font-display text-[40px] leading-none text-velora-ink">I&apos;d welcome</h2>
+        <p className="mt-2 text-[14px] text-velora-muted">Choose none for everyone. Only people who fit can reply — it&apos;s checked when they send.</p>
+        <div className="mt-4">
+          {PLAN_REPLY_TYPES.map((item) => {
+            const on = replyTypes.includes(item.value);
+            return (
+              <label key={item.value} className="flex min-h-12 items-center justify-between font-display text-[28px] text-velora-ink">
+                {item.label}
+                <input type="checkbox" checked={on} onChange={() => setReplyTypes((current) => on ? current.filter((value) => value !== item.value) : [...current, item.value])} className="h-6 w-6 accent-velora-ink" />
+              </label>
+            );
+          })}
+        </div>
+        <h3 className="mb-2 mt-8 text-[13px] font-semibold uppercase tracking-[0.18em] text-velora-ink2">Aged</h3>
+        <div className="flex items-baseline gap-3 font-display text-[28px] text-velora-ink">
+          <input type="number" inputMode="numeric" min={18} max={99} value={minAge} aria-label="Youngest age" onChange={(event) => setMinAge(Math.min(99, Math.max(18, Number(event.target.value) || 18)))} className="w-16 border-b border-velora-ink/40 bg-transparent text-center focus:outline-none" />
+          <span className="text-velora-muted">to</span>
+          <input type="number" inputMode="numeric" min={18} max={99} value={maxAge} aria-label="Oldest age" onChange={(event) => setMaxAge(Math.min(99, Math.max(18, Number(event.target.value) || 99)))} className="w-16 border-b border-velora-ink/40 bg-transparent text-center focus:outline-none" />
+        </div>
+        <label className="mt-6 flex min-h-12 items-center justify-between gap-4 text-[16px] text-velora-ink">
+          Verified members only
+          <input type="checkbox" checked={requireVerified} onChange={(event) => setRequireVerified(event.target.checked)} className="h-6 w-6 accent-velora-ink" />
+        </label>
+      </Sheet>
+
+      <Sheet open={sheet === "kind"} onClose={() => setSheet(null)} label="Kind of evening">
+        <h2 className="font-display text-[40px] leading-none text-velora-ink">Kind of evening</h2>
+        <div role="radiogroup" aria-label="Kind of evening" className="mt-4">
+          {PLAN_CATEGORIES.map((item) => (
+            <button key={item.value} type="button" role="radio" aria-checked={category === item.value} onClick={() => { setCategory(item.value); setSheet(null); }} className={`flex w-full items-baseline justify-between py-1.5 text-left font-display text-[28px] ${category === item.value ? "text-velora-ink" : "text-velora-muted"}`}>
+              {item.label}{category === item.value && <span className="font-sans text-[14px] text-velora-copperInk">Selected</span>}
+            </button>
+          ))}
+        </div>
+      </Sheet>
     </main>
   );
-}
-
-function nextHalfHour(date: Date) {
-  const next = new Date(date);
-  next.setSeconds(0, 0);
-  next.setMinutes(next.getMinutes() <= 30 ? 30 : 60);
-  return next;
-}
-
-/** Formats a Date for <input type="datetime-local"> in the member's own time zone. */
-function toLocalInput(date: Date) {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
