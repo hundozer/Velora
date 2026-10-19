@@ -45,13 +45,13 @@ export async function anonymizeDeletedProfile(db: SupabaseClient, runId: string,
 
   const completedAt = new Date().toISOString();
   const { error: profileError } = await db.from("profiles").update({
-    auth_id: `deleted|${profileId}`, email: `deleted+${profileId}@invalid.intimo.live`, display_name: "Deleted member", username: null,
+    auth_id: profileId, email: `deleted+${profileId}@invalid.intimo.live`, display_name: "Deleted member", username: null,
     avatar_url: null, cover_photo_url: null, date_of_birth: null, age: null, gender: null, sexual_orientation: null,
-    country: "", city: "", location: "", languages: [], headline: null, bio: null, interests: [], lifestyle_tags: [], hobbies: [],
+    country: "", city: "", location: "", area_id: null, languages: [], headline: null, bio: null, interests: [], lifestyle_tags: [], hobbies: [],
     relationship_status: null, looking_for: [], partner_display_name: null, partner_age: null, partner_gender: null,
     pubic_hair_grooming: null, piercing: null, tattoo: null, erogenous_zones: [], favourite_sex_places: [],
     favourite_sex_positions: [], sex_hobbies: [], categories: [], gallery_images: [], public_profile_visibility: false,
-    profile_visibility: "PRIVATE", allow_direct_messages: false, show_online_status: false, show_distance: false,
+    profile_visibility: "PRIVATE", discovery_disabled: true, show_in_introductions: false, browse_invisibly: true, allow_direct_messages: false, show_online_status: false, show_distance: false,
     account_status: "DEACTIVATED", account_lifecycle_status: "DELETED", deleted_at: completedAt, updated_at: completedAt,
   }).eq("id", profileId).eq("account_lifecycle_status", "ANONYMIZATION_IN_PROGRESS");
   if (profileError) { const result: Result = { profileId, status: "FAILED", reason: "Profile anonymization failed" }; await record(db, runId, result); return result; }
