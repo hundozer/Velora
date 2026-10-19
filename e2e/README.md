@@ -35,3 +35,9 @@ Coverage: real sign-in, desires/boundaries, People API and profile, interest/in-
 Cleanup runs in `finally` and asserts failures. It removes the run's upload, Plan, outgoing interest and block, and revokes private access. Test messages, notices and consent/preferences remain as fixture evidence. This is not a pristine reset; reset/recreate dedicated fixtures when required. Failed cleanup requires inspection before reusing them. Traces can contain test credentials/data; access is restricted by repository permissions and artifacts expire after three days.
 
 Still separate, unproved acceptance gates: new signup and inbox confirmation, full onboarding/photo display on a phone, email delivery/unsubscribe, actual server RLS attacks with two JWTs, account deletion and scheduled erasure. Do not mark issue #31 complete from this suite alone.
+
+## Actual recovered staging role test
+
+`tests/sql/staging-message-rls.sql` is a rollback-only test for recovered Supabase staging `fuczjjcwtxzzvoxilrme`, executed as database owner via `execute_sql`. It uses real `anon`/`authenticated` roles and the existing `auth.uid()` function with simulated request claims. It does not create roles or replace Supabase tables/functions, unlike the disposable PostgreSQL harness `tests/sql/message-rls.sql` (which must never run in Supabase).
+
+The staging test verifies both block directions, inactive accounts, unrelated/missing identities, anonymous denial, direct write/RPC denial and restrictive-policy behavior alongside a deliberately permissive probe policy. Everything rolls back. Independently check fixture profiles (`rls-%-20261019@example.invalid`), conversation `staging-rollback-20261019`, and policy `staging_rollback_permissive_probe` are absent afterward, including after an ambiguous tool error. A successful SQL-role result is not a real-JWT REST/Realtime or customer-journey result.

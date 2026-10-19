@@ -1,4 +1,53 @@
-# Prague beta decision: NO, verification and privacy blockers remain
+# Prague beta decision: NO-GO, Preview and member acceptance remain blocked
+
+Current evidence: 19 October 2026, 18:34 UTC (20:34 Prague). Audited `main`: `30cea2f5ae3cbb5719cca2fc6dc5942ab624e007`, including merged #83–88. This update supersedes the older audit below where status differs. No application redesign or production database change was made.
+
+## Live environment evidence
+
+| Environment | Exact target | Observed result |
+| --- | --- | --- |
+| Vercel project | `velora`, `prj_hZBTijIxLYZCQr2ePituCyOqk7og`, team `team_39Gwdv5nH2S8oUWtobZe6UqV` | Production READY at audited main |
+| Production deployment | `dpl_4t8GFo369s98aWVfU1nKYJRSJJom`, `intimo.live` | `/login` 200; `/api/public/community?limit=1` 200, empty public inventory, `demoContentPresent:false` |
+| Preview inspected | `dpl_J4zfEBYChMijrW8Ffh3Za7HJFFMu`, `velora-b67ftg6x6-hundozers-projects.vercel.app` | READY at `78570dd38318e9e79b8570196d170df4decc40f2` (merged #88 parent); `/login` 200; DB endpoint application 503 even after staging recovery |
+| Production Supabase | `bkdyjdbmtucqvgebqadp`, EU Central | ACTIVE_HEALTHY; public login JS contains this exact project URL; 1 profile, 1 Auth user, 4 media rows |
+| Staging Supabase | `fuczjjcwtxzzvoxilrme`, EU West | ACTIVE_HEALTHY; Preview login JS contains this exact project URL; recovered schema and actual-role tests below |
+
+Protected requests used the Vercel connector's authorized fetch; protection remains enabled (`all_except_custom_domains`). The test Preview is identified explicitly rather than being described as an exact-main build. No `AGENTS.md` was present in the checkout or workspace parents. Read `e2e/README.md`, deployment workflows/config, migrations and `supabase/APPLIED.md` before changing staging.
+
+## Code, migration and verification evidence are separate
+
+- **Implemented:** #83–88 are on authoritative main. `npm ci --ignore-scripts` succeeded; `npm test` passed **196/196**, no skips. `npm run typecheck` and `npm run lint` passed (no ESLint warnings/errors). These include mocked/source tests and do not establish the customer journey.
+- **Applied on staging:** exact repository SQL for `20261020`–`20261028` and `20261101`–`20261104`, with canonical ledger statements registered in the same transaction as each replay group. Recovery wrappers are also retained in the management ledger; see `supabase/APPLIED.md` for their actual generated versions.
+- **Effective schema:** staging and production public columns, constraints and table RLS flags compare equal. Staging additionally has `member_message_safety` and `intimo_can_read_message`; production does not. The existing rate-limit function differs only by a comment in its stored definition. All 47 public tables have RLS; anon has SELECT only on `areas`; anon/authenticated have no direct table-write grants. All 47 tables have service-role SELECT. Inspected member-read policies and privileged function ACLs, not merely migration names. Realtime publication includes messages and notifications; event delivery remains untested.
+- **Actual staging database-role verification:** `tests/sql/staging-message-rls.sql` executed through Supabase `execute_sql` against staging. PASS using real `anon`/`authenticated` roles and real `auth.uid()` with simulated request claims. Both participants read before a block. Both are denied after either direction of block, even with a deliberately permissive policy; incoming block rows remain hidden. Inactive viewer/peer, unrelated member, missing uid and anon are denied. Direct profile/message/desire writes and member execution of the privileged block RPC are denied. This is not a real JWT, REST or Realtime acceptance result.
+- **Cleanup independently verified:** 2 legacy profiles remain restricted, private and discovery/messaging disabled; 2 identity mappings; 5 media records still owned by those profiles; 0 Auth users, messages, blocks, live Plans or private grants. SQL fixture profile/message counts and temporary probe-policy count are all zero. No files were uploaded by this run. One incompatible legacy advert is preserved in the restricted archive, as described below.
+- **Two-member suite:** `npx playwright test --project=member-acceptance` exited 1 at `memberEnvironment()` before sign-in because all seven required E2E variables are unavailable locally. It recorded a failure, not a skip or a journey pass. No acceptance Auth accounts were created. The existing suite intentionally leaves messages/notices/preferences on reusable fixtures; isolated disposable members plus full cleanup verification are still required for the requested pristine acceptance run.
+
+## Migration reconciliation and preservation
+
+1. `20260805` previously recorded a verified no-op explanation, not canonical SQL execution. Its guard would return because restored `profiles.account_status` already exists. Keep this distinction; do not advertise exact replay.
+2. `20260811` was replayed with an expanded intermediate media-status constraint to preserve five existing `PENDING_REVIEW` rows. Canonical `20260814`/`20260821` subsequently installed the final constraint. Current validated values are exactly `PENDING_REVIEW, UNDER_REVIEW, APPROVED, REJECTED, HIDDEN, REMOVED`; processing values are `UPLOADING, PROCESSING, READY, FAILED, REJECTED`. This is a documented compatibility replay, not a byte-identical `20260811`.
+3. `20260818` was never separately replayed. Its earlier ledger row contained only a skip explanation. That evidence is now in `intimo_migration_audit.superseded_migrations`; the misleading applied row was removed. The `20260820` blocking function is present, service-role-only and removes both connections and friendships. Do not replay the older definition over it or invent an applied history.
+4. One restored advert had category `Man seeking woman`, incompatible with canonical Plan categories. Its complete pre-migration JSON is preserved in `intimo_migration_audit.legacy_dating_ads` before removal from the active table. It belongs to a quarantined legacy identity and was not converted into a fabricated new Plan. No profile, identity mapping or media record was deleted. Canonical Plan constraints are validated.
+5. `profiles_auth_id_matches_id` is validated (`auth_id = id::text`). Restricted legacy mappings retain their original identities in the private audit schema. No anon/authenticated table grants exist in that schema.
+6. The new `20261104` function/policy were executed correctly. A string-escaping error affected only the newly recorded statement text; that ledger text was corrected to the exact executed repository SQL and its MD5 rechecked as `1cd73751c6f9ce761e65999956296e0b`. It was not a schema retry or invented execution.
+
+## Exact blockers and next authorized work
+
+1. **Preview server database credential:** `SUPABASE_SERVICE_ROLE_KEY` exists only for production in Vercel metadata. Preview has no such entry; `getServerSupabase()` returns null without it. Configure a server-only service-role credential belonging specifically to **staging `fuczjjcwtxzzvoxilrme`**, then rebuild a Preview from current main. Never copy production's key. The available Supabase connector exposes publishable keys, not a service-role/secret-key retrieval capability; Vercel single-env/decrypt reads return metadata without usable values. No authenticated Vercel CLI identity or local service credential is available here.
+2. **Storage isolation:** R2 account/key/bucket environment entries target both Preview and production. They are shared configuration entries; their values are unavailable. Provide verified staging-only storage before destructive upload/erasure tests. Do not assume a shared bucket is isolated.
+3. **Acceptance fixtures and access:** independently allowlisted Preview origin; disposable adult A/B credentials; A's approved PRIVATE non-chat photo ID; controlled test inbox/confirmation capability; protected-browser access through the existing trusted-source/OIDC workflow. Locally absent variables: `E2E_BASE_URL`, `E2E_ALLOWED_ORIGIN`, `E2E_A_EMAIL`, `E2E_A_PASSWORD`, `E2E_B_EMAIL`, `E2E_B_PASSWORD`, `E2E_A_PRIVATE_MEDIA_ID`. Existing GitHub secret values are not readable; their configured state was not established by this local failure.
+4. **Still unexercised:** signup and inbox confirmation, real login/onboarding/profile editing, People/profile sheet close, timed Plan creation and reply eligibility, message arrival/Realtime, block/report through APIs, metadata-sensitive media grant/revoke/delivery, export/deactivation/erasure and post-erasure access denial. Do not replace these gates with the SQL result or green unit tests.
+5. **Production #87:** direct ledger and policy inspection confirms `20261104` and the restrictive policy/helper remain absent. Exact proposed production change is only `supabase/migrations/20261104_block_aware_message_reads.sql`; it adds the helper and restrictive SELECT policy without data removal. Staging SQL evidence exists, but authenticated REST/Realtime acceptance is not ready. No production authorization is inferred from merged PRs, and no production change/approval request is made before the remaining staging gate is concrete.
+6. Controlled admission at both app/Auth boundaries, operator moderation drill, discreet email delivery and scheduled retention remain unproved gates from the original audit. They were not silently closed by schema recovery.
+
+Security advisor: 32 INFO findings for RLS with no policy on intentionally server-mediated tables, and one WARN for authenticated execution of the deliberate message-safety SECURITY DEFINER helper. Its empty search path, uid/participant guard, anon/PUBLIC revocation and unrelated-caller denial were inspected/tested. Do not revoke the authenticated grant to silence the warning and break the restrictive policy. [Advisor explanation](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable).
+
+Supabase changelog was fetched before replay. Relevant PostgreSQL patch/TLS/Realtime notices were inspected; no Realtime internal schema was edited and no project engine upgrade was attempted. All recovery migration calls in this run returned success and were followed by ledger/effective-object inspection. Earlier ambiguous failures were not retried blindly.
+
+## Historical audit before recovery (superseded where noted above)
+
+### Original audit decision: NO
 
 Audited source: `main` at `76fda9d1b60fdc99b8476e85a2bc0876e3dae985`, 19 October 2026. This is an evidence snapshot, not a readiness percentage. Product authority remains PRODUCT_VISION.md, MVP_DEFINITION.md and ROADMAP.md. The approved People/Profile/Messages design is retained.
 
