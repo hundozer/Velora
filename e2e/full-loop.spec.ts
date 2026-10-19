@@ -1,3 +1,4 @@
+import { authorizePreview } from "./protected-preview";
 import { memberEnvironment } from "./member-environment";
 import { expect, test, type APIRequestContext, type Browser, type BrowserContext, type Page } from "@playwright/test";
 
@@ -16,6 +17,7 @@ type Member = { context: BrowserContext; page: Page; api: APIRequestContext; id:
 async function signIn(browser: Browser, credentials: { email?: string; password?: string }): Promise<Member> {
   const context = await browser.newContext({ baseURL: env.baseUrl });
   try {
+    await authorizePreview(context);
     const page = await context.newPage();
     await page.goto("/login");
     await page.getByRole("button", { name: "Yes, I'm 18+" }).click();
