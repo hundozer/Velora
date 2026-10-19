@@ -11,7 +11,7 @@ ship in the product (`MONETIZATION_ENABLED=false`, hard-coded).
 |---|---|
 | [docs/AUDIT_2026-10.md](docs/AUDIT_2026-10.md) | What exists, what's broken, the 12 key questions |
 | [docs/PRODUCT_VISION.md](docs/PRODUCT_VISION.md) | What Intimo is, for whom, the core loop |
-| [docs/MVP_DEFINITION.md](docs/MVP_DEFINITION.md) | The 8 MVP capabilities with acceptance criteria |
+| [docs/MVP_DEFINITION.md](docs/MVP_DEFINITION.md) | The 10 MVP capabilities with acceptance criteria |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Target architecture, ADR-002 (Supabase Auth), data model |
 | [docs/FEATURE_PARITY_AMATERI.md](docs/FEATURE_PARITY_AMATERI.md) | Benchmark matrix and priorities |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Phases 0–5, issues, dependencies |
@@ -23,8 +23,7 @@ only and are superseded wherever they conflict with the documents above.
 
 ## Stack
 Next.js 14 (App Router) on Vercel · Supabase Postgres (schema: `supabase/migrations/`
-only) · Cloudflare R2 media · Resend email. Auth is currently Auth0, migrating to
-Supabase Auth (ADR-002).
+only) · Cloudflare R2 media · Resend email. Supabase Auth is canonical: `profiles.id = auth.users.id` (ADR-002).
 
 ## Develop
 ```bash
