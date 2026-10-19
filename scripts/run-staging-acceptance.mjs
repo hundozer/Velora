@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { createClient } from '@supabase/supabase-js';
 import { chromium } from '@playwright/test';
 import sharp from 'sharp';
-import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 
 const base = process.env.INTIMO_E2E_BASE_URL;
 const access = process.env.INTIMO_E2E_SHARE_URL;
@@ -60,7 +60,12 @@ async function onboarding(member, gender) {
   console.log(`STAGING_ACCEPTANCE ${member.label} UI login/onboarding/profile-edit PASS`);
 }
 try {
-  browser = await chromium.launch(); // Fail before creating fixtures when the host lacks browser libraries.
+  const { default: serverless } = await import('@sparticuz/chromium');
+  const executablePath = await serverless.executablePath();
+  const args = serverless.args.filter(arg => !/disable-web-security|disable-site-isolation|single-process/.test(arg));
+  process.env.PLAYWRIGHT_CHROMIUM_PATH = executablePath;
+  process.env.PLAYWRIGHT_CHROMIUM_ARGS = JSON.stringify(args);
+  browser = await chromium.launch({ executablePath, args }); // Fail before creating fixtures if the browser cannot run.
   for (const label of ['A', 'B']) {
     const email = `intimo-e2e-${run}-${label.toLowerCase()}@example.invalid`;
     const data = ok(await db.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { intimo_acceptance_run: run } }), 'Create isolated Auth fixture');
@@ -109,12 +114,20 @@ try {
   async function attempt(label, fn) { try { await fn(); } catch { failures.push(label); } }
   for (const context of contexts) await attempt('close browser context',()=>context.close());
   await attempt('close browser',async()=>browser?.close());
+  // Recover a remotely-created fixture after an ambiguous createUser response.
+  await attempt('recover ambiguous Auth creations',async()=>{
+    const users=ok(await db.auth.admin.listUsers({page:1,perPage:1000}),'Fixture recovery').users;
+    for(const user of users) if(user.user_metadata?.intimo_acceptance_run===run && user.email?.startsWith(`intimo-e2e-${run}-`) && !members.some(m=>m.id===user.id)) members.push({id:user.id,email:user.email});
+  });
   const ids = members.map(m=>m.id);
   const keys = new Set(seededKeys);
   if (ids.length) {
     await attempt('list owned media',async()=>{ const rows=ok(await db.from('media_objects').select('id,object_key,variants').in('owner_id',ids),'Fixture media lookup'); for(const row of rows){keys.add(row.object_key);for(const v of Object.values(row.variants??{}))if(v?.objectKey)keys.add(v.objectKey);const listed=await r2.send(new ListObjectsV2Command({Bucket:bucket,Prefix:`variants/${row.id}/`}));for(const item of listed.Contents??[])if(item.Key)keys.add(item.Key);} });
   }
-  for (const key of keys) await attempt('delete fixture object',()=>r2.send(new DeleteObjectCommand({Bucket:bucket,Key:key})));
+  for (const key of keys) await attempt('delete fixture object',async()=>{
+    await r2.send(new DeleteObjectCommand({Bucket:bucket,Key:key}));
+    let absent=false;try{await r2.send(new HeadObjectCommand({Bucket:bucket,Key:key}));}catch(error){if(error?.$metadata?.httpStatusCode===404)absent=true;else throw error;}assert.ok(absent,'Fixture object remains');
+  });
   if (ids.length) {
     // Remove synthetic dependent rows before FK-protected profiles. No real identity is selected.
     for (const [table,column] of [['content_participant_declarations','uploader_id'],['sensitive_access_events','actor_profile_id'],['admin_action_events','actor_profile_id'],['verification_reviews','profile_id'],['retention_execution_events','profile_id'],['retention_holds','profile_id'],['audit_events','actor_profile_id'],['direct_messages','sender_id'],['direct_messages','receiver_id'],['chat_messages','sender_id'],['moderation_events','actor_profile_id'],['moderation_appeals','appellant_id'],['moderation_cases','reporter_id'],['profiles','id']]) {
