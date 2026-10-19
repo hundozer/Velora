@@ -6,6 +6,9 @@ import { auditLogger } from "@/lib/auth/auditLogger";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
 
 export const dynamic = "force-dynamic";
+const COLUMNS = "profile_visibility,sensitive_fields_visibility,location_precision,show_online_status,show_distance,message_permission,browse_invisibly,show_in_introductions";
+const LEGACY_COLUMNS = "profile_visibility,sensitive_fields_visibility,location_precision,show_online_status,show_distance,message_permission,browse_invisibly";
+const UNDEFINED_COLUMN = "42703";
 const VISIBILITY = new Set(["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY", "PRIVATE"]);
 const MESSAGE_PERMISSION = new Set(["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY", "PRIVATE"]);
 
@@ -14,7 +17,9 @@ export async function GET(req: NextRequest) {
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Privacy service unavailable" }, { status: 503 });
-  const { data, error } = await supabase.from("profiles").select("profile_visibility,sensitive_fields_visibility,location_precision,show_online_status,show_distance,message_permission,browse_invisibly").eq("id", actor.actor.profileId).single();
+  let { data, error } = await supabase.from("profiles").select(COLUMNS).eq("id", actor.actor.profileId).single();
+  // Before the 20261103 migration there is no Introductions opt-out column yet.
+  if (error?.code === UNDEFINED_COLUMN) ({ data, error } = await supabase.from("profiles").select(LEGACY_COLUMNS).eq("id", actor.actor.profileId).single());
   if (error) return NextResponse.json({ error: "Privacy settings lookup failed" }, { status: 502 });
   return NextResponse.json({ settings: data }, { headers: { "Cache-Control": "private, no-store" } });
 }
@@ -36,13 +41,19 @@ export async function PUT(req: NextRequest) {
     location_precision: input.locationPrecision,
     show_online_status: input.showOnlineStatus === true,
     browse_invisibly: input.browseInvisibly === true,
+    // Older clients don't send this; only an explicit false takes a member out of Introductions.
+    show_in_introductions: input.showInIntroductions !== false,
     show_distance: input.showDistance === true && input.locationPrecision !== "HIDDEN",
     message_permission: input.messagePermission,
     updated_at: new Date().toISOString(),
   };
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Privacy service unavailable" }, { status: 503 });
-  const { data, error } = await supabase.from("profiles").update(update).eq("id", actor.actor.profileId).select("profile_visibility,sensitive_fields_visibility,location_precision,show_online_status,show_distance,message_permission,browse_invisibly").single();
+  let { data, error } = await supabase.from("profiles").update(update).eq("id", actor.actor.profileId).select(COLUMNS).single();
+  if (error?.code === UNDEFINED_COLUMN) {
+    const { show_in_introductions: _unavailable, ...legacy } = update;
+    ({ data, error } = await supabase.from("profiles").update(legacy).eq("id", actor.actor.profileId).select(LEGACY_COLUMNS).single());
+  }
   if (error) return NextResponse.json({ error: "Privacy settings update failed" }, { status: 502 });
   auditLogger.logEvent({ actorId: actor.actor.userId, actorRole: actor.actor.role as any, action: "PRIVACY_SETTINGS_UPDATE", resourceId: actor.actor.profileId, resourceType: "PROFILE", status: "SUCCESS" });
   const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "PRIVACY_SETTINGS_UPDATE", resourceType: "PROFILE", resourceId: actor.actor.profileId, outcome: "SUCCESS" });
