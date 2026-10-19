@@ -4,6 +4,11 @@ import { defineConfig } from "@playwright/test";
 // members; never point E2E_BASE_URL at production. See e2e/README.md.
 export default defineConfig({
   testDir: "e2e",
+  testIgnore: "deployment-smoke.spec.ts",
+  projects: [
+    { name: "ui", testIgnore: "full-loop.spec.ts" },
+    { name: "member-acceptance", testMatch: "full-loop.spec.ts" },
+  ],
   timeout: 120_000,
   retries: 0,
   workers: 1,

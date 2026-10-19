@@ -1,17 +1,37 @@
-# Full-loop E2E (P1-17)
+# Deployment smoke and member acceptance
 
-One Playwright spec, `full-loop.spec.ts`, drives two real members through the core loop on a deployed environment:
-sign in → desires and boundaries → People → interest and notification → Plan → private photo request and grant → realtime message → block.
+These are different evidence levels. Neither green CI nor the UI specs proves the member journey.
 
-It's skipped unless every variable below is set. It refuses to run against intimo.live.
+## Real deployment smoke
+
+`E2E_BASE_URL=https://your-preview.vercel.app npx playwright test --config=playwright.smoke.config.ts`
+
+No backend mocks or member credentials. Checks public DB data, server-generated age cookie, and anonymous rejection by member/admin endpoints. Runs on successful Preview deployment status and supports manual dispatch. Missing database credentials, a paused database, or a protection login fails the smoke. Do not bypass a failure by mocking the backend. A protected Preview needs an authorized automation access arrangement before this workflow can pass; it does not send a bypass secret to arbitrary input URLs.
+
+## UI regression tests
+
+`E2E_BASE_URL=http://localhost:3000 npx playwright test --project=ui`
+
+These intercept backend requests. They prove UI behavior only.
+
+## Two-member acceptance on dedicated staging
+
+`npx playwright test --project=member-acceptance`
+
+Required environment:
 
 | Variable | Meaning |
 | --- | --- |
-| `E2E_BASE_URL` | Staging or preview URL, e.g. a Vercel preview deployment |
-| `E2E_A_EMAIL`, `E2E_A_PASSWORD` | Test member A: onboarded, adult-verified, with a confirmed email |
-| `E2E_B_EMAIL`, `E2E_B_PASSWORD` | Test member B: the same, a different person |
+| `E2E_BASE_URL` | Non-production HTTPS origin |
+| `E2E_ALLOWED_ORIGIN` | Exact origin of the dedicated staging deployment, configured independently from the workflow input |
+| `E2E_A_EMAIL`, `E2E_A_PASSWORD` | Dedicated confirmed, onboarded adult fixture A |
+| `E2E_B_EMAIL`, `E2E_B_PASSWORD` | Different dedicated confirmed, onboarded adult fixture B |
+| `E2E_A_PRIVATE_MEDIA_ID` | An approved, available PRIVATE non-chat photo owned by A |
 
-Run it locally with `npm run e2e`, or in GitHub with **Actions → E2E → Run workflow** (it uses repository secrets of the same names).
-The spec cleans up after itself (block, interest and Plan), so the same pair can be reused.
+Workflow uses the `intimo-staging` GitHub environment. Set its variables and secrets above. Staging must have canonical migrations, isolated R2 storage, and test mailboxes. Both fixtures must be discoverable and allow messaging. They must have no prior private-photo denial cooldown. Do not use real member accounts. Production custom domains and known production aliases are rejected before sign-in; never allowlist a new production alias.
 
-Not covered here: registration and onboarding (they need inbox access; see `tests/onboarding*.test.mjs`) and account deletion (irreversible; tested through the privacy request flow).
+Coverage: real sign-in, desires/boundaries, People API and profile, interest/in-app notification, Plan timestamps, actual R2 upload/completion/variant processing/owner delivery, approved private-photo delivery before grant/after grant/after revoke, two-way message arrival within 15 seconds, block and profile denial. Media delivery checks require the privacy fix in PR #83.
+
+Cleanup runs in `finally` and asserts failures. It removes the run's upload, Plan, outgoing interest and block, and revokes private access. Test messages, notices and consent/preferences remain as fixture evidence. This is not a pristine reset; reset/recreate dedicated fixtures when required. Failed cleanup requires inspection before reusing them. Traces can contain test credentials/data; access is restricted by repository permissions and artifacts expire after three days.
+
+Still separate, unproved acceptance gates: new signup and inbox confirmation, full onboarding/photo display on a phone, email delivery/unsubscribe, actual server RLS attacks with two JWTs, account deletion and scheduled erasure. Do not mark issue #31 complete from this suite alone.
