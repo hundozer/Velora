@@ -3,30 +3,15 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Message, Conversation } from "@/types";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { ReportModal } from "@/components/safety/ReportModal";
-import {
-  MessageSquare,
-  Send,
-  Lock,
-  MoreVertical,
-  ShieldAlert,
-  Ban,
-  CheckCircle2,
-  Check,
-  CheckCheck,
-  Eye,
-  UserCheck,
-  MapPin,
-  X,
-  Search,
-  ImagePlus,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, MoreHorizontal, Plus, Search } from "lucide-react";
 import { ChatPhoto } from "@/components/chat/ChatPhoto";
+import { Portrait } from "@/components/media/Portrait";
 import { requestParticipantDeclaration, uploadFileToR2 } from "@/lib/storage/clientUpload";
+import { desireById } from "@/lib/desires.mjs";
+import { possessive } from "@/lib/peopleCopy.mjs";
+import { openersFor, explicitPhotoRule, planWindow } from "@/lib/messageJourney.mjs";
 
 interface ChatWindowProps {
   conversations: Conversation[];
@@ -37,10 +22,29 @@ interface ChatWindowProps {
   datingAdId?: string | null;
   /** Bumped by the page on a realtime event for the open conversation. */
   threadVersion?: number;
+  /** On phones only one pane shows: the list, or the open thread. */
+  phonePane?: "list" | "thread";
+  onBackToList?: () => void;
 }
 
 type Folder = "INBOX" | "UNREAD" | "REQUESTS";
+type ThreadContext = {
+  approach: { canWrite: boolean; line: string | null; established: boolean; explicitMediaInChat?: string } | null;
+  shared: string[];
+  plan: { id: string; title: string; text?: string; startsAt?: string; expiresAt: string } | null;
+};
+const OPENERS_HIDDEN = "intimo:openers:hidden";
 
+function readHidden() {
+  try { return window.localStorage.getItem(OPENERS_HIDDEN) === "1"; } catch { return false; }
+}
+
+/**
+ * Messages (approved v33): a quiet list of conversations and a thread that starts with
+ * context — the plan being replied to, what you share, the explicit-photo rule — then
+ * optional typographic openers and a plain composer. The server stays authoritative for
+ * every rule shown here (POST /api/messages).
+ */
 export const ChatWindow: React.FC<ChatWindowProps> = ({
   conversations,
   activeConversation,
@@ -49,13 +53,22 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   loadingOlderConversations = false,
   datingAdId = null,
   threadVersion = 0,
+  phonePane = "thread",
+  onBackToList,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [folder, setFolder] = useState<Folder>("INBOX");
   const [messages, setMessages] = useState<Message[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loadingOlder, setLoadingOlder] = useState(false);
+  const [loadedThread, setLoadedThread] = useState<string | null>(null);
   const [sendError, setSendError] = useState("");
+  const [context, setContext] = useState<ThreadContext>({ approach: null, shared: [], plan: null });
+  const [openersHidden, setOpenersHidden] = useState(false);
+  const participant = activeConversation.participant;
+  const participantId = participant.id || participant.userId;
+
+  useEffect(() => { setOpenersHidden(readHidden()); }, []);
 
   // Load durable messages through the authenticated participant boundary.
   useEffect(() => {
@@ -66,36 +79,48 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       .then(async (response) => response.ok ? response.json() : Promise.reject(new Error("Messages unavailable")))
       .then((payload) => {
         if (!active) return;
-        setMessages((payload.messages || []).map((item: any) => ({
-          id: item.id,
-          conversationId: item.conversation_id,
-          senderId: item.sender_id === participantId ? participantId : "user-current",
-          senderName: item.sender_id === participantId ? activeConversation.participant.displayName : "You",
-          senderAvatar: item.sender_id === participantId ? activeConversation.participant.avatarUrl : "",
-          content: item.content,
-          mediaUrl: item.attachment_type === "IMAGE" ? item.media_url || undefined : undefined,
-          status: item.status,
-          createdAt: new Date(item.created_at).toLocaleString(),
-        })));
+        setMessages((payload.messages || []).map((item: any) => toMessage(item, activeConversation)));
         setNextCursor(payload.pagination?.nextCursor || null);
+        setLoadedThread(participantId);
       })
-      .catch(() => { if (active) setMessages([]); });
+      .catch(() => { if (active) { setMessages([]); setLoadedThread(participantId); } });
     return () => { active = false; };
   }, [activeConversation, threadVersion]);
+
+  // What frames the thread: how to approach, what you share, the plan being replied to.
+  useEffect(() => {
+    let active = true;
+    const key = encodeURIComponent(participantId);
+    const get = (url: string) => fetch(url, { credentials: "same-origin", cache: "no-store" }).then((response) => response.ok ? response.json() : null).catch(() => null);
+    Promise.all([
+      get(`/api/profiles/${key}/approach`),
+      get(`/api/profiles/${key}/desires`),
+      datingAdId ? get(`/api/dating-ads?authorId=${key}`) : Promise.resolve(null),
+    ]).then(([approach, desires, plans]) => {
+      if (!active) return;
+      const plan = datingAdId ? (plans?.plans || []).find((item: { id: string }) => item.id === datingAdId) ?? null : null;
+      setContext({ approach, shared: desires?.shared || [], plan });
+    });
+    return () => { active = false; };
+  }, [participantId, datingAdId]);
 
   const [inputMessage, setInputMessage] = useState("");
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [blockModalOpen, setBlockModalOpen] = useState(false);
-  const [showProfilePreview, setShowProfilePreview] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [attachOpen, setAttachOpen] = useState(false);
+  const inputRef = React.useRef<HTMLTextAreaElement>(null);
+  const threadEnd = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => { threadEnd.current?.scrollIntoView({ block: "end" }); }, [messages.length, loadedThread]);
 
   const loadOlder = async () => {
     if (!nextCursor || loadingOlder) return;
     setLoadingOlder(true);
-    const participantId = activeConversation.participant.id || activeConversation.participant.userId;
     const response = await fetch(`/api/messages?peerId=${encodeURIComponent(participantId)}&before=${encodeURIComponent(nextCursor)}`, { credentials: "same-origin", cache: "no-store" });
     const payload = await response.json().catch(() => ({}));
     if (response.ok) {
-      const older = (payload.messages || []).map((item: any) => ({ id: item.id, conversationId: item.conversation_id, senderId: item.sender_id === participantId ? participantId : "user-current", senderName: item.sender_id === participantId ? activeConversation.participant.displayName : "You", senderAvatar: item.sender_id === participantId ? activeConversation.participant.avatarUrl : "", content: item.content, mediaUrl: item.attachment_type === "IMAGE" ? item.media_url || undefined : undefined, status: item.status, createdAt: new Date(item.created_at).toLocaleString() }));
+      const older = (payload.messages || []).map((item: any) => toMessage(item, activeConversation));
       setMessages((current) => [...older, ...current.filter((message) => !older.some((item: Message) => item.id === message.id))]);
       setNextCursor(payload.pagination?.nextCursor || null);
     }
@@ -110,6 +135,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     if (!file) return;
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 15 * 1024 * 1024) { setSendError("Choose a JPEG, PNG or WebP photo under 15 MB."); return; }
     setSendError("");
+    setAttachOpen(false);
     try {
       const declaration = await requestParticipantDeclaration();
       setUploadingPhoto(0);
@@ -127,7 +153,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     if (!inputMessage.trim() && !mediaId) return;
     setSendError("");
 
-    const participantId = activeConversation.participant.id || activeConversation.participant.userId;
     const response = await fetch("/api/messages", {
       method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ receiverId: participantId, content: inputMessage.trim(), datingAdId, mediaId }),
@@ -138,7 +163,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       return;
     }
 
-    const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     const newMsg: Message = {
       id: payload.message?.id || "m-" + Date.now(),
       conversationId: activeConversation.id,
@@ -148,13 +172,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       content: inputMessage.trim(),
       mediaUrl: payload.message?.media_url || undefined,
       status: "SENT",
-      createdAt: nowTime,
+      createdAt: new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
     };
-
-    const updated = [...messages, newMsg];
-    setMessages(updated);
+    setMessages((current) => [...current, newMsg]);
     setInputMessage("");
+  };
 
+  const hideOpeners = () => {
+    setOpenersHidden(true);
+    try { window.localStorage.setItem(OPENERS_HIDDEN, "1"); } catch { /* the choice just won't persist */ }
   };
 
   const requestCount = conversations.filter((c) => c.isRequest).length;
@@ -164,260 +190,207 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     && (folder === "REQUESTS" ? c.isRequest : !c.isRequest && (folder === "INBOX" || c.unreadCount > 0))
   );
 
+  const name = participant.displayName;
+  const her = possessive(participant);
+  const threadLoaded = loadedThread === participantId;
+  const emptyThread = threadLoaded && messages.length === 0;
+  const established = Boolean(context.approach?.established) || messages.some((m) => m.senderId !== "user-current");
+  const sharedWords = context.shared.map((id) => desireById(id)?.label?.toLowerCase()).filter(Boolean) as string[];
+  const explicitRule = explicitPhotoRule(context.approach?.explicitMediaInChat, established, name);
+  const explicitAllowed = context.approach?.explicitMediaInChat === "COMFORTABLE" || (context.approach?.explicitMediaInChat === "ASK_FIRST" && established);
+  const openers = emptyThread && !openersHidden ? openersFor({ plan: context.plan, shared: sharedWords }) : [];
+  const status = participant.isOnline ? "Here now" : null;
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-140px)] text-left">
-      {/* Sidebar: Conversation List matching Amateri reference */}
-      <Card variant="glass" className="p-3 space-y-3 flex flex-col h-full overflow-hidden">
-        {/* Search Conversations Input */}
-        <div className="relative">
-          <Search className="w-4 h-4 text-velora-textMuted absolute left-3 top-2.5" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search conversations..."
-            className="w-full pl-9 pr-4 py-1.5 bg-ink/5 border border-ink/10 rounded-full text-xs text-ink placeholder-velora-textMuted focus:outline-none focus:border-velora-accent/60 transition-all"
-          />
+    <div className="grid h-[calc(100svh-4rem)] grid-cols-1 text-left md:h-[calc(100vh-7rem)] md:grid-cols-[340px_minmax(0,1fr)] md:gap-0 md:overflow-hidden md:rounded-[28px] md:border md:border-velora-line md:bg-velora-surface">
+      {/* Conversations */}
+      <section aria-label="Conversations" className={`${phonePane === "list" ? "flex" : "hidden"} min-h-0 flex-col bg-velora-surface md:flex md:border-r md:border-velora-line`}>
+        <div className="px-5 pb-3 pt-5">
+          <h1 className="font-display text-[40px] leading-none text-velora-ink">Messages</h1>
+          <div className="mt-4 flex gap-5" role="tablist" aria-label="Message folders">
+            {([["INBOX", "Inbox", 0], ["UNREAD", "Unread", unreadCount], ["REQUESTS", "Requests", requestCount]] as const).map(([value, label, count]) => (
+              <button key={value} type="button" role="tab" aria-selected={folder === value} onClick={() => setFolder(value)} className={`min-h-11 border-b-2 text-[15px] transition-colors ${folder === value ? "border-velora-copper font-semibold text-velora-ink" : "border-transparent text-velora-muted hover:text-velora-ink"}`}>
+                {label}{count > 0 ? ` · ${count}` : ""}
+              </button>
+            ))}
+          </div>
+          <label className="mt-3 flex items-center gap-3 border-b border-velora-ink/40 pb-2">
+            <Search className="h-4 w-4 text-velora-ink2" aria-hidden />
+            <span className="sr-only">Search conversations</span>
+            <input type="search" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by name" className="w-full bg-transparent text-[16px] text-velora-ink placeholder:text-velora-muted focus:outline-none" />
+          </label>
         </div>
-
-        <div className="flex gap-1.5 px-1 pt-1 border-t border-ink/10" role="tablist" aria-label="Message folders">
-          {([["INBOX", "Inbox", 0], ["UNREAD", "Unread", unreadCount], ["REQUESTS", "Requests", requestCount]] as const).map(([value, label, count]) => (
-            <button key={value} type="button" role="tab" aria-selected={folder === value} onClick={() => setFolder(value)} className={`min-h-9 flex-1 rounded-full border px-2 text-[11px] font-semibold transition ${folder === value ? "border-velora-accent/60 bg-velora-accent/15 text-ink" : "border-ink/10 text-velora-textMuted hover:border-ink/25"}`}>
-              {label}{count > 0 ? ` · ${count}` : ""}
-            </button>
-          ))}
-        </div>
-
-        <div className="space-y-1.5 overflow-y-auto flex-1 pr-1 custom-scrollbar">
+        <ul className="min-h-0 flex-1 overflow-y-auto px-5 pb-6">
           {filteredConversations.map((c) => {
             const isActive = activeConversation.id === c.id;
-            const genderSymbol =
-              (c.participant as any).genderSymbol ||
-              (c.participant.gender === "FEMALE" ? "♀" : c.participant.gender === "MALE" ? "♂" : "👫");
-
             return (
-              <div
-                key={c.id}
-                onClick={() => onSelectConversation(c)}
-                className={`p-2.5 rounded-2xl cursor-pointer transition-all flex items-center gap-3 ${
-                  isActive
-                    ? "bg-gradient-to-r from-velora-accent/20 to-velora-accent/20 border border-velora-accent/40 shadow-gold-glow"
-                    : "hover:bg-ink/5 border border-transparent"
-                }`}
-              >
-                <div className="w-11 h-11 rounded-full border border-ink/20 overflow-hidden bg-velora-card shrink-0 relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={c.participant.avatarUrl}
-                    alt={c.participant.displayName}
-                    className="w-full h-full object-cover"
-                  />
-                  {c.participant.isOnline ? (
-                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-velora-bg" title="Online" />
-                  ) : (
-                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-gray-500 border-2 border-velora-bg" title="Offline" />
-                  )}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1 min-w-0">
-                      <h3 className="text-xs font-bold text-ink truncate">
-                        {c.participant.displayName}
-                      </h3>
-                      <span className="text-[10px] text-pink-400 font-bold shrink-0">{genderSymbol}</span>
-                      {c.participant.verified && (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 fill-blue-400/20 shrink-0" />
-                      )}
-                    </div>
-                    <span className="text-[9px] font-mono text-velora-textMuted shrink-0 ml-1">
-                      {c.lastMessage?.createdAt}
+              <li key={c.id}>
+                <button type="button" onClick={() => onSelectConversation(c)} aria-current={isActive ? "true" : undefined} className={`flex min-h-[76px] w-full items-center gap-4 border-b border-velora-line/70 py-3 text-left ${isActive ? "md:bg-velora-sunken/60 md:-mx-5 md:w-[calc(100%+2.5rem)] md:px-5" : ""}`}>
+                  <Portrait src={c.participant.avatarUrl} name={c.participant.displayName} sizes="44px" className="h-[55px] w-11 shrink-0" monogramClassName="text-xl" />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-baseline justify-between gap-2">
+                      <span className={`truncate font-display text-[22px] leading-tight ${c.unreadCount > 0 ? "text-velora-ink" : "text-velora-ink"}`}>{c.participant.displayName}</span>
+                      {c.participant.isOnline && <span className="h-2 w-2 shrink-0 rounded-full bg-velora-copper" role="img" aria-label="Here now" />}
                     </span>
-                  </div>
-
-                  <p className="text-[11px] text-velora-textMuted truncate mt-0.5 flex items-center gap-1">
-                    <span className="text-[10px]">↩</span>
-                    <span className="truncate">{c.lastMessage?.content || "Conversation started"}</span>
-                  </p>
-                </div>
-              </div>
+                    <span className={`block truncate text-[14px] ${c.unreadCount > 0 ? "font-semibold text-velora-ink" : "text-velora-muted"}`}>{c.lastMessage?.content || "Conversation started"}</span>
+                  </span>
+                </button>
+              </li>
             );
           })}
+          {filteredConversations.length === 0 && <li className="py-8 text-[15px] text-velora-ink2">{folder === "REQUESTS" ? "No message requests." : folder === "UNREAD" ? "You're all caught up." : "No conversations here yet."}</li>}
           {onLoadOlderConversations && !searchQuery && (
-            <button type="button" onClick={onLoadOlderConversations} disabled={loadingOlderConversations} className="w-full rounded-xl border border-ink/10 px-3 py-2 text-[11px] font-semibold text-velora-textMuted hover:border-velora-accent/40 hover:text-velora-accent disabled:opacity-50">
-              {loadingOlderConversations ? "Loading older conversations…" : "Load older conversations"}
-            </button>
+            <li><button type="button" onClick={onLoadOlderConversations} disabled={loadingOlderConversations} className="mt-3 min-h-11 text-[15px] text-velora-ink2 underline underline-offset-4 disabled:opacity-50">{loadingOlderConversations ? "Loading older conversations…" : "Load older conversations"}</button></li>
           )}
-        </div>
-      </Card>
+        </ul>
+      </section>
 
-      {/* Main Chat Thread Window */}
-      <Card variant="glass" className="md:col-span-2 p-0 flex flex-col h-full overflow-hidden relative">
-        {/* Chat Thread Header */}
-        <div className="p-4 border-b border-ink/10 flex items-center justify-between bg-velora-card/60">
-          <div
-            className="flex items-center gap-3 cursor-pointer"
-            onClick={() => setShowProfilePreview(!showProfilePreview)}
-          >
-            <div className="w-10 h-10 rounded-full border border-velora-gold/40 overflow-hidden bg-velora-card">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={activeConversation.participant.avatarUrl}
-                alt="Avatar"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-velora-textPrimary flex items-center gap-2">
-                {activeConversation.participant.displayName}
-                {activeConversation.participant.verified && <Badge type="verified" label="" />}
-              </h3>
-              <p className="text-[10px] text-velora-textMuted">
-                {activeConversation.participant.isOnline ? (
-                  <span className="text-emerald-700 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    {activeConversation.participant.location
-                      ? `${activeConversation.participant.location} • Active Now`
-                      : "Active Now"}
-                  </span>
-                ) : (
-                  <span className="text-gray-400">
-                    {activeConversation.participant.location
-                      ? `${activeConversation.participant.location} • Offline`
-                      : "Offline"}
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
-
-          {/* Action Tools */}
-          <div className="flex items-center gap-2">
-            <Link href={`/profile/${activeConversation.participant.id}`}>
-              <Button variant="glass" size="sm" className="text-xs">
-                View Profile
-              </Button>
-            </Link>
-
-            <button
-              onClick={() => setReportModalOpen(true)}
-              className="p-2 rounded-full glass-panel text-velora-textMuted hover:text-red-600 hover:border-red-500/40 transition-colors"
-              title="Report User"
-            >
-              <ShieldAlert className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => setBlockModalOpen(true)}
-              className="p-2 rounded-full glass-panel text-velora-textMuted hover:text-red-600 hover:border-red-500/40 transition-colors"
-              title="Block User"
-            >
-              <Ban className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {activeConversation.isRequest && (
-          <div className="border-b border-velora-accent/20 bg-velora-accent/5 px-4 py-2 text-[11px] text-velora-accent" role="note">
-            Message request: you haven&apos;t replied yet. Reply to move it to your inbox, or block or report from the menu.
-          </div>
-        )}
-
-        {/* Message Thread History */}
-        <div className="flex-1 p-6 overflow-y-auto space-y-4">
-          {nextCursor && <div className="text-center"><Button variant="ghost" size="sm" onClick={() => void loadOlder()} disabled={loadingOlder}>{loadingOlder ? "Loading…" : "Load older messages"}</Button></div>}
-          {messages.map((m) => {
-            const isMe = m.senderId === "user-current";
-            return (
-              <div
-                key={m.id}
-                className={`flex flex-col ${isMe ? "items-end" : "items-start"} space-y-1`}
-              >
-                <div className="flex items-center gap-2 px-1">
-                  <span className="text-[10px] text-velora-textMuted">{m.senderName}</span>
-                  <span className="text-[10px] text-velora-textMuted">• {m.createdAt}</span>
-                </div>
-
-                <div
-                  className={`max-w-md p-4 rounded-2xl text-xs leading-relaxed relative ${
-                    isMe
-                      ? "bg-gold-gradient text-velora-bg font-medium shadow-gold-glow rounded-tr-none"
-                      : "glass-panel text-velora-textPrimary border-ink/10 rounded-tl-none"
-                  }`}
-                >
-                  {m.mediaUrl && <div className={m.content ? "mb-2" : ""}><ChatPhoto src={m.mediaUrl} mine={isMe} /></div>}
-                  {m.content && <p>{m.content}</p>}
-
-                  {/* Delivery Status Indicator for sent messages */}
-                  {isMe && (
-                    <div className="flex justify-end pt-1 text-velora-bg/80">
-                      {m.status === "SENT" && <span title="Sent"><Check className="w-3.5 h-3.5" /></span>}
-                      {m.status === "DELIVERED" && <span title="Delivered"><CheckCheck className="w-3.5 h-3.5" /></span>}
-                      {m.status === "READ" && <span title="Read"><CheckCheck className="w-3.5 h-3.5 text-velora-bg font-bold" /></span>}
-                    </div>
-                  )}
-                </div>
+      {/* Thread */}
+      <section aria-label={`Conversation with ${name}`} className={`${phonePane === "thread" ? "flex" : "hidden"} min-h-0 flex-col bg-velora-surface md:flex`}>
+        <header className="flex items-center gap-3 border-b border-velora-line px-3 py-2 md:px-6">
+          <button type="button" onClick={onBackToList} aria-label="Back to conversations" className="flex h-11 w-11 items-center justify-center text-velora-ink md:hidden"><ArrowLeft className="h-5 w-5" aria-hidden /></button>
+          <Link href={`/profile/${participantId}`} className="flex min-w-0 flex-1 items-center gap-3">
+            <Portrait src={participant.avatarUrl} name={name} sizes="40px" className="h-10 w-10 shrink-0 rounded-full" monogramClassName="text-lg" />
+            <span className="min-w-0">
+              <span className="block truncate font-display text-[24px] leading-tight text-velora-ink">{name}</span>
+              {status && <span className="block text-[13px] text-velora-muted">{status}</span>}
+            </span>
+          </Link>
+          <div className="relative">
+            <button type="button" aria-label="More" aria-haspopup="menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)} className="flex h-11 w-11 items-center justify-center text-velora-ink"><MoreHorizontal className="h-5 w-5" aria-hidden /></button>
+            {menuOpen && (
+              <div role="menu" className="absolute right-0 top-11 z-20 w-52 border border-velora-line bg-velora-surface py-2 shadow-card">
+                <Link role="menuitem" href={`/profile/${participantId}`} className="flex min-h-11 items-center px-4 text-[15px] text-velora-ink hover:bg-velora-sunken">{her === "their" ? "Their" : her === "her" ? "Her" : "His"} portrait</Link>
+                <button role="menuitem" type="button" onClick={() => { setMenuOpen(false); setReportModalOpen(true); }} className="block min-h-11 w-full px-4 text-left text-[15px] text-velora-ink hover:bg-velora-sunken">Report</button>
+                <button role="menuitem" type="button" onClick={() => { setMenuOpen(false); setBlockModalOpen(true); }} className="block min-h-11 w-full px-4 text-left text-[15px] text-velora-crimson hover:bg-velora-sunken">Block</button>
               </div>
-            );
-          })}
+            )}
+          </div>
+        </header>
 
-
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-8">
+          {context.plan && (
+            <blockquote className="mb-5 border-l-2 border-velora-copper pl-4">
+              <p className="text-[14px] text-velora-ink2">Replying to {her} invitation{planWindow(context.plan) ? ` · ${planWindow(context.plan)}` : ""}</p>
+              <p className="mt-1 font-display text-[26px] leading-[1.15] text-velora-ink">{context.plan.title}</p>
+            </blockquote>
+          )}
+          {(sharedWords.length > 0 || explicitRule || (!established && context.approach?.line)) && (
+            <p className="mb-6 text-[15px] leading-relaxed text-velora-ink2">
+              {sharedWords.length > 0 && <>You both list {sharedWords.length === 1 ? sharedWords[0] : `${sharedWords.slice(0, -1).join(", ")} and ${sharedWords[sharedWords.length - 1]}`}. </>}
+              {!established && context.approach?.line && <>{context.approach.line} </>}
+              {explicitRule}
+            </p>
+          )}
+          {activeConversation.isRequest && (
+            <p className="mb-5 text-[14px] text-velora-ink2" role="note">
+              Message request: you haven&apos;t replied yet. Reply to move it to your inbox, or block or report from the menu.
+            </p>
+          )}
+          {nextCursor && <div className="mb-4 text-center"><button type="button" onClick={() => void loadOlder()} disabled={loadingOlder} className="min-h-11 text-[14px] text-velora-ink2 underline underline-offset-4">{loadingOlder ? "Loading…" : "Load older messages"}</button></div>}
+          <ol className="space-y-3">
+            {messages.map((m) => {
+              const isMe = m.senderId === "user-current";
+              return (
+                <li key={m.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                  <div className={`max-w-[85%] px-4 py-3 text-[16px] leading-relaxed md:max-w-md ${isMe ? "rounded-[20px] rounded-br-md bg-velora-ink text-velora-paper" : "rounded-[20px] rounded-bl-md bg-velora-sunken text-velora-ink"}`}>
+                    {m.mediaUrl && <div className={m.content ? "mb-2" : ""}><ChatPhoto src={m.mediaUrl} mine={isMe} /></div>}
+                    {m.content && <p className="whitespace-pre-line">{m.content}</p>}
+                  </div>
+                  <span className="mt-1 px-1 text-[13px] text-velora-muted">{m.createdAt}{isMe && m.status === "READ" ? " · Read" : ""}</span>
+                </li>
+              );
+            })}
+          </ol>
+          <div ref={threadEnd} />
         </div>
 
         {/* Photos are private chat media (P1-10): served only to the two participants. */}
-        <div className="p-4 border-t border-ink/10 bg-velora-card/60 space-y-2">
-          {datingAdId && <p className="text-[11px] text-velora-accent">Replying to a dating ad. Its audience requirements are checked securely when you send.</p>}
-          {sendError && <p role="alert" className="text-[11px] text-rose-700">{sendError}</p>}
-          <label className="flex items-center gap-2 text-[11px] text-velora-textMuted"><input type="checkbox" className="h-3.5 w-3.5 accent-velora-gold" checked={photoExplicit} onChange={(event) => setPhotoExplicit(event.target.checked)} />Next photo is explicit (respects their boundaries)</label>
-          <div className="flex items-center gap-3">
-            <input
-              type="text"
-              placeholder="Write a private message…"
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && void handleSendMessage()}
-              className="flex-1 bg-ink/5 border border-ink/10 rounded-2xl px-4 py-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
-            />
-            <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => void sendPhoto(event.target.files?.[0])} />
-            <Button variant="ghost" size="sm" className="p-3 rounded-2xl" onClick={() => photoInputRef.current?.click()} disabled={uploadingPhoto !== null} aria-label="Send a photo">
-              {uploadingPhoto !== null ? <span className="text-[10px]">{uploadingPhoto}%</span> : <ImagePlus className="w-4 h-4" />}
-            </Button>
-            <Button variant="gold" size="sm" className="p-3 rounded-2xl" onClick={() => void handleSendMessage()}>
-              <Send className="w-4 h-4" />
-            </Button>
+        <div className="border-t border-velora-line bg-velora-surface px-4 pb-3 pt-3 md:px-8">
+          {openers.length > 0 && (
+            <div className="mb-3">
+              <div className="flex items-baseline justify-between">
+                <p className="text-[14px] text-velora-muted">If you&apos;d like a start</p>
+                <button type="button" onClick={hideOpeners} className="min-h-11 text-[14px] text-velora-ink underline underline-offset-4">Hide</button>
+              </div>
+              <ul>
+                {openers.map((opener) => (
+                  <li key={opener}><button type="button" onClick={() => { setInputMessage(opener); inputRef.current?.focus(); }} className="py-1 text-left font-display text-[22px] italic leading-snug text-velora-copperInk hover:text-velora-ink">&ldquo;{opener}&rdquo;</button></li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {datingAdId && !context.plan && <p className="mb-2 text-[14px] text-velora-ink2">Replying to an invitation. Who can reply is checked when you send.</p>}
+          {sendError && <p role="alert" className="mb-2 text-[14px] text-velora-crimson">{sendError}</p>}
+          {attachOpen && (
+            <div className="mb-3 border border-velora-line bg-velora-paper p-4">
+              <button type="button" onClick={() => photoInputRef.current?.click()} className="min-h-11 text-[16px] font-semibold text-velora-ink underline underline-offset-4">Choose a photo</button>
+              <label className={`mt-2 flex items-start gap-3 text-[15px] ${explicitAllowed ? "text-velora-ink" : "text-velora-muted"}`}>
+                <input type="checkbox" className="mt-1 h-5 w-5 accent-velora-ink" checked={photoExplicit && explicitAllowed} disabled={!explicitAllowed} onChange={(event) => setPhotoExplicit(event.target.checked)} />
+                <span>This photo is explicit{!explicitAllowed && <span className="block text-[14px]">{explicitRule || "Not available in this conversation."}</span>}</span>
+              </label>
+            </div>
+          )}
+          <div className="flex items-end gap-2">
+            <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" aria-label="Choose a photo to send" tabIndex={-1} className="sr-only" onChange={(event) => void sendPhoto(event.target.files?.[0])} />
+            <button type="button" onClick={() => setAttachOpen(!attachOpen)} disabled={uploadingPhoto !== null} aria-expanded={attachOpen} aria-label="Send a photo" className="flex h-12 w-11 shrink-0 items-center justify-center text-velora-ink disabled:opacity-50">
+              {uploadingPhoto !== null ? <span className="text-[13px]">{uploadingPhoto}%</span> : <Plus className="h-5 w-5" aria-hidden />}
+            </button>
+            <label className="flex min-h-12 flex-1 items-center rounded-[24px] border border-velora-ink/60 bg-velora-surface px-4 focus-within:border-velora-ink">
+              <span className="sr-only">Message {name}</span>
+              <textarea
+                ref={inputRef}
+                rows={1}
+                placeholder={emptyThread ? "Introduce yourself…" : "Write a message…"}
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void handleSendMessage(); } }}
+                className="max-h-32 w-full resize-none bg-transparent py-3 text-[16px] text-velora-ink placeholder:text-velora-muted focus:outline-none"
+              />
+            </label>
+            <button type="button" onClick={() => void handleSendMessage()} disabled={!inputMessage.trim()} aria-label="Send" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-velora-ink text-velora-paper disabled:opacity-40">
+              <ArrowRight className="h-5 w-5" aria-hidden />
+            </button>
           </div>
         </div>
-      </Card>
+      </section>
 
-      {/* Safety Report Modal */}
       <ReportModal
         isOpen={reportModalOpen}
         onClose={() => setReportModalOpen(false)}
-        targetUsername={activeConversation.participant.displayName}
-        targetProfileId={activeConversation.participant.id || activeConversation.participant.userId}
+        targetUsername={name}
+        targetProfileId={participantId}
         contentType="MESSAGE"
       />
 
-      {/* User Block Modal */}
-      <Modal isOpen={blockModalOpen} onClose={() => setBlockModalOpen(false)} title="Confirm User Block">
-        <div className="space-y-4 text-left">
-          <p className="text-xs text-velora-textSecondary leading-relaxed">
-            Are you sure you want to block <strong>@{activeConversation.participant.displayName}</strong>? Blocked members cannot view your profile or send messages.
-          </p>
-          <div className="flex gap-3">
-            <Button variant="ghost" className="w-1/3 text-xs" onClick={() => setBlockModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="danger" className="w-2/3 text-xs font-bold" onClick={async () => {
-              const targetProfileId = activeConversation.participant.id || activeConversation.participant.userId;
-              const response = await fetch("/api/blocks", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ targetProfileId }) });
-              if (response.ok) setBlockModalOpen(false);
-            }}>
-              Confirm Block
-            </Button>
+      <Modal isOpen={blockModalOpen} onClose={() => setBlockModalOpen(false)} title={`Block ${name}?`}>
+        <div className="space-y-5 text-left">
+          <p className="text-[16px] leading-relaxed text-velora-ink2">You will no longer see or contact each other. Blocked members cannot view your profile or send messages.</p>
+          <div className="flex items-center gap-5">
+            <button type="button" className="min-h-11 text-[16px] text-velora-ink underline underline-offset-4" onClick={() => setBlockModalOpen(false)}>Cancel</button>
+            <button type="button" className="min-h-12 flex-1 rounded-full bg-velora-crimson text-[16px] font-semibold text-velora-paper" onClick={async () => {
+              const response = await fetch("/api/blocks", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ targetProfileId: participantId }) });
+              if (response.ok) { setBlockModalOpen(false); window.location.assign("/messages"); }
+            }}>Block</button>
           </div>
         </div>
       </Modal>
     </div>
   );
 };
+
+function toMessage(item: any, conversation: Conversation): Message {
+  const participantId = conversation.participant.id || conversation.participant.userId;
+  const theirs = item.sender_id === participantId;
+  return {
+    id: item.id,
+    conversationId: item.conversation_id,
+    senderId: theirs ? participantId : "user-current",
+    senderName: theirs ? conversation.participant.displayName : "You",
+    senderAvatar: theirs ? conversation.participant.avatarUrl : "",
+    content: item.content,
+    mediaUrl: item.attachment_type === "IMAGE" ? item.media_url || undefined : undefined,
+    status: item.status,
+    createdAt: new Date(item.created_at).toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit" }),
+  };
+}

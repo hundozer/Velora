@@ -261,7 +261,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
             <div className="mt-4 grid grid-cols-3 gap-2">
               {media.slice(0, 6).map((item, index) => (
                 <div key={item.id} className={`relative ${index === 0 && media.length > 1 ? "col-span-2 row-span-2" : ""}`}>
-                  <a href={item.mediaUrl} target="_blank" rel="noreferrer" className="block h-full">
+                  <a href={item.mediaUrl} target="_blank" rel="noreferrer" aria-label={`Open photograph ${index + 1} of ${name}`} className="block h-full">
                     <Portrait src={item.mediaUrl} name={name} sizes="(min-width: 768px) 440px, 66vw" className="aspect-[4/5] h-full w-full" />
                   </a>
                   {memberView && !isOwner && <LikeButton mediaId={item.id} className="absolute bottom-2 right-2" />}

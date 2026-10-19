@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, Suspense } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { Conversation } from "@/types";
@@ -19,6 +20,8 @@ function MessagesContent() {
   const [activeConv, setActiveConv] = useState<Conversation | null>(null);
   const [nextConversationCursor, setNextConversationCursor] = useState<string | null>(null);
   const [loadingOlderConversations, setLoadingOlderConversations] = useState(false);
+  // Phones show one pane at a time: a link to a member opens their thread directly.
+  const [phonePane, setPhonePane] = useState<"list" | "thread">(targetUserId ? "thread" : "list");
 
   const syncConversations = useCallback(() => {
     fetch("/api/messages", { credentials: "same-origin" }).then(async (response) => response.ok ? response.json() : Promise.reject()).then((payload) => {
@@ -100,15 +103,23 @@ function MessagesContent() {
   }
 
   if (!activeConv) {
-    return <div className="max-w-4xl mx-auto px-4 py-16 text-center text-sm text-velora-textMuted">No conversations yet. Open a member profile and choose Message to start one.</div>;
+    return (
+      <div className="mx-auto max-w-2xl px-5 py-12">
+        <h1 className="font-display text-[44px] leading-none text-velora-ink">Messages</h1>
+        <p className="mt-4 text-[17px] text-velora-ink2">No conversations yet. Open someone&apos;s portrait in People and begin a conversation.</p>
+        <Link href="/people" className="mt-6 inline-flex min-h-11 items-center text-[16px] font-semibold text-velora-ink underline underline-offset-4">Go to People</Link>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="mx-auto max-w-6xl md:px-6 md:py-6">
       <ChatWindow
         conversations={conversations}
         activeConversation={activeConv}
-        onSelectConversation={setActiveConv}
+        onSelectConversation={(conversation) => { setActiveConv(conversation); setPhonePane("thread"); }}
+        phonePane={phonePane}
+        onBackToList={() => setPhonePane("list")}
         onLoadOlderConversations={nextConversationCursor ? loadOlderConversations : undefined}
         loadingOlderConversations={loadingOlderConversations}
         datingAdId={activeConv.participant.id === targetUserId ? targetDatingAdId : null}
