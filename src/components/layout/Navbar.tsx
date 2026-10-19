@@ -38,9 +38,12 @@ export const Navbar: React.FC = () => {
   }, [user]);
 
   if (isFlowPath(pathname)) return null;
+  // On phones, member People draws its own header (wordmark + Introductions/Everyone)
+  // over the full-bleed opening; notifications stay reachable from You.
+  const phoneHidden = Boolean(user) && pathname.startsWith("/people");
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-velora-line/70 bg-velora-paper/85 backdrop-blur-xl">
+    <header className={`${phoneHidden ? "hidden md:block" : ""} sticky top-0 z-40 w-full border-b border-velora-line/70 bg-velora-paper/85 backdrop-blur-xl`}>
       <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 lg:h-20 flex items-center justify-between gap-4">
         <Link href="/" className="shrink-0 font-display text-3xl leading-none text-velora-ink">Intimo</Link>
 

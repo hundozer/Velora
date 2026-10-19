@@ -263,7 +263,7 @@ test("discovery is authenticated, visibility-filtered, and deterministically ord
   assert.match(route, /created_at.*ascending: false/);
   assert.match(route, /id.*ascending: true/);
   assert.match(route, /\.neq\("auth_id", actorResult\.actor\.userId\)/);
-  assert.match(page, /fetch\(`\/api\/discovery\/profiles\?\$\{query\}`/);
+  assert.match(page, /fetch\(`\/api\/discovery\/profiles\?\$\{params\.toString\(\)\}`/);
   assert.doesNotMatch(page, /MOCK_PROFILES/);
 });
 

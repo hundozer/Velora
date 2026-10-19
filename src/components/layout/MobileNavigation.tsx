@@ -3,47 +3,54 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, MessageSquare, Users, Flame, CircleUserRound } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { isFlowPath } from "@/lib/flowRoutes";
+import { useNavTone } from "@/lib/ui/navTone";
 
+/**
+ * Bottom navigation as words (approved v33): People · Tonight · Messages · You,
+ * the current one marked with a copper dot. Dark variant over dark openings.
+ */
 export const MobileNavigation: React.FC = () => {
   const pathname = usePathname();
   const { t } = useTranslation();
   const { user } = useAuth();
+  const tone = useNavTone();
 
-  const publicItems = [
-    { href: "/", label: t("nav.home"), icon: Compass },
-    { href: "/people", label: t("nav.people"), icon: Users },
-    { href: "/tonight", label: t("nav.tonight"), icon: Flame },
-  ];
-  const memberItems = [
-    { href: "/messages", label: t("nav.messages"), icon: MessageSquare },
-    { href: "/me", label: t("nav.me"), icon: CircleUserRound },
-  ];
-  const navItems = user ? [...publicItems, ...memberItems] : publicItems;
+  const items = user
+    ? [
+        { href: "/people", label: t("nav.people") },
+        { href: "/tonight", label: t("nav.tonight") },
+        { href: "/messages", label: t("nav.messages") },
+        { href: "/me", label: t("nav.me") },
+      ]
+    : [
+        { href: "/", label: t("nav.home") },
+        { href: "/people", label: t("nav.people") },
+        { href: "/tonight", label: t("nav.tonight") },
+      ];
   if (isFlowPath(pathname)) return null;
+  const dark = tone === "dark";
 
   return (
-    <nav aria-label="Mobile navigation" className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-velora-paper border-t border-velora-line pb-[env(safe-area-inset-bottom)] px-2 py-2 flex items-center justify-around">
-      {navItems.map((item) => {
-        const Icon = item.icon;
-        const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
-
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all ${
-              isActive ? "text-velora-gold" : "text-velora-textMuted hover:text-ink"
-            }`}
-          >
-            <Icon className={`w-5 h-5 ${isActive ? "text-velora-gold scale-110" : ""}`} />
-            <span className="text-[10px] font-semibold tracking-wider">{item.label}</span>
-          </Link>
-        );
-      })}
+    <nav aria-label="Mobile navigation" className={`md:hidden fixed bottom-0 left-0 right-0 z-50 border-t pb-[env(safe-area-inset-bottom)] transition-colors duration-300 ${dark ? "border-white/10 bg-velora-night" : "border-velora-line bg-velora-paper"}`}>
+      <div className="flex h-16 items-stretch justify-around px-2">
+        {items.map((item) => {
+          const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`) || (item.href === "/people" && pathname.startsWith("/profile/"));
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={active ? "page" : undefined}
+              className={`relative flex min-w-[64px] flex-col items-center justify-center text-[15px] transition-colors ${active ? (dark ? "font-semibold text-velora-paper" : "font-semibold text-velora-ink") : dark ? "text-velora-paper/70 hover:text-velora-paper" : "text-velora-muted hover:text-velora-ink"}`}
+            >
+              {item.label}
+              <span aria-hidden className={`mt-1.5 h-1 w-1 rounded-full ${active ? "bg-velora-copper" : "bg-transparent"}`} />
+            </Link>
+          );
+        })}
+      </div>
     </nav>
   );
 };

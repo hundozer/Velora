@@ -15,6 +15,7 @@ test.beforeEach(async ({ context }) => {
     const page = url.searchParams.get("cursor") ? 1 : 0;
     return r.fulfill({ json: { profiles: Array.from({ length: 24 }, (_, k) => person(page * 24 + k)), nextCursor: page ? null : "2026-10-18T10:00:00Z|00000000-0000-4000-8000-000000000023" } });
   });
+  await context.route("**/api/discovery/introductions", (r) => r.fulfill({ json: { introductions: [] } }));
   await context.route("**/api/desires/me", (r) => r.fulfill({ json: { selections: [] } }));
   await context.route("**/api/dating-ads**", (r) => r.fulfill({ json: { plans: [] } }));
   await context.route("**/api/profiles/**", (r) => r.fulfill({ json: { profile: { id: "x", displayName: "Member 40", age: 30, interests: [], languages: [] }, ownership: { isOwner: false } } }));
@@ -25,7 +26,8 @@ test("filters, loaded people and scroll position survive opening a profile", asy
   await page.goto("/people?who=WOMEN&withinKm=5");
   const tile = (i: number) => page.locator(`a[href="/profile/${person(i).id}"]`);
   await tile(0).waitFor();
-  await page.getByRole("button", { name: "Show more" }).click();
+  // The index loads more as you scroll.
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await tile(40).scrollIntoViewIfNeeded();
   const before = await page.evaluate(() => Math.round(window.scrollY));
 
