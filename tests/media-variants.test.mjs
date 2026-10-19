@@ -88,10 +88,10 @@ test("processing writes variants under variants/{id}/ and records the outcome; f
 
 test("serving keeps grant-based and chat media uncached and reads variants without touching the auth query", async () => {
   const route = await read("src/app/api/media/[id]/route.ts");
-  assert.match(route, /const cacheable = !isChatImage && \(media\.visibility === "PUBLIC" \|\| media\.visibility === "MEMBERS_ONLY"\)/);
+  assert.match(route, /deliverMedia\(objectKey, media\.mime_type/);
   assert.match(route, /"private, no-store"/);
   // The authorisation select must not depend on the new column (works before the migration).
-  const authSelect = route.match(/select\("id,owner_id,object_key,visibility,upload_status,moderation_status,processing_status,category"\)/);
+  const authSelect = route.match(/select\("id,owner_id,object_key,visibility,upload_status,moderation_status,processing_status,category,mime_type"\)/);
   assert.ok(authSelect, "authorisation select unchanged");
   assert.ok(route.indexOf('select("variants")') > route.indexOf("if (!allowed) return"), "variants are read only after authorisation");
   assert.match(route, /media-view-thumb:/);

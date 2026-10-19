@@ -16,3 +16,5 @@ export declare function processMediaVariants(args: {
   recordResult: (result: VariantResult) => Promise<void>;
   timeoutMs?: number;
 }): Promise<VariantResult>;
+
+export declare function sanitizeDeliveredImage(input: Buffer): Promise<Buffer>;

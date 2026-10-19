@@ -85,3 +85,12 @@ export async function processMediaVariants({ media, readObject, writeObject, rec
   }
   return result;
 }
+
+/** Final image-delivery boundary: never return an uploaded original with metadata.
+ * Re-encode even on variant failure, for widthless requests and animated uploads.
+ * Decode/storage failures propagate: callers return 503 instead of leaking the source.
+ */
+export async function sanitizeDeliveredImage(input) {
+  return sharp(input, { limitInputPixels: MAX_INPUT_PIXELS, animated: true })
+    .rotate().webp({ quality: 85 }).toBuffer();
+}
