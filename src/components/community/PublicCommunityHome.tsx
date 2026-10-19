@@ -85,8 +85,9 @@ export function PublicCommunityHome() {
           <div className="relative aspect-[4/5] overflow-hidden rounded-card shadow-card sm:aspect-[5/4] lg:aspect-[4/5]">
             <Image src="/marketing/intimo-community-hero.jpg" alt="Adults talking over drinks in a candle-lit Prague bar" fill priority sizes="(max-width: 1024px) 100vw, 45vw" className="object-cover" style={{ objectPosition: "72% center" }} />
             <div className="absolute inset-x-4 bottom-4 rounded-2xl bg-velora-surface/95 p-4 shadow-card backdrop-blur sm:inset-x-6 sm:bottom-6 sm:p-5">
-              <p className="text-sm font-semibold text-velora-ink">Nina &amp; Tom, Vinohrady</p>
-              <p className="mt-1 text-sm text-velora-ink2">“Drinks tonight, see where it goes.” · ends in 5 h</p>
+              <p className="mb-1 text-xs text-velora-muted">Illustration · not a live member plan</p>
+              <p className="text-sm font-semibold text-velora-ink">An example of a Tonight plan</p>
+              <p className="mt-1 text-sm text-velora-ink2">“Drinks tonight, see where it goes.”</p>
             </div>
           </div>
         }
@@ -112,7 +113,7 @@ export function PublicCommunityHome() {
         <SectionTitle eyebrow="Discreet by design" title={<>Your privacy is<br />the default.</>} />
         <div className="mt-12 grid gap-6 md:grid-cols-3">
           {[
-            [MapPin, "Area, never position", "Members see your district. Your location is never stored."],
+            [MapPin, "Area, never position", "Members see your chosen district, never a precise position."],
             [EyeOff, "Members only", "Profiles and photos stay behind sign-in unless you choose otherwise."],
             [Mail, "Quiet emails", "Notifications never contain names, photos or messages."],
           ].map(([Icon, title, body]) => {
@@ -176,7 +177,7 @@ function DesireDemo() {
 function BoundaryDemo() {
   return (
     <div className="space-y-3" aria-hidden>
-      {[["First messages from men", "Ask first"], ["First messages from couples", "Welcome"], ["Explicit photos in chat", "Not interested"]].map(([label, value]) => (
+      {[["First messages from men", "Not interested"], ["First messages from couples", "Welcome"], ["Explicit photos in chat", "Not interested"]].map(([label, value]) => (
         <div key={label} className="flex items-center justify-between gap-4 rounded-2xl border border-velora-line px-5 py-4"><span className="text-base text-velora-ink">{label}</span><span className="shrink-0 text-sm font-semibold text-velora-accent">{value}</span></div>
       ))}
       <p className="flex items-center gap-2 pt-2 text-sm text-velora-muted"><ShieldCheck className="h-4 w-4 text-velora-accent" />Enforced before a message is sent</p>
@@ -186,8 +187,8 @@ function BoundaryDemo() {
 
 function PlanDemo() {
   return (
-    <div className="rounded-2xl border border-velora-line bg-velora-surface p-6" aria-hidden>
-      <div className="flex items-center justify-between text-sm"><span className="font-semibold text-velora-accent">Drinks &amp; a date</span><span className="text-velora-muted">ends in 5 h</span></div>
+    <div className="rounded-2xl border border-velora-line bg-velora-surface p-6" aria-label="Example plan, not a live listing">
+      <div className="flex items-center justify-between text-sm"><span className="font-semibold text-velora-accent">Drinks &amp; a date</span><span className="text-velora-muted">Example plan</span></div>
       <p className="mt-3 font-display text-3xl leading-tight text-velora-ink">Wine in Vinohrady, then see where it goes</p>
       <div className="mt-5 flex items-center justify-between"><span className="text-sm text-velora-ink2">Nina &amp; Tom · Praha 2</span><span className="rounded-full bg-velora-accent px-4 py-2 text-sm font-semibold text-velora-paper">Reply</span></div>
     </div>
@@ -196,8 +197,8 @@ function PlanDemo() {
 
 function PeopleDemo() {
   return (
-    <div className="flex gap-3" aria-hidden>
-      {[["Lena", "29 · Praha 7", "Online now"], ["Marek & Eva", "Couple · Praha 2", "Active today"]].map(([name, meta, presence]) => (
+    <div className="flex gap-3" aria-label="Illustrative profiles, not real members">
+      {[["Lena", "29 · Praha 7", "Example profile"], ["Marek & Eva", "Couple · Praha 2", "Example profile"]].map(([name, meta, presence]) => (
         <div key={name} className="flex-1 rounded-2xl border border-velora-line bg-velora-surface p-5">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-velora-accent/10 font-display text-xl text-velora-accent">{name[0]}</div>
           <p className="mt-4 text-base font-semibold text-velora-ink">{name}</p>
@@ -211,7 +212,8 @@ function PeopleDemo() {
 
 function PrivateDemo() {
   return (
-    <div aria-hidden>
+    <div aria-label="Example private photo request">
+      <p className="mb-3 text-sm text-velora-muted">Example request</p>
       <div className="grid grid-cols-3 gap-3">
         {[0, 1, 2].map((item) => <div key={item} className="flex aspect-square items-center justify-center rounded-2xl bg-gradient-to-br from-velora-blush to-velora-sunken"><Lock className="h-6 w-6 text-velora-accent/60" /></div>)}
       </div>
