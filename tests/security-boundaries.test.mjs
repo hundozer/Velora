@@ -269,12 +269,13 @@ test("discovery is authenticated, visibility-filtered, and deterministically ord
 
 test("member profile pages load through the authenticated visibility boundary", async () => {
   const route = await read("src/app/api/profiles/[id]/route.ts");
-  const page = await read("src/app/profile/[id]/page.tsx");
+  const page = await read("src/components/profile/ProfileStory.tsx");
   assert.match(route, /data\.profile_visibility === "FRIENDS_ONLY" && friends/);
   assert.match(route, /areFriends\(actorResult\.actor\.profileId, id\)/);
   assert.match(route, /isAdminActor\(actorResult\.actor\)/);
   assert.match(route, /\.eq\("id", id\)/);
-  assert.match(page, /fetch\(`\/api\/profiles\/\$\{encodeURIComponent\(id\)\}`/);
+  assert.match(page, /const key = encodeURIComponent\(id\);/);
+  assert.match(page, /fetch\(`\/api\/profiles\/\$\{key\}`/);
   assert.match(page, /response\.status === 401.*\/api\/public\/profiles/s);
 });
 
@@ -282,7 +283,7 @@ test("friendships are mutual, accepted, server-owned, block-aware, and enforce p
   const route = await read("src/app/api/friends/route.ts");
   const messages = await read("src/app/api/messages/route.ts");
   const privacy = await read("src/app/api/privacy/settings/route.ts");
-  const profile = await read("src/app/profile/[id]/page.tsx");
+  const profile = await read("src/components/profile/ProfileStory.tsx");
   const migration = await read("supabase/migrations/20260820_mutual_friendships.sql");
   assert.match(route, /resolveServerActor\(req\)/);
   assert.match(route, /intimo_friend_action/);
@@ -508,7 +509,7 @@ test("God Mode is a short-lived, MFA-backed, audited SUPER_ADMIN elevation witho
 
 test("production member surfaces do not inject fabricated profiles, feeds, relationships, or visitors", async () => {
   const dashboard = await read("src/app/dashboard/page.tsx");
-  const profile = await read("src/app/profile/[id]/page.tsx");
+  const profile = await read("src/components/profile/ProfileStory.tsx");
   const search = await read("src/components/people/MemberPeople.tsx");
   const features = await read("src/lib/features.ts");
   assert.doesNotMatch(dashboard, /MOCK_PROFILES|INITIAL_FEED_POSTS|RECENT_VISITORS|localStorage/);
@@ -526,7 +527,7 @@ test("legacy admin route cannot mount browser authority or fabricated operationa
 });
 
 test("canonical profile has no browser media stores or development fixtures", async () => {
-  const profile = await read("src/app/profile/[id]/page.tsx");
+  const profile = await read("src/components/profile/ProfileStory.tsx");
   assert.doesNotMatch(profile, /localStorage|NODE_ENV|mediaService|MOCK_|INITIAL_/);
   assert.match(profile, /api\/public\/media\?ownerId=/);
   assert.match(profile, /api\/public\/albums\?ownerId=/);

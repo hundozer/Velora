@@ -4,6 +4,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { toMemberVisibleProfile } from "@/lib/supabase/publicProfile";
 import type { ProfileRow } from "@/lib/supabase/profileService";
 import { areFriends } from "@/lib/social/friendship";
+import { areaById, distanceBucket, DISTANCE_BUCKET_LABELS } from "@/lib/areas.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -38,8 +39,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   }
   // Visitors (P1-08): at most one row per viewer, profile and day; never for invisible browsers.
+  let viewerAreaId: string | null = null;
   if (!isOwner && !isAdmin) {
-    const { data: viewer } = await supabase.from("profiles").select("browse_invisibly").eq("id", actorResult.actor.profileId).maybeSingle();
+    const { data: viewer } = await supabase.from("profiles").select("browse_invisibly,area_id").eq("id", actorResult.actor.profileId).maybeSingle();
+    viewerAreaId = viewer?.area_id ?? null;
     if (viewer && viewer.browse_invisibly !== true) {
       const { error: viewError } = await supabase.from("profile_views").upsert(
         { viewer_id: actorResult.actor.profileId, viewed_id: id, viewed_on: new Date().toISOString().slice(0, 10), last_viewed_at: new Date().toISOString() },
@@ -48,5 +51,14 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       if (viewError) console.error("Profile view not recorded", { code: viewError.code });
     }
   }
-  return NextResponse.json({ profile: toMemberVisibleProfile(data as ProfileRow, { friends: friends || isOwner || isAdmin }), ownership: { isOwner } }, { headers: { "Cache-Control": "private, no-store" } });
+  // Coarse place only (area and distance bucket), and never when the member hides location.
+  const hidden = data.location_precision === "HIDDEN";
+  const bucket = !hidden && viewerAreaId && data.area_id ? distanceBucket(viewerAreaId, data.area_id) : null;
+  const profile = {
+    ...toMemberVisibleProfile(data as ProfileRow, { friends: friends || isOwner || isAdmin }),
+    bio: data.bio || "",
+    areaName: hidden ? null : areaById(data.area_id)?.name || null,
+    distance: bucket && data.show_distance !== false ? DISTANCE_BUCKET_LABELS[bucket] : null,
+  };
+  return NextResponse.json({ profile, ownership: { isOwner } }, { headers: { "Cache-Control": "private, no-store" } });
 }

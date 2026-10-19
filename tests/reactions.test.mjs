@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 
 const route = readFileSync(new URL("../src/app/api/reactions/route.ts", import.meta.url), "utf8");
 const button = readFileSync(new URL("../src/components/media/LikeButton.tsx", import.meta.url), "utf8");
-const profile = readFileSync(new URL("../src/app/profile/[id]/page.tsx", import.meta.url), "utf8");
+const profile = readFileSync(new URL("../src/components/profile/ProfileStory.tsx", import.meta.url), "utf8");
 
 test("reactions reuse the shared content access check", () => {
   assert.match(route, /resolveContentTarget\(auth\.actor, "MEDIA", targetId\)/);

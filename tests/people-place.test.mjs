@@ -62,7 +62,8 @@ test("People keeps filters in the URL and restores its place only when coming ba
 });
 
 test("blocking from a profile returns to People instead of a missing page", async () => {
-  const profile = await read("src/app/profile/[id]/page.tsx");
-  assert.match(profile, /router\.push\("\/people"\)/);
+  // The story is shared by the page and the sheet over People; a full load drops the blocked member from the list.
+  const profile = await read("src/components/profile/ProfileStory.tsx");
+  assert.match(profile, /window\.location\.assign\("\/people"\)/);
   assert.doesNotMatch(profile, /"\/discover"/);
 });
