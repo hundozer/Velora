@@ -2,58 +2,39 @@
 
 import React from "react";
 import Link from "next/link";
-import { Clock3, MapPin, MessageSquare, ShieldCheck } from "lucide-react";
+import { clock, glanceTime } from "@/lib/tonight.mjs";
 
 export type Plan = {
   id: string; authorId: string; authorName: string; authorAvatar: string; authorAge: number | null; authorIsCouple: boolean; authorVerified: boolean;
   category: string; categoryLabel: string; title: string; text: string; areaName: string | null; distance: string | null;
-  expiresAt: string; endsIn: string; replyTypes: string[]; minAge: number; maxAge: number; requireVerified: boolean; requireMedia: boolean;
+  startsAt: string; expiresAt: string; endsIn: string; replyTypes: string[]; minAge: number; maxAge: number; requireVerified: boolean; requireMedia: boolean;
   status: string; live: boolean; isMine: boolean;
+  /** Who may reply, in words, and whether this viewer can — computed by the server's reply rule. */
+  audience?: string; canReply?: boolean; replyReason?: string | null; eligibilityText?: string | null;
 };
 
-const REPLY_LABELS: Record<string, string> = { "♀": "women", "♂": "men", "👫": "couples", "⚧": "trans & non-binary" };
+export const replyHref = (plan: Plan) => `/messages?user=${encodeURIComponent(plan.authorId)}&datingAd=${encodeURIComponent(plan.id)}`;
 
-function whoMayReply(plan: Plan) {
-  const types = plan.replyTypes.length ? plan.replyTypes.map((value) => REPLY_LABELS[value] || value).join(", ") : "everyone";
-  const ages = plan.minAge > 18 || plan.maxAge < 99 ? ` · ${plan.minAge}–${plan.maxAge}` : "";
-  return `Open to ${types}${ages}${plan.requireVerified ? " · verified only" : ""}`;
-}
-
-/** One Tonight plan. Replying opens a conversation tagged with the plan; eligibility is checked server-side. */
+/**
+ * One plan as an editorial entry (used on profiles): when, what, who, whether you can
+ * reply. Replying opens a conversation tagged with the plan; the server re-checks eligibility.
+ */
 export function PlanCard({ plan, onEnd, onReport }: { plan: Plan; onEnd?: (id: string) => void; onReport?: (plan: Plan) => void }) {
   return (
-    <article className="space-y-3 rounded-3xl border border-ink/10 bg-velora-card/70 p-5">
-      <div className="flex items-center justify-between gap-3 text-[11px]">
-        <span className="rounded-full border border-velora-gold/40 bg-velora-gold/10 px-2.5 py-1 font-semibold uppercase tracking-wider text-velora-gold">{plan.categoryLabel}</span>
-        <span className="inline-flex items-center gap-1 text-velora-textMuted"><Clock3 className="h-3.5 w-3.5" aria-hidden />{plan.live ? plan.endsIn : "Ended"}</span>
-      </div>
-      <div>
-        <h3 className="font-serif text-xl font-bold text-velora-textPrimary">{plan.title}</h3>
-        <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-velora-textSecondary">{plan.text}</p>
-      </div>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-velora-textMuted">
-        <Link href={`/profile/${plan.authorId}`} className="inline-flex items-center gap-2 font-semibold text-velora-textPrimary hover:text-velora-gold">
-          <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-ink/15 bg-velora-bg">
-            {plan.authorAvatar
-              ? // eslint-disable-next-line @next/next/no-img-element
-                <img src={plan.authorAvatar} alt="" className="h-full w-full object-cover" />
-              : <span className="text-[11px] text-velora-gold">{plan.authorName.slice(0, 1).toUpperCase()}</span>}
-          </span>
-          {plan.authorName}{plan.authorAge ? `, ${plan.authorAge}` : ""}{plan.authorIsCouple ? " · couple" : ""}
-        </Link>
-        {plan.authorVerified && <span className="inline-flex items-center gap-1 text-emerald-700"><ShieldCheck className="h-3.5 w-3.5" aria-hidden />Verified</span>}
-        {(plan.areaName || plan.distance) && <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" aria-hidden />{[plan.areaName, plan.distance].filter(Boolean).join(" · ")}</span>}
-      </div>
-      <p className="text-[11px] text-velora-textMuted">{whoMayReply(plan)}</p>
-      <div className="flex flex-wrap gap-2">
+    <article className="border-t border-velora-line py-5">
+      <p className="font-display text-[26px] leading-none text-velora-copperInk">
+        {glanceTime(plan)}<span className="ml-2 font-sans text-[14px] text-velora-muted">until {clock(plan.expiresAt)}{plan.areaName ? ` · ${plan.areaName}` : ""}</span>
+      </p>
+      <h3 className="mt-2 font-display text-[24px] leading-tight text-velora-ink">{plan.title}</h3>
+      {plan.text && <p className="mt-1 whitespace-pre-line text-[15px] leading-relaxed text-velora-ink2">{plan.text}</p>}
+      {plan.eligibilityText && <p className="mt-2 text-[14px] text-velora-ink2">{plan.canReply ? "✓ " : ""}{plan.eligibilityText}</p>}
+      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
         {plan.isMine ? (
-          plan.live && onEnd && <button type="button" onClick={() => onEnd(plan.id)} className="min-h-10 rounded-full border border-ink/15 px-4 text-xs font-semibold text-velora-textSecondary hover:border-red-400/50 hover:text-red-700">End plan now</button>
+          plan.live && onEnd && <button type="button" onClick={() => onEnd(plan.id)} className="min-h-11 text-[15px] text-velora-ink underline underline-offset-4">End it now</button>
         ) : (
           <>
-            <Link href={`/messages?user=${encodeURIComponent(plan.authorId)}&datingAd=${encodeURIComponent(plan.id)}`} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-gold-gradient px-5 text-xs font-bold text-velora-bg">
-              <MessageSquare className="h-4 w-4" aria-hidden />Reply
-            </Link>
-            {onReport && <button type="button" onClick={() => onReport(plan)} className="min-h-10 rounded-full px-3 text-xs text-velora-textMuted hover:text-red-700">Report this plan</button>}
+            {plan.canReply !== false && <Link href={replyHref(plan)} className="inline-flex min-h-11 items-center rounded-full bg-velora-ink px-5 text-[15px] font-semibold text-velora-paper">Reply to {plan.authorName}</Link>}
+            {onReport && <button type="button" onClick={() => onReport(plan)} className="min-h-11 text-[14px] text-velora-muted underline underline-offset-4">Report this plan</button>}
           </>
         )}
       </div>

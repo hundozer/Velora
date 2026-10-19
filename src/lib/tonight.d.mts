@@ -1,0 +1,12 @@
+type Timed = { startsAt: string; expiresAt: string };
+export declare function clock(iso: string | Date): string;
+export declare function weekday(iso: string | Date): string;
+export declare function hourOf(iso: string | Date): number;
+export declare function nightKey(date: string | Date): string;
+export declare function openingLine(now?: Date): string;
+export declare function groupTonight<P extends Timed>(plans: P[], now?: Date): { happening: P[]; later: P[]; tomorrow: P[] };
+export declare function glanceTime(plan: Timed, now?: Date): string;
+export declare function byHour<P extends Timed>(plans: P[]): { hour: number; plans: P[] }[];
+export declare function shortAudience(audience: string | null | undefined): string;
+export declare function windowFromClock(input: { day: "tonight" | "tomorrow"; from: string; until: string }, now?: Date): { startsAt: string; endsAt: string } | null;
+export declare function untilWords(time: string): string;
