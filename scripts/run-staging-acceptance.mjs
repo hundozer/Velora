@@ -23,6 +23,7 @@ const password = randomBytes(24).toString('base64url');
 const members = [];
 const seededKeys = [];
 const contexts = [];
+const liveClients = [];
 let browser;
 function ok(result, label) { if (result.error) throw new Error(`${label}: ${result.error.code ?? result.error.status ?? 'failed'}`); return result.data; }
 async function status(response, expected, label) { assert.equal(response.status(), expected, `${label}: HTTP ${response.status()}`); }
@@ -115,22 +116,46 @@ try {
   await status(await b.context.request.post('/api/messages',{data:{receiverId:a.id,datingAdId:negativeId,content:'Synthetic denied Plan reply'}}),403,'Ineligible Plan reply');
   for(const planId of [positiveId,negativeId])await status(await a.context.request.delete(`/api/dating-ads/${planId}`),200,'Remove eligibility fixture Plan');
   console.log('STAGING_ACCEPTANCE required Plan times and positive/negative reply eligibility PASS');
-  const direct = [];
+  const direct = liveClients;
   for (const member of members) {
     const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
     ok(await client.auth.signInWithPassword({ email: member.email, password }), 'Real JWT sign-in');
     direct.push(client);
   }
   for (const c of direct) assert.ok(ok(await c.from('direct_messages').select('id'), 'Direct member message read').length > 0);
+  const receipts = direct.map(()=>new Set());
+  for (const [index,client] of direct.entries()) {
+    const session=ok(await client.auth.getSession(),'Fixture session');
+    await client.realtime.setAuth(session.session.access_token);
+    await new Promise((resolve,reject)=>{
+      const timer=setTimeout(()=>reject(new Error('Realtime subscription timeout')),15000);
+      client.channel(`acceptance-${run}-${index}`).on('postgres_changes',{event:'INSERT',schema:'public',table:'direct_messages'},payload=>receipts[index].add(payload.new.id)).subscribe(state=>{
+        if(state==='SUBSCRIBED'){clearTimeout(timer);resolve();}
+        else if(state==='CHANNEL_ERROR'||state==='TIMED_OUT'){clearTimeout(timer);reject(new Error(`Realtime ${state}`));}
+      });
+    });
+  }
+  async function insertRealtimeProbe() {
+    const id=randomUUID();
+    ok(await db.from('direct_messages').insert({id,conversation_id:`acceptance-${run}`,sender_id:a.id,receiver_id:b.id,sender_name:'Synthetic acceptance A',content:'Synthetic Realtime policy probe'}),'Insert isolated Realtime probe');
+    return id;
+  }
+  const readableProbe=await insertRealtimeProbe();
+  const deadline=Date.now()+10000;
+  while(Date.now()<deadline&&!receipts.every(set=>set.has(readableProbe)))await new Promise(resolve=>setTimeout(resolve,100));
+  assert.ok(receipts.every(set=>set.has(readableProbe)),'Both real member subscriptions must receive the readable probe');
   for (const [blocker,target] of [[a,b],[b,a]]) {
     await status(await blocker.context.request.post('/api/blocks', { data: { targetProfileId: target.id } }), 201, 'Block fixture peer');
     for (const c of direct) assert.equal(ok(await c.from('direct_messages').select('id'), 'Direct JWT read after block').length, 0);
+    const blockedProbe=await insertRealtimeProbe();
+    await new Promise(resolve=>setTimeout(resolve,4000));
+    assert.ok(receipts.every(set=>!set.has(blockedProbe)),'Blocked message delivered by Realtime');
     await status(await blocker.context.request.delete(`/api/blocks?targetProfileId=${target.id}`), 200, 'Unblock fixture peer');
   }
   ok(await db.from('profiles').update({ account_status: 'DEACTIVATED' }).eq('id',a.id), 'Deactivate fixture for RLS probe');
   for (const c of direct) assert.equal(ok(await c.from('direct_messages').select('id'), 'Inactive JWT message read').length, 0);
   ok(await db.from('profiles').update({ account_status: 'ACTIVE' }).eq('id',a.id), 'Restore fixture before self deletion');
-  console.log('STAGING_ACCEPTANCE real JWT REST reads denied both block directions and inactive participant PASS');
+  console.log('STAGING_ACCEPTANCE real JWT REST/Realtime both block directions PASS (4s event-denial windows); inactive REST denial PASS');
   await status(await b.context.request.post('/api/reports', { data: { contentType: 'PROFILE', reportedUserId: a.id, contentId: a.id, reason: 'OTHER', description: 'Synthetic acceptance test report; no real member involved.' } }),201,'Submit report');
   await status(await a.context.request.get('/api/privacy/export'),200,'Privacy export');
   await status(await a.context.request.post('/api/auth/delete-account', { data: { confirmation: 'DELETE' } }),200,'Self-service account deletion');
@@ -149,6 +174,7 @@ try {
     const users=ok(await db.auth.admin.listUsers({page:1,perPage:1000}),'Fixture recovery').users;
     for(const user of users) if(user.user_metadata?.intimo_acceptance_run===run && user.email?.startsWith(`intimo-e2e-${run}-`) && !members.some(m=>m.id===user.id)) members.push({id:user.id,email:user.email});
   });
+  await attempt('close Realtime subscriptions',async()=>{for(const client of liveClients)await client.removeAllChannels();});
   const ids = members.map(m=>m.id);
   const keys = new Set(seededKeys);
   if (ids.length) {
@@ -169,6 +195,7 @@ try {
     for(const [table,column] of [['direct_messages','sender_id'],['direct_messages','receiver_id'],['media_objects','owner_id'],['dating_ads','author_id']]) await attempt(`verify no ${table}`,async()=>{const result=await db.from(table).select('*',{count:'exact',head:true}).in(column,ids);ok(result,'Cleanup count');assert.equal(result.count,0);});
   }
   await attempt('verify fixture prefix empty',async()=>{const r=await r2.send(new ListObjectsV2Command({Bucket:bucket,Prefix:`acceptance-fixtures/${run}/`,MaxKeys:1}));assert.equal(r.Contents?.length??0,0);});
+  await attempt('inventory staging storage',async()=>{const listing=await r2.send(new ListObjectsV2Command({Bucket:bucket,MaxKeys:1}));console.log(`STAGING_ACCEPTANCE staging bucket empty ${!(listing.Contents?.length)}`);});
   r2.destroy();
   if(failures.length)throw new Error(`STAGING_ACCEPTANCE CLEANUP FAILED: ${failures.join(', ')}`);
   console.log('STAGING_ACCEPTANCE fixture Auth/profiles/media/messages/plans cleanup PASS');
