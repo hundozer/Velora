@@ -53,8 +53,8 @@ test("signing out clears every People snapshot and nothing else", async () => {
 test("People keeps filters in the URL and restores its place only when coming back", async () => {
   const people = await read("src/components/people/MemberPeople.tsx");
   assert.match(people, /filtersFromParams\(new URLSearchParams\(searchParams\?\.toString\(\) \?\? ""\)\)/);
-  assert.match(people, /router\.replace\(query \? `\/people\?\$\{query\}` : "\/people", \{ scroll: false \}\)/);
-  assert.match(people, /takeSnapshot<Person, typeof rails>\(window\.sessionStorage, query\)/);
+  assert.match(people, /router\.replace\(pageQuery \? `\/people\?\$\{pageQuery\}` : "\/people", \{ scroll: false \}\)/);
+  assert.match(people, /takeSnapshot<Person, Extras>\(window\.sessionStorage, query\)/);
   assert.match(people, /document\.addEventListener\("click", onClick, true\)/);
   assert.doesNotMatch(people, /pagehide/, "reloads must fetch fresh results");
   const page = await read("src/app/people/page.tsx");

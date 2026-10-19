@@ -44,7 +44,8 @@ test("discovery runs filters in the query, pages by keyset and excludes blocks",
   assert.match(route, /query = query\.not\("id", "in", `\(\$\{excludedIds\.join\(","\)\}\)`\)/);
   assert.match(await read("src/lib/discovery/context.ts"), /row\.location_precision === "HIDDEN" \? null/);
   const people = await read("src/components/people/MemberPeople.tsx");
-  assert.match(people, /if \(people\.length === 0\) return null; \/\/ Empty rails hide/);
-  assert.match(people, /\["ONLINE", "Online now"\], \["DAY", "Active today"\], \["WEEK", "Active this week"\]/);
+  // Phase 2: rails gave way to Introductions (max five) and the activity-grouped index.
+  assert.match(people, /fetch\("\/api\/discovery\/introductions"/);
+  assert.match(people, /params\.set\("sort", "activity"\)/);
   assert.match(await read("next.config.mjs"), /source: "\/discovery", destination: "\/people"/);
 });

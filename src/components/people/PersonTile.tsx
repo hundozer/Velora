@@ -6,8 +6,8 @@ import { BadgeCheck, MapPin } from "lucide-react";
 import { Portrait } from "@/components/media/Portrait";
 
 export type Person = {
-  id: string; displayName: string; age?: number; isCoupleProfile?: boolean; avatarUrl?: string; verified?: boolean;
-  presence?: "ONLINE" | "TODAY" | "WEEK" | null; presenceLabel?: string | null; areaName?: string | null; distance?: string | null; headline?: string;
+  id: string; displayName: string; age?: number; gender?: string; isCoupleProfile?: boolean; avatarUrl?: string; verified?: boolean;
+  presence?: "ONLINE" | "TODAY" | "WEEK" | null; presenceLabel?: string | null; areaName?: string | null; distance?: string | null; headline?: string; areaLabel?: string | null; reason?: "ONLINE" | "NEW" | "RECENT";
 };
 
 /** Compact member tile for the People grid and rails. Shows only coarse location and activity. */

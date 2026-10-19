@@ -3,24 +3,26 @@
 import React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { SlidersHorizontal, X } from "lucide-react";
-import { PersonTile, type Person } from "@/components/people/PersonTile";
-import { PlanCard, type Plan } from "@/components/plans/PlanCard";
-import { DESIRES, MAX_DESIRE_FILTERS, POSITIVE_STATES } from "@/lib/desires.mjs";
-import { DISTANCE_OPTIONS, WHO_OPTIONS, parsePeopleFilters } from "@/lib/people.mjs";
+import type { Person } from "@/components/people/PersonTile";
+import { IntroductionSpread } from "@/components/people/IntroductionSpread";
+import { PeopleIndex } from "@/components/people/PeopleIndex";
+import { DEFAULT_FILTERS, FilterSentence, FilterSheet, type Filters } from "@/components/people/PeopleFilters";
+import { MAX_DESIRE_FILTERS, POSITIVE_STATES } from "@/lib/desires.mjs";
+import { parsePeopleFilters } from "@/lib/people.mjs";
 import { takeSnapshot, writeSnapshot } from "@/lib/peopleSession.mjs";
+import { useDarkNav } from "@/lib/ui/navTone";
 
-type Filters = { who: string[]; minAge: number; maxAge: number; withinKm: number | null; desires: string[]; hasPhoto: boolean; verified: boolean; online: boolean };
-const DEFAULT_FILTERS: Filters = { who: [], minAge: 18, maxAge: 99, withinKm: null, desires: [], hasPhoto: false, verified: false, online: false };
+type View = "introductions" | "everyone";
+type Extras = { introductions: Person[] | null };
 
 /** Reads filters from the page URL with the same validation the discovery API applies. */
 function filtersFromParams(params: URLSearchParams): Filters {
   const parsed = parsePeopleFilters(params);
-  return { who: parsed.who, minAge: parsed.minAge, maxAge: parsed.maxAge, withinKm: parsed.withinKm, desires: parsed.desires, hasPhoto: parsed.hasPhoto, verified: parsed.verified, online: parsed.active === "ONLINE" };
+  return { who: parsed.who, minAge: parsed.minAge, maxAge: parsed.maxAge, withinKm: parsed.withinKm, desires: parsed.desires, hasPhoto: parsed.hasPhoto, verified: parsed.verified, q: parsed.q ?? "" };
 }
 
-function toQuery(filters: Filters, extra: Record<string, string> = {}) {
-  const params = new URLSearchParams(extra);
+function filterParams(filters: Filters) {
+  const params = new URLSearchParams();
   if (filters.who.length) params.set("who", filters.who.join(","));
   if (filters.minAge !== 18) params.set("minAge", String(filters.minAge));
   if (filters.maxAge !== 99) params.set("maxAge", String(filters.maxAge));
@@ -28,55 +30,75 @@ function toQuery(filters: Filters, extra: Record<string, string> = {}) {
   if (filters.desires.length) params.set("desires", filters.desires.join(","));
   if (filters.hasPhoto) params.set("hasPhoto", "true");
   if (filters.verified) params.set("verified", "true");
-  if (filters.online) params.set("active", "ONLINE");
+  if (filters.q.trim().length >= 2) params.set("q", filters.q.trim());
+  return params;
+}
+
+/** The page URL: filters plus which view is showing. */
+function toQuery(filters: Filters, view: View) {
+  const params = filterParams(filters);
+  if (view === "everyone") params.set("view", "everyone");
   return params.toString();
 }
 
-async function fetchPeople(query: string): Promise<{ profiles: Person[]; nextCursor: string | null }> {
-  const response = await fetch(`/api/discovery/profiles?${query}`, { credentials: "same-origin", cache: "no-store" });
+async function fetchPeople(filters: Filters, cursor?: string | null): Promise<{ profiles: Person[]; nextCursor: string | null }> {
+  const params = filterParams(filters);
+  params.set("sort", "activity");
+  if (cursor) params.set("cursor", cursor);
+  const response = await fetch(`/api/discovery/profiles?${params.toString()}`, { credentials: "same-origin", cache: "no-store" });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload.error || "People could not be loaded.");
   return { profiles: payload.profiles || [], nextCursor: payload.nextCursor || null };
 }
 
-function Rail({ title, people, href }: { title: string; people: Person[]; href?: string }) {
-  if (people.length === 0) return null; // Empty rails hide; never show a zero.
-  return (
-    <section className="space-y-2">
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">{title}</h2>
-        {href && <Link href={href} className="text-xs text-velora-gold">See all</Link>}
-      </div>
-      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1">{people.map((person) => <PersonTile key={person.id} person={person} compact />)}</div>
-    </section>
-  );
+async function fetchIntroductions(): Promise<Person[]> {
+  const response = await fetch("/api/discovery/introductions", { credentials: "same-origin", cache: "no-store" });
+  if (!response.ok) return [];
+  const payload = await response.json().catch(() => ({}));
+  return payload.introductions || [];
 }
 
-/** People v3 (P1-05): rails for a low-density city, then the filtered grid. */
+function ModeSwitch({ view, onChange, dark }: { view: View; onChange: (view: View) => void; dark: boolean }) {
+  const item = (value: View, label: string) => (
+    <button type="button" aria-pressed={view === value} onClick={() => onChange(value)} className={`min-h-11 border-b-2 pb-0.5 text-[15px] transition-colors ${view === value ? `border-velora-copper font-semibold ${dark ? "text-velora-paper md:text-velora-ink" : "text-velora-ink"}` : `border-transparent ${dark ? "text-velora-paper/75 hover:text-velora-paper md:text-velora-muted md:hover:text-velora-ink" : "text-velora-muted hover:text-velora-ink"}`}`}>{label}</button>
+  );
+  return <nav aria-label="People view" className="flex items-center gap-5">{item("introductions", "Introductions")}{item("everyone", "Everyone")}</nav>;
+}
+
+/**
+ * People (approved v33): Introductions first — up to five full-bleed spreads — flowing
+ * into "Everyone nearby", a compact index grouped by activity with filters as a sentence.
+ * Filters and the view live in the URL; coming back from a profile restores the place.
+ */
 export function MemberPeople() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Filters live in the URL, so reloads, links and the back button keep them.
+  const initialParams = React.useMemo(() => new URLSearchParams(searchParams?.toString() ?? ""), []); // eslint-disable-line react-hooks/exhaustive-deps
   const [filters, setFilters] = React.useState<Filters>(() => filtersFromParams(new URLSearchParams(searchParams?.toString() ?? "")));
-  const [draft, setDraft] = React.useState<Filters>(filters);
-  const [sheetOpen, setSheetOpen] = React.useState(false);
+  const [view, setView] = React.useState<View>(() => initialParams.get("view") === "everyone" ? "everyone" : "introductions");
   const [people, setPeople] = React.useState<Person[] | null>(null);
   const [cursor, setCursor] = React.useState<string | null>(null);
   const [loadingMore, setLoadingMore] = React.useState(false);
   const [error, setError] = React.useState("");
-  const [rails, setRails] = React.useState<{ activeTitle: string; active: Person[]; fresh: Person[]; shared: Person[]; plans: Plan[] }>({ activeTitle: "Online now", active: [], fresh: [], shared: [], plans: [] });
+  const [introductions, setIntroductions] = React.useState<Person[] | null>(null);
+  const [sheet, setSheet] = React.useState<{ open: boolean; section: string }>({ open: false, section: "who" });
+  const [sharedDesires, setSharedDesires] = React.useState<string[]>([]);
+  const [spreadsVisible, setSpreadsVisible] = React.useState(false);
+  const spreads = React.useRef<HTMLDivElement>(null);
 
   const filtersActive = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
+  const showIntroductions = view === "introductions" && (introductions?.length ?? 0) > 0;
   const firstLoad = React.useRef(true);
   const restoredQuery = React.useRef<string | null>(null);
-  const railsRestored = React.useRef(false);
-  const latest = React.useRef({ filters, people, cursor, rails });
-  latest.current = { filters, people, cursor, rails };
+  const introductionsRestored = React.useRef(false);
+  const latest = React.useRef({ filters, people, cursor, introductions });
+  latest.current = { filters, people, cursor, introductions };
+  useDarkNav(showIntroductions && spreadsVisible);
 
-  /** Remembers loaded people, rails and scroll position before leaving for a profile. */
+  /** Remembers loaded people, introductions and scroll position before leaving for a profile. */
   const saveSnapshot = React.useCallback(() => {
-    const { filters: current, people: loaded, cursor: next, rails: currentRails } = latest.current;
-    if (loaded) writeSnapshot(window.sessionStorage, toQuery(current), { people: loaded, cursor: next, rails: currentRails, scrollY: window.scrollY });
+    const { filters: current, people: loaded, cursor: next, introductions: intros } = latest.current;
+    if (loaded) writeSnapshot(window.sessionStorage, filterParams(current).toString(), { people: loaded, cursor: next, rails: { introductions: intros }, scrollY: window.scrollY });
   }, []);
 
   // Save when following any in-app link (a profile, Tonight, Messages…), not on reload,
@@ -91,17 +113,22 @@ export function MemberPeople() {
   }, [saveSnapshot]);
 
   React.useEffect(() => {
-    const query = toQuery(filters);
-    router.replace(query ? `/people?${query}` : "/people", { scroll: false });
+    const pageQuery = toQuery(filters, view);
+    router.replace(pageQuery ? `/people?${pageQuery}` : "/people", { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, view]);
+
+  React.useEffect(() => {
+    const query = filterParams(filters).toString();
     if (firstLoad.current) {
       firstLoad.current = false;
       // Coming back from a profile: restore the same people and scroll position once.
-      const snapshot = takeSnapshot<Person, typeof rails>(window.sessionStorage, query);
+      const snapshot = takeSnapshot<Person, Extras>(window.sessionStorage, query);
       if (snapshot) {
         restoredQuery.current = query;
         setPeople(snapshot.people);
         setCursor(snapshot.cursor);
-        if (snapshot.rails) { setRails(snapshot.rails); railsRestored.current = true; }
+        if (snapshot.rails?.introductions) { setIntroductions(snapshot.rails.introductions); introductionsRestored.current = true; }
         requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, snapshot.scrollY)));
         return;
       }
@@ -112,147 +139,94 @@ export function MemberPeople() {
     let cancelled = false;
     setPeople(null);
     setError("");
-    fetchPeople(toQuery(filters))
+    fetchPeople(filters)
       .then((result) => { if (!cancelled) { setPeople(result.profiles); setCursor(result.nextCursor); } })
       .catch((cause) => { if (!cancelled) { setError(cause.message); setPeople([]); } });
     return () => { cancelled = true; };
-    // router is stable; the URL follows filters, not the other way round.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
   React.useEffect(() => {
-    if (railsRestored.current) return;
+    if (introductionsRestored.current) return;
     let cancelled = false;
-    (async () => {
-      // Widen the recency window until something shows, so a quiet hour never looks empty.
-      let active: Person[] = [];
-      let activeTitle = "Online now";
-      for (const [window, title] of [["ONLINE", "Online now"], ["DAY", "Active today"], ["WEEK", "Active this week"]] as const) {
-        active = (await fetchPeople(`active=${window}&limit=12`).catch(() => ({ profiles: [] as Person[] }))).profiles;
-        activeTitle = title;
-        if (active.length > 0) break;
-      }
-      const fresh = (await fetchPeople("new=true&limit=12").catch(() => ({ profiles: [] as Person[] }))).profiles;
-      const mine = await fetch("/api/desires/me", { credentials: "same-origin", cache: "no-store" }).then((response) => response.ok ? response.json() : null).catch(() => null);
-      const wanted = (mine?.selections || []).filter((row: { state: string }) => POSITIVE_STATES.includes(row.state as never)).map((row: { desire_id: string }) => row.desire_id).slice(0, MAX_DESIRE_FILTERS);
-      const shared = wanted.length ? (await fetchPeople(`desires=${wanted.join(",")}&limit=12`).catch(() => ({ profiles: [] as Person[] }))).profiles : [];
-      const plans = await fetch("/api/dating-ads", { credentials: "same-origin", cache: "no-store" }).then((response) => response.ok ? response.json() : null).then((payload) => (payload?.plans || []).filter((plan: Plan) => !plan.isMine).slice(0, 3)).catch(() => []);
-      if (!cancelled) setRails({ activeTitle, active, fresh, shared, plans });
-    })();
+    fetchIntroductions().then((list) => { if (!cancelled) setIntroductions(list); });
+    fetch("/api/desires/me", { credentials: "same-origin", cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((mine) => {
+        const wanted = (mine?.selections || []).filter((row: { state: string }) => POSITIVE_STATES.includes(row.state as never)).map((row: { desire_id: string }) => row.desire_id).slice(0, MAX_DESIRE_FILTERS);
+        if (!cancelled) setSharedDesires(wanted);
+      })
+      .catch(() => {});
     return () => { cancelled = true; };
   }, []);
 
-  async function loadMore() {
-    if (!cursor || loadingMore) return;
+  // The bottom navigation turns dark while an introduction fills the bottom of the screen.
+  React.useEffect(() => {
+    const node = spreads.current;
+    if (!node || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(([entry]) => setSpreadsVisible(entry.isIntersecting), { rootMargin: "-90% 0px 0px 0px" });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [showIntroductions]);
+
+  const loadMore = React.useCallback(async () => {
+    const { cursor: next, filters: current } = latest.current;
+    if (!next || loadingMore) return;
     setLoadingMore(true);
     try {
-      const result = await fetchPeople(toQuery(filters, { cursor }));
-      setPeople((current) => [...(current || []), ...result.profiles.filter((person) => !(current || []).some((known) => known.id === person.id))]);
+      const result = await fetchPeople(current, next);
+      setPeople((existing) => [...(existing || []), ...result.profiles.filter((person) => !(existing || []).some((known) => known.id === person.id))]);
       setCursor(result.nextCursor);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "More people could not be loaded.");
     } finally {
       setLoadingMore(false);
     }
-  }
+  }, [loadingMore]);
 
-  const chip = (on: boolean) => `min-h-9 rounded-full border px-3 text-xs transition ${on ? "border-velora-gold bg-velora-gold/15 text-velora-textPrimary" : "border-ink/10 text-velora-textSecondary hover:border-ink/25"}`;
-  const toggle = (list: string[], value: string, max = 99) => list.includes(value) ? list.filter((item) => item !== value) : list.length >= max ? list : [...list, value];
+  const onSearch = React.useCallback((q: string) => setFilters((current) => ({ ...current, q })), []);
+  const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const switchView = (next: View) => { setView(next); window.scrollTo({ top: 0 }); };
+  const darkHeader = showIntroductions;
 
   return (
-    <main className="mx-auto max-w-5xl space-y-6 px-4 pb-24 pt-6">
-      <header className="flex items-end justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">People</p>
-          <h1 className="font-serif font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">Who&apos;s around</h1>
-        </div>
-        <button type="button" onClick={() => { setDraft(filters); setSheetOpen(true); }} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-ink/15 px-4 text-sm font-semibold text-velora-textPrimary hover:border-velora-gold/50">
-          <SlidersHorizontal className="h-4 w-4" aria-hidden />Filters{filtersActive ? " ·" : ""}
-        </button>
+    <div className="min-h-screen bg-velora-surface pb-24 md:pb-16">
+      <header className={`z-20 mx-auto flex ${showIntroductions ? "max-w-5xl" : "max-w-2xl"} items-center justify-between px-5 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-8 ${darkHeader ? "absolute inset-x-0 top-0 md:static md:pt-6" : "pt-4 md:pt-8"}`}>
+        <Link href="/" className={`font-display text-[28px] leading-none md:invisible ${darkHeader ? "text-velora-paper md:text-velora-ink" : "text-velora-ink"}`}>Intimo</Link>
+        <ModeSwitch view={view} onChange={switchView} dark={darkHeader} />
       </header>
 
-      {!filtersActive && (
-        <div className="space-y-6">
-          <Rail title={rails.activeTitle} people={rails.active} />
-          <Rail title="New in Prague" people={rails.fresh} />
-          <Rail title="Shares your desires" people={rails.shared} />
-          {rails.plans.length > 0 && (
-            <section className="space-y-2">
-              <div className="flex items-baseline justify-between">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">Tonight near you</h2>
-                <Link href="/tonight" className="text-xs text-velora-gold">See all</Link>
-              </div>
-              <div className="grid gap-3 md:grid-cols-3">{rails.plans.map((plan) => <PlanCard key={plan.id} plan={plan} />)}</div>
-            </section>
+      {showIntroductions && introductions && (
+        <div ref={spreads} className="mx-auto max-w-5xl md:space-y-6 md:px-8 md:pt-4">
+          {introductions.map((person, index) => (
+            <div key={person.id} id={`intro-${index}`}>
+              <IntroductionSpread person={person} priority={index === 0} next={introductions[index + 1] ?? null} onNext={() => scrollToId(index + 1 < introductions.length ? `intro-${index + 1}` : "everyone-nearby")} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <section id="everyone-nearby" aria-label="Everyone nearby" className="mx-auto max-w-2xl scroll-mt-4 px-5 pt-8 sm:px-8 md:pt-12">
+        {showIntroductions && <h1 className="mb-4 font-display text-[44px] leading-[1.02] text-velora-ink">Everyone nearby</h1>}
+        {!showIntroductions && <h1 className="sr-only">People</h1>}
+        <FilterSentence filters={filters} onOpen={(section) => setSheet({ open: true, section })} onSearch={onSearch} />
+
+        <div className="mt-6">
+          {error && <p role="alert" className="mb-4 border-l-2 border-velora-crimson pl-4 text-[15px] text-velora-crimson">{error}</p>}
+          {people !== null && people.length === 0 ? (
+            <div className="py-10">
+              <h2 className="font-display text-[32px] leading-tight text-velora-ink">{filtersActive ? "Nobody here with these filters yet" : "Members are on their way"}</h2>
+              <p className="mt-3 text-[16px] text-velora-ink2">{filtersActive ? "Try a wider distance or fewer filters." : "Post a plan for tonight so new members find you first."}</p>
+              {filtersActive
+                ? <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)} className="mt-5 min-h-11 text-[16px] font-semibold text-velora-ink underline underline-offset-4">Show everyone</button>
+                : <Link href="/tonight/new" className="mt-5 inline-flex min-h-11 items-center text-[16px] font-semibold text-velora-ink underline underline-offset-4">Post a plan</Link>}
+            </div>
+          ) : (
+            <PeopleIndex people={people} loading={people === null} hasMore={Boolean(cursor)} loadingMore={loadingMore} onLoadMore={loadMore} endNote={filters.withinKm ? "Widen the distance to see more of Prague." : null} />
           )}
         </div>
-      )}
-
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">{filtersActive ? "With your filters" : "Everyone"}</h2>
-          {filtersActive && <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)} className="text-xs text-velora-textMuted underline">Clear filters</button>}
-        </div>
-        {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-700">{error}</p>}
-        {people === null ? (
-          <p className="text-sm text-velora-textMuted">Loading…</p>
-        ) : people.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-ink/15 p-8 text-center">
-            <h3 className="font-serif text-xl font-bold text-velora-textPrimary">{filtersActive ? "Nobody here with these filters yet" : "Members are on their way"}</h3>
-            <p className="mt-2 text-sm text-velora-textSecondary">{filtersActive ? "Try a wider distance or fewer filters." : "Post a plan for tonight so new members find you first."}</p>
-            {filtersActive
-              ? <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)} className="mt-4 text-sm font-semibold text-velora-gold underline">Clear filters</button>
-              : <Link href="/tonight/new" className="mt-4 inline-block text-sm font-semibold text-velora-gold underline">Post a plan</Link>}
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{people.map((person) => <PersonTile key={person.id} person={person} />)}</div>
-            {cursor && <button type="button" onClick={loadMore} disabled={loadingMore} className="mx-auto block min-h-11 rounded-full border border-ink/15 px-6 text-sm text-velora-textSecondary disabled:opacity-50">{loadingMore ? "Loading…" : "Show more"}</button>}
-          </>
-        )}
       </section>
 
-      {sheetOpen && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 md:items-center" role="dialog" aria-modal="true" aria-label="Filters">
-          <div className="max-h-[85vh] w-full max-w-lg space-y-5 overflow-y-auto rounded-t-3xl border border-ink/10 bg-velora-bg p-5 md:rounded-3xl">
-            <div className="flex items-center justify-between">
-              <h2 className="font-serif text-3xl font-bold text-velora-textPrimary">Filters</h2>
-              <button type="button" onClick={() => setSheetOpen(false)} aria-label="Close filters" className="rounded-full p-2 text-velora-textMuted hover:text-velora-textPrimary"><X className="h-5 w-5" /></button>
-            </div>
-            <fieldset className="space-y-2"><legend className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">Who</legend>
-              <div className="flex flex-wrap gap-2">{WHO_OPTIONS.map((item) => <button key={item.value} type="button" aria-pressed={draft.who.includes(item.value)} onClick={() => setDraft({ ...draft, who: toggle(draft.who, item.value) })} className={chip(draft.who.includes(item.value))}>{item.label}</button>)}</div>
-            </fieldset>
-            <fieldset className="space-y-2"><legend className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">Age</legend>
-              <div className="flex items-center gap-3 text-sm text-velora-textSecondary">
-                <input type="number" min={18} max={99} value={draft.minAge} onChange={(event) => setDraft({ ...draft, minAge: Math.max(18, Number(event.target.value) || 18) })} className="w-20 rounded-xl border border-ink/10 bg-ink/5 px-3 py-2 text-velora-textPrimary" aria-label="Minimum age" />
-                to
-                <input type="number" min={18} max={99} value={draft.maxAge} onChange={(event) => setDraft({ ...draft, maxAge: Math.min(99, Number(event.target.value) || 99) })} className="w-20 rounded-xl border border-ink/10 bg-ink/5 px-3 py-2 text-velora-textPrimary" aria-label="Maximum age" />
-              </div>
-            </fieldset>
-            <fieldset className="space-y-2"><legend className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">Distance</legend>
-              <div className="flex flex-wrap gap-2">
-                <button type="button" aria-pressed={draft.withinKm === null} onClick={() => setDraft({ ...draft, withinKm: null })} className={chip(draft.withinKm === null)}>Anywhere</button>
-                {DISTANCE_OPTIONS.map((item) => <button key={item.km} type="button" aria-pressed={draft.withinKm === item.km} onClick={() => setDraft({ ...draft, withinKm: item.km })} className={chip(draft.withinKm === item.km)}>{item.label}</button>)}
-              </div>
-              <p className="text-[11px] text-velora-textMuted">Measured between Prague areas, never exact positions.</p>
-            </fieldset>
-            <fieldset className="space-y-2"><legend className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">Into <span className="font-normal normal-case tracking-normal text-velora-textMuted">· up to {MAX_DESIRE_FILTERS}</span></legend>
-              <div className="flex flex-wrap gap-2">{DESIRES.map((desire) => <button key={desire.id} type="button" aria-pressed={draft.desires.includes(desire.id)} onClick={() => setDraft({ ...draft, desires: toggle(draft.desires, desire.id, MAX_DESIRE_FILTERS) })} className={chip(draft.desires.includes(desire.id))}>{desire.label}</button>)}</div>
-            </fieldset>
-            <fieldset className="space-y-2"><legend className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">Only show</legend>
-              <div className="flex flex-wrap gap-2">
-                <button type="button" aria-pressed={draft.online} onClick={() => setDraft({ ...draft, online: !draft.online })} className={chip(draft.online)}>Online now</button>
-                <button type="button" aria-pressed={draft.hasPhoto} onClick={() => setDraft({ ...draft, hasPhoto: !draft.hasPhoto })} className={chip(draft.hasPhoto)}>With photo</button>
-                <button type="button" aria-pressed={draft.verified} onClick={() => setDraft({ ...draft, verified: !draft.verified })} className={chip(draft.verified)}>Verified</button>
-              </div>
-            </fieldset>
-            <div className="flex gap-3 pt-2">
-              <button type="button" onClick={() => setDraft(DEFAULT_FILTERS)} className="min-h-11 flex-1 rounded-full border border-ink/15 text-sm text-velora-textSecondary">Reset</button>
-              <button type="button" onClick={() => { setFilters({ ...draft, maxAge: Math.max(draft.minAge, draft.maxAge) }); setSheetOpen(false); }} className="min-h-11 flex-1 rounded-full bg-gold-gradient text-sm font-bold text-velora-bg">Show people</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </main>
+      <FilterSheet open={sheet.open} section={sheet.section} initial={filters} sharedDesires={sharedDesires} onClose={() => setSheet((current) => ({ ...current, open: false }))} onApply={(next) => { setFilters(next); setSheet((current) => ({ ...current, open: false })); if (view === "introductions" && introductions?.length) requestAnimationFrame(() => scrollToId("everyone-nearby")); }} />
+    </div>
   );
 }
