@@ -1,12 +1,12 @@
 /** Opt-in disposable fixtures + existing member suite. Never loaded by app routes. */
 import assert from 'node:assert/strict';
-import { randomUUID, randomBytes, createHash } from 'node:crypto';
+import { randomUUID, randomBytes } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { chromium } from '@playwright/test';
 import sharp from 'sharp';
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 
 const base = process.env.INTIMO_E2E_BASE_URL;
 const access = process.env.INTIMO_E2E_SHARE_URL;
@@ -27,6 +27,12 @@ const seededKeys = [];
 const contexts = [];
 const liveClients = [];
 let browser;
+let storageBaseline;
+async function storageInventory() {
+ const result=await r2.send(new ListObjectsV2Command({Bucket:bucket,MaxKeys:1000}));
+ assert.ok(!result.IsTruncated,'Full staging object inventory required');
+ return (result.Contents??[]).map(item=>({key:item.Key,size:item.Size,etag:item.ETag,modified:item.LastModified?.toISOString()})).sort((a,b)=>a.key.localeCompare(b.key));
+}
 function ok(result, label) { if (result.error) throw new Error(`${label}: ${result.error.code ?? result.error.status ?? 'failed'}`); return result.data; }
 async function status(response, expected, label) { assert.equal(response.status(), expected, `${label}: HTTP ${response.status()}`); }
 async function onboarding(member, gender) {
@@ -64,6 +70,8 @@ async function onboarding(member, gender) {
   console.log(`STAGING_ACCEPTANCE ${member.label} UI login/onboarding/profile-edit PASS`);
 }
 try {
+  storageBaseline=await storageInventory();
+  console.log(`STAGING_ACCEPTANCE existing storage objects preserved: ${storageBaseline.length}`);
   const binaryModule = await import(process.env.INTIMO_E2E_CHROMIUM_MODULE || '@sparticuz/chromium');
   const serverless = binaryModule.default?.default || binaryModule.default;
   const executablePath = await serverless.executablePath();
@@ -205,25 +213,9 @@ try {
     for(const [table,column] of [['direct_messages','sender_id'],['direct_messages','receiver_id'],['media_objects','owner_id'],['dating_ads','author_id']]) await attempt(`verify no ${table}`,async()=>{const result=await db.from(table).select('*',{count:'exact',head:true}).in(column,ids);ok(result,'Cleanup count');assert.equal(result.count,0);});
   }
   await attempt('verify fixture prefix empty',async()=>{const r=await r2.send(new ListObjectsV2Command({Bucket:bucket,Prefix:`acceptance-fixtures/${run}/`,MaxKeys:1}));assert.equal(r.Contents?.length??0,0);});
-  await attempt('audit and recover verified synthetic leftovers',async()=>{
-    const listing=await r2.send(new ListObjectsV2Command({Bucket:bucket,MaxKeys:1000}));
-    assert.ok(!listing.IsTruncated,'Full staging object inventory required');
-    const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAEUlEQVR4nGP4z8AARwgWXg4ArpMP8aaUSCMAAAAASUVORK5CYII=','base64');
-    const tiny=await sharp(png).rotate().resize({width:4,withoutEnlargement:true}).webp({quality:78}).toBuffer();
-    const allowed=new Set([png,tiny].map(bytes=>createHash('sha256').update(bytes).digest('hex')));
-    for(const item of listing.Contents??[]) {
-      const isTestKey=/^photos\/\d+_[a-z0-9]+_acceptance\.png$/.test(item.Key??'')||/^variants\/[0-9a-f-]{36}\/4\.webp$/.test(item.Key??'');
-      if(!isTestKey||new Date(item.LastModified).getTime()<1792437800000||item.Size>4096)continue;
-      const object=await r2.send(new GetObjectCommand({Bucket:bucket,Key:item.Key}));
-      const bytes=Buffer.from(await object.Body.transformToByteArray());
-      const hash=createHash('sha256').update(bytes).digest('hex');
-      if(!allowed.has(hash)){console.log('STAGING_ACCEPTANCE unrecognised leftover retained',JSON.stringify({key:item.Key,size:item.Size,hash}));continue;}
-      await r2.send(new DeleteObjectCommand({Bucket:bucket,Key:item.Key}));
-      console.log('STAGING_ACCEPTANCE recovered verified synthetic leftover',item.Key);
-    }
-    const after=await r2.send(new ListObjectsV2Command({Bucket:bucket,MaxKeys:1}));
-    console.log(`STAGING_ACCEPTANCE staging bucket empty ${!(after.Contents?.length)}`);
-    if(after.Contents?.length)throw new Error('Staging object inventory still contains an unresolved leftover; inspect before reusing fixtures');
+  if(storageBaseline)await attempt('verify full storage inventory matches baseline',async()=>{
+    assert.deepEqual(await storageInventory(),storageBaseline,'Storage inventory changed after fixture cleanup');
+    console.log(`STAGING_ACCEPTANCE full storage inventory unchanged; ${storageBaseline.length} pre-existing objects preserved PASS`);
   });
   r2.destroy();
   if(failures.length)throw new Error(`STAGING_ACCEPTANCE CLEANUP FAILED: ${failures.join(', ')}`);
