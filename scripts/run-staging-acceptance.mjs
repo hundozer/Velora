@@ -53,6 +53,7 @@ async function onboarding(member, gender) {
   await page.getByRole('button', { name: 'Skip for now', exact: true }).click();
   await page.waitForURL(base + '/');
   member.context = context;
+  member.page = page;
   const me = await context.request.get('/api/profile/me');
   await status(me, 200, 'New member profile');
   assert.equal((await me.json()).profile.id, member.id);
@@ -60,7 +61,8 @@ async function onboarding(member, gender) {
   console.log(`STAGING_ACCEPTANCE ${member.label} UI login/onboarding/profile-edit PASS`);
 }
 try {
-  const { default: serverless } = await import('@sparticuz/chromium');
+  const binaryModule = await import(process.env.INTIMO_E2E_CHROMIUM_MODULE || '@sparticuz/chromium');
+  const serverless = binaryModule.default?.default || binaryModule.default;
   const executablePath = await serverless.executablePath();
   const args = serverless.args.filter(arg => !/disable-web-security|disable-site-isolation|single-process/.test(arg));
   process.env.PLAYWRIGHT_CHROMIUM_PATH = executablePath;
@@ -74,6 +76,15 @@ try {
   }
   await onboarding(members[0], 'Woman');
   await onboarding(members[1], 'Man');
+  const people = members[1].page;
+  await people.goto('/people?view=everyone');
+  await people.locator(`a[href="/profile/${members[0].id}"]`).first().click();
+  const sheet=people.getByRole('dialog',{name:'Profile'});
+  await sheet.waitFor({state:'visible'});
+  await sheet.getByRole('button',{name:'Back to People'}).first().click();
+  await people.waitForURL('**/people?view=everyone');
+  assert.equal(await people.getByRole('dialog',{name:'Profile'}).count(),0);
+  console.log('STAGING_ACCEPTANCE real People/profile sheet open/close PASS');
   const image = await sharp({ create: { width: 16, height: 12, channels: 3, background: 'blue' } }).withExif({ IFD0: { Make: 'Synthetic private camera' }, IFD3: { GPSLatitudeRef: 'N', GPSLatitude: '50/1 5/1 0/1' } }).jpeg().toBuffer();
   const mediaId = randomUUID();
   const key = `acceptance-fixtures/${run}/private.jpg`;
@@ -87,6 +98,23 @@ try {
   const child = spawnSync(process.execPath, ['node_modules/@playwright/test/cli.js', 'test', '--project=member-acceptance', '--trace=off', '--timeout=240000'], { stdio: 'inherit', timeout: 360000, env: { ...process.env, E2E_BASE_URL: base, E2E_ALLOWED_ORIGIN: base, E2E_VERCEL_SHARE_URL: access, E2E_A_EMAIL: members[0].email, E2E_B_EMAIL: members[1].email, E2E_A_PASSWORD: password, E2E_B_PASSWORD: password, E2E_A_PRIVATE_MEDIA_ID: mediaId } });
   assert.equal(child.status, 0, 'Existing two-member acceptance suite failed');
   const [a,b] = members;
+  const planPayload={category:'DATE',title:'Synthetic eligibility plan',text:'Isolated acceptance fixture; no real meeting.',startsAt:new Date(Date.now()+60000).toISOString(),endsAt:new Date(Date.now()+3600000).toISOString()};
+  await status(await a.context.request.post('/api/dating-ads',{data:{category:'DATE',title:'Missing times',text:'Invalid fixture plan without required times.'}}),400,'Plan requires timestamps');
+  const positive=await a.context.request.post('/api/dating-ads',{data:planPayload});
+  await status(positive,201,'Eligible Plan creation');
+  const positiveId=(await positive.json()).plan.id;
+  const negative=await a.context.request.post('/api/dating-ads',{data:{...planPayload,minAge:80,maxAge:99}});
+  await status(negative,201,'Restricted Plan creation');
+  const negativeId=(await negative.json()).plan.id;
+  const catalogue=await b.context.request.get('/api/dating-ads');
+  await status(catalogue,200,'Read Plan eligibility');
+  const plans=(await catalogue.json()).plans;
+  assert.equal(plans.find(p=>p.id===positiveId)?.canReply,true);
+  assert.equal(plans.find(p=>p.id===negativeId)?.canReply,false);
+  await status(await b.context.request.post('/api/messages',{data:{receiverId:a.id,datingAdId:positiveId,content:'Synthetic allowed Plan reply'}}),201,'Allowed Plan reply');
+  await status(await b.context.request.post('/api/messages',{data:{receiverId:a.id,datingAdId:negativeId,content:'Synthetic denied Plan reply'}}),403,'Ineligible Plan reply');
+  for(const planId of [positiveId,negativeId])await status(await a.context.request.delete(`/api/dating-ads/${planId}`),200,'Remove eligibility fixture Plan');
+  console.log('STAGING_ACCEPTANCE required Plan times and positive/negative reply eligibility PASS');
   const direct = [];
   for (const member of members) {
     const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -107,6 +135,8 @@ try {
   await status(await a.context.request.get('/api/privacy/export'),200,'Privacy export');
   await status(await a.context.request.post('/api/auth/delete-account', { data: { confirmation: 'DELETE' } }),200,'Self-service account deletion');
   await status(await a.context.request.get('/api/profile/me'),401,'Post-deletion application access');
+  assert.ok(!(await a.context.request.get(`/api/media/${mediaId}`)).ok(),'Deleted owner retains media access');
+  assert.ok(!(await b.context.request.get(`/api/media/${mediaId}`)).ok(),'Peer retains deleted-owner media access');
   assert.equal(ok(await direct[1].from('direct_messages').select('id'),'Post-deletion direct message read').length,0);
   console.log('STAGING_ACCEPTANCE report/export/self-deletion/access-denial PASS (scheduled retention still separate)');
 } finally {
