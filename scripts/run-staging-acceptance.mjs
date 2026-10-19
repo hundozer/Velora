@@ -209,7 +209,7 @@ try {
     const listing=await r2.send(new ListObjectsV2Command({Bucket:bucket,MaxKeys:1000}));
     assert.ok(!listing.IsTruncated,'Full staging object inventory required');
     const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAEUlEQVR4nGP4z8AARwgWXg4ArpMP8aaUSCMAAAAASUVORK5CYII=','base64');
-    const tiny=await sharp(png).rotate().resize(4,{withoutEnlargement:true}).webp({quality:78}).toBuffer();
+    const tiny=await sharp(png).rotate().resize({width:4,withoutEnlargement:true}).webp({quality:78}).toBuffer();
     const allowed=new Set([png,tiny].map(bytes=>createHash('sha256').update(bytes).digest('hex')));
     for(const item of listing.Contents??[]) {
       const isTestKey=/^photos\/\d+_[a-z0-9]+_acceptance\.png$/.test(item.Key??'')||/^variants\/[0-9a-f-]{36}\/4\.webp$/.test(item.Key??'');
