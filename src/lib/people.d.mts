@@ -1,4 +1,4 @@
-export interface PeopleFilters { who: string[]; minAge: number; maxAge: number; withinKm: number | null; desires: string[]; hasPhoto: boolean; verified: boolean; active: "ONLINE" | "DAY" | "WEEK" | null; newWithinDays: number | null; limit: number; cursor: { createdAt: string; id: string } | null }
+export interface PeopleFilters { who: string[]; minAge: number; maxAge: number; withinKm: number | null; desires: string[]; hasPhoto: boolean; verified: boolean; active: "ONLINE" | "DAY" | "WEEK" | null; newWithinDays: number | null; limit: number; cursor: { createdAt: string; id: string } | null; sort: "new" | "activity"; activityCursor: { phase: "A" | "R"; at: string | null; id: string | null } | null; q: string | null }
 export declare const PEOPLE_PAGE_SIZE: number;
 export declare const WHO_OPTIONS: { value: string; label: string }[];
 export declare const DISTANCE_OPTIONS: { km: number; label: string }[];
@@ -7,3 +7,15 @@ export declare function parsePeopleFilters(params: URLSearchParams): PeopleFilte
 export declare function areaIdsWithin(viewerAreaId: unknown, km: number): string[] | null;
 export declare function whoFilterExpression(who: string[]): string | null;
 export declare function encodeCursor(row: { created_at: string; id: string }): string;
+export declare const SEARCH_MAX_LENGTH: number;
+export declare const INTRODUCTIONS_MAX: number;
+export declare const NEW_MEMBER_DAYS: number;
+export declare function normaliseSearch(value: unknown): string | null;
+export declare function areaIdsMatching(q: string | null): string[];
+export declare function searchExpression(q: string | null): string | null;
+export declare function allOf(expressions: (string | null | undefined)[]): string | null;
+export declare function audienceExpression(friendIds: Iterable<string>): string;
+export declare function encodeActivityCursor(phase: "A" | "R", row: { id: string; created_at: string; last_active_at?: string | null }): string;
+export declare const ACTIVITY_GROUPS: { presence: "ONLINE" | "TODAY" | "WEEK" | null; label: string }[];
+export declare function chooseIntroductions<T extends { id: string }>(pools: { online?: T[]; fresh?: T[]; recent?: T[] }, options: { viewerId: string; day: string; max?: number }): { row: T; reason: "ONLINE" | "NEW" | "RECENT" }[];
+export declare const ACTIVITY_REST_START: string;

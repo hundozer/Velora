@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { toMemberVisibleProfile } from "@/lib/supabase/publicProfile";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
-import type { ProfileRow } from "@/lib/supabase/profileService";
 import { POSITIVE_STATES } from "@/lib/desires.mjs";
-import { ACTIVE_WINDOWS, areaIdsWithin, encodeCursor, parsePeopleFilters, whoFilterExpression } from "@/lib/people.mjs";
-import { areaById, distanceBucket, DISTANCE_BUCKET_LABELS } from "@/lib/areas.mjs";
+import { ACTIVE_WINDOWS, allOf, areaIdsWithin, audienceExpression, ACTIVITY_REST_START, encodeActivityCursor, encodeCursor, parsePeopleFilters, searchExpression, whoFilterExpression } from "@/lib/people.mjs";
+import { DISCOVERY_COLUMNS, loadViewerContext, toDiscoveryPerson, type DiscoveryRow } from "@/lib/discovery/context";
 
 // People v3 (P1-05): every filter runs in the database query; keyset pagination
 // on (created_at desc, id asc); blocks excluded both ways.
+// Phase 2: sort=activity orders the Everyone index as Here now → Earlier today → This
+// week → Other people nearby. Only members who show their activity are ordered by it;
+// everyone else follows by join date with no activity information. No counts, ever.
 export const dynamic = "force-dynamic";
 const noStore = { "Cache-Control": "private, no-store" };
+const WEEK_MS = ACTIVE_WINDOWS.WEEK;
 
 export async function GET(req: NextRequest) {
   const actorResult = await resolveServerActor(req);
@@ -28,16 +30,10 @@ export async function GET(req: NextRequest) {
   const filters = parsePeopleFilters(new URL(req.url).searchParams);
   const empty = (reason: string) => NextResponse.json({ profiles: [], nextCursor: null, filters, emptyReason: reason }, { headers: noStore });
 
-  const [{ data: blockRows, error: blockError }, { data: friendshipRows, error: friendshipError }, { data: viewer }] = await Promise.all([
-    supabase.from("user_blocks").select("blocker_id,blocked_profile_id").or(`blocker_id.eq.${viewerId},blocked_profile_id.eq.${viewerId}`),
-    supabase.from("friendships").select("requester_id,addressee_id").eq("status", "ACCEPTED").or(`requester_id.eq.${viewerId},addressee_id.eq.${viewerId}`),
-    supabase.from("profiles").select("area_id").eq("id", viewerId).maybeSingle(),
-  ]);
-  if (blockError) return NextResponse.json({ error: "Discovery safety lookup failed" }, { status: 502 });
-  if (friendshipError) return NextResponse.json({ error: "Discovery friends lookup failed" }, { status: 502 });
-  const excludedIds = (blockRows || []).map((block) => block.blocker_id === viewerId ? block.blocked_profile_id : block.blocker_id);
-  const friendIds = new Set((friendshipRows || []).map((row) => row.requester_id === viewerId ? row.addressee_id : row.requester_id));
-  const viewerAreaId: string | null = viewer?.area_id ?? null;
+  const loaded = await loadViewerContext(supabase, viewerId);
+  if ("error" in loaded) return NextResponse.json({ error: loaded.error }, { status: 502 });
+  const context = loaded.context;
+  const { excludedIds, friendIds, viewerAreaId } = context;
 
   // Desire filter: members who want any of the chosen desires (members-visible rows only).
   let desireMatchIds: string[] | null = null;
@@ -56,45 +52,73 @@ export async function GET(req: NextRequest) {
   }
 
   const now = Date.now();
-  let query = supabase
-    .from("profiles")
-    .select("*")
-    .in("profile_visibility", ["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY"])
-    .eq("account_status", "ACTIVE")
-    .eq("discovery_disabled", false)
-    .neq("auth_id", actorResult.actor.userId)
-    .gte("age", filters.minAge)
-    .lte("age", filters.maxAge)
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: true })
-    .limit(filters.limit + 1);
-  if (excludedIds.length > 0) query = query.not("id", "in", `(${excludedIds.join(",")})`);
-  if (desireMatchIds) query = query.in("id", desireMatchIds);
-  if (areaIds) query = query.in("area_id", areaIds);
-  const who = whoFilterExpression(filters.who);
-  if (who) query = query.or(who);
-  if (filters.hasPhoto) query = query.not("avatar_url", "is", null);
-  if (filters.verified) query = query.eq("verification_status", "VERIFIED");
-  if (filters.active) query = query.eq("show_online_status", true).gte("last_active_at", new Date(now - ACTIVE_WINDOWS[filters.active]).toISOString());
-  if (filters.newWithinDays) query = query.gte("created_at", new Date(now - filters.newWithinDays * 86_400_000).toISOString());
-  if (filters.cursor) query = query.or(`created_at.lt.${filters.cursor.createdAt},and(created_at.eq.${filters.cursor.createdAt},id.gt.${filters.cursor.id})`);
+  const weekAgo = new Date(now - WEEK_MS).toISOString();
+  // Activity order: phase A while members active this week remain, then phase R.
+  const phase: "A" | "R" | null = filters.sort === "activity" ? (filters.activityCursor?.phase === "R" ? "R" : "A") : null;
 
-  const { data, error } = await query;
-  if (error) return NextResponse.json({ error: "Discovery lookup failed" }, { status: 502 });
-  const rows = (data || []) as (ProfileRow & { id: string; created_at: string; area_id?: string | null })[];
-  const page = rows.slice(0, filters.limit);
+  const run = async (currentPhase: "A" | "R" | null, limit: number) => {
+    let query = supabase
+      .from("profiles")
+      .select(DISCOVERY_COLUMNS)
+      .in("profile_visibility", ["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY"])
+      .eq("account_status", "ACTIVE")
+      .eq("discovery_disabled", false)
+      .neq("auth_id", actorResult.actor.userId)
+      .gte("age", filters.minAge)
+      .lte("age", filters.maxAge);
+    if (currentPhase === "A") query = query.eq("show_online_status", true).gte("last_active_at", weekAgo).order("last_active_at", { ascending: false });
+    else query = query.order("created_at", { ascending: false });
+    query = query.order("id", { ascending: true }).limit(limit + 1);
+    if (excludedIds.length > 0) query = query.not("id", "in", `(${excludedIds.join(",")})`);
+    if (desireMatchIds) query = query.in("id", desireMatchIds);
+    if (areaIds) query = query.in("area_id", areaIds);
+    if (filters.hasPhoto) query = query.not("avatar_url", "is", null);
+    if (filters.verified) query = query.eq("verification_status", "VERIFIED");
+    if (filters.active) query = query.eq("show_online_status", true).gte("last_active_at", new Date(now - ACTIVE_WINDOWS[filters.active]).toISOString());
+    if (filters.newWithinDays) query = query.gte("created_at", new Date(now - filters.newWithinDays * 86_400_000).toISOString());
+
+    // Every OR-shaped rule goes into one or= parameter so they all must hold.
+    // FRIENDS_ONLY members are filtered here, before the limit, so pages stay full.
+    const rules: (string | null)[] = [audienceExpression(friendIds), whoFilterExpression(filters.who), searchExpression(filters.q)];
+    if (currentPhase === "R") rules.push(`show_online_status.eq.false,last_active_at.is.null,last_active_at.lt.${weekAgo}`);
+    const cursor = filters.activityCursor;
+    if (currentPhase === "A" && cursor?.phase === "A") rules.push(`last_active_at.lt.${cursor.at},and(last_active_at.eq.${cursor.at},id.gt.${cursor.id})`);
+    if (currentPhase === "R" && cursor?.phase === "R" && cursor.at) rules.push(`created_at.lt.${cursor.at},and(created_at.eq.${cursor.at},id.gt.${cursor.id})`);
+    if (!currentPhase && filters.cursor) rules.push(`created_at.lt.${filters.cursor.createdAt},and(created_at.eq.${filters.cursor.createdAt},id.gt.${filters.cursor.id})`);
+    const combined = allOf(rules);
+    if (combined) query = query.or(combined);
+    const { data, error } = await query;
+    return { rows: (data || []) as unknown as DiscoveryRow[], error };
+  };
+
+  let page: DiscoveryRow[];
+  let nextCursor: string | null = null;
+  if (phase === "A") {
+    const active = await run("A", filters.limit);
+    if (active.error) return NextResponse.json({ error: "Discovery lookup failed" }, { status: 502 });
+    page = active.rows.slice(0, filters.limit);
+    if (active.rows.length > filters.limit) nextCursor = encodeActivityCursor("A", page[page.length - 1]);
+    else {
+      // This week's members are exhausted: fill the page from "Other people nearby".
+      const room = filters.limit - page.length;
+      const rest = await run("R", room);
+      if (rest.error) return NextResponse.json({ error: "Discovery lookup failed" }, { status: 502 });
+      const restPage = rest.rows.slice(0, room);
+      page = [...page, ...restPage];
+      if (rest.rows.length > room) nextCursor = restPage.length ? encodeActivityCursor("R", restPage[restPage.length - 1]) : ACTIVITY_REST_START;
+    }
+  } else {
+    const result = await run(phase, filters.limit);
+    if (result.error) return NextResponse.json({ error: "Discovery lookup failed" }, { status: 502 });
+    page = result.rows.slice(0, filters.limit);
+    if (result.rows.length > filters.limit) nextCursor = phase ? encodeActivityCursor(phase, page[page.length - 1]) : encodeCursor(page[page.length - 1]);
+  }
+
   const profiles = page
     .filter((row) => row.profile_visibility !== "FRIENDS_ONLY" || friendIds.has(row.id))
-    .map((row) => {
-      const bucket = viewerAreaId && row.area_id ? distanceBucket(viewerAreaId, row.area_id) : null;
-      return {
-        ...toMemberVisibleProfile(row, { friends: friendIds.has(row.id) }),
-        areaName: row.location_precision === "HIDDEN" ? null : areaById(row.area_id)?.name || null,
-        distance: row.location_precision === "HIDDEN" || !bucket ? null : DISTANCE_BUCKET_LABELS[bucket],
-      };
-    });
+    .map((row) => toDiscoveryPerson(row, context));
   return NextResponse.json(
-    { profiles, nextCursor: rows.length > filters.limit ? encodeCursor(page[page.length - 1]) : null, ranking: { algorithm: "created_at_desc_then_id_asc", limit: filters.limit, desires: filters.desires } },
+    { profiles, nextCursor, ranking: { algorithm: phase ? "activity_then_joined" : "created_at_desc_then_id_asc", limit: filters.limit, desires: filters.desires } },
     { headers: noStore },
   );
 }

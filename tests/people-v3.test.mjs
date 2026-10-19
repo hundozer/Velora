@@ -39,9 +39,10 @@ test("discovery runs filters in the query, pages by keyset and excludes blocks",
   assert.match(route, /\.gte\("age", filters\.minAge\)/);
   assert.match(route, /query = query\.in\("area_id", areaIds\)/);
   assert.match(route, /created_at\.lt\.\$\{filters\.cursor\.createdAt\},and\(created_at\.eq\./);
+  assert.match(route, /\.select\(DISCOVERY_COLUMNS\)/);
   assert.match(route, /\.eq\("account_status", "ACTIVE"\)/);
   assert.match(route, /query = query\.not\("id", "in", `\(\$\{excludedIds\.join\(","\)\}\)`\)/);
-  assert.match(route, /row\.location_precision === "HIDDEN" \? null/);
+  assert.match(await read("src/lib/discovery/context.ts"), /row\.location_precision === "HIDDEN" \? null/);
   const people = await read("src/components/people/MemberPeople.tsx");
   assert.match(people, /if \(people\.length === 0\) return null; \/\/ Empty rails hide/);
   assert.match(people, /\["ONLINE", "Online now"\], \["DAY", "Active today"\], \["WEEK", "Active this week"\]/);

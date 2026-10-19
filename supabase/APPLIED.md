@@ -41,6 +41,7 @@ Verified 2026-10-17 against `supabase_migrations.schema_migrations`.
 | 20261028 | rate_limits | SQL editor (owner), verified 2026-10-18 |
 | 20261101 | media_variants | Supabase MCP (Claude, at owner's request), verified 2026-10-18 |
 | 20261102 | plan_start_times | Supabase MCP (Claude, at owner's request), verified 2026-10-18 |
+| 20261103 | introductions | Supabase MCP (Claude, at owner's request), verified 2026-10-19 |
 | 20260922033815 | 001_initial_schema | legacy bootstrap, superseded by 20260805 |
 
 ## Staging — Supabase `Intimo Staging` (`fuczjjcwtxzzvoxilrme`)

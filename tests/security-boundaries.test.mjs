@@ -253,10 +253,12 @@ test("onboarding creates a verified-session-owned adult profile without self-gra
 
 test("discovery is authenticated, visibility-filtered, and deterministically ordered", async () => {
   const route = await read("src/app/api/discovery/profiles/route.ts");
+  const context = await read("src/lib/discovery/context.ts");
   const page = await read("src/components/people/MemberPeople.tsx");
   assert.match(route, /resolveServerActor\(req\)/);
   assert.match(route, /\.in\("profile_visibility", \["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY"\]\)/);
-  assert.match(route, /\.from\("friendships"\)/);
+  assert.match(context, /\.from\("friendships"\)/);
+  assert.match(route, /audienceExpression\(friendIds\)/, "FRIENDS_ONLY members are filtered in the query, before the limit");
   assert.match(route, /row\.profile_visibility !== "FRIENDS_ONLY" \|\| friendIds\.has\(row\.id\)/);
   assert.match(route, /created_at.*ascending: false/);
   assert.match(route, /id.*ascending: true/);
@@ -411,7 +413,7 @@ test("plans cannot advertise commercial sexual services or require VIP", async (
 
 test("blocking is server-owned and enforced in discovery, profiles, and messages", async () => {
   const blocks = await read("src/app/api/blocks/route.ts");
-  const discovery = await read("src/app/api/discovery/profiles/route.ts");
+  const discovery = await read("src/lib/discovery/context.ts");
   const profile = await read("src/app/api/profiles/[id]/route.ts");
   const messages = await read("src/app/api/messages/route.ts");
   assert.match(blocks, /blocker_id: actor\.actor\.profileId/);
