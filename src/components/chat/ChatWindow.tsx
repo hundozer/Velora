@@ -332,7 +332,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             </div>
           )}
           <div className="flex items-end gap-2">
-            <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => void sendPhoto(event.target.files?.[0])} />
+            <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" aria-label="Choose a photo to send" tabIndex={-1} className="sr-only" onChange={(event) => void sendPhoto(event.target.files?.[0])} />
             <button type="button" onClick={() => setAttachOpen(!attachOpen)} disabled={uploadingPhoto !== null} aria-expanded={attachOpen} aria-label="Send a photo" className="flex h-12 w-11 shrink-0 items-center justify-center text-velora-ink disabled:opacity-50">
               {uploadingPhoto !== null ? <span className="text-[13px]">{uploadingPhoto}%</span> : <Plus className="h-5 w-5" aria-hidden />}
             </button>
