@@ -2,6 +2,14 @@
 
 Current evidence: 19 October 2026, 18:34 UTC (20:34 Prague). Audited `main`: `30cea2f5ae3cbb5719cca2fc6dc5942ab624e007`, including merged #83–88. This update supersedes the older audit below where status differs. No application redesign or production database change was made.
 
+## Preview connection recovered after owner configuration
+
+Update: 19 October 2026, 18:57 UTC (20:57 Prague). Owner added `SUPABASE_SERVICE_ROLE_KEY` for Preview only; production retains its separate existing entry. Key values were not retrieved or printed. Fresh Preview `dpl_HveRMM7QLtJ1ze3GVFbWZYhHNd6r` is READY at merged main `0ffcb84b1be72f05d7725b941126a02a0d121235`, URL `https://velora-pmetp3frm-hundozers-projects.vercel.app`. Vercel API labels this Preview target `staging`; no production promotion was performed.
+
+Authorized protected HTTP checks: home 200 with Intimo content; `/api/public/community?limit=1` **200**, empty profiles/Plans and `demoContentPresent:false`; `/api/profile/me`, `/api/discovery/profiles`, `/api/messages` and `/api/admin/overview` each **401** anonymously. This closes the missing service-credential/public database connection blocker. The age-declaration POST from the complete Playwright smoke was not run in these connector GET checks, so this is a partial HTTP smoke, not a full smoke-suite pass.
+
+**Beta remains NO-GO.** R2 entries still target Preview and production together; isolated staging storage is not established. Disposable member fixtures, controlled inbox confirmation and protected browser access still need configuration before real acceptance and cleanup. No signup/login/member journey, uploaded-file cycle or erasure was exercised; no production SQL was applied. Earlier 503 and missing-key observations below are historical as of their stated timestamp, not current Preview status.
+
 ## Live environment evidence
 
 | Environment | Exact target | Observed result |
