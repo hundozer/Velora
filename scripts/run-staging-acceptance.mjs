@@ -1,11 +1,12 @@
 /** Opt-in disposable fixtures + existing member suite. Never loaded by app routes. */
 import assert from 'node:assert/strict';
-import { randomUUID, randomBytes } from 'node:crypto';
+import { randomUUID, randomBytes, createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { chromium } from '@playwright/test';
 import sharp from 'sharp';
-import { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 
 const base = process.env.INTIMO_E2E_BASE_URL;
 const access = process.env.INTIMO_E2E_SHARE_URL;
@@ -19,6 +20,7 @@ const bucket = process.env.CLOUDFLARE_R2_BUCKET_NAME;
 const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 const r2 = new S3Client({ region: 'auto', endpoint: `https://${process.env.CLOUDFLARE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com`, requestChecksumCalculation: 'WHEN_REQUIRED', responseChecksumValidation: 'WHEN_REQUIRED', credentials: { accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID, secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY } });
 const run = randomUUID();
+const manifestPath = `/tmp/intimo-e2e-${run}.jsonl`;
 const password = randomBytes(24).toString('base64url');
 const members = [];
 const seededKeys = [];
@@ -96,7 +98,7 @@ try {
   await status(delivered, 200, 'Metadata-sensitive owner delivery');
   assert.equal((await sharp(await delivered.body()).metadata()).exif, undefined, 'Delivered EXIF/GPS retained');
   console.log('STAGING_ACCEPTANCE actual private delivery strips EXIF/GPS PASS');
-  const child = spawnSync(process.execPath, ['node_modules/@playwright/test/cli.js', 'test', '--project=member-acceptance', '--trace=off', '--timeout=240000'], { stdio: 'inherit', timeout: 360000, env: { ...process.env, E2E_BASE_URL: base, E2E_ALLOWED_ORIGIN: base, E2E_VERCEL_SHARE_URL: access, E2E_A_EMAIL: members[0].email, E2E_B_EMAIL: members[1].email, E2E_A_PASSWORD: password, E2E_B_PASSWORD: password, E2E_A_PRIVATE_MEDIA_ID: mediaId } });
+  const child = spawnSync(process.execPath, ['node_modules/@playwright/test/cli.js', 'test', '--project=member-acceptance', '--trace=off', '--timeout=240000'], { stdio: 'inherit', timeout: 360000, env: { ...process.env, E2E_BASE_URL: base, E2E_ALLOWED_ORIGIN: base, E2E_VERCEL_SHARE_URL: access, E2E_MANIFEST_PATH: manifestPath, E2E_A_EMAIL: members[0].email, E2E_B_EMAIL: members[1].email, E2E_A_PASSWORD: password, E2E_B_PASSWORD: password, E2E_A_PRIVATE_MEDIA_ID: mediaId } });
   assert.equal(child.status, 0, 'Existing two-member acceptance suite failed');
   const [a,b] = members;
   const planPayload={category:'DATE',title:'Synthetic eligibility plan',text:'Isolated acceptance fixture; no real meeting.',startsAt:new Date(Date.now()+60000).toISOString(),endsAt:new Date(Date.now()+3600000).toISOString()};
@@ -177,6 +179,14 @@ try {
   await attempt('close Realtime subscriptions',async()=>{for(const client of liveClients)await client.removeAllChannels();});
   const ids = members.map(m=>m.id);
   const keys = new Set(seededKeys);
+  const manifestIds=[];
+  await attempt('read fixture storage manifest',async()=>{
+    if(existsSync(manifestPath))for(const line of readFileSync(manifestPath,'utf8').trim().split('\n').filter(Boolean)){
+      const entry=JSON.parse(line);assert.match(entry.mediaId,/^[0-9a-f-]{36}$/i);assert.match(entry.objectKey,/^photos\/[a-zA-Z0-9_.-]+$/);keys.add(entry.objectKey);manifestIds.push(entry.mediaId);
+    }
+    rmSync(manifestPath,{force:true});
+  });
+  for(const mediaId of manifestIds)await attempt('list manifested variants',async()=>{const r=await r2.send(new ListObjectsV2Command({Bucket:bucket,Prefix:`variants/${mediaId}/`}));for(const item of r.Contents??[])if(item.Key)keys.add(item.Key);});
   if (ids.length) {
     await attempt('list owned media',async()=>{ const rows=ok(await db.from('media_objects').select('id,object_key,variants').in('owner_id',ids),'Fixture media lookup'); for(const row of rows){keys.add(row.object_key);for(const v of Object.values(row.variants??{}))if(v?.objectKey)keys.add(v.objectKey);const listed=await r2.send(new ListObjectsV2Command({Bucket:bucket,Prefix:`variants/${row.id}/`}));for(const item of listed.Contents??[])if(item.Key)keys.add(item.Key);} });
   }
@@ -195,7 +205,26 @@ try {
     for(const [table,column] of [['direct_messages','sender_id'],['direct_messages','receiver_id'],['media_objects','owner_id'],['dating_ads','author_id']]) await attempt(`verify no ${table}`,async()=>{const result=await db.from(table).select('*',{count:'exact',head:true}).in(column,ids);ok(result,'Cleanup count');assert.equal(result.count,0);});
   }
   await attempt('verify fixture prefix empty',async()=>{const r=await r2.send(new ListObjectsV2Command({Bucket:bucket,Prefix:`acceptance-fixtures/${run}/`,MaxKeys:1}));assert.equal(r.Contents?.length??0,0);});
-  await attempt('inventory staging storage',async()=>{const listing=await r2.send(new ListObjectsV2Command({Bucket:bucket,MaxKeys:1}));console.log(`STAGING_ACCEPTANCE staging bucket empty ${!(listing.Contents?.length)}`);});
+  await attempt('audit and recover verified synthetic leftovers',async()=>{
+    const listing=await r2.send(new ListObjectsV2Command({Bucket:bucket,MaxKeys:1000}));
+    assert.ok(!listing.IsTruncated,'Full staging object inventory required');
+    const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAEUlEQVR4nGP4z8AARwgWXg4ArpMP8aaUSCMAAAAASUVORK5CYII=','base64');
+    const tiny=await sharp(png).rotate().resize(4,{withoutEnlargement:true}).webp({quality:78}).toBuffer();
+    const allowed=new Set([png,tiny].map(bytes=>createHash('sha256').update(bytes).digest('hex')));
+    for(const item of listing.Contents??[]) {
+      const isTestKey=/^photos\/\d+_[a-z0-9]+_acceptance\.png$/.test(item.Key??'')||/^variants\/[0-9a-f-]{36}\/4\.webp$/.test(item.Key??'');
+      if(!isTestKey||new Date(item.LastModified).getTime()<1792437800000||item.Size>4096)continue;
+      const object=await r2.send(new GetObjectCommand({Bucket:bucket,Key:item.Key}));
+      const bytes=Buffer.from(await object.Body.transformToByteArray());
+      const hash=createHash('sha256').update(bytes).digest('hex');
+      if(!allowed.has(hash)){console.log('STAGING_ACCEPTANCE unrecognised leftover retained',JSON.stringify({key:item.Key,size:item.Size,hash}));continue;}
+      await r2.send(new DeleteObjectCommand({Bucket:bucket,Key:item.Key}));
+      console.log('STAGING_ACCEPTANCE recovered verified synthetic leftover',item.Key);
+    }
+    const after=await r2.send(new ListObjectsV2Command({Bucket:bucket,MaxKeys:1}));
+    console.log(`STAGING_ACCEPTANCE staging bucket empty ${!(after.Contents?.length)}`);
+    if(after.Contents?.length)throw new Error('Staging object inventory still contains an unresolved leftover; inspect before reusing fixtures');
+  });
   r2.destroy();
   if(failures.length)throw new Error(`STAGING_ACCEPTANCE CLEANUP FAILED: ${failures.join(', ')}`);
   console.log('STAGING_ACCEPTANCE fixture Auth/profiles/media/messages/plans cleanup PASS');
