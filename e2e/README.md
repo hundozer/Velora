@@ -62,6 +62,18 @@ The staging test verifies both block directions, inactive accounts, unrelated/mi
 
 ## Disposable acceptance from a Preview build
 
+### Focused profile-save investigation
+
+`scripts/probe-staging-profile-save.mjs` is an opt-in HTTP probe for the earlier 30-second profile-edit timeout. It is not part of the default build or CI. It requires a Preview builder, the staging Supabase project and the builder's short-lived `VERCEL_OIDC_TOKEN`. Its exact inspected Preview target is hardcoded; changing the target requires independently checking its commit and staging configuration first.
+
+One-off Preview build override: `node scripts/probe-staging-profile-save.mjs && npm run build`. No access URL, fixture password or server credential is saved into environment settings. The identity header goes only to fixed relative paths on the inspected Preview; every HTTP request refuses redirects. Supabase clients do not receive that header. Errors omit Playwright call logs and auth cookies.
+
+The probe provisions two confirmed synthetic identities, signs in with real passwords, creates profiles through the application API, then saves eight headline changes per member. It measures each response and verifies each saved value through authenticated HTTP and the database. The 90-second request observation window records actual responses beyond the earlier 30-second test deadline; it is not a production timeout change or a retry that conceals failure. This is HTTP/session/persistence evidence, not a fresh browser UI or email-registration journey.
+
+`finally` recovers ambiguous identity creations by a unique run marker, removes only those fixtures' audits/rate limits/profiles/Auth identities, verifies their absence and compares complete pre-existing profile/media row hashes. No messages, Plans or uploads are created. Independently check Supabase afterward, including after a failed build. Do not cancel a running probe after fixtures are created.
+
+### Full disposable runner
+
 When credentials are intentionally unreadable outside Vercel, `scripts/run-staging-acceptance.mjs` can use them inside an explicitly requested Preview build. It refuses production, another Supabase project, another R2 account/bucket and any target other than the independently inspected Preview hardcoded in the runner. It does not add an application endpoint or run in the default build/CI command.
 
 The runner creates two synthetic, confirmed Auth identities (admin provisioning, **not signup/email-confirmation acceptance**), drives their actual phone-sized login/onboarding/profile-edit screens, checks People/profile-sheet close, seeds an approved private test image containing synthetic EXIF/GPS, then runs the existing `member-acceptance` suite. It additionally checks Plan reply eligibility, direct JWT REST/Realtime message access, reporting, export and self-service deletion. Account deactivation is distinct from scheduled retention/erasure.
