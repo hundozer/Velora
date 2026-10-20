@@ -7,10 +7,10 @@ import { request } from '@playwright/test';
 
 const base = 'https://velora-8nrl0463z-hundozers-projects.vercel.app';
 assert.equal(process.env.VERCEL_ENV, 'preview');
-assert.equal(process.env.INTIMO_PROFILE_PROBE_BASE_URL, base, 'Inspected Preview required');
 assert.equal(new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname, 'fuczjjcwtxzzvoxilrme.supabase.co');
-const access = process.env.INTIMO_PROFILE_PROBE_SHARE_URL;
-assert.equal(new URL(access).origin, base);
+const token = process.env.VERCEL_OIDC_TOKEN;
+assert.ok(token, 'Short-lived Vercel build identity required; no fixture created');
+const protection = { 'x-vercel-trusted-oidc-idp-token': token };
 const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
@@ -51,19 +51,10 @@ async function call(client, label, method, path, body, expected = 200) {
 console.log(`PROFILE_PROBE run=${run} target_commit=f866f862cb8b724710900bd54b54af25227e8d92 app_matches_main=b0459433ca7fc705215928bc26da2e14e671409b`);
 try {
   baseline = await preservedRows();
-  const home = await request.newContext({ baseURL: base });
+  const home = await request.newContext({ baseURL: base, extraHTTPHeaders: protection });
   clients.push(home);
-  // Establish only an origin-scoped protection cookie. Never forward a share URL elsewhere.
-  let next = access;
-  for (let step = 0; step < 4; step++) {
-    assert.equal(new URL(next).origin, base);
-    const response = await home.get(next, { maxRedirects: 0 });
-    if (response.status() === 200) break;
-    assert.ok([301, 302, 303, 307, 308].includes(response.status()), 'Protected Preview access failed');
-    const location = response.headers().location;
-    assert.ok(location, 'Protection response missing location');
-    next = new URL(location, base).href;
-  }
+  // Every request is a fixed relative path on this exact Preview, with redirects disabled.
+  // The short-lived deployment identity is never sent to Supabase or stored in env settings.
   await call(home, 'public community', 'GET', '/api/public/community?limit=1');
   const protectionState = await home.storageState();
   for (const label of ['A', 'B']) {
@@ -81,7 +72,7 @@ try {
     data(await auth.auth.signInWithPassword({ email, password }), 'Actual password login');
     const cookies = [...jar].map(([name, value]) => ({ name, value, domain: new URL(base).hostname,
       path: '/', expires: -1, httpOnly: false, secure: true, sameSite: 'Lax' }));
-    member.client = await request.newContext({ baseURL: base,
+    member.client = await request.newContext({ baseURL: base, extraHTTPHeaders: protection,
       storageState: { cookies: [...protectionState.cookies, ...cookies], origins: [] } });
     clients.push(member.client);
     await call(member.client, `${label} age declaration`, 'POST', '/api/access/age-declaration', { adult: true });
