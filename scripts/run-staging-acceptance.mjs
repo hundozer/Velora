@@ -174,6 +174,12 @@ try {
   assert.ok(!(await b.context.request.get(`/api/media/${mediaId}`)).ok(),'Peer retains deleted-owner media access');
   assert.equal(ok(await direct[1].from('direct_messages').select('id'),'Post-deletion direct message read').length,0);
   console.log('STAGING_ACCEPTANCE report/export/self-deletion/access-denial PASS (scheduled retention still separate)');
+} catch (error) {
+  // Playwright request errors include headers/cookies in their multi-line call log.
+  // Keep the failure reason without persisting credentials in hosted build output.
+  const reason = (error instanceof Error ? error.message : String(error)).split('\n')[0]
+    .replace(/(https?:\/\/[^\s?]+)\?[^\s]+/g, '$1?[redacted]');
+  throw new Error(`STAGING_ACCEPTANCE ${error?.name ?? 'Error'}: ${reason}`);
 } finally {
   const failures = [];
   async function attempt(label, fn) { try { await fn(); } catch { failures.push(label); } }
