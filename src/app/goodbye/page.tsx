@@ -29,7 +29,7 @@ export default function GoodbyePage() {
 
         <div className="space-y-3">
           <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20 inline-block animate-pulse">
-            Account Permanently Erased
+            Deletion Request Accepted
           </span>
           <h2 className="text-3xl font-serif font-bold text-velora-textPrimary tracking-wide">
             We're Sad to See You Go! 💔
@@ -43,11 +43,11 @@ export default function GoodbyePage() {
         <div className="p-4 rounded-xl bg-ink/5 border border-ink/10 text-left text-xs text-velora-textMuted space-y-2 leading-relaxed font-mono">
           <div className="flex items-start gap-2 text-[11px]">
             <Heart className="w-4 h-4 text-velora-gold shrink-0 mt-0.5" />
-            <span>Your account deletion request was accepted. Profile data, messages, and media follow the documented deletion/anonymization workflow and any legitimate safety or legal retention duties.</span>
+            <span>Your login has been removed and your profile deactivated. Profile data, messages, and media follow the documented deletion/anonymization workflow and any legitimate safety or legal retention duties.</span>
           </div>
           <div className="flex items-start gap-2 text-[11px]">
             <ShieldAlert className="w-4 h-4 text-velora-accent shrink-0 mt-0.5" />
-            <span>We respect your Right to be Forgotten. No hidden trackers, backups, or legacy footings remain. You are officially off the grid.</span>
+            <span>Permanent erasure is not immediate. Deactivated accounts become eligible for the deletion/anonymization workflow after 30 days, subject to applicable retention duties.</span>
           </div>
         </div>
 
