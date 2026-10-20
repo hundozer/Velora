@@ -8,6 +8,24 @@ These are different evidence levels. Neither green CI nor the UI specs proves th
 
 No backend mocks or member credentials. Checks public DB data, server-generated age cookie, and anonymous rejection by member/admin endpoints. Runs on successful Preview deployment status and supports manual dispatch. Missing database credentials, a paused database, or a protection login fails the smoke. Do not bypass a failure by mocking the backend. A protected Preview needs an authorized automation access arrangement before this workflow can pass; it does not send a bypass secret to arbitrary input URLs.
 
+### Protected Preview CI access
+
+The Preview smoke workflow obtains a short-lived GitHub Actions OIDC token (masked in logs), rather than a shared static bypass secret. In Vercel project `velora`, **Settings → Deployment Protection → Trusted Sources → External Services**, the applied GitHub Actions rule is:
+
+- Issuer: `https://token.actions.githubusercontent.com`
+- Audience (`aud`): `https://github.com/hundozer`
+- Repository (`repository`): `hundozer/Velora`
+- Repository ID (`repository_id`): `1321270415`
+- Workflow (`workflow`): `Preview smoke` (the YAML workflow name, not a path).
+- Trigger (`event_name`), accepted values: `deployment_status`, `workflow_dispatch`.
+- Target environment: **Preview only**.
+
+This access-control rule was explicitly owner-approved, applied and read back on20October2026. Authenticated hosted smoke run39425483193 attempt2 passed1/1; see the readiness report for exact source/target commits and earlier failed attempts. Future changes to its scope require owner approval. Preserve all existing project trust rules and Deployment Protection. GitHub workflow token issuance alone does not establish Vercel authorization. Avoid requiring an assumed `sub` shape: current tokens include immutable account/repository suffixes. Deployment-status tokens also use commit SHAs in `workflow_ref`, while manual tokens use branch refs. The rule therefore verifies immutable repository ID, workflow name and the two intended event types.
+
+`E2E_VERCEL_OIDC_TOKEN` is scoped to HTTPS origins on the project's owning-team deployment hostnames. The smoke never follows redirects, so it cannot forward the header to Vercel login or another origin; traces are disabled. No database/member credential is sent. The HTTP assertions, public database read, anonymous API denials and signed age cookie remain required. The aggregate timeout is120seconds, matching the previously measured full smoke budget.
+
+Inspect each run's steps and token metadata rather than inferring its workflow source: the actual deployment-status run used the repaired workflow at the deployment SHA. Its `workflow_ref` claim ended with that SHA. Manually dispatch on the PR branch for a separate explicit check; automatic deployment-status checks must also pass.
+
 ## UI regression tests
 
 `E2E_BASE_URL=http://localhost:3000 npx playwright test --project=ui`

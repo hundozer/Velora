@@ -14,6 +14,9 @@ permissions:
 jobs:
   smoke:
     if: github.event_name == 'workflow_dispatch' || (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Preview')
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -22,12 +25,24 @@ jobs:
           ref: ${{ github.event.deployment.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
       - run: npm ci
+      - name: Obtain short-lived Preview access identity
+        uses: actions/github-script@v7
+        id: oidc
+        with:
+          script: |
+            const token = await core.getIDToken();
+            core.setSecret(token);
+            core.setOutput("token", token);
+            const claims = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString());
+            const identity = Object.fromEntries(["iss", "aud", "repository", "repository_id", "sub", "workflow_ref"].map(key => [key, claims[key]]));
+            core.info(`Preview access identity claims: ${JSON.stringify(identity)}`);
       - name: Verify the real deployment
         run: npx playwright test --config=playwright.smoke.config.ts
         env:
+          E2E_VERCEL_OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
           E2E_BASE_URL: ${{ github.event.deployment_status.environment_url || inputs.base_url }}
       - uses: actions/upload-artifact@v4
         if: failure()
