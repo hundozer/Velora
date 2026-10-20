@@ -2,6 +2,12 @@
 
 Current evidence: 20 October 2026. Authoritative main, freshly fetched: `1eda06588dc4ed5166db43c445f08f3de23a5e05` (merged #92; includes #83–91). The sections below date earlier deployments and evidence explicitly. The owner-approved production message-read migration is now applied and verified after dashboard fallback. Earlier connector failures caused no change. The historical audit below is retained for context; this section supersedes older blocked/pending observations.
 
+## Admission decision — normal signup link
+
+20 October 2026: when asked how beta members should join, the owner requested a sign-up link rather than approved email lists or manual invitations. The entry point is `https://intimo.live/register`. Registration remains open: the link may be forwarded, and possessing it is not an admission restriction. No invite system, allowlist, signup closure or Auth configuration change was made.
+
+This owner decision supersedes the earlier invite-only launch requirement. Controlled admission is no longer a beta blocker under this launch scope; it is not marked as an implemented or tested security control. Existing signup/confirmation and isolated staging journey evidence retain their stated limits. The remaining gates are moderator operation, scheduled retention/physical erasure, discreet return email/unsubscribe, disabled leaked-password protection and the unresolved intermittent profile-edit failure. Beta remains **NO-GO** pending those gates.
+
 ## Production ledger repair completed
 
 Owner approval was received in this session before execution. On 20 October 2026 at 18:35:31 UTC, the exact reviewed 5038-byte SQL (SHA-256 `c38e68d76761da42dc125efabcf8390e072a4e6f479da0a869a5f6c79f796cdd`, source blob `fcb242f390924460e7c4b24e2835c61ec0c1f378`) committed successfully through Supabase execute_sql on production `bkdyjdbmtucqvgebqadp`. No wrapper migration receipt was created and no legacy SQL was executed.
@@ -18,7 +24,7 @@ The latest main Supabase check observed is `118807445098`, **SKIPPED**, created 
 
 Fresh post-repair public smoke on authoritative main passed **1/1** (35.5-second test,36.2-second total): `E2E_BASE_URL=https://intimo.live E2E_HTTP_PROXY="${HTTPS_PROXY:-${HTTP_PROXY:-}}" npx playwright test --config=playwright.smoke.config.ts --trace=off`. It verified application home200, real public-community200/no demo content, anonymous profile/discovery/messages/admin401 and signed age cookie200. No production member account, content or upload was created.
 
-See `LEGACY_BOOTSTRAP_LEDGER_REPAIR.md` for source, rollback-only staging rehearsal and the exact bounded transaction. Beta remains **NO-GO**: controlled admission, moderator operator drill, scheduled retention/physical erasure, discreet return email/unsubscribe, disabled leaked-password protection and the earlier intermittent profile-edit failure remain unresolved or unproven. This repair and public smoke do not re-prove the prior authenticated staging journey.
+See `LEGACY_BOOTSTRAP_LEDGER_REPAIR.md` for source, rollback-only staging rehearsal and the exact bounded transaction. Beta remains **NO-GO**: moderator operator drill, scheduled retention/physical erasure, discreet return email/unsubscribe, disabled leaked-password protection and the earlier intermittent profile-edit failure remain unresolved or unproven. This repair and public smoke do not re-prove the prior authenticated staging journey. The owner's later normal-signup decision above supersedes the former controlled-admission gate.
 
 ## Post-merge verification: #91 and #92 (before ledger repair)
 
