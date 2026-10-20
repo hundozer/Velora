@@ -1,6 +1,6 @@
 # Prague beta decision: NO-GO; staging member journey exercised
 
-Current evidence: 20 October 2026. Authoritative main, freshly fetched: `0ffcb84b1be72f05d7725b941126a02a0d121235` (merged #89; includes #83–88). PR #90 contains test infrastructure and this evidence, not product features. Production SQL has not been changed during this recovery. The historical audit below is retained for context; this section supersedes older blocked/pending observations.
+Current evidence: 20 October 2026. Authoritative main, freshly fetched: `0ffcb84b1be72f05d7725b941126a02a0d121235` (merged #89; includes #83–88). PR #90 contains test infrastructure and this evidence, not product features. Production SQL has not been changed during this recovery. The owner approved the exact message-read migration on 20 October; two connector attempts failed without taking effect. The historical audit below is retained for context; this section supersedes older blocked/pending observations.
 
 ## Environments and isolation
 
@@ -23,7 +23,7 @@ No repository/workspace-parent `AGENTS.md` was present. Read current readiness, 
 | Automated source checks | `npm test`:196/196, no skips; `npm run typecheck` and `npm run lint`:pass, freshly repeated 20 October; hosted app build passed in `dpl_CUFb87gF48FpvfvpAJpGWteARJWH` |
 | Actual SQL roles | Rollback-only `tests/sql/staging-message-rls.sql` passed on Supabase using real anon/authenticated roles with simulated claims |
 | Live member journey | Existing #85 unmocked browser/API suite passed; extra phone-sized onboarding, profile sheet, Plan eligibility, EXIF privacy, JWT REST/Realtime, report/export/self-deletion exercised below |
-| Production migration | **Not applied/approved**. Read-only20Oct preflight still returns ledger/helper/policy all absent |
+| Production migration | **Approved, not applied**. Two connector attempts failed; independent checks after each show ledger/helper/policy absent |
 
 SQL-role evidence: both participants read before a block; either block direction denies both; inactive viewer/peer, unrelated/null identity and anonymous reads deny; unauthorized direct profile/message/desire writes and privileged block RPC deny. A deliberately broad permissive policy cannot bypass the restrictive predicate. Everything rolled back. All 47 public tables have RLS, anon SELECT only areas, authenticated no direct table writes, service role SELECT all 47. Effective columns/constraints/RLS match production except this staged policy/helper; rate-limit function differs only in a comment. Final media statuses and identity constraint are listed below.
 
@@ -43,6 +43,10 @@ Earlier complete run `dpl_CUFb87gF48FpvfvpAJpGWteARJWH`, harness `72e73871bf27d9
 
 Final repeat **passed acceptance and cleanup** on 20 October: `dpl_5ymbA83Z4cunBkaKtCcufNGKsgDz`, harness `06a5460880a229fe6d0be6900204f91d7cd44305`, fixed main app target above. Full-loop passed in 1.1 minutes; all extra onboarding/People/EXIF/Plans/REST/Realtime/report/export/deletion checks passed. Full storage inventory exactly matched its eight-object baseline. Independently queried Supabase afterward: Auth users0, profiles2 (both restricted/private legacy), media5, messages0, Plans0, blocks0, private grants0, synthetic profiles/Auth/reports0. No leftover test accounts, profiles, messages, Plans or uploads. Two branch-only temporary acceptance access values were cleared after completion (entries remain blank; real staging credentials unchanged). The normal application build also completed successfully; deployment READY was rechecked. The earlier intermittent failures remain unresolved observations; this repeat is not proof of their cause or cure.
 
+## Production approval and blocked execution
+
+20 October 2026 production attempt: owner explicitly approved only canonical `20261104_block_aware_message_reads.sql`. Source on authoritative main `0ffcb84b1be72f05d7725b941126a02a0d121235` still matches SHA-256 `cc428966e904b3116dc31153fb492e0c28561c92b7ee4927f8838e911f88201b`. Two `apply_migration` calls returned `Invalid or expired requestState`; after each, `execute_sql` independently confirmed no canonical/wrapper ledger receipt, no helper and no restrictive policy. No third unchanged retry. Production remains at profiles1/Auth1/media4/messages0, original participant policy and authenticated SELECT-only grant; no member fixture or member-data write occurred. Vercel production `dpl_GDAAJj42WEomuYqiVqnd8NjTENp4` remains READY at main `0ffcb84`. Migration approval is granted; execution is blocked by the connector. No Supabase CLI is installed. Dashboard SQL editor is the prepared fallback, pending permission to use Browser after repeated connector failure.
+
 ## Failed attempts and test repairs
 
 Standard Chromium could not launch on Vercel's builder (missing libnspr/libnss); serverless Chromium141.0.0 works, installed under `/tmp` so application locked dependencies remain intact. One earlier successful acceptance was followed by app-build failure because an in-repository no-save install pruned dev dependencies; the isolated-prefix approach fixed that.
@@ -58,7 +62,7 @@ Commands: `npm test`; `npm run typecheck`; `npm run lint`; `node --check scripts
 ## Remaining gates and production decision
 
 1. Review/merge focused [PR #90](https://github.com/hundozer/Velora/pull/90), including final cleanup evidence. Acceptance's unexplained earlier failure remains disclosed.
-2. Obtain explicit approval for only `supabase/migrations/20261104_block_aware_message_reads.sql` on production `bkdyjdbmtucqvgebqadp`. Exact SHA-256 `cc428966e904b3116dc31153fb492e0c28561c92b7ee4927f8838e911f88201b`. Reviewable scope/preflight/postchecks in `PRODUCTION_MESSAGE_RLS_ROLLOUT.md`. It adds a uid-guarded safety helper/restrictive read policy, changes no member rows. Merging PRs is not production migration authorization.
+2. Approval received on 20 October for only `supabase/migrations/20261104_block_aware_message_reads.sql` on production `bkdyjdbmtucqvgebqadp`; execution remains blocked by the connector. Exact SHA-256 `cc428966e904b3116dc31153fb492e0c28561c92b7ee4927f8838e911f88201b`. Reviewable scope/preflight/postchecks in `PRODUCTION_MESSAGE_RLS_ROLLOUT.md`. It adds a uid-guarded safety helper/restrictive read policy, changes no member rows. Merging PRs is not production migration authorization.
 3. Real signup/inbox confirmation, discreet email delivery/unsubscribe, controlled admission at both app/Auth boundaries, moderator operator drill and scheduled retention/physical erasure remain unproved. No beta invitation/launch readiness claim until these have evidence. Full Playwright public smoke remains distinct from partial authorized GET checks.
 
 Security advisor findings:32 INFO for RLS with no policies on server-only tables, one WARN for deliberately authenticated-executable SECURITY DEFINER safety helper. Empty search path, participant guard, no anon/PUBLIC execute and unrelated-caller denial verified; do not remove authenticated execution just to silence the warning.
