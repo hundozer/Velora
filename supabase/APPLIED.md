@@ -46,7 +46,7 @@ Ledger and effective schema re-inspected 2026-10-19 at 18:34 UTC. Existing canon
 
 ## Staging — Supabase `Intimo Staging` (`fuczjjcwtxzzvoxilrme`)
 
-Restored and ACTIVE_HEALTHY, freshly verified 2026-10-19. Schema recovered; Preview/member acceptance **not ready**. See `docs/BETA_READINESS_2026-10-19.md` for live evidence, differences and blockers.
+Restored and ACTIVE_HEALTHY, freshly verified 2026-10-19. Schema and Preview database connection recovered. Disposable member journeys and direct JWT REST/Realtime policy checks exercised; see the readiness report for exact runs, failures and remaining beta gates. Production safety migration remains unapplied. See `docs/BETA_READINESS_2026-10-19.md` for live evidence, differences and blockers.
 
 | Versions | Observed history |
 | --- | --- |
