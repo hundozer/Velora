@@ -21,6 +21,8 @@ The latest main Supabase check observed is `118807445098`, **SKIPPED**, created 
 
 Fresh post-repair public smoke on authoritative main passed **1/1** (35.5-second test,36.2-second total): `E2E_BASE_URL=https://intimo.live E2E_HTTP_PROXY="${HTTPS_PROXY:-${HTTP_PROXY:-}}" npx playwright test --config=playwright.smoke.config.ts --trace=off`. It verified application home200, real public-community200/no demo content, anonymous profile/discovery/messages/admin401 and signed age cookie200. No production member account, content or upload was created.
 
+Security advisor after repair (18:38UTC):33 INFO findings for RLS-enabled tables without policies, including the deliberately inaccessible private receipt archive; two existing WARN findings remain: intentional authenticated execution of the uid-guarded helper and disabled leaked-password protection. No new WARN/ERROR class was returned. See [RLS advisor](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy), [helper advisor](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable) and [password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). Do not grant client access or add a permissive archive policy to silence the INFO finding.
+
 ## Diagnosis and scope (pre-repair)
 
 After #92 merged, main `1eda06588dc4ed5166db43c445f08f3de23a5e05` is live on READY production deployment `dpl_ejmCK9nHr58PMeoAjB6TXmJXFRNs`. Hosted CI verify passed. Full public production smoke passed1/1 (51.6-second total); the goodbye HTTP response contains the corrected deletion-request/deactivation wording.
@@ -29,7 +31,7 @@ The Supabase integration check118783303593 failed with `Remote migration version
 
 Do not replay the legacy SQL, manufacture a replacement applied history, or add it to the active migration chain merely to silence the check.
 
-The approved transaction created a private `intimo_migration_audit.retired_migration_receipts` table, copies the **entire original ledger row** as JSON (including statements, rollback, created_by and idempotency_key), then removed exactly that old row from the active ledger. It preserved every canonical receipt and application table/policy unchanged. Original execution evidence remains available in the private archive. This file lives under docs/sql rather than supabase/migrations, so merging this PR does not execute the repair automatically or create a wrapper receipt.
+The approved transaction created a private `intimo_migration_audit.retired_migration_receipts` table, copied the **entire original ledger row** as JSON (including statements, rollback, created_by and idempotency_key), then removed exactly that old row from the active ledger. It preserved every canonical receipt and application table/policy unchanged. Original execution evidence remains available in the private archive. This file lives under docs/sql rather than supabase/migrations, so merging this PR does not execute the repair automatically or create a wrapper receipt.
 
 ## Guards and preservation
 
