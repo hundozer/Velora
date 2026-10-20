@@ -2,6 +2,14 @@
 
 Current evidence: 20 October 2026. Authoritative main, freshly fetched: `467b4d327d28f5b18dd55ba5ccd12337f17d6486` (merged #90; includes #83–89). The sections below date earlier deployments and evidence explicitly. The owner-approved production message-read migration is now applied and verified after dashboard fallback. Earlier connector failures caused no change. The historical audit below is retained for context; this section supersedes older blocked/pending observations.
 
+## PR #91 merge-check diagnosis and repair
+
+20 October12:37UTC checkpoint: #91 head `0932a5b277a4873569bd8af767402bf39e7e950f` is open, non-draft and conflict-free (`mergeable:true`, `mergeable_state:unstable`). CI `verify` passed; Vercel deployment passed; no unresolved review threads. Hosted `smoke` job `118628759186`, run `39423101013`, failed because an unauthenticated homepage request followed a redirect to the Vercel login page. It never established application health. Branch-protection configuration could not be read with this integration (403), so the exact enforcement rule is not claimed.
+
+The repair adds masked short-lived GitHub OIDC identity to the Preview smoke workflow, guards the destination origin, refuses redirects on every smoke request and disables credential-bearing traces. All original application assertions remain. Aggregate timeout120seconds matches prior full-smoke evidence; smoke's Node runtime22 matches locked dependencies. Proposed Preview-only Vercel external trust rule and pre-merge manual workflow validation are detailed in `e2e/README.md`. No static bypass secret, protection disabling, production trust rule, database change or member-data write.
+
+Local verification: `npm test`199/199, `npm run typecheck`, `npm run lint`, workflow YAML parse and `git diff --check` pass. These are source-level checks. Vercel trust configuration is pending explicit owner approval; an authenticated hosted smoke has **not yet passed** for this repair. Do not merge based on the old unauthenticated failed run or declare beta ready from these checks.
+
 ## 20 October signup and confirmation-origin recovery
 
 Current application main: `467b4d327d28f5b18dd55ba5ccd12337f17d6486` (merged #90). Production at this commit passed the full public Playwright smoke after merge (1/1,45.5-second total,120-second aggregate budget, all assertions retained); the production canonical ledger/helper/restrictive policy were rechecked unchanged.
