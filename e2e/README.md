@@ -10,20 +10,21 @@ No backend mocks or member credentials. Checks public DB data, server-generated 
 
 ### Protected Preview CI access
 
-The Preview smoke workflow obtains a short-lived GitHub Actions OIDC token (masked in logs), rather than a shared static bypass secret. In Vercel project `velora`, **Settings → Deployment Protection → Trusted Sources → External Services**, the proposed GitHub Actions rule is:
+The Preview smoke workflow obtains a short-lived GitHub Actions OIDC token (masked in logs), rather than a shared static bypass secret. In Vercel project `velora`, **Settings → Deployment Protection → Trusted Sources → External Services**, the applied GitHub Actions rule is:
 
 - Issuer: `https://token.actions.githubusercontent.com`
 - Audience (`aud`): `https://github.com/hundozer`
 - Repository (`repository`): `hundozer/Velora`
 - Repository ID (`repository_id`): `1321270415`
-- Workflow (`workflow_ref`), accepted values: `hundozer/Velora/.github/workflows/preview-smoke.yml@refs/heads/main` and `hundozer/Velora/.github/workflows/preview-smoke.yml@refs/heads/codex/staging-confirmation-origin` (the latter permits this repair's pre-merge manual validation; remove it after merge).
+- Workflow (`workflow`): `Preview smoke` (the YAML workflow name, not a path).
+- Trigger (`event_name`), accepted values: `deployment_status`, `workflow_dispatch`.
 - Target environment: **Preview only**.
 
-This access-control rule was explicitly owner-approved, applied and read back on20October2026. Authenticated hosted smoke run39425483193 attempt2 passed1/1; see the readiness report for exact source/target commits and earlier failed attempts. Future changes to its scope require owner approval. Preserve all existing project trust rules and Deployment Protection. GitHub workflow token issuance alone does not establish Vercel authorization. Avoid requiring an assumed `sub` shape: current tokens include immutable account/repository suffixes; the rule instead verifies repository ID and exact workflow refs.
+This access-control rule was explicitly owner-approved, applied and read back on20October2026. Authenticated hosted smoke run39425483193 attempt2 passed1/1; see the readiness report for exact source/target commits and earlier failed attempts. Future changes to its scope require owner approval. Preserve all existing project trust rules and Deployment Protection. GitHub workflow token issuance alone does not establish Vercel authorization. Avoid requiring an assumed `sub` shape: current tokens include immutable account/repository suffixes. Deployment-status tokens also use commit SHAs in `workflow_ref`, while manual tokens use branch refs. The rule therefore verifies immutable repository ID, workflow name and the two intended event types.
 
 `E2E_VERCEL_OIDC_TOKEN` is scoped to HTTPS origins on the project's owning-team deployment hostnames. The smoke never follows redirects, so it cannot forward the header to Vercel login or another origin; traces are disabled. No database/member credential is sent. The HTTP assertions, public database read, anonymous API denials and signed age cookie remain required. The aggregate timeout is120seconds, matching the previously measured full smoke budget.
 
-Before this workflow repair is merged, deployment-status events still run the workflow from default `main`; manually dispatch `preview-smoke.yml` on `codex/staging-confirmation-origin` against that branch's latest fixed Preview to verify the repaired workflow. Do not treat the old failed run as proof the new code ran.
+Inspect each run's steps and token metadata rather than inferring its workflow source: the actual deployment-status run used the repaired workflow at the deployment SHA. Its `workflow_ref` claim ended with that SHA. Manually dispatch on the PR branch for a separate explicit check; automatic deployment-status checks must also pass.
 
 ## UI regression tests
 
