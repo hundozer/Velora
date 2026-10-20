@@ -3,6 +3,10 @@
 Source of truth for schema: `supabase/migrations/`. This file records what each environment actually has.
 Update it in the same PR that ships a migration, after the migration is applied.
 
+## Pending legacy receipt reconciliation (20 October 2026)
+
+Main `1eda065` (#91/#92 merged) is deployed and public production smoke passes. The Supabase integration rejects unmatched historical version `20260922033815` (`001_initial_schema`), absent from active repository migrations. It remains in production with source MD5 `09afadcde71d6378ece68b69ac5811b4`; canonical20261104 source/helper/restrictive policy remain verified. **No ledger repair is applied yet.** The guarded archive-and-remove proposal and rollback-only staging evidence are in `docs/LEGACY_BOOTSTRAP_LEDGER_REPAIR.md`. This is outside the prior20261104 approval and requires new production approval. Do not mark the receipt archived until the archive and active ledger are independently verified after execution.
+
 ## Production — Supabase `Velora` (`bkdyjdbmtucqvgebqadp`)
 Ledger and effective schema re-inspected 20 October 2026 after owner-approved dashboard application. Canonical entries through `20261104` and legacy bootstrap are present. `20261104_block_aware_message_reads` is **applied and verified**: restrictive policy/helper and exact canonical ledger source match staging. No production member records were changed. Earlier per-row owner attributions below are historical records, not newly verified actors.
 
