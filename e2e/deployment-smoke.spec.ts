@@ -6,7 +6,9 @@ test.beforeAll(() => {
 });
 test("deployment serves public data and protects member/admin endpoints", async ({ request }) => {
   const home = await request.get("/", { maxRedirects: 0 });
-  expect(home.status(), "Preview access must reach Intimo directly, without a Vercel login redirect").toBe(200);
+  const redirect = home.headers().location ? new URL(home.headers().location, process.env.E2E_BASE_URL) : null;
+  const accessDetail = redirect ? `redirect to ${redirect.origin}${redirect.pathname}` : (home.headers()["x-vercel-error"] || "no redirect");
+  expect(home.status(), `Preview access must reach Intimo directly (${accessDetail})`).toBe(200);
   expect((await home.text()).includes("Intimo"), "homepage must be the application").toBe(true);
   const community = await request.get("/api/public/community?limit=1", { maxRedirects: 0 });
   expect(community.status(), "real database-backed request").toBe(200);
