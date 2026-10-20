@@ -34,10 +34,32 @@ Coverage: real sign-in, desires/boundaries, People API and profile, interest/in-
 
 Cleanup runs in `finally` and asserts failures. It removes the run's upload, Plan, outgoing interest and block, and revokes private access. Test messages, notices and consent/preferences remain as fixture evidence. This is not a pristine reset; reset/recreate dedicated fixtures when required. Failed cleanup requires inspection before reusing them. Traces can contain test credentials/data; access is restricted by repository permissions and artifacts expire after three days.
 
-Still separate, unproved acceptance gates: new signup and inbox confirmation, full onboarding/photo display on a phone, email delivery/unsubscribe, actual server RLS attacks with two JWTs, account deletion and scheduled erasure. Do not mark issue #31 complete from this suite alone.
+The standalone suite does not cover new signup/inbox confirmation, onboarding, direct JWT policy probes or account deletion. The opt-in disposable runner below adds several of those checks; signup/inbox confirmation, email delivery/unsubscribe and scheduled erasure remain separate. Do not mark issue #31 complete from this suite alone.
 
 ## Actual recovered staging role test
 
 `tests/sql/staging-message-rls.sql` is a rollback-only test for recovered Supabase staging `fuczjjcwtxzzvoxilrme`, executed as database owner via `execute_sql`. It uses real `anon`/`authenticated` roles and the existing `auth.uid()` function with simulated request claims. It does not create roles or replace Supabase tables/functions, unlike the disposable PostgreSQL harness `tests/sql/message-rls.sql` (which must never run in Supabase).
 
 The staging test verifies both block directions, inactive accounts, unrelated/missing identities, anonymous denial, direct write/RPC denial and restrictive-policy behavior alongside a deliberately permissive probe policy. Everything rolls back. Independently check fixture profiles (`rls-%-20261019@example.invalid`), conversation `staging-rollback-20261019`, and policy `staging_rollback_permissive_probe` are absent afterward, including after an ambiguous tool error. A successful SQL-role result is not a real-JWT REST/Realtime or customer-journey result.
+
+## Disposable acceptance from a Preview build
+
+When credentials are intentionally unreadable outside Vercel, `scripts/run-staging-acceptance.mjs` can use them inside an explicitly requested Preview build. It refuses production, another Supabase project, another R2 account/bucket and any target other than the independently inspected Preview hardcoded in the runner. It does not add an application endpoint or run in the default build/CI command.
+
+The runner creates two synthetic, confirmed Auth identities (admin provisioning, **not signup/email-confirmation acceptance**), drives their actual phone-sized login/onboarding/profile-edit screens, checks People/profile-sheet close, seeds an approved private test image containing synthetic EXIF/GPS, then runs the existing `member-acceptance` suite. It additionally checks Plan reply eligibility, direct JWT REST/Realtime message access, reporting, export and self-service deletion. Account deactivation is distinct from scheduled retention/erasure.
+
+Realtime checks require both subscriptions to receive an allowed probe, then observe no blocked probe for four seconds in each block direction. This is a bounded observation, not an unlimited delivery guarantee. The full storage inventory (key, size, ETag and modification timestamp) must equal its pre-run baseline after cleanup; pre-existing files are preserved.
+
+Supply branch-scoped server-only `INTIMO_E2E_BASE_URL` and `INTIMO_E2E_SHARE_URL`; the latter is a temporary authorized Vercel share link on that exact origin, never a source-code value. `e2e/protected-preview.ts` establishes its origin-scoped access cookie for each test context. It does not forward a protection header to R2. Fixture passwords stay in memory and traces are disabled. Failure reporting strips Playwright request call logs (which can include cookies) and URL queries; do not log original request errors or access links.
+
+Deploy by the named branch so Vercel includes its branch-scoped settings, and confirm the resolved commit before accepting results. A raw SHA ref does not inherit those settings. Use a one-off deployment build override, preserving the application's locked dependencies:
+
+```sh
+npm install --prefix /tmp/intimo-e2e-browser --no-package-lock @sparticuz/chromium@141.0.0 && INTIMO_E2E_CHROMIUM_MODULE=/tmp/intimo-e2e-browser/node_modules/@sparticuz/chromium/build/cjs/index.cjs node scripts/run-staging-acceptance.mjs && npm run build
+```
+
+The browser package is temporary; no application dependency/lockfile is changed. Standard Playwright Chromium lacked libnspr/libnss on Vercel's builder. `PLAYWRIGHT_CHROMIUM_PATH`/`PLAYWRIGHT_CHROMIUM_ARGS` let the existing suite reuse the pinned serverless binary. Web-security-disable and single-process flags are excluded.
+
+Every run attempts all cleanup in `finally`, including after test failures. It recovers ambiguous Auth creations by the run's unique metadata and email prefix, deletes only those identities' records/objects, closes subscriptions/contexts, and verifies absence. Inspect `STAGING_ACCEPTANCE ... cleanup PASS` plus independent SQL counts. A failed cleanup is a blocker, not a pass. A provider outage/hard process kill may prevent `finally`; use the logged synthetic UUIDs and exact run marker for recovery before rerunning. Never cancel a build after fixture creation unless its fixtures have been independently recovered.
+
+`scripts/verify-staging-storage.mjs` is a smaller opt-in staging-only object write/head/read/delete probe with independent head/list cleanup checks. Its default build command is also unchanged. Remove temporary branch access variables after acceptance. Do not apply the staging fixture SQL or runner to production.

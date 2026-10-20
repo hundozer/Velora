@@ -1,3 +1,5 @@
+import { appendFileSync } from "node:fs";
+import { authorizePreview } from "./protected-preview";
 import { memberEnvironment } from "./member-environment";
 import { expect, test, type APIRequestContext, type Browser, type BrowserContext, type Page } from "@playwright/test";
 
@@ -16,6 +18,7 @@ type Member = { context: BrowserContext; page: Page; api: APIRequestContext; id:
 async function signIn(browser: Browser, credentials: { email?: string; password?: string }): Promise<Member> {
   const context = await browser.newContext({ baseURL: env.baseUrl });
   try {
+    await authorizePreview(context);
     const page = await context.newPage();
     await page.goto("/login");
     await page.getByRole("button", { name: "Yes, I'm 18+" }).click();
@@ -39,6 +42,7 @@ test("member loop: preferences → discover → interest → plan → private ac
   let b: Member | undefined;
   let planId = "";
   let mediaId = "";
+  let primaryFailure: unknown;
   try {
   a = await signIn(browser, env.a);
   b = await signIn(browser, env.b);
@@ -83,6 +87,7 @@ test("member loop: preferences → discover → interest → plan → private ac
     expect(presign.status(), await presign.text()).toBe(200);
     const upload = await presign.json();
     mediaId = upload.mediaId;
+    if (process.env.E2E_MANIFEST_PATH) appendFileSync(process.env.E2E_MANIFEST_PATH, JSON.stringify({ mediaId, objectKey: upload.objectKey }) + "\n", { mode: 0o600 });
     expect(upload.isMock).toBe(false);
     expect((await a!.api.put(upload.uploadUrl, { data: png, headers: { "Content-Type": "image/png" } })).ok()).toBeTruthy();
     const complete = await a!.api.post(`/api/media/${mediaId}/complete`);
@@ -131,20 +136,25 @@ test("member loop: preferences → discover → interest → plan → private ac
     expect((await b!.api.get(`/api/profiles/${a!.id}`)).ok()).toBeFalsy();
   });
 
+  } catch (error) {
+    primaryFailure = error;
   } finally {
     // Always attempt every cleanup, including after a failed assertion/sign-in.
     const cleanups: Array<() => Promise<unknown>> = [];
     if (a && b) {
-      cleanups.push(async () => { expect((await a!.api.delete(`/api/blocks?targetProfileId=${b!.id}`)).ok()).toBeTruthy(); });
-      cleanups.push(async () => { expect((await b!.api.delete(`/api/interests?targetProfileId=${a!.id}`)).ok()).toBeTruthy(); });
-      cleanups.push(async () => { expect((await a!.api.patch("/api/private-access", { data: { viewerId: b!.id, decision: "REVOKE" } })).ok()).toBeTruthy(); });
+      cleanups.push(async () => { expect((await a!.api.delete(`/api/blocks?targetProfileId=${b!.id}`)).ok(), "cleanup unblock").toBeTruthy(); });
+      cleanups.push(async () => { expect((await b!.api.delete(`/api/interests?targetProfileId=${a!.id}`)).ok(), "cleanup interest").toBeTruthy(); });
+      cleanups.push(async () => { expect((await a!.api.patch("/api/private-access", { data: { viewerId: b!.id, decision: "REVOKE" } })).ok(), "cleanup private access").toBeTruthy(); });
     }
-    if (a && planId) cleanups.push(async () => { expect((await a!.api.delete(`/api/dating-ads/${planId}`)).ok()).toBeTruthy(); });
-    if (a && mediaId) cleanups.push(async () => { expect((await a!.api.delete(`/api/media/${mediaId}`)).ok()).toBeTruthy(); });
+    if (a && planId) cleanups.push(async () => { expect((await a!.api.delete(`/api/dating-ads/${planId}`)).ok(), "cleanup Plan").toBeTruthy(); });
+    if (a && mediaId) cleanups.push(async () => { expect((await a!.api.delete(`/api/media/${mediaId}`)).ok(), "cleanup media").toBeTruthy(); });
     const outcomes = await Promise.allSettled(cleanups.map((cleanup) => cleanup()));
     await a?.context.close();
     await b?.context.close();
     const failures = outcomes.filter((outcome) => outcome.status === "rejected");
-    expect(failures, "Fixture cleanup failed; inspect staging before reusing these members").toEqual([]);
+    const errors = [...(primaryFailure ? [primaryFailure] : []), ...failures.map((outcome) => (outcome as PromiseRejectedResult).reason)];
+    // Request error call logs can include Cookie/Authorization headers. Never attach originals.
+    const safeErrors = errors.map(error => new Error((error instanceof Error ? error.message : String(error)).split("\n")[0].replace(/(https?:\/\/[^\s?]+)\?[^\s]+/g, "$1?[redacted]")));
+    if (safeErrors.length) throw new AggregateError(safeErrors, safeErrors.map(error => error.message).join("\n"));
   }
 });
