@@ -36,6 +36,9 @@ jobs:
             const token = await core.getIDToken();
             core.setSecret(token);
             core.setOutput("token", token);
+            const claims = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString());
+            const identity = Object.fromEntries(["iss", "aud", "repository", "repository_id", "sub", "workflow_ref"].map(key => [key, claims[key]]));
+            core.info(`Preview access identity claims: ${JSON.stringify(identity)}`);
       - name: Verify the real deployment
         run: npx playwright test --config=playwright.smoke.config.ts
         env:
