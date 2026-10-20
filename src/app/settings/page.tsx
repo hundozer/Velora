@@ -56,6 +56,8 @@ export default function SettingsPage() {
   React.useEffect(() => setDiscreet(readDiscreet()), []);
   const [verificationWizardOpen, setVerificationWizardOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletePending, setDeletePending] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
   const [mediaUpload, setMediaUpload] = useState<{ kind: "avatar" | "cover"; progress: number } | null>(null);
@@ -220,21 +222,21 @@ export default function SettingsPage() {
   };
 
   const handleDeleteAccount = async () => {
-    if (user) {
-      try {
-        const response = await fetch("/api/auth/delete-account", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ confirmation: "DELETE" }),
-        });
-        if (!response.ok) throw new Error("Account deletion was not completed");
-      } catch (err) {
-        console.error("API call to delete account failed:", err);
-      }
-      setDeleteModalOpen(false);
-      
-      // The SDK clears its httpOnly session and validates the return target.
+    if (!user || deletePending) return;
+    setDeletePending(true);
+    setDeleteError("");
+    try {
+      const response = await fetch("/api/auth/delete-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation: "DELETE" }),
+      });
+      if (!response.ok) throw new Error("Deletion request failed");
+      // Clear the session only after the server accepts the deletion request.
       window.location.href = "/auth/logout?returnTo=%2Fgoodbye";
+    } catch {
+      setDeleteError("We could not confirm your deletion request. Please try again. If you cannot sign in, contact support to check its status.");
+      setDeletePending(false);
     }
   };
 
@@ -542,7 +544,7 @@ export default function SettingsPage() {
               variant="danger"
               size="sm"
               className="text-xs font-bold shrink-0 gap-2"
-              onClick={() => setDeleteModalOpen(true)}
+              onClick={() => { setDeleteError(""); setDeleteModalOpen(true); }}
             >
               <Trash2 className="w-4 h-4" /> Delete Account
             </Button>
@@ -551,21 +553,22 @@ export default function SettingsPage() {
       </Card>
 
       {/* Account Deletion Confirmation Modal */}
-      <Modal isOpen={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Confirm Account Deletion">
+      <Modal isOpen={deleteModalOpen} onClose={() => { if (!deletePending) setDeleteModalOpen(false); }} showCloseButton={!deletePending} title="Confirm Account Deletion">
         <div className="space-y-4 text-left">
           <div className="p-4 bg-red-500/10 border border-red-500/40 rounded-2xl flex items-center gap-3">
             <AlertTriangle className="w-6 h-6 text-red-600 shrink-0" />
             <p className="text-xs text-red-700 leading-relaxed">
-              This action is permanent and cannot be undone. Your profile, messages, and media will be deleted or anonymized through the documented deletion workflow, subject to legitimate safety or legal retention duties.
+              Your login will be removed and your profile deactivated. Deletion or anonymization of profile data, messages, and media follows the documented retention workflow, subject to legitimate safety or legal retention duties.
             </p>
           </div>
 
+          {deleteError && <p role="alert" className="text-xs text-red-700">{deleteError}</p>}
           <div className="flex gap-3 pt-2">
-            <Button variant="ghost" className="w-1/2 text-xs" onClick={() => setDeleteModalOpen(false)}>
+            <Button variant="ghost" className="w-1/2 text-xs" disabled={deletePending} onClick={() => setDeleteModalOpen(false)}>
               Cancel
             </Button>
-            <Button variant="danger" className="w-1/2 text-xs font-bold uppercase tracking-wider" onClick={handleDeleteAccount}>
-              Confirm Permanent Erasure
+            <Button variant="danger" className="w-1/2 text-xs font-bold uppercase tracking-wider" disabled={deletePending} onClick={handleDeleteAccount}>
+              {deletePending ? "Submitting…" : "Confirm Deletion Request"}
             </Button>
           </div>
         </div>
