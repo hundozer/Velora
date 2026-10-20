@@ -1,6 +1,6 @@
-# Production message-read safety migration: approved, connector blocked
+# Production message-read safety migration: applied and verified
 
-Approved target: Supabase production `bkdyjdbmtucqvgebqadp` only. No production SQL has been executed by this recovery. The owner explicitly approved this exact migration on 20 October 2026. Merged PRs and staging configuration were not used as authorization.
+Approved target: Supabase production `bkdyjdbmtucqvgebqadp` only. The approved production migration was executed through the SQL editor after the connector attempts failed. The owner explicitly approved this exact migration on 20 October 2026. Merged PRs and staging configuration were not used as authorization.
 
 Exact source: `supabase/migrations/20261104_block_aware_message_reads.sql` on merged main `0ffcb84b1be72f05d7725b941126a02a0d121235`.
 
@@ -8,7 +8,17 @@ SHA-256: `cc428966e904b3116dc31153fb492e0c28561c92b7ee4927f8838e911f88201b`.
 
 The transaction adds/replaces `intimo_can_read_message(uuid,uuid)` and adds the restrictive `member_message_safety` SELECT policy. The helper checks the current uid is a participant, both profiles are ACTIVE and neither participant has blocked the other. It uses SECURITY DEFINER solely to see incoming blocks hidden by the existing own-block policy, with an empty search path and no anonymous/PUBLIC execution grant. Existing participant-read policy and member write revocations remain in place. No profile, message, relationship, media or other member row is modified.
 
-## Current execution status
+## Applied result
+
+20 October 2026, approximately 06:30 UTC (08:30 Prague): after explicit migration approval and explicit permission for dashboard fallback, the guarded transaction was executed through the production Supabase SQL editor. The entered transaction was copied back and matched byte-for-byte before Run. It executed the canonical schema SQL plus canonical bookkeeping atomically. Canonical ledger `20261104`, name `block_aware_message_reads`, contains one statement with exact source MD5 `1cd73751c6f9ce761e65999956296e0b`; no management-wrapper receipt was generated or invented. The two earlier expired-request-state attempts had been checked and caused no change.
+
+Independent read-only `execute_sql` verification: production and staging helper definitions share MD5 `b5410de5cebab3460e5fe0566ca59367`; owner postgres, STABLE SECURITY DEFINER, empty search_path, ACL only postgres/authenticated/service_role (no PUBLIC or anon). Authenticated helper execution true; anon false. RLS remains enabled; `member_message_safety` is RESTRICTIVE SELECT for authenticated alongside the original permissive participant policy. Authenticated table grant remains SELECT only; anon has no table grants. Production counts remain profiles1/Auth1/media4/messages0. No production acceptance fixtures or member-data writes were used. Supabase is ACTIVE_HEALTHY; Vercel production `dpl_GDAAJj42WEomuYqiVqnd8NjTENp4` remains READY at app main `0ffcb84b1be72f05d7725b941126a02a0d121235`.
+
+Fresh HTTP checks: homepage200 with Intimo content, public-community200 with `demoContentPresent:false`, profile/discovery/messages/admin401 anonymously. Individual parallel curl checks took about6.7–6.8seconds. The full Playwright smoke's initial45-second aggregate budget expired; a120-second-budget repeat retains all assertions, including the signed age cookie. Repeat passed: **1/1**, 43.9-second test /44.6-second total. Command: `E2E_BASE_URL=https://intimo.live E2E_HTTP_PROXY="$HTTPS_PROXY" npx playwright test --config=playwright.smoke.config.ts --trace=off --timeout=120000`. All original assertions retained; no member credentials, account creation or destructive data test.
+
+Security advisor after application:32 INFO for intentionally server-only RLS tables without policies, one WARN for deliberate authenticated execution of the uid-guarded security-definer helper, and one WARN for disabled Auth leaked-password protection. The latter is recorded for separate Auth review; no unrelated Auth setting was changed. See [password-protection remediation](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) and [helper advisor](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable). Beta remains NO-GO pending operational gates; this schema rollout does not prove signup/email, admission, moderator operation, scheduled erasure or resolution of the earlier intermittent profile-edit failure.
+
+## Earlier connector failures (superseded)
 
 20 October 2026 production attempt: owner explicitly approved only canonical `20261104_block_aware_message_reads.sql`. Source on authoritative main `0ffcb84b1be72f05d7725b941126a02a0d121235` still matches SHA-256 `cc428966e904b3116dc31153fb492e0c28561c92b7ee4927f8838e911f88201b`. Two `apply_migration` calls returned `Invalid or expired requestState`; after each, `execute_sql` independently confirmed no canonical/wrapper ledger receipt, no helper and no restrictive policy. No third unchanged retry. Production remains at profiles1/Auth1/media4/messages0, original participant policy and authenticated SELECT-only grant; no member fixture or member-data write occurred. Vercel production `dpl_GDAAJj42WEomuYqiVqnd8NjTENp4` remains READY at main `0ffcb84`. Migration approval is granted; execution is blocked by the connector. No Supabase CLI is installed. Dashboard SQL editor is the prepared fallback, pending permission to use Browser after repeated connector failure.
 
@@ -45,9 +55,9 @@ Rollback is the two DROP statements documented in the migration header. It remov
 
 This migration does not establish beta readiness by itself. Email confirmation/delivery, controlled admission, moderator operation and scheduled erasure remain distinct acceptance gates.
 
-## Prepared SQL editor fallback
+## Executed SQL editor fallback (audit reference; do not rerun)
 
-The transaction below executes the approved canonical schema statements and records the actually executed canonical source in the same transaction. A state guard refuses unexpected existing objects/history. It modifies no member rows. This fallback has **not been executed**. A successful dashboard execution will not generate a management-wrapper receipt; record only the canonical receipt that really exists, never fabricate a wrapper. Inspect ledger/objects before any retry after an ambiguous response.
+The transaction below executes the approved canonical schema statements and records the actually executed canonical source in the same transaction. A state guard refuses unexpected existing objects/history. It modifies no member rows. This fallback was executed successfully. Dashboard execution generated no management-wrapper receipt; only the canonical ledger row actually created is recorded. Inspect ledger/objects before any retry after an ambiguous response.
 
 ```sql
 -- Tighten direct Supabase REST/Realtime reads, not just the application API.
