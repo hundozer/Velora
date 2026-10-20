@@ -4,7 +4,7 @@ Source of truth for schema: `supabase/migrations/`. This file records what each 
 Update it in the same PR that ships a migration, after the migration is applied.
 
 ## Production — Supabase `Velora` (`bkdyjdbmtucqvgebqadp`)
-Ledger and effective schema re-inspected 2026-10-19 at 18:34 UTC. Existing canonical entries through `20261103` and legacy bootstrap are present. `20261104_block_aware_message_reads` is **not applied**: restrictive policy/helper absent. No production change performed in this recovery. Earlier per-row owner attributions below are historical records, not newly verified actors.
+Ledger and effective schema re-inspected 20 October 2026 after owner-approved dashboard application. Canonical entries through `20261104` and legacy bootstrap are present. `20261104_block_aware_message_reads` is **applied and verified**: restrictive policy/helper and exact canonical ledger source match staging. No production member records were changed. Earlier per-row owner attributions below are historical records, not newly verified actors.
 
 | Version | Migration | Applied via |
 |---|---|---|
@@ -42,11 +42,12 @@ Ledger and effective schema re-inspected 2026-10-19 at 18:34 UTC. Existing canon
 | 20261101 | media_variants | Supabase MCP (Claude, at owner's request), verified 2026-10-18 |
 | 20261102 | plan_start_times | Supabase MCP (Claude, at owner's request), verified 2026-10-18 |
 | 20261103 | introductions | Supabase MCP (Claude, at owner's request), verified 2026-10-19 |
+| 20261104 | block_aware_message_reads | Owner-approved dashboard SQL editor, applied and independently verified 2026-10-20; exact canonical ledger source |
 | 20260922033815 | 001_initial_schema | legacy bootstrap, superseded by 20260805 |
 
 ## Staging — Supabase `Intimo Staging` (`fuczjjcwtxzzvoxilrme`)
 
-Restored and ACTIVE_HEALTHY, freshly verified 2026-10-19. Schema and Preview database connection recovered. Disposable member journeys and direct JWT REST/Realtime policy checks exercised; see the readiness report for exact runs, failures and remaining beta gates. Production safety migration remains unapplied. See `docs/BETA_READINESS_2026-10-19.md` for live evidence, differences and blockers.
+Restored and ACTIVE_HEALTHY, freshly verified 2026-10-19. Schema and Preview database connection recovered. Disposable member journeys and direct JWT REST/Realtime policy checks exercised; see the readiness report for exact runs, failures and remaining beta gates. Production safety migration was subsequently approved, applied and independently verified on 20 October; see completion evidence below. See `docs/BETA_READINESS_2026-10-19.md` for live evidence, differences and blockers.
 
 | Versions | Observed history |
 | --- | --- |
@@ -78,7 +79,17 @@ Retained state: 2 restricted/private legacy profiles, 2 original identity mappin
 
 20 October live acceptance: `dpl_5ymbA83Z4cunBkaKtCcufNGKsgDz` at harness `06a5460880a229fe6d0be6900204f91d7cd44305`, targeting merged-main Preview `0ffcb84`, passed actual JWT REST/Realtime checks in both block directions (four-second event-denial windows), inactive REST denial and full member/cleanup checks. Independent database counts returned the preserved baseline: Auth0, restricted legacy profiles2, media5, messages/Plans/blocks/private grants0. All eight pre-existing R2 objects exactly matched the before-run inventory. This is staging evidence only; production `20261104` still absent at read-only20October preflight. See readiness report for earlier failed repeats and remaining gates.
 
-## Production execution attempt — 20 October 2026
+## Production rollout completed — 20 October 2026
+
+20 October 2026, approximately 06:30 UTC (08:30 Prague): after explicit migration approval and explicit permission for dashboard fallback, the guarded transaction was executed through the production Supabase SQL editor. The entered transaction was copied back and matched byte-for-byte before Run. It executed the canonical schema SQL plus canonical bookkeeping atomically. Canonical ledger `20261104`, name `block_aware_message_reads`, contains one statement with exact source MD5 `1cd73751c6f9ce761e65999956296e0b`; no management-wrapper receipt was generated or invented. The two earlier expired-request-state attempts had been checked and caused no change.
+
+Independent read-only `execute_sql` verification: production and staging helper definitions share MD5 `b5410de5cebab3460e5fe0566ca59367`; owner postgres, STABLE SECURITY DEFINER, empty search_path, ACL only postgres/authenticated/service_role (no PUBLIC or anon). Authenticated helper execution true; anon false. RLS remains enabled; `member_message_safety` is RESTRICTIVE SELECT for authenticated alongside the original permissive participant policy. Authenticated table grant remains SELECT only; anon has no table grants. Production counts remain profiles1/Auth1/media4/messages0. No production acceptance fixtures or member-data writes were used. Supabase is ACTIVE_HEALTHY; Vercel production `dpl_GDAAJj42WEomuYqiVqnd8NjTENp4` remains READY at app main `0ffcb84b1be72f05d7725b941126a02a0d121235`.
+
+Fresh HTTP checks: homepage200 with Intimo content, public-community200 with `demoContentPresent:false`, profile/discovery/messages/admin401 anonymously. Individual parallel curl checks took about6.7–6.8seconds. The full Playwright smoke's initial45-second aggregate budget expired; a120-second-budget repeat retains all assertions, including the signed age cookie. Repeat passed: **1/1**, 43.9-second test /44.6-second total. Command: `E2E_BASE_URL=https://intimo.live E2E_HTTP_PROXY="$HTTPS_PROXY" npx playwright test --config=playwright.smoke.config.ts --trace=off --timeout=120000`. All original assertions retained; no member credentials, account creation or destructive data test.
+
+Security advisor after application:32 INFO for intentionally server-only RLS tables without policies, one WARN for deliberate authenticated execution of the uid-guarded security-definer helper, and one WARN for disabled Auth leaked-password protection. The latter is recorded for separate Auth review; no unrelated Auth setting was changed. See [password-protection remediation](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) and [helper advisor](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable). Beta remains NO-GO pending operational gates; this schema rollout does not prove signup/email, admission, moderator operation, scheduled erasure or resolution of the earlier intermittent profile-edit failure.
+
+## Earlier production execution attempts (superseded)
 
 20 October 2026 production attempt: owner explicitly approved only canonical `20261104_block_aware_message_reads.sql`. Source on authoritative main `0ffcb84b1be72f05d7725b941126a02a0d121235` still matches SHA-256 `cc428966e904b3116dc31153fb492e0c28561c92b7ee4927f8838e911f88201b`. Two `apply_migration` calls returned `Invalid or expired requestState`; after each, `execute_sql` independently confirmed no canonical/wrapper ledger receipt, no helper and no restrictive policy. No third unchanged retry. Production remains at profiles1/Auth1/media4/messages0, original participant policy and authenticated SELECT-only grant; no member fixture or member-data write occurred. Vercel production `dpl_GDAAJj42WEomuYqiVqnd8NjTENp4` remains READY at main `0ffcb84`. Migration approval is granted; execution is blocked by the connector. No Supabase CLI is installed. Dashboard SQL editor is the prepared fallback, pending permission to use Browser after repeated connector failure.
 
