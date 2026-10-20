@@ -2,6 +2,24 @@
 
 Current evidence: 20 October 2026. Authoritative main, freshly fetched: `0ffcb84b1be72f05d7725b941126a02a0d121235` (merged #89; includes #83–88). PR #90 contains test infrastructure and this evidence, not product features. The owner-approved production message-read migration is now applied and verified after dashboard fallback. Earlier connector failures caused no change. The historical audit below is retained for context; this section supersedes older blocked/pending observations.
 
+## 20 October signup and confirmation-origin recovery
+
+Current application main: `467b4d327d28f5b18dd55ba5ccd12337f17d6486` (merged #90). Production at this commit passed the full public Playwright smoke after merge (1/1,45.5-second total,120-second aggregate budget, all assertions retained); the production canonical ledger/helper/restrictive policy were rechecked unchanged.
+
+The owner first registered `registration@intimo.live` on production. Owner reported email receipt; read-only Auth evidence shows creation20October11:54:49UTC and confirmation/sign-in11:55:15UTC. This is owner-assisted production signup/confirmation evidence, not an isolated staging test. No profile exists for that address in production; the owner's production account is deliberately untouched. No destructive production acceptance or cleanup was authorized/performed.
+
+The owner then registered the same address on staging: created12:01:57UTC, still unconfirmed and without a profile at this checkpoint. A reported404 was traced to the confirmation link's old `velora-git-codex-intimo-secure-mvp-hundozers-projects.vercel.app` host. The current staging `/verify-email` page renders correctly in a browser. The original generic own-Vercel-host configuration probe was insufficient: an old Preview host passed it. Raw HTML also contains the fallback404 component in Next's serialized data; checking for that text alone does not prove a rendered404. No route/code defect is claimed from that check.
+
+**Configuration fixed:** Preview-only `NEXT_PUBLIC_APP_URL` entry `SvAUBtZiGppy6ao2` was explicitly set empty, using the existing `appOrigin(req)` request-origin fallback. Production's separate entry was not edited. No key value was retrieved, no authentication implementation changed, and Vercel protection stayed enabled. Document this distinction in `.env.example`; do not pin auth links to an old branch URL.
+
+New staging Preview `dpl_HDdnSNmPV5vqC8JfGo5H8YNJf6fc`, `https://velora-5yu0yd4pb-hundozers-projects.vercel.app`, is READY at main `467b4d3`. Its one-off build asserted an empty canonical override and the expected staging Supabase project `fuczjjcwtxzzvoxilrme`, then completed the normal application build. Log: `STAGING_AUTH_ORIGIN request fallback PASS`. Earlier inspection-only Preview builds `dpl_6wTELv8vwN6QrNejfCe4QjLGFZgr` and `dpl_6LsYttw38vB6r28wnastvqL5LkDU` created no accounts themselves.
+
+Actual browser resend from the new Preview's `/verify-email` page to the owner-designated test address succeeded: UI showed **Sent. The newest link is the one that works.** The resend uses the product's existing magic-link confirmation path. Provider acceptance is not proof of inbox arrival or link completion. New-link receipt, correct target and staging confirmation/onboarding remain pending direct evidence. The owner supplied a bearer confirmation link in chat during diagnosis; it was never opened, repeated, consumed or stored in this report. No token is needed in chat for continuation.
+
+Current staging checkpoint: one known, intentionally pending signup Auth identity, zero profile for it; two restricted legacy profiles and five media records unchanged. The earlier disposable-run cleanup remains a dated result, not a claim that today's staging Auth inventory is empty. Keep this named signup fixture until the assisted journey is finished, then remove its staging records/files and verify cleanup. Do not touch the owner's separate production account.
+
+**Decision remains NO-GO.** This closes the stale-origin configuration defect; it does not yet close staging email confirmation, controlled admission, moderator operation, scheduled erasure, the prior intermittent profile-edit failure or the disabled leaked-password-protection finding.
+
 ## Environments and isolation
 
 - Vercel project `velora`, `prj_hZBTijIxLYZCQr2ePituCyOqk7og`, team `team_39Gwdv5nH2S8oUWtobZe6UqV`. No project rename. Protection remains enabled (`all_except_custom_domains`). Authorized temporary share access establishes an origin-scoped cookie; no protection header is forwarded to storage.
