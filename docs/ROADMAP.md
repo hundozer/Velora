@@ -126,7 +126,7 @@ Generic feed, compatibility summaries, relationship links between profiles, chat
 - a hard limit or `Not interested` boundary is never overridden by an unsolicited request
 - no zero-count / dead-community UI surfaces
 
-**→ Launch gate:** Prague beta with an initial recruitment target of 100–200 members, deliberately weighted toward women, couples, queer members and recognised community participants/organisers. Owner decision, 20 October 2026: use the normal shareable signup link (`https://intimo.live/register`), with open registration rather than invite-only admission. This changes the admission plan; the remaining safety and operational launch gates still apply.
+**→ Launch gate:** Prague beta with an initial recruitment target of 100–200 members, deliberately weighted toward women, couples, queer members and recognised community participants/organisers. Owner decision, 20 October 2026: use the normal shareable signup link (`https://intimo.live/register`), with open registration rather than invite-only admission. This changes the admission plan; the remaining safety and operational launch checks retain their verified or owner-deferred status in the readiness report.
 
 ---
 
