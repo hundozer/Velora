@@ -3,8 +3,24 @@
 Source of truth for schema: `supabase/migrations/`. This file records what each environment actually has.
 Update it in the same PR that ships a migration, after the migration is applied.
 
+## Legacy receipt reconciliation completed — 20 October 2026
+
+Owner approval was received in this session before execution. On 20 October 2026 at 18:35:31 UTC, the exact reviewed 5038-byte SQL (SHA-256 `c38e68d76761da42dc125efabcf8390e072a4e6f479da0a869a5f6c79f796cdd`, source blob `fcb242f390924460e7c4b24e2835c61ec0c1f378`) committed successfully through Supabase execute_sql on production `bkdyjdbmtucqvgebqadp`. No wrapper migration receipt was created and no legacy SQL was executed.
+
+Independent post-commit queries verified:
+- Active legacy receipt `20260922033815`: absent; private archive: exactly one complete original receipt, JSON MD5 `597eba0cdea5dd99818c549c9a74060b`, identical to the preflight full-row hash.
+- All35 repository migration versions match the active production versions: no missing or extra versions. This verifies version reconciliation, not byte-identical replay of every historical migration.
+- Canonical ledger hash `f6a323bcfebc40001fbe602c87b5adfc`, profiles hash `c79210679352712160de1d67e6a8e637` and media hash `acb1a03cd08a8e79a1a0852f21cfdd97` match preflight. The transaction also checked message-policy hashes unchanged.
+- Message helper MD5 remains `b5410de5cebab3460e5fe0566ca59367`; RESTRICTIVE `member_message_safety` remains alongside the permissive participant policy.
+- Archive RLS enabled. Actual anon/authenticated/service_role roles all have neither schema USAGE nor table SELECT.
+- Production `intimo.live` remains READY at main `1eda06588dc4ed5166db43c445f08f3de23a5e05`, deployment `dpl_ejmCK9nHr58PMeoAjB6TXmJXFRNs`.
+
+The latest main Supabase check observed is `118807445098`, **SKIPPED**, created at18:26UTC before this repair: “This git branch is not associated with any Supabase Branch.” It supersedes the earlier failed check display but is not a successful migration validation, and was not caused by this repair. The connectors expose no supported Supabase check-rerequest operation; a fresh successful integration run remains unproven. No integration or protection setting was changed.
+
+Fresh post-repair public smoke on authoritative main passed **1/1** (35.5-second test,36.2-second total): `E2E_BASE_URL=https://intimo.live E2E_HTTP_PROXY="${HTTPS_PROXY:-${HTTP_PROXY:-}}" npx playwright test --config=playwright.smoke.config.ts --trace=off`. It verified application home200, real public-community200/no demo content, anonymous profile/discovery/messages/admin401 and signed age cookie200. No production member account, content or upload was created.
+
 ## Production — Supabase `Velora` (`bkdyjdbmtucqvgebqadp`)
-Ledger and effective schema re-inspected 20 October 2026 after owner-approved dashboard application. Canonical entries through `20261104` and legacy bootstrap are present. `20261104_block_aware_message_reads` is **applied and verified**: restrictive policy/helper and exact canonical ledger source match staging. No production member records were changed. Earlier per-row owner attributions below are historical records, not newly verified actors.
+Ledger and effective schema re-inspected 20 October 2026 after owner-approved dashboard application. All35 canonical version entries through `20261104` are present. The legacy bootstrap receipt is preserved privately rather than in the active ledger, as verified after the separately approved repair above. `20261104_block_aware_message_reads` is **applied and verified**: restrictive policy/helper and exact canonical ledger source match staging. No production member records were changed. Earlier per-row owner attributions below are historical records, not newly verified actors.
 
 | Version | Migration | Applied via |
 |---|---|---|
@@ -43,7 +59,6 @@ Ledger and effective schema re-inspected 20 October 2026 after owner-approved da
 | 20261102 | plan_start_times | Supabase MCP (Claude, at owner's request), verified 2026-10-18 |
 | 20261103 | introductions | Supabase MCP (Claude, at owner's request), verified 2026-10-19 |
 | 20261104 | block_aware_message_reads | Owner-approved dashboard SQL editor, applied and independently verified 2026-10-20; exact canonical ledger source |
-| 20260922033815 | 001_initial_schema | legacy bootstrap, superseded by 20260805 |
 
 ## Staging — Supabase `Intimo Staging` (`fuczjjcwtxzzvoxilrme`)
 

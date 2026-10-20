@@ -1,6 +1,34 @@
 # Prague beta decision: NO-GO; staging member journey exercised
 
-Current evidence: 20 October 2026. Authoritative main, freshly fetched: `467b4d327d28f5b18dd55ba5ccd12337f17d6486` (merged #90; includes #83–89). The sections below date earlier deployments and evidence explicitly. The owner-approved production message-read migration is now applied and verified after dashboard fallback. Earlier connector failures caused no change. The historical audit below is retained for context; this section supersedes older blocked/pending observations.
+Current evidence: 20 October 2026. Authoritative main, freshly fetched: `1eda06588dc4ed5166db43c445f08f3de23a5e05` (merged #92; includes #83–91). The sections below date earlier deployments and evidence explicitly. The owner-approved production message-read migration is now applied and verified after dashboard fallback. Earlier connector failures caused no change. The historical audit below is retained for context; this section supersedes older blocked/pending observations.
+
+## Production ledger repair completed
+
+Owner approval was received in this session before execution. On 20 October 2026 at 18:35:31 UTC, the exact reviewed 5038-byte SQL (SHA-256 `c38e68d76761da42dc125efabcf8390e072a4e6f479da0a869a5f6c79f796cdd`, source blob `fcb242f390924460e7c4b24e2835c61ec0c1f378`) committed successfully through Supabase execute_sql on production `bkdyjdbmtucqvgebqadp`. No wrapper migration receipt was created and no legacy SQL was executed.
+
+Independent post-commit queries verified:
+- Active legacy receipt `20260922033815`: absent; private archive: exactly one complete original receipt, JSON MD5 `597eba0cdea5dd99818c549c9a74060b`, identical to the preflight full-row hash.
+- All35 repository migration versions match the active production versions: no missing or extra versions. This verifies version reconciliation, not byte-identical replay of every historical migration.
+- Canonical ledger hash `f6a323bcfebc40001fbe602c87b5adfc`, profiles hash `c79210679352712160de1d67e6a8e637` and media hash `acb1a03cd08a8e79a1a0852f21cfdd97` match preflight. The transaction also checked message-policy hashes unchanged.
+- Message helper MD5 remains `b5410de5cebab3460e5fe0566ca59367`; RESTRICTIVE `member_message_safety` remains alongside the permissive participant policy.
+- Archive RLS enabled. Actual anon/authenticated/service_role roles all have neither schema USAGE nor table SELECT.
+- Production `intimo.live` remains READY at main `1eda06588dc4ed5166db43c445f08f3de23a5e05`, deployment `dpl_ejmCK9nHr58PMeoAjB6TXmJXFRNs`.
+
+The latest main Supabase check observed is `118807445098`, **SKIPPED**, created at18:26UTC before this repair: “This git branch is not associated with any Supabase Branch.” It supersedes the earlier failed check display but is not a successful migration validation, and was not caused by this repair. The connectors expose no supported Supabase check-rerequest operation; a fresh successful integration run remains unproven. No integration or protection setting was changed.
+
+Fresh post-repair public smoke on authoritative main passed **1/1** (35.5-second test,36.2-second total): `E2E_BASE_URL=https://intimo.live E2E_HTTP_PROXY="${HTTPS_PROXY:-${HTTP_PROXY:-}}" npx playwright test --config=playwright.smoke.config.ts --trace=off`. It verified application home200, real public-community200/no demo content, anonymous profile/discovery/messages/admin401 and signed age cookie200. No production member account, content or upload was created.
+
+See `LEGACY_BOOTSTRAP_LEDGER_REPAIR.md` for source, rollback-only staging rehearsal and the exact bounded transaction. Beta remains **NO-GO**: controlled admission, moderator operator drill, scheduled retention/physical erasure, discreet return email/unsubscribe, disabled leaked-password protection and the earlier intermittent profile-edit failure remain unresolved or unproven. This repair and public smoke do not re-prove the prior authenticated staging journey.
+
+## Post-merge verification: #91 and #92 (before ledger repair)
+
+20 October2026: authoritative main `1eda06588dc4ed5166db43c445f08f3de23a5e05` includes merged #91/#92. Production `intimo.live` resolves to READY `dpl_ejmCK9nHr58PMeoAjB6TXmJXFRNs` at that SHA; hosted CI verify passed. Fresh public Playwright smoke passed1/1 (51.0-second test,51.6-second total): `E2E_BASE_URL=https://intimo.live E2E_HTTP_PROXY="$HTTPS_PROXY" npx playwright test --config=playwright.smoke.config.ts --trace=off`. No member credentials/fixtures; signed age-cookie POST is the only application POST. The goodbye response contains corrected request-accepted/deactivation wording and neither unsupported permanent-erasure nor no-backups claim. This is HTTP evidence, not a new authenticated deletion journey.
+
+The production Supabase integration check118783303593 **failed**: `Remote migration versions not found in local migrations directory.` Read-only comparison identifies exactly one unmatched receipt: `20260922033815`, `001_initial_schema`, the documented pre-canonical bootstrap. Its stored SQL is8949bytes, MD5 `09afadcde71d6378ece68b69ac5811b4`. All35 repository migration versions are present. Do not replay legacy SQL or invent applied history.
+
+Production safety remains installed: canonical20261104 source MD5 `1cd73751c6f9ce761e65999956296e0b`; helper definition MD5 `b5410de5cebab3460e5fe0566ca59367`; restrictive member_message_safety SELECT remains alongside the permissive participant policy. No production DB write was performed during this verification.
+
+A separate guarded proposal archives the full old receipt privately and removes only its obsolete active-ledger entry. See `LEGACY_BOOTSTRAP_LEDGER_REPAIR.md` and `docs/sql/archive-legacy-bootstrap-receipt.sql`. The staging rehearsal passed with an explicitly synthetic receipt/hash substitution and rolled back; independent queries confirm unchanged ledger/profile/media hashes and no test receipt/archive table. This is not byte-identical production execution. At that checkpoint production repair was unapplied and required explicit approval. The completion section above supersedes that pending state; the operational beta gates remain.
 
 ## PR #91 protected smoke repair verified
 
