@@ -8,6 +8,23 @@ These are different evidence levels. Neither green CI nor the UI specs proves th
 
 No backend mocks or member credentials. Checks public DB data, server-generated age cookie, and anonymous rejection by member/admin endpoints. Runs on successful Preview deployment status and supports manual dispatch. Missing database credentials, a paused database, or a protection login fails the smoke. Do not bypass a failure by mocking the backend. A protected Preview needs an authorized automation access arrangement before this workflow can pass; it does not send a bypass secret to arbitrary input URLs.
 
+### Protected Preview CI access
+
+The Preview smoke workflow obtains a short-lived GitHub Actions OIDC token (masked in logs), rather than a shared static bypass secret. In Vercel project `velora`, **Settings → Deployment Protection → Trusted Sources → External Services**, the proposed GitHub Actions rule is:
+
+- Issuer: `https://token.actions.githubusercontent.com`
+- Audience (`aud`): `https://github.com/hundozer`
+- Repository (`repository`): `hundozer/Velora`
+- Repository ID (`repository_id`): `1321270415`
+- Workflow (`workflow_ref`), accepted values: `hundozer/Velora/.github/workflows/preview-smoke.yml@refs/heads/main` and `hundozer/Velora/.github/workflows/preview-smoke.yml@refs/heads/codex/staging-confirmation-origin` (the latter permits this repair's pre-merge manual validation; remove it after merge).
+- Target environment: **Preview only**.
+
+Adding this access-control rule requires owner approval; its application and a passing hosted run are separate from the code being prepared. Preserve all existing project trust rules and Deployment Protection. GitHub workflow token issuance alone does not establish Vercel authorization.
+
+`E2E_VERCEL_OIDC_TOKEN` is scoped to HTTPS origins on the project's owning-team deployment hostnames. The smoke never follows redirects, so it cannot forward the header to Vercel login or another origin; traces are disabled. No database/member credential is sent. The HTTP assertions, public database read, anonymous API denials and signed age cookie remain required. The aggregate timeout is120seconds, matching the previously measured full smoke budget.
+
+Before this workflow repair is merged, deployment-status events still run the workflow from default `main`; manually dispatch `preview-smoke.yml` on `codex/staging-confirmation-origin` against that branch's latest fixed Preview to verify the repaired workflow. Do not treat the old failed run as proof the new code ran.
+
 ## UI regression tests
 
 `E2E_BASE_URL=http://localhost:3000 npx playwright test --project=ui`
