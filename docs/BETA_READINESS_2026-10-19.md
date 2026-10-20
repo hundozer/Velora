@@ -2,6 +2,16 @@
 
 Current evidence: 20 October 2026. Authoritative main, freshly fetched: `467b4d327d28f5b18dd55ba5ccd12337f17d6486` (merged #90; includes #83–89). The sections below date earlier deployments and evidence explicitly. The owner-approved production message-read migration is now applied and verified after dashboard fallback. Earlier connector failures caused no change. The historical audit below is retained for context; this section supersedes older blocked/pending observations.
 
+## Post-merge verification: #91 and #92
+
+20 October2026: authoritative main `1eda06588dc4ed5166db43c445f08f3de23a5e05` includes merged #91/#92. Production `intimo.live` resolves to READY `dpl_ejmCK9nHr58PMeoAjB6TXmJXFRNs` at that SHA; hosted CI verify passed. Fresh public Playwright smoke passed1/1 (51.0-second test,51.6-second total): `E2E_BASE_URL=https://intimo.live E2E_HTTP_PROXY="$HTTPS_PROXY" npx playwright test --config=playwright.smoke.config.ts --trace=off`. No member credentials/fixtures; signed age-cookie POST is the only application POST. The goodbye response contains corrected request-accepted/deactivation wording and neither unsupported permanent-erasure nor no-backups claim. This is HTTP evidence, not a new authenticated deletion journey.
+
+The production Supabase integration check118783303593 **failed**: `Remote migration versions not found in local migrations directory.` Read-only comparison identifies exactly one unmatched receipt: `20260922033815`, `001_initial_schema`, the documented pre-canonical bootstrap. Its stored SQL is8949bytes, MD5 `09afadcde71d6378ece68b69ac5811b4`. All35 repository migration versions are present. Do not replay legacy SQL or invent applied history.
+
+Production safety remains installed: canonical20261104 source MD5 `1cd73751c6f9ce761e65999956296e0b`; helper definition MD5 `b5410de5cebab3460e5fe0566ca59367`; restrictive member_message_safety SELECT remains alongside the permissive participant policy. No production DB write was performed during this verification.
+
+A separate guarded proposal archives the full old receipt privately and removes only its obsolete active-ledger entry. See `LEGACY_BOOTSTRAP_LEDGER_REPAIR.md` and `docs/sql/archive-legacy-bootstrap-receipt.sql`. The staging rehearsal passed with an explicitly synthetic receipt/hash substitution and rolled back; independent queries confirm unchanged ledger/profile/media hashes and no test receipt/archive table. This is not byte-identical production execution. **Production repair remains unapplied and requires explicit approval.** Beta remains NO-GO pending this reconciliation and the documented operational gates.
+
 ## PR #91 protected smoke repair verified
 
 20 October12:37UTC checkpoint: #91 head `0932a5b277a4873569bd8af767402bf39e7e950f` was open, non-draft and conflict-free. CI verify and Vercel deployment passed; no unresolved review threads. Hosted smoke job118628759186/run39423101013 failed before reaching Intimo because its unauthenticated request followed Vercel's login redirect. Branch-protection configuration was unreadable through the integration (403); the browser later showed the normal Merge pull request control enabled. No branch protection was weakened.
