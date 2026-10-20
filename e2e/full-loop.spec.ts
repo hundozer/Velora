@@ -153,6 +153,8 @@ test("member loop: preferences → discover → interest → plan → private ac
     await b?.context.close();
     const failures = outcomes.filter((outcome) => outcome.status === "rejected");
     const errors = [...(primaryFailure ? [primaryFailure] : []), ...failures.map((outcome) => (outcome as PromiseRejectedResult).reason)];
-    if (errors.length) throw new AggregateError(errors, errors.map(error => error instanceof Error ? error.stack : String(error)).join("\n\n").replace(/(https?:\/\/[^\s?]+)\?[^\s]+/g, "$1?[redacted]"));
+    // Request error call logs can include Cookie/Authorization headers. Never attach originals.
+    const safeErrors = errors.map(error => new Error((error instanceof Error ? error.message : String(error)).split("\n")[0].replace(/(https?:\/\/[^\s?]+)\?[^\s]+/g, "$1?[redacted]")));
+    if (safeErrors.length) throw new AggregateError(safeErrors, safeErrors.map(error => error.message).join("\n"));
   }
 });
