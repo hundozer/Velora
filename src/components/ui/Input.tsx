@@ -25,7 +25,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             className={twMerge(
               clsx(
-                "w-full bg-ink/5 border border-ink/10 rounded-2xl py-3 text-sm text-velora-textPrimary placeholder:text-velora-textMuted focus:outline-none focus:border-velora-gold/60 focus:ring-1 focus:ring-velora-gold/60 transition-all backdrop-blur-md",
+                "w-full bg-velora-surface border border-velora-control rounded-2xl py-3 text-sm text-velora-textPrimary placeholder:text-velora-textMuted focus:border-velora-gold focus:ring-2 focus:ring-velora-gold/30 transition-all",
                 icon ? "pl-11 pr-4" : "px-4",
                 error && "border-red-500/60 focus:border-red-500 focus:ring-red-500",
                 className
@@ -34,7 +34,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {...props}
           />
         </div>
-        {error && <p className="mt-1.5 text-xs text-red-600 font-medium">{error}</p>}
+        {error && <p className="mt-1.5 text-xs text-velora-danger font-medium">{error}</p>}
       </div>
     );
   }

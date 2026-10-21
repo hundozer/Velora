@@ -94,8 +94,9 @@ test("mandatory age gate is a full screen with no way around it", async () => {
 
 test("public home is content-first rather than implementation-focused", async () => {
   const home = await read("src/components/community/PublicCommunityHome.tsx");
-  assert.match(home, /intimo-community-hero\.jpg/);
-  assert.match(home, /Find your people/);
+  assert.match(home, /Kinky\./);
+  assert.match(home, /Say what&apos;s off limits/);
+  assert.match(home, /Join Intimo/);
   for (const destination of ["people", "tonight", "photos", "videos"]) assert.match(home, new RegExp(`\\"/${destination}\\"`));
   assert.doesNotMatch(home, /Real empty states|server-authorized workflows|Sensitive preference fields|Local design preview|Newest first/);
 });

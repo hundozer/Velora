@@ -28,7 +28,7 @@ export function ProfileSheet({ id }: { id: string }) {
   return (
     <div className="fixed inset-0 z-40" role="presentation">
       <button type="button" aria-label="Back to People" tabIndex={-1} onClick={close} className="absolute inset-0 h-full w-full cursor-default bg-velora-night/80" />
-      <p aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-velora-night px-5 pt-[max(0.5rem,env(safe-area-inset-top))] text-[13px] text-velora-paper/80 md:hidden">People · where you left off</p>
+      <p aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-velora-night px-5 pt-[max(0.5rem,env(safe-area-inset-top))] text-[13px] text-velora-onPhoto/80 md:hidden">People · where you left off</p>
       <div
         ref={panel}
         tabIndex={-1}

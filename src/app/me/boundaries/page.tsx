@@ -8,7 +8,7 @@ import { BOUNDARY_GROUPS, BOUNDARY_KINDS, BOUNDARY_PREFERENCES, type BoundaryPre
 const PREFERENCE_STYLE: Record<BoundaryPreference, string> = {
   COMFORTABLE: "border-emerald-400/60 bg-emerald-400/10 text-velora-textPrimary",
   ASK_FIRST: "border-velora-gold bg-velora-gold/15 text-velora-textPrimary",
-  NOT_INTERESTED: "border-red-400/60 bg-red-500/10 text-red-700",
+  NOT_INTERESTED: "border-red-400/60 bg-red-500/10 text-velora-danger",
 };
 
 /** Boundaries & approach preferences editor (P1-20). Enforced server-side where marked. */
@@ -59,14 +59,14 @@ export default function BoundariesPage() {
 
   if (status === "loading") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textMuted">Loading…</main>;
   if (status === "signed-out") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textSecondary"><Link href="/auth/login?returnTo=%2Fme%2Fboundaries" className="text-velora-gold underline">Sign in</Link> to set your boundaries.</main>;
-  if (status === "error") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-red-700">Your boundaries could not be loaded. Please refresh.</main>;
+  if (status === "error") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-danger">Your boundaries could not be loaded. Please refresh.</main>;
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 px-4 pb-32 pt-6">
       <Link href="/me" className="inline-flex items-center gap-1 text-xs text-velora-textMuted hover:text-velora-textPrimary"><ArrowLeft className="h-3.5 w-3.5" aria-hidden />Me</Link>
       <header className="space-y-2">
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">Boundaries</p>
-        <h1 className="font-serif font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">How to approach you</h1>
+        <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">How to approach you</h1>
         <p className="text-sm leading-relaxed text-velora-textSecondary">Members see these on your profile. &ldquo;Not interested&rdquo; on first messages and photos is enforced, so the message or request can&apos;t be sent.</p>
       </header>
 
@@ -100,7 +100,7 @@ export default function BoundariesPage() {
 
       <div className="fixed inset-x-0 bottom-16 z-30 border-t border-ink/10 bg-velora-bg/95 px-4 py-3 backdrop-blur md:bottom-0">
         <div className="mx-auto flex max-w-2xl items-center gap-3">
-          <p className={`flex-1 text-xs ${message?.kind === "error" ? "text-red-700" : "text-velora-textSecondary"}`} role={message ? "status" : undefined}>
+          <p className={`flex-1 text-xs ${message?.kind === "error" ? "text-velora-danger" : "text-velora-textSecondary"}`} role={message ? "status" : undefined}>
             {message ? message.text : dirty ? "Unsaved changes" : "Up to date"}
           </p>
           <button type="button" onClick={save} disabled={saving || !dirty} className="min-h-11 rounded-full bg-gold-gradient px-6 text-sm font-bold text-velora-bg disabled:opacity-50">

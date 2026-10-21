@@ -7,7 +7,7 @@ export default function AccountRestrictedPage() {
     <main className="mx-auto flex min-h-[70vh] max-w-3xl items-center px-4 py-16">
       <Card className="w-full p-8 text-center sm:p-12">
         <AlertTriangle className="mx-auto mb-5 h-12 w-12 text-velora-accent" aria-hidden="true" />
-        <h1 className="font-serif font-semibold text-ink text-5xl leading-[1.02] sm:text-6xl">Account access is limited</h1>
+        <h1 className="font-display font-semibold text-ink text-5xl leading-[1.02] sm:text-6xl">Account access is limited</h1>
         <p className="mx-auto mt-4 max-w-xl text-ink">
           This account cannot currently use member features. Contact Intimo support if you believe this is a mistake.
         </p>

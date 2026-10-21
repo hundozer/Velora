@@ -36,13 +36,13 @@ export default function ScenePage() {
       <header className="flex items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">Prague Scene</p>
-          <h1 className="font-serif font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">Out in the city</h1>
+          <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">Out in the city</h1>
           <p className="mt-1 text-sm text-velora-textSecondary">Munches, workshops and parties run by Prague&apos;s sex-positive community. Hand-picked by us; booking is with the organiser.</p>
         </div>
         {user && !suggesting && <button type="button" onClick={() => setSuggesting(true)} className="min-h-11 shrink-0 rounded-full border border-ink/15 px-4 text-sm font-semibold text-velora-textPrimary hover:border-velora-gold/50">Suggest</button>}
       </header>
 
-      {message && <p role="status" className={`rounded-2xl border p-4 text-sm ${message.ok ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-700" : "border-red-500/40 bg-red-500/10 text-red-700"}`}>{message.text}</p>}
+      {message && <p role="status" className={`rounded-2xl border p-4 text-sm ${message.ok ? "border-emerald-400/30 bg-emerald-400/10 text-velora-success" : "border-red-500/40 bg-red-500/10 text-velora-danger"}`}>{message.text}</p>}
 
       {suggesting && (
         <form onSubmit={suggest} className="space-y-3 rounded-3xl border border-ink/10 bg-ink/[0.02] p-5">
@@ -61,7 +61,7 @@ export default function ScenePage() {
 
       {events === null ? <p className="text-sm text-velora-textMuted">Loading…</p> : events.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-ink/15 p-8 text-center">
-          <h2 className="font-serif text-3xl font-bold text-velora-textPrimary">New listings coming soon</h2>
+          <h2 className="font-display text-3xl font-bold text-velora-textPrimary">New listings coming soon</h2>
           <p className="mt-2 text-sm text-velora-textSecondary">Know a good munch, workshop or party in Prague? {user ? "Suggest it above." : "Sign in to suggest it."}</p>
         </div>
       ) : <div className="space-y-4">{events.map((event) => <SceneEventCard key={event.id} event={event} />)}</div>}

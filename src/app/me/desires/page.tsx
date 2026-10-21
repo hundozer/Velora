@@ -12,7 +12,7 @@ const STATE_STYLE: Record<DesireState, string> = {
   INTO: "border-velora-gold/70 bg-velora-gold/10 text-velora-textPrimary",
   CURIOUS: "border-ink/40 bg-ink/10 text-velora-textPrimary",
   NOT_FOR_ME: "border-ink/25 bg-ink/5 text-velora-textSecondary",
-  HARD_LIMIT: "border-red-400/60 bg-red-500/10 text-red-700",
+  HARD_LIMIT: "border-red-400/60 bg-red-500/10 text-velora-danger",
 };
 
 /** Desire Graph editor (P1-19): five states per desire, members-visible unless hidden. */
@@ -77,7 +77,7 @@ export default function DesiresPage() {
 
   if (status === "loading") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textMuted">Loading…</main>;
   if (status === "signed-out") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textSecondary"><Link href="/auth/login?returnTo=%2Fme%2Fdesires" className="text-velora-gold underline">Sign in</Link> to set your desires.</main>;
-  if (status === "error") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-red-700">Your desires could not be loaded. Please refresh.</main>;
+  if (status === "error") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-danger">Your desires could not be loaded. Please refresh.</main>;
 
   const count = Object.keys(selections).length;
   return (
@@ -85,14 +85,14 @@ export default function DesiresPage() {
       <Link href="/me" className="inline-flex items-center gap-1 text-xs text-velora-textMuted hover:text-velora-textPrimary"><ArrowLeft className="h-3.5 w-3.5" aria-hidden />Me</Link>
       <header className="space-y-2">
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">Desires</p>
-        <h1 className="font-serif font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">What you&apos;re into</h1>
+        <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">What you&apos;re into</h1>
         <p className="text-sm leading-relaxed text-velora-textSecondary">Mark only what you want to. Members see shared desires first. Hard limits are shown so nobody has to guess; &ldquo;Not for me&rdquo; is always private.</p>
       </header>
 
       {!consented && (
         <label className="flex cursor-pointer gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 p-4 text-sm leading-relaxed text-velora-textSecondary">
           <input type="checkbox" className="mt-1 h-4 w-4 accent-velora-gold" checked={consentChecked} onChange={(event) => setConsentChecked(event.target.checked)} />
-          <span><ShieldCheck className="mr-1 inline h-4 w-4 text-emerald-700" aria-hidden />I explicitly consent to Intimo storing my desires and showing the visible ones to signed-in members. I can withdraw this in Privacy settings, which erases them.</span>
+          <span><ShieldCheck className="mr-1 inline h-4 w-4 text-velora-success" aria-hidden />I explicitly consent to Intimo storing my desires and showing the visible ones to signed-in members. I can withdraw this in Privacy settings, which erases them.</span>
         </label>
       )}
 
@@ -131,7 +131,7 @@ export default function DesiresPage() {
 
       <div className="fixed inset-x-0 bottom-16 z-30 border-t border-ink/10 bg-velora-bg/95 px-4 py-3 backdrop-blur md:bottom-0">
         <div className="mx-auto flex max-w-2xl items-center gap-3">
-          <p className={`flex-1 text-xs ${message?.kind === "error" ? "text-red-700" : "text-velora-textSecondary"}`} role={message ? "status" : undefined}>
+          <p className={`flex-1 text-xs ${message?.kind === "error" ? "text-velora-danger" : "text-velora-textSecondary"}`} role={message ? "status" : undefined}>
             {message ? message.text : `${count} selected`}
           </p>
           <button type="button" onClick={save} disabled={saving || (!consented && !consentChecked)} className="min-h-11 rounded-full bg-gold-gradient px-6 text-sm font-bold text-velora-bg disabled:opacity-50">

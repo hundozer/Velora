@@ -18,7 +18,7 @@ export default function DashboardPage() {
     <main className="mx-auto max-w-6xl space-y-8 px-4 py-10 sm:px-6">
       <section className="rounded-3xl border border-velora-gold/30 bg-velora-card p-6 shadow-gold-glow sm:p-9">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-velora-gold">Your Intimo home</p>
-        <h1 className="mt-3 font-serif font-bold text-ink text-5xl leading-[1.02] sm:text-6xl">Welcome, {firstName}</h1>
+        <h1 className="mt-3 font-display font-bold text-ink text-5xl leading-[1.02] sm:text-6xl">Welcome, {firstName}</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-velora-textSecondary">
           Your home starts empty and grows only from real profiles, conversations and connections you choose.
         </p>

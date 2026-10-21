@@ -111,7 +111,7 @@ export default function NewInvitationPage() {
           <Blank onClick={() => setSheet("day")} label={`Day: ${day}`}>{day === "tonight" ? "Tonight" : "Tomorrow"}</Blank> I&apos;d like to{" "}
           <label className="inline">
             <span className="sr-only">What you&apos;d like to do</span>
-            <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} placeholder="have a quiet drink" size={Math.max(14, title.length + 1)} className="max-w-full border-b-2 border-dotted border-velora-copper bg-transparent text-velora-copperInk placeholder:text-velora-copper/60 focus:border-solid focus:outline-none" />
+            <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} placeholder="talk kink over a drink" size={Math.max(14, title.length + 1)} className="max-w-full border-b-2 border-dotted border-velora-copper bg-transparent text-velora-copperInk placeholder:text-velora-copper/60 focus:border-solid focus:outline-none" />
           </label>{" "}
           in <Blank onClick={() => setSheet("area")} label={`Area: ${area?.name || "choose"}`}>{area?.kind === "PRAGUE_DISTRICT" ? area.label.split(" · ")[0] : area?.name || "Prague"}</Blank>, from
           <label className="inline"><span className="sr-only">Starts at</span><TimeSelect value={from} onChange={setFrom} className={timeInput} /></label>
@@ -126,14 +126,14 @@ export default function NewInvitationPage() {
 
         <label className="mt-8 block">
           <span className="text-[13px] font-semibold uppercase tracking-[0.18em] text-velora-ink2">A few words for whoever reads it</span>
-          <textarea value={text} onChange={(event) => setText(event.target.value)} maxLength={1000} rows={4} placeholder="Who you are, the place or the mood, anything people should know before replying." className="mt-2 w-full resize-y border-b border-velora-ink/50 bg-transparent py-2 text-[17px] leading-relaxed text-velora-ink placeholder:text-velora-muted focus:border-velora-ink focus:outline-none" />
+          <textarea value={text} onChange={(event) => setText(event.target.value)} maxLength={1000} rows={4} placeholder="What do you have in mind? What should someone know before saying yes?" className="mt-2 w-full resize-y border-b border-velora-ink/50 bg-transparent py-2 text-[17px] leading-relaxed text-velora-ink placeholder:text-velora-muted focus:border-velora-ink focus:outline-none" />
           <span className="block text-[14px] text-velora-muted">No payment, services or contact details. Invitations offering paid services are removed.</span>
         </label>
 
         <p className="mt-6 text-[16px] text-velora-ink2">Kind of evening: <Blank onClick={() => setSheet("kind")} label="Kind of evening">{PLAN_CATEGORIES.find((item) => item.value === category)?.label.toLowerCase()}</Blank></p>
 
         {error && <p role="alert" className="mt-6 border-l-2 border-velora-crimson pl-4 text-[15px] text-velora-crimson">{error}</p>}
-        <button type="submit" disabled={!valid || submitting} className="mt-8 min-h-14 w-full rounded-full bg-velora-ink text-[16px] font-semibold text-velora-paper disabled:opacity-40">{submitting ? "Sending…" : "Send the invitation"}</button>
+        <button type="submit" disabled={!valid || submitting} className="mt-8 min-h-14 w-full rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper disabled:opacity-40">{submitting ? "Sending…" : "Send the invitation"}</button>
         {!valid && !timeProblem && <p className="mt-2 text-center text-[14px] text-velora-muted">Say what you&apos;d like to do and add a few words.</p>}
       </form>
 
@@ -162,7 +162,7 @@ export default function NewInvitationPage() {
         </div>
       </Sheet>
 
-      <Sheet open={sheet === "welcome"} onClose={() => setSheet(null)} label="Who may reply" footer={<button type="button" onClick={() => setSheet(null)} className="min-h-14 w-full rounded-full bg-velora-ink text-[16px] font-semibold text-velora-paper">Done</button>}>
+      <Sheet open={sheet === "welcome"} onClose={() => setSheet(null)} label="Who may reply" footer={<button type="button" onClick={() => setSheet(null)} className="min-h-14 w-full rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper">Done</button>}>
         <h2 className="font-display text-[40px] leading-none text-velora-ink">I&apos;d welcome</h2>
         <p className="mt-2 text-[14px] text-velora-muted">Choose none for everyone. Only people who fit can reply — it&apos;s checked when they send.</p>
         <div className="mt-4">

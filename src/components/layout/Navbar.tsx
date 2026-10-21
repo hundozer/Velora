@@ -45,7 +45,7 @@ export const Navbar: React.FC = () => {
   return (
     <header className={`${phoneHidden ? "hidden md:block" : ""} sticky top-0 z-40 w-full border-b border-velora-line/70 bg-velora-paper/85 backdrop-blur-xl`}>
       <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 lg:h-20 flex items-center justify-between gap-4">
-        <Link href="/" className="shrink-0 font-display text-3xl leading-none text-velora-ink">Intimo</Link>
+        <Link href="/" aria-label="Intimo" className="shrink-0 font-display text-3xl leading-none text-velora-ink">intimo<span className="text-velora-accent" aria-hidden>↗</span></Link>
 
         {/* Home · People · Tonight · Messages; Me lives in the account menu. */}
         <nav className="hidden lg:flex items-center gap-1" aria-label="Primary navigation">
@@ -55,7 +55,7 @@ export const Navbar: React.FC = () => {
             { href: "/tonight", label: "Tonight", active: pathname.startsWith("/tonight") },
             ...(user ? [{ href: "/messages", label: t("nav.messages"), active: pathname.startsWith("/messages") }] : []),
           ].map((item) => (
-            <Link key={item.href} href={item.href} aria-current={item.active ? "page" : undefined} className={`rounded-full px-4 py-2 text-[15px] font-medium transition ${item.active ? "bg-velora-ink text-velora-paper" : "text-velora-ink2 hover:bg-velora-ink/5 hover:text-velora-ink"}`}>
+            <Link key={item.href} href={item.href} aria-current={item.active ? "page" : undefined} className={`rounded-full px-4 py-2 text-[15px] font-medium transition ${item.active ? "bg-velora-accent text-velora-paper" : "text-velora-ink2 hover:bg-velora-ink/5 hover:text-velora-ink"}`}>
               {item.label}
             </Link>
           ))}
@@ -180,7 +180,7 @@ export const Navbar: React.FC = () => {
                     href={`/profile/${profile?.id || "me"}?tab=VIDEOS`}
                     className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
                   >
-                    <Video className="w-4 h-4 text-emerald-700" />
+                    <Video className="w-4 h-4 text-velora-success" />
                     My Videos
                   </Link>
 
@@ -188,7 +188,7 @@ export const Navbar: React.FC = () => {
                     href={`/profile/${profile?.id || "me"}?tab=ADS`}
                     className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
                   >
-                    <Megaphone className="w-4 h-4 text-rose-400" />
+                    <Megaphone className="w-4 h-4 text-velora-danger" />
                     My Dating Ads
                   </Link>
 
@@ -210,7 +210,7 @@ export const Navbar: React.FC = () => {
 
                   <button
                     onClick={() => signOut("/")}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-red-600 hover:bg-red-500/10 rounded-xl mt-1 border-t border-ink/5"
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-danger hover:bg-red-500/10 rounded-xl mt-1 border-t border-ink/5"
                   >
                     <LogOut className="w-4 h-4" />
                     Sign Out

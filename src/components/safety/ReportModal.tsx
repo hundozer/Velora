@@ -54,8 +54,8 @@ export const ReportModal: React.FC<ReportModalProps> = ({
     <Modal isOpen={isOpen} onClose={resetAndClose} title="Security & Compliance Report">
       {submitted ? (
         <div className="text-center space-y-4 py-6 text-left">
-          <CheckCircle2 className="w-12 h-12 text-emerald-700 mx-auto" />
-          <h3 className="text-lg font-serif font-bold text-velora-textPrimary text-center">
+          <CheckCircle2 className="w-12 h-12 text-velora-success mx-auto" />
+          <h3 className="text-lg font-display font-bold text-velora-textPrimary text-center">
             Report Submitted & Logged
           </h3>
           <p className="text-xs text-velora-textMuted leading-relaxed glass-panel p-4 rounded-2xl">
@@ -68,7 +68,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
       ) : (
         <div className="space-y-6 text-left">
           <div className="flex items-center gap-3 p-4 glass-panel rounded-2xl border border-red-500/30">
-            <ShieldAlert className="w-6 h-6 text-red-600 shrink-0" />
+            <ShieldAlert className="w-6 h-6 text-velora-danger shrink-0" />
             <div>
               <h4 className="text-sm font-bold text-velora-textPrimary">Report @{targetUsername}</h4>
               <p className="text-[11px] text-velora-textMuted">
@@ -116,7 +116,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
           </div>
 
           <p className="text-[11px] text-velora-textMuted">Do not upload or redistribute illegal material. Moderators can preserve existing platform content by its reference. Additional evidence may be requested securely.</p>
-          {submitError && <p className="text-xs text-red-600" role="alert">{submitError}</p>}
+          {submitError && <p className="text-xs text-velora-danger" role="alert">{submitError}</p>}
 
           <div className="flex gap-3 pt-2">
             <Button variant="ghost" className="w-1/3 text-xs" onClick={resetAndClose}>

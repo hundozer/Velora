@@ -13,7 +13,7 @@ export function SceneEventCard({ event }: { event: SceneEvent }) {
         <span className="rounded-full border border-velora-gold/40 bg-velora-gold/10 px-2.5 py-1 font-semibold uppercase tracking-wider text-velora-gold">{event.kindLabel}</span>
         <span className="inline-flex items-center gap-1 text-velora-textMuted"><CalendarDays className="h-3.5 w-3.5" aria-hidden />{dateFormat.format(new Date(event.startsAt))}</span>
       </div>
-      <h3 className="font-serif text-lg font-bold text-velora-textPrimary">{event.title}</h3>
+      <h3 className="font-display text-lg font-bold text-velora-textPrimary">{event.title}</h3>
       {event.description && <p className="text-sm leading-relaxed text-velora-textSecondary">{event.description}</p>}
       <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-velora-textMuted">
         <span>By {event.organiser}</span>

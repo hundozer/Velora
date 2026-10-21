@@ -32,7 +32,7 @@ export default function MePage() {
   if (!user) {
     return (
       <main className="mx-auto max-w-lg space-y-4 px-4 py-10 text-center">
-        <h1 className="font-serif font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">Your account</h1>
+        <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">Your account</h1>
         <p className="text-sm text-velora-textSecondary">Sign in to see your profile, messages and settings.</p>
         <div className="flex justify-center gap-3">
           <button onClick={() => signIn()} className="min-h-11 rounded-full border border-velora-gold/40 px-5 text-sm font-bold text-velora-gold">Sign in</button>
@@ -53,7 +53,7 @@ export default function MePage() {
             : <span className="text-xl font-bold text-velora-gold">{name.slice(0, 1).toUpperCase()}</span>}
         </div>
         <div className="min-w-0">
-          <h1 className="truncate font-serif font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">{name}</h1>
+          <h1 className="truncate font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">{name}</h1>
           <p className="truncate text-xs text-velora-textMuted">{user.email}</p>
         </div>
       </div>
@@ -81,7 +81,7 @@ export default function MePage() {
         </select>
       </label>
 
-      <button onClick={() => signOut("/")} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-red-400/30 text-sm font-semibold text-red-700 hover:bg-red-500/10">
+      <button onClick={() => signOut("/")} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-red-400/30 text-sm font-semibold text-velora-danger hover:bg-red-500/10">
         <LogOut className="h-4 w-4" aria-hidden /> Sign out
       </button>
     </main>

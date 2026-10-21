@@ -28,10 +28,10 @@ export default function GoodbyePage() {
         </div>
 
         <div className="space-y-3">
-          <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20 inline-block animate-pulse">
+          <span className="text-[10px] font-bold text-velora-danger uppercase tracking-widest bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20 inline-block animate-pulse">
             Deletion Request Accepted
           </span>
-          <h2 className="text-3xl font-serif font-bold text-velora-textPrimary tracking-wide">
+          <h2 className="text-3xl font-display font-bold text-velora-textPrimary tracking-wide">
             We're Sad to See You Go! 💔
           </h2>
           <p className="text-xs text-velora-textSecondary leading-relaxed max-w-sm mx-auto">

@@ -122,10 +122,10 @@ export default function OnboardingPage() {
     }
   }
 
-  const errorLine = error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-5 py-4 text-base text-red-700">{error}</p> : null;
+  const errorLine = error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-5 py-4 text-base text-velora-danger">{error}</p> : null;
 
   if (step === "kind") return (
-    <FlowScreen {...screen} title="Who's joining?">
+    <FlowScreen {...screen} title="Who's coming in?">
       <ChoiceCard icon={<User className="h-7 w-7" />} label="Just me" selected={profileType === "SINGLE"} onClick={() => { if (profileType !== "SINGLE") { setGender(""); setRelationshipStatus(""); } setProfileType("SINGLE"); setStep("identity"); }} />
       <ChoiceCard icon={<Users className="h-7 w-7" />} label="We're a couple" selected={profileType === "COUPLE"} onClick={() => { if (profileType !== "COUPLE") { setGender(""); setRelationshipStatus(""); } setProfileType("COUPLE"); setStep("identity"); }} />
     </FlowScreen>
@@ -172,7 +172,7 @@ export default function OnboardingPage() {
   );
 
   if (step === "looking") return (
-    <FlowScreen {...screen} title="What are you looking for?" action={<BigButton disabled={lookingFor.length === 0} onClick={next}>Continue</BigButton>}>
+    <FlowScreen {...screen} title="What brings you here?" action={<BigButton disabled={lookingFor.length === 0} onClick={next}>Continue</BigButton>}>
       <p className="-mt-4 text-base text-velora-textMuted">Pick as many as you like.</p>
       {LOOKING_FOR.map((item) => (
         <ChoiceCard key={item.value} compact label={item.label} selected={lookingFor.includes(item.value)} onClick={() => setLookingFor((current) => current.includes(item.value) ? current.filter((value) => value !== item.value) : [...current, item.value])} />

@@ -43,7 +43,7 @@ export const MobileNavigation: React.FC = () => {
               key={item.href}
               href={item.href}
               aria-current={active ? "page" : undefined}
-              className={`relative flex min-w-[64px] flex-col items-center justify-center text-[15px] transition-colors ${active ? (dark ? "font-semibold text-velora-paper" : "font-semibold text-velora-ink") : dark ? "text-velora-paper/70 hover:text-velora-paper" : "text-velora-muted hover:text-velora-ink"}`}
+              className={`relative flex min-w-[64px] flex-col items-center justify-center text-[15px] transition-colors ${active ? (dark ? "font-semibold text-velora-onPhoto" : "font-semibold text-velora-ink") : dark ? "text-velora-onPhoto/70 hover:text-velora-onPhoto" : "text-velora-muted hover:text-velora-ink"}`}
             >
               {item.label}
               <span aria-hidden className={`mt-1.5 h-1 w-1 rounded-full ${active ? "bg-velora-copper" : "bg-transparent"}`} />

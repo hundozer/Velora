@@ -55,7 +55,7 @@ export const AgeVerificationModal: React.FC = () => {
             No, take me out
           </a>
         </div>
-        {error && <p role="alert" className="mt-4 text-base text-red-700">{error}</p>}
+        {error && <p role="alert" className="mt-4 text-base text-velora-danger">{error}</p>}
       </div>
     </div>
   );

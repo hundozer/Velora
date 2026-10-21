@@ -52,8 +52,8 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
     <Modal isOpen={isOpen} onClose={handleReset} title="Intimo Trust & Verification Levels" maxWidth="lg">
       {submitted ? (
         <div className="text-center space-y-4 py-6 text-left">
-          <CheckCircle2 className="w-12 h-12 text-emerald-700 mx-auto" />
-          <h3 className="text-xl font-serif font-bold text-velora-textPrimary text-center">
+          <CheckCircle2 className="w-12 h-12 text-velora-success mx-auto" />
+          <h3 className="text-xl font-display font-bold text-velora-textPrimary text-center">
             Verification Submitted
           </h3>
           <p className="text-xs text-velora-textMuted leading-relaxed glass-panel p-4 rounded-2xl">
@@ -69,13 +69,13 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Level 1 */}
             <div className="p-4 glass-panel rounded-2xl border border-ink/10 flex items-start gap-3">
-              <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 shrink-0">
+              <div className="p-2 rounded-xl bg-blue-500/10 text-velora-accent shrink-0">
                 <Mail className="w-4 h-4" />
               </div>
               <div className="text-xs">
                 <div className="flex items-center gap-1">
                   <span className="font-bold text-velora-textPrimary">Level 1: Email Verified</span>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-velora-success" />
                 </div>
                 <p className="text-velora-textMuted text-[11px] mt-0.5">Basic account creation completed</p>
               </div>
@@ -83,13 +83,13 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
 
             {/* Level 2 */}
             <div className="p-4 glass-panel rounded-2xl border border-ink/10 flex items-start gap-3">
-              <div className="p-2 rounded-xl bg-purple-500/10 text-purple-800 shrink-0">
+              <div className="p-2 rounded-xl bg-purple-500/10 text-velora-signal shrink-0">
                 <Phone className="w-4 h-4" />
               </div>
               <div className="text-xs">
                 <div className="flex items-center gap-1">
                   <span className="font-bold text-velora-textPrimary">Level 2: Phone SMS</span>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-velora-success" />
                 </div>
                 <p className="text-velora-textMuted text-[11px] mt-0.5">SMS multi-factor authentication</p>
               </div>
@@ -135,7 +135,7 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
           {/* Submission Form Steps */}
           {step === 1 && (
             <div className="space-y-4 pt-2 border-t border-ink/10">
-              <h4 className="text-sm font-serif font-bold text-velora-textPrimary">
+              <h4 className="text-sm font-display font-bold text-velora-textPrimary">
                 Photo verification submission
               </h4>
               <p className="text-xs text-velora-textMuted">

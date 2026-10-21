@@ -1,6 +1,6 @@
 import type { Config } from "tailwindcss";
 
-// Warm light editorial palette. Values live as RGB channels in globals.css so
+// Graphite / ice-blue palette. Values live as RGB channels in globals.css so
 // opacity modifiers (bg-intimo-accent/10) keep working.
 const token = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
 
@@ -11,9 +11,11 @@ const intimoColors = {
   surface: token("surface"),
   sunken: token("sunken"),
   ink: token("ink"),
+  onPhoto: token("on-photo"),
   ink2: token("ink-2"),
   muted: token("muted"),
   line: token("line"),
+  control: token("control"),
   accent: token("accent"),
   accentHover: token("accent-hover"),
   blush: token("blush"),
@@ -32,6 +34,10 @@ const intimoColors = {
   amber: token("accent"),
   roseGold: token("accent"),
   crimson: token("danger"),
+  danger: token("danger"),
+  success: token("success"),
+  warning: token("warning"),
+  signal: token("signal"),
   textPrimary: token("ink"),
   textSecondary: token("ink-2"),
   textMuted: token("muted"),
@@ -52,7 +58,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-sans)"],
-        serif: ["var(--font-display)"],
+        serif: ["Instrument Serif", "Georgia", "serif"],
         display: ["var(--font-display)"],
       },
       backgroundImage: {
@@ -63,9 +69,9 @@ const config: Config = {
         "glass-gradient": "none",
       },
       boxShadow: {
-        "gold-glow": "0 10px 30px -12px rgb(var(--accent) / 0.45)",
-        glass: "0 1px 2px rgb(var(--ink) / 0.04), 0 12px 40px -18px rgb(var(--ink) / 0.18)",
-        card: "0 1px 2px rgb(var(--ink) / 0.04), 0 18px 50px -24px rgb(var(--ink) / 0.22)",
+        "gold-glow": "0 6px 20px -12px rgb(var(--accent) / 0.25)",
+        glass: "0 1px 2px rgb(0 0 0 / 0.12), 0 12px 40px -18px rgb(0 0 0 / 0.35)",
+        card: "0 1px 2px rgb(0 0 0 / 0.12), 0 18px 50px -24px rgb(0 0 0 / 0.4)",
       },
       borderRadius: {
         card: "1.75rem",
