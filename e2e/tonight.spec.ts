@@ -60,7 +60,7 @@ test("an invitation is written as a sentence and sent with explicit start and en
   await page.getByRole("dialog", { name: "Who may reply" }).getByLabel("Couples").check();
   await page.getByRole("button", { name: "Done" }).click();
   await expect(page.getByRole("button", { name: /Who may reply: women and couples/ })).toBeVisible();
-  await page.getByPlaceholder(/Who you are/).fill("Natural wine, quiet corner table, easy conversation.");
+  await page.getByPlaceholder(/What do you have in mind/).fill("Natural wine, quiet corner table, easy conversation.");
   await page.getByRole("button", { name: "Send the invitation" }).click();
   await expect.poll(() => body).not.toBeNull();
   const sent = body as unknown as Record<string, string | string[]>;
