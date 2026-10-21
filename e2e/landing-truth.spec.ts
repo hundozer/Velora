@@ -25,7 +25,35 @@ for (const width of [375, 390, 1440]) {
     await expect(page.getByText("Example plan", { exact: true }).first()).toBeVisible();
     await expect(page.locator("body")).not.toContainText("ends in 5 h");
     await expect(page.locator("body")).not.toContainText("Online now");
+    await expect(page.locator("body")).toContainText("Looking for sex, a date, or someone who shares your kink?");
+    const illustrations = page.locator("figure").filter({ hasText: "AI-generated illustration. Not real members or events." });
+    await expect(illustrations).toHaveCount(8);
+    for (const figure of await illustrations.all()) {
+      const photo = figure.getByRole("img");
+      await photo.scrollIntoViewIfNeeded();
+      await expect.poll(() => photo.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
+    }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: `/tmp/intimo-landing-${width}.png`, fullPage: true });
+  });
+}
+
+for (const width of [375, 1440]) {
+  test(`About photos load and disclose their origin at ${width}px`, async ({ page, context }) => {
+    await context.addInitScript(() => localStorage.setItem("intimo_age_verified", "true"));
+    await page.route("**/api/auth/session", (route) => route.fulfill({ status: 401, json: { authenticated: false } }));
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/about");
+    const illustrations = page.locator("figure").filter({ hasText: "AI-generated illustration. Not real members or events." });
+    await expect(illustrations).toHaveCount(4);
+    for (const figure of await illustrations.all()) {
+      const photo = figure.getByRole("img");
+      await photo.scrollIntoViewIfNeeded();
+      await expect.poll(() => photo.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({ path: `/tmp/intimo-about-${width}.png`, fullPage: true });
   });
 }

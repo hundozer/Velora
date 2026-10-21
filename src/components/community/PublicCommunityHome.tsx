@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ArrowUpRight, Asterisk, BadgeCheck, EyeOff, Lock, MapPin, ShieldCheck } from "lucide-react";
 import { ContextualCTA, NumberedChapter, OversizedChoiceCard, PrimaryAction, SecondaryAction, SectionTitle, Showcase, StorySection } from "@/components/editorial/Editorial";
 import { MemberActivityFeed } from "@/components/community/MemberActivityFeed";
+import { EditorialPhoto } from "@/components/editorial/EditorialPhoto";
 
 interface PublicProfile {
   id: string;
@@ -78,7 +79,7 @@ export function PublicCommunityHome() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-velora-muted">Prague · Sex-positive · 18+</p>
           <h1 id="community-welcome" className="mt-6 font-display text-[clamp(3.5rem,8vw,7rem)] leading-[0.98]">Kinky.<br />Curious.<br /><span className="text-velora-accent">Welcome.</span></h1>
-          <p className="mt-7 max-w-lg text-lg leading-relaxed text-velora-ink2 sm:text-xl">Rope, roleplay, open relationships. Or something you haven&apos;t found the words for yet. Say what turns you on. Say what&apos;s off limits.</p>
+          <p className="mt-7 max-w-lg text-lg leading-relaxed text-velora-ink2 sm:text-xl">Looking for sex, a date, or someone who shares your kink? Meet adults in Prague who can say what they want. Say what turns you on. Say what&apos;s off limits.</p>
           <div className="mt-8 flex flex-wrap items-center gap-5">
             <PrimaryAction href="/register">Join Intimo <ArrowUpRight className="h-5 w-5" aria-hidden /></PrimaryAction>
             <p className="text-sm leading-relaxed text-velora-muted">18+. Free to join.<br />Curiosity is enough.</p>
@@ -94,7 +95,11 @@ export function PublicCommunityHome() {
           <div className="flex items-center justify-between border-t border-velora-paper/40 pt-5"><p className="text-sm leading-relaxed">Your kink.<br />Your call.</p><ArrowUpRight className="h-9 w-9" aria-hidden /></div>
         </div>
       </section>
-      <div className="border-y border-velora-line"><div className="mx-auto flex max-w-7xl flex-wrap gap-x-7 gap-y-3 px-5 py-6 text-sm text-velora-ink2 sm:px-8"><span>Rope.</span><span>Leather.</span><span>Power play.</span><span>Still figuring it out.</span><strong className="text-velora-accent">There&apos;s room for you.</strong></div></div>
+      <div className="mx-auto grid max-w-7xl gap-5 px-5 pb-12 sm:px-8 md:grid-cols-2" aria-label="Sex, dates and shared curiosity">
+        <EditorialPhoto photo="balcony-connection" caption="Someone you want to get closer to." />
+        <EditorialPhoto photo="shared-chemistry" caption="Singles. Couples. See who you click with." />
+      </div>
+      <div className="border-y border-velora-line"><div className="mx-auto flex max-w-7xl flex-wrap gap-x-7 gap-y-3 px-5 py-6 text-sm text-velora-ink2 sm:px-8"><span>Sex.</span><span>Dates.</span><span>Rope.</span><span>Leather.</span><span>Power play.</span><span>Still figuring it out.</span><strong className="text-velora-accent">There&apos;s room for you.</strong></div></div>
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-12 sm:px-8 md:grid-cols-3">
         {[["01", "Own your yes.", "Name your kinks. Leave room for curiosity."], ["02", "Mean your no.", "Hard limits do not need a defence."], ["03", "Ask first.", "Being here does not mean being up for everything."]].map(([number, title, body]) => <div key={number}><span className="text-xs font-semibold text-velora-accent">{number}</span><h2 className="mt-3 text-xl font-bold tracking-tight">{title}</h2><p className="mt-2 text-sm leading-relaxed text-velora-ink2">{body}</p></div>)}
       </div>
@@ -102,18 +107,23 @@ export function PublicCommunityHome() {
       <StorySection tone="sunken" id="journeys">
         <SectionTitle eyebrow="Who catches your eye?" title={<>A little chemistry.<br />See where it goes.</>} />
         <div className="mt-12 grid gap-6 lg:grid-cols-2">
-          <OversizedChoiceCard href="/people" eyebrow="People" title="Someone to talk kink with." body="Read what they choose to share. Check their boundaries. Then say hello." cta="Browse people" visual={<PeopleDemo />} />
+          <OversizedChoiceCard href="/people" eyebrow="People" title="A sex partner. A date. A shared kink." body="Read what they choose to share. Check their boundaries. Then say hello." cta="Browse people" visual={<PeopleDemo />} />
           <OversizedChoiceCard href="/tonight" eyebrow="Tonight" title="Got something in mind?" body="A drink, a date, a shared curiosity. Say what you want to do and who you want to hear from." cta="See tonight's plans" visual={<PlanDemo />} />
         </div>
       </StorySection>
 
       <StorySection id="how">
         <SectionTitle eyebrow="Desire has a few ground rules" title="Your yes. Your maybe. Your no." />
-        <NumberedChapter index={1} total={4} title="Say the thing." body="The kink you love. The one you are curious about. The thing you will never do. Share as much or as little as you want." visual={<Showcase><DesireDemo /></Showcase>} />
-        <NumberedChapter index={2} total={4} reverse title="Kink is not permission." body="Say who can approach you and how. First-message and photo-request limits apply before anything is sent." visual={<Showcase><BoundaryDemo /></Showcase>} />
-        <NumberedChapter index={3} total={4} title="Fancy company tonight?" body="Say what you have in mind, when, and who you would like to hear from. Reply only if the invitation is meant for you." visual={<Showcase><PlanDemo /></Showcase>} />
-        <NumberedChapter index={4} total={4} reverse title="Looking is by invitation." body="Choose who can open your private photos. Permission to look is not permission to copy or share." visual={<Showcase><PrivateDemo /></Showcase>} />
+        <NumberedChapter index={1} total={4} title="Say the thing." body="Sex without a relationship? A kink you love? Something you will never do? Share as much or as little as you want." visual={<div className="space-y-5"><EditorialPhoto photo="latex-style" caption="Wear what makes you feel like you." /><Showcase><DesireDemo /></Showcase></div>} />
+        <NumberedChapter index={2} total={4} reverse title="Kink is not permission." body="Say who can approach you and how. First-message and photo-request limits apply before anything is sent." visual={<div className="space-y-5"><EditorialPhoto photo="collar-and-harness" caption="A shared kink starts with a conversation." /><Showcase><BoundaryDemo /></Showcase></div>} />
+        <NumberedChapter index={3} total={4} title="Fancy company tonight?" body="Say what you have in mind, when, and who you would like to hear from. Reply only if the invitation is meant for you." visual={<div className="space-y-5"><EditorialPhoto photo="roleplay" caption="A date. A little roleplay. Your call." /><Showcase><PlanDemo /></Showcase></div>} />
+        <NumberedChapter index={4} total={4} reverse title="Looking is by invitation." body="Choose who can open your private photos. Permission to look is not permission to copy or share." visual={<div className="space-y-5"><EditorialPhoto photo="sensory-play" caption="Leave something to the imagination." /><Showcase><PrivateDemo /></Showcase></div>} />
       </StorySection>
+
+      <div className="mx-auto grid max-w-7xl gap-5 px-5 pb-12 sm:px-8 md:grid-cols-2">
+        <EditorialPhoto photo="boots-and-gloves" caption="Dress for your own pleasure." />
+        <EditorialPhoto photo="red-rope" caption="A different kind of connection." />
+      </div>
 
       <StorySection tone="sunken">
         <SectionTitle eyebrow="Some things stay yours" title={<>Your kink.<br />Your business.</>} />
