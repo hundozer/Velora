@@ -1,15 +1,16 @@
 "use client";
 
 import React from "react";
-import { Search } from "lucide-react";
+import { Check as CheckIcon, Search } from "lucide-react";
 import { Sheet } from "@/components/editorial/Sheet";
-import { DESIRES, MAX_DESIRE_FILTERS, desireById } from "@/lib/desires.mjs";
+import { DESIRES, DESIRE_CATEGORIES, MAX_DESIRE_FILTERS, desireById } from "@/lib/desires.mjs";
 import { DISTANCE_OPTIONS, WHO_OPTIONS } from "@/lib/people.mjs";
 
 export type Filters = { who: string[]; minAge: number; maxAge: number; withinKm: number | null; desires: string[]; hasPhoto: boolean; verified: boolean; q: string };
 export const DEFAULT_FILTERS: Filters = { who: [], minAge: 18, maxAge: 99, withinKm: null, desires: [], hasPhoto: false, verified: false, q: "" };
 
 const WHO_WORDS: Record<string, string> = { WOMEN: "women", MEN: "men", COUPLES: "couples", OTHER: "non-binary & trans people" };
+const DESIRE_GROUPS = DESIRE_CATEGORIES.map((category) => ({ ...category, desires: DESIRES.filter((desire) => desire.category === category.id) }));
 const listWords = (words: string[]) => words.length <= 1 ? words.join("") : `${words.slice(0, -1).join(", ")} and ${words[words.length - 1]}`;
 
 /** A word in the filter sentence: looks like text, opens the sheet at its section. */
@@ -79,7 +80,7 @@ function Check({ checked, onChange, children, disabled = false }: { checked: boo
 
 const Label = ({ id, children }: { id: string; children: React.ReactNode }) => <h3 id={`filter-${id}`} className="mb-2 mt-8 scroll-mt-4 text-[13px] font-semibold uppercase tracking-[0.18em] text-velora-ink2">{children}</h3>;
 
-/** The typographic filter sheet: large serif choices, a few checkboxes, Reset and Show people. */
+/** Filter sheet with grouped interest chips and a persistent apply action. */
 export function FilterSheet({ open, section, initial, sharedDesires, onClose, onApply }: {
   open: boolean; section: string; initial: Filters; sharedDesires: string[]; onClose: () => void; onApply: (filters: Filters) => void;
 }) {
@@ -90,8 +91,9 @@ export function FilterSheet({ open, section, initial, sharedDesires, onClose, on
     requestAnimationFrame(() => document.getElementById(`filter-${section}`)?.scrollIntoView({ block: "start" }));
   }, [open, section]);
   const single = draft.who.length === 1 ? draft.who[0] : draft.who.length === 0 ? "" : null;
+  const selectedInterestCount = draft.desires.length;
   const sharesMine = sharedDesires.length > 0 && sharedDesires.every((id) => draft.desires.includes(id)) && draft.desires.length === sharedDesires.length;
-  const toggleDesire = (id: string) => setDraft({ ...draft, desires: draft.desires.includes(id) ? draft.desires.filter((value) => value !== id) : draft.desires.length >= MAX_DESIRE_FILTERS ? draft.desires : [...draft.desires, id] });
+  const toggleDesire = (id: string) => setDraft((current) => ({ ...current, desires: current.desires.includes(id) ? current.desires.filter((value) => value !== id) : current.desires.length >= MAX_DESIRE_FILTERS ? current.desires : [...current.desires, id] }));
 
   return (
     <Sheet open={open} onClose={onClose} label="Who to show" footer={
@@ -130,15 +132,34 @@ export function FilterSheet({ open, section, initial, sharedDesires, onClose, on
         People who share your interests{sharedDesires.length === 0 && <span className="block text-[14px] text-velora-muted">Add what you&apos;re into on your profile first.</span>}
       </Check>
 
-      <Label id="into">Into <span className="font-normal normal-case tracking-normal text-velora-muted">· up to {MAX_DESIRE_FILTERS}</span></Label>
-      <p className="font-display text-[22px] leading-[1.6]">
-        {DESIRES.map((desire, index) => (
-          <React.Fragment key={desire.id}>
-            <button type="button" aria-pressed={draft.desires.includes(desire.id)} onClick={() => toggleDesire(desire.id)} className={draft.desires.includes(desire.id) ? "text-velora-ink underline decoration-velora-copper decoration-2 underline-offset-4" : "text-velora-muted hover:text-velora-ink2"}>{desire.label}</button>
-            {index < DESIRES.length - 1 && <span aria-hidden className="text-velora-line">{" · "}</span>}
-          </React.Fragment>
-        ))}
-      </p>
+      <section aria-labelledby="filter-into" className="mt-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 id="filter-into" className="scroll-mt-4 text-[13px] font-semibold uppercase tracking-[0.18em] text-velora-ink2">Into</h3>
+          <p role="status" aria-live="polite" aria-atomic="true" className="text-sm font-semibold text-velora-accent">{selectedInterestCount} of {MAX_DESIRE_FILTERS} selected</p>
+        </div>
+        <p id="interest-filter-hint" className="mt-2 text-sm leading-relaxed text-velora-muted">
+          {selectedInterestCount >= MAX_DESIRE_FILTERS ? "Remove a selection to choose another." : "Choose up to five interests. You can mix categories."}
+        </p>
+        {selectedInterestCount > 0 && <button type="button" onClick={() => setDraft((current) => ({ ...current, desires: [] }))} className="mt-1 min-h-11 text-sm font-semibold text-velora-accent underline underline-offset-4">Clear interests</button>}
+        <div className="mt-5 space-y-6">
+          {DESIRE_GROUPS.map((category) => (
+            <fieldset key={category.id} className="min-w-0 border-t border-velora-line pt-4">
+              <legend className="pr-3 text-sm font-semibold text-velora-ink">{category.label}</legend>
+              <div className="flex flex-wrap gap-2">
+                {category.desires.map((desire) => {
+                  const selected = draft.desires.includes(desire.id);
+                  return (
+                    <button key={desire.id} type="button" aria-pressed={selected} aria-describedby="interest-filter-hint" disabled={!selected && selectedInterestCount >= MAX_DESIRE_FILTERS} onClick={() => toggleDesire(desire.id)} className={`inline-flex min-h-11 max-w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-[15px] leading-snug transition-colors disabled:cursor-not-allowed disabled:border-velora-line disabled:text-velora-muted ${selected ? "border-velora-accent bg-velora-accent font-semibold text-velora-paper" : "border-velora-control bg-velora-paper/40 text-velora-ink2 hover:border-velora-accent hover:bg-velora-blush hover:text-velora-ink"}`}>
+                      {selected && <CheckIcon className="h-4 w-4 shrink-0" aria-hidden />}
+                      <span>{desire.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+          ))}
+        </div>
+      </section>
     </Sheet>
   );
 }
