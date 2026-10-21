@@ -6,10 +6,10 @@ for (const width of [375, 390, 1440]) {
     await page.route("**/api/auth/session", (route) => route.fulfill({ status: 401, json: { authenticated: false } }));
     await page.route("**/api/public/community**", (route) => route.fulfill({ json: { profiles: [], datingAds: [], pagination: { total: 0 }, demoContentPresent: false } }));
     await page.route("**/api/access/age-declaration", (route) => route.fulfill({ json: { declared: true } }));
+    const sessionReady = page.waitForResponse("**/api/auth/session");
     await page.goto("/");
-    // Wait for session hydration before testing the gate's keyboard listener;
-    // native autofocus can occur on the server-rendered button before React mounts.
-    await expect(page.getByRole("heading", { level: 1, name: "Kinky. Curious. Looking for someone?" })).toBeAttached();
+    // Native SSR autofocus precedes React; wait for the session effect before keyboard input.
+    await sessionReady;
     const dialog = page.getByRole("dialog", { name: "Are you 18 or older?" });
     const yes = dialog.getByRole("button", { name: "Yes, I'm 18+" });
     const exit = dialog.getByRole("link", { name: "No, take me out" });
