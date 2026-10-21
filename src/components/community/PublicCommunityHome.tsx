@@ -68,7 +68,6 @@ export function PublicCommunityHome() {
             <article key={name} aria-label={`Example profile: ${name}`} className="overflow-hidden rounded-xl border border-velora-line bg-velora-surface">
               <div className="relative">
                 <LandingPhoto photo={photo} />
-                <span className="absolute left-3 top-3 rounded-md border border-velora-control bg-velora-paper px-3 py-2 text-xs font-bold uppercase tracking-wider text-velora-ink">Example profile</span>
               </div>
               <div className="p-5">
                 <h3 className="text-xl font-bold tracking-tight">{name}</h3>

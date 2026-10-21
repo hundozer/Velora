@@ -32,7 +32,7 @@ for (const width of [375, 390, 1440]) {
     const examples = page.getByRole("article", { name: /^Example profile:/ });
     await expect(examples).toHaveCount(3);
     for (const card of await examples.all()) {
-      await expect(card.getByText("Example profile", { exact: true })).toBeVisible();
+      await expect(card.getByText("Example profile", { exact: true })).toHaveCount(0);
       await expect(card.getByRole("list", { name: "Example interests" })).toBeVisible();
       await expect(card.locator("a, button")).toHaveCount(0);
     }

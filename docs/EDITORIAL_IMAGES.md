@@ -2,7 +2,7 @@
 
 The 12 photographic concepts generated during design review are static illustrations, separate from
 member uploads, public community records and event listings. The founding-member landing uses a subset
-as atmosphere and in explicitly labelled fictional example cards. About retains editorial captions. Repeated generation notices were removed from the public pages at the owner's
+as atmosphere and in fictional example cards beneath an explicit section disclosure. About retains editorial captions. Repeated generation notices were removed from the public pages at the owner's
 request; this document retains the asset provenance.
 
 The landing page starts with people and chemistry, explicitly including sex partners and dates alongside
@@ -46,8 +46,8 @@ These are fixture-based UI checks, not authenticated member acceptance or new be
 ## 21 October founding-member landing
 
 Owner-approved mockup implemented from main `536a394b5737e7b0c08291b826689393c1b77ae2`.
-The shorter public home has a photographic hero, three connection types, three explicitly fictional
-profile examples and two registration links. Existing site navigation, footer, age gate, registration
+The shorter public home has a photographic hero, three connection types, three fictional
+profile examples with a visible section disclosure and two registration links. Existing site navigation, footer, age gate, registration
 flow and signed-in member feed are retained. Public-home examples are local presentation data; the
 page no longer fetches or displays public database profiles. No seed script or database write is involved.
 

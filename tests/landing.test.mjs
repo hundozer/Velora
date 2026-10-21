@@ -12,7 +12,7 @@ test("landing explains Intimo as Prague's sex-positive community without counts"
   assert.match(home, /Prague · Sex-positive · 18\+/);
   for (const pillar of ["Looking for someone?", "What brings you here?", "Just chemistry.", "Something kinky.", "Explore together.", "Join the founding members", "Create your profile", "Prague Scene"]) assert.ok(home.includes(pillar), pillar);
   assert.match(home, /fictional examples, not members/);
-  assert.match(home, /Example profile<\/span>/);
+  assert.doesNotMatch(home, /Example profile<\/span>/);
   assert.match(home, /if \(user\) return <MemberActivityFeed \/>/);
   assert.doesNotMatch(home, /fetch\(|\/profile\/|recentlyActive|BadgeCheck/);
   assert.doesNotMatch(home, /members online|total members|\{data\.pagination\.total\}/i);
