@@ -1,30 +1,31 @@
 # Generated editorial images
 
 The 12 photographic concepts generated during design review are static illustrations, separate from
-member uploads, public community records, profile examples and event listings. Each displayed image has
-a short editorial caption. Repeated generation notices were removed from the public pages at the owner's
+member uploads, public community records and event listings. The founding-member landing uses a subset
+as atmosphere and in fictional example cards beneath an explicit section disclosure. About retains editorial captions. Repeated generation notices were removed from the public pages at the owner's
 request; this document retains the asset provenance.
 
 The landing page starts with people and chemistry, explicitly including sex partners and dates alongside
-kink. About carries the remaining atmospheric photographs. None of these images establishes a real
+kink. About carries the remaining atmospheric photographs. Example cards have no member IDs, profile links, online status or messaging actions. None of these images establishes a real
 member's identity, preferences, relationship status or attendance at an event.
 
 ## Assets and placements
 
 All assets live in `public/images/editorial/`; `src/lib/editorialPhotos.ts` records native dimensions and alt
 text. `EditorialPhoto` uses Next Image responsive sizing, lazy loading and a caption below the photograph.
+The landing uses Next Image directly: only the hero is priority-loaded; other images are lazy-loaded.
 
 | File | Page | Native size |
 | --- | --- | --- |
-| balcony-connection.webp | Landing, opening photo pair | 1672 × 941 |
-| shared-chemistry.webp | Landing, opening photo pair | 1672 × 941 |
-| latex-style.webp | Landing, desires | 1536 × 1024 |
-| collar-and-harness.webp | Landing, boundaries | 1536 × 1024 |
-| roleplay.webp | Landing, invitations | 1536 × 1024 |
-| sensory-play.webp | Landing, private sharing | 1536 × 1024 |
-| boots-and-gloves.webp | Landing, closing photo pair | 1536 × 1024 |
-| red-rope.webp | Landing, closing photo pair | 1536 × 1024 |
-| club-chemistry.webp | About, opening photo pair | 1536 × 1024 |
+| balcony-connection.webp | Landing, hero and chemistry card | 1672 × 941 |
+| shared-chemistry.webp | Landing, explore-together card | 1672 × 941 |
+| latex-style.webp | Landing, kink card and fictional Nina example | 1536 × 1024 |
+| collar-and-harness.webp | Available editorial asset | 1536 × 1024 |
+| roleplay.webp | Landing, fictional Alex example | 1536 × 1024 |
+| sensory-play.webp | Available editorial asset | 1536 × 1024 |
+| boots-and-gloves.webp | Available editorial asset | 1536 × 1024 |
+| red-rope.webp | Available editorial asset | 1536 × 1024 |
+| club-chemistry.webp | About; landing fictional couple example | 1536 × 1024 |
 | satin-and-lace.webp | About, opening photo pair | 1536 × 1024 |
 | leather-detail.webp | About, closing photo pair | 1536 × 1024 |
 | rope-and-cuff.webp | About, closing photo pair | 1536 × 1024 |
@@ -41,3 +42,20 @@ into view, verifies successful image decoding and checks
 for horizontal overflow. Existing age-gate keyboard checks remain in place.
 
 These are fixture-based UI checks, not authenticated member acceptance or new beta-readiness evidence.
+
+## 21 October founding-member landing
+
+Owner-approved mockup implemented from main `536a394b5737e7b0c08291b826689393c1b77ae2`.
+The shorter public home has a photographic hero, three connection types, three fictional
+profile examples with a visible section disclosure and two registration links. Existing site navigation, footer, age gate, registration
+flow and signed-in member feed are retained. Public-home examples are local presentation data; the
+page no longer fetches or displays public database profiles. No seed script or database write is involved.
+
+Local validation: `npm test` (206 passed), `npm run typecheck`, `npm run lint`, and
+`E2E_BASE_URL=http://localhost:3000 npx playwright test landing-truth --project=ui --trace=off`
+(5 passed). Browser checks cover 375/390/1440 px, age-gate keyboard cycling, in-page navigation,
+registration navigation, all seven landing image placements, non-interactive labelled examples,
+no fabricated presence, no horizontal overflow, plus unchanged About images at 375/1440 px.
+Desktop and phone screenshots were inspected. The gate test now waits for session hydration before
+sending keyboard input, avoiding native SSR autofocus being mistaken for an installed React listener.
+These are UI regression results, not new live member acceptance or a change to the beta decision.

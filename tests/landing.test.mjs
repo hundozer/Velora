@@ -10,11 +10,11 @@ const read = (file) => fs.readFile(path.join(root, file), "utf8");
 test("landing explains Intimo as Prague's sex-positive community without counts", async () => {
   const home = await read("src/components/community/PublicCommunityHome.tsx");
   assert.match(home, /Prague · Sex-positive · 18\+/);
-  // Story structure: two journeys, four numbered chapters, privacy, one closing action.
-  assert.match(home, /A little chemistry\.<br \/>See where it goes\./);
-  for (let index = 1; index <= 4; index += 1) assert.match(home, new RegExp(`<NumberedChapter index=\\{${index}\\} total=\\{4\\}`));
-  for (const pillar of ["Say the thing.", "Kink is not permission.", "Fancy company tonight?", "Looking is by invitation.", "Some things stay yours", "Prague Scene"]) assert.ok(home.includes(pillar), pillar);
-  assert.match(home, /<ContextualCTA /);
+  for (const pillar of ["Looking for someone?", "What brings you here?", "Just chemistry.", "Something kinky.", "Explore together.", "Join the founding members", "Create your profile", "Prague Scene"]) assert.ok(home.includes(pillar), pillar);
+  assert.match(home, /fictional examples, not members/);
+  assert.doesNotMatch(home, /Example profile<\/span>/);
+  assert.match(home, /if \(user\) return <MemberActivityFeed \/>/);
+  assert.doesNotMatch(home, /fetch\(|\/profile\/|recentlyActive|BadgeCheck/);
   assert.doesNotMatch(home, /members online|total members|\{data\.pagination\.total\}/i);
   const layout = await read("src/app/layout.tsx");
   assert.match(layout, /title: "Intimo \| Prague's sex-positive community"/);
