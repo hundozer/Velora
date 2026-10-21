@@ -109,3 +109,12 @@ Security advisor after application:32 INFO for intentionally server-only RLS tab
 20 October 2026 production attempt: owner explicitly approved only canonical `20261104_block_aware_message_reads.sql`. Source on authoritative main `0ffcb84b1be72f05d7725b941126a02a0d121235` still matches SHA-256 `cc428966e904b3116dc31153fb492e0c28561c92b7ee4927f8838e911f88201b`. Two `apply_migration` calls returned `Invalid or expired requestState`; after each, `execute_sql` independently confirmed no canonical/wrapper ledger receipt, no helper and no restrictive policy. No third unchanged retry. Production remains at profiles1/Auth1/media4/messages0, original participant policy and authenticated SELECT-only grant; no member fixture or member-data write occurred. Vercel production `dpl_GDAAJj42WEomuYqiVqnd8NjTENp4` remains READY at main `0ffcb84`. Migration approval is granted; execution is blocked by the connector. No Supabase CLI is installed. Dashboard SQL editor is the prepared fallback, pending permission to use Browser after repeated connector failure.
 
 `20261104` must remain outside the applied-production table until successful execution and effective-object verification. The prepared, guarded fallback transaction is reviewable in `docs/PRODUCTION_MESSAGE_RLS_ROLLOUT.md`.
+
+## 21 October unread-message queue (staging only)
+
+Staging migration tool receipt `20261021200009`, name `durable_unread_message_emails`, source MD5
+`6961890acc3b3a1eaa1716f81cd63002`, matches the repository source statement. Adds the unread outbox,
+restricted worker RPCs and scheduling helpers; pg_cron/pg_net installed. No scheduled job or Vault
+configuration is created by the migration. Preserved profile/media hashes are unchanged; rollback-only
+SQL behavioral/role tests passed. See `docs/UNREAD_EMAIL_DELIVERY.md` for exact evidence and failures.
+Production has **not** received this migration. Its application requires separate reviewed approval.

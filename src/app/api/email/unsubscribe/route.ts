@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { EMAIL_CATEGORIES, verifyUnsubscribeToken } from "@/lib/notifications/returnEmails";
 
-// One-click unsubscribe from a return email (P1-11). Works without signing in;
+// Signed unsubscribe: GET confirms intent; POST performs it (including one-click clients).
+// Works without signing in;
 // the signed token proves the link came from an email we sent.
 export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -20,11 +21,10 @@ export async function GET(req: NextRequest) {
   if (!valid) return page("Link not valid", "This unsubscribe link is invalid or incomplete. You can change emails in Settings.", 400);
   const db = getServerSupabase();
   if (!db) return page("Try again later", "We couldn't update your email settings right now.", 503);
-  const { data: member } = await db.from("profiles").select("email_opt_out").eq("id", profileId).maybeSingle();
-  if (!member) return page("Done", "You won't receive these emails.");
-  const current: string[] = Array.isArray(member.email_opt_out) ? member.email_opt_out : [];
-  const next = [...new Set([...current, category])];
-  const { error } = await db.from("profiles").update({ email_opt_out: next }).eq("id", profileId);
+  if (req.method === "GET") return page("Stop these emails?", '<form method="post"><button type="submit" style="padding:14px 24px;font:inherit">Confirm unsubscribe</button></form>');
+  const { error } = await db.rpc("intimo_email_opt_out", { p_profile: profileId, p_category: category });
   if (error) return page("Try again later", "We couldn't update your email settings right now.", 503);
-  return page("Done", category === "ALL" ? "You won't receive any more Intimo emails. Account and security emails still arrive." : "You won't receive these emails any more. Change this any time in Settings.");
+  return page("Done", category === "ALL" ? "You won't receive any more Intimo notification emails. Account and security emails still arrive." : "You won't receive these emails any more. Change this any time in Settings.");
 }
+
+export const POST = GET;
