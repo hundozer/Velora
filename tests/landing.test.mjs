@@ -13,7 +13,9 @@ test("landing explains Intimo as Prague's sex-positive community without counts"
   for (const pillar of ["Looking for someone?", "What brings you here?", "Just chemistry.", "Something kinky.", "Explore together.", "Join the founding members", "Create your profile", "Prague Scene"]) assert.ok(home.includes(pillar), pillar);
   assert.match(home, /fictional examples, not members/);
   assert.doesNotMatch(home, /Example profile<\/span>/);
-  assert.match(home, /if \(user\) return <MemberActivityFeed \/>/);
+  assert.doesNotMatch(home, /useAuth|isAuthLoading|use client/);
+  const experience = await read("src/components/community/HomeExperience.tsx");
+  assert.match(experience, /if \(user\) return <MemberActivityFeed \/>/);
   assert.doesNotMatch(home, /fetch\(|\/profile\/|recentlyActive|BadgeCheck/);
   assert.doesNotMatch(home, /members online|total members|\{data\.pagination\.total\}/i);
   const layout = await read("src/app/layout.tsx");

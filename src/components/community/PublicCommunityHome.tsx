@@ -1,11 +1,7 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
 import { PrimaryAction } from "@/components/editorial/Editorial";
-import { MemberActivityFeed } from "@/components/community/MemberActivityFeed";
 import { editorialPhotos, type EditorialPhotoId } from "@/lib/editorialPhotos";
 
 const CONNECTIONS = [
@@ -27,10 +23,6 @@ function LandingPhoto({ photo, hero = false }: { photo: EditorialPhotoId; hero?:
 }
 
 export function PublicCommunityHome() {
-  const { user, isAuthLoading } = useAuth();
-  if (isAuthLoading) return <div className="min-h-screen" />;
-  if (user) return <MemberActivityFeed />;
-
   return (
     <div className="mx-auto max-w-7xl px-5 sm:px-8">
       <section className="grid items-center gap-8 pb-12 pt-10 lg:grid-cols-2 lg:gap-12 lg:py-16" aria-labelledby="community-welcome">
