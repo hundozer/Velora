@@ -96,7 +96,7 @@ test("public home is content-first rather than implementation-focused", async ()
   const home = await read("src/components/community/PublicCommunityHome.tsx");
   assert.match(home, /Kinky\./);
   assert.match(home, /Say what&apos;s off limits/);
-  assert.match(home, /Join Intimo/);
+  assert.match(home, /Join the founding members/);
   for (const destination of ["people", "tonight", "photos", "videos"]) assert.match(home, new RegExp(`\\"/${destination}\\"`));
   assert.doesNotMatch(home, /Real empty states|server-authorized workflows|Sensitive preference fields|Local design preview|Newest first/);
 });
@@ -752,10 +752,11 @@ test("demo profiles are staging-only, visibly labeled, reversible, and cannot im
   assert.match(seed, /delete\(\).*\.eq\("is_demo", true\).*\.like\("auth_id"/s);
   assert.match(migration, /is_demo boolean not null default false/);
   assert.match(publicRoute, /demoContentPresent/);
-  for (const source of [home, people]) {
-    assert.match(source, /Staging demo content/);
-    assert.match(source, /fictional/);
-  }
+  assert.match(people, /Staging demo content/);
+  assert.match(people, /fictional/);
+  // The public landing no longer displays database profiles, including staging demos.
+  assert.doesNotMatch(home, /fetch\(|data\??\.profiles/);
+  assert.match(home, /fictional examples, not members/);
 });
 
 test("auth emails are server-sent, enumeration-safe and rate-limited", async () => {
