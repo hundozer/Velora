@@ -59,3 +59,42 @@ test("the filter sentence opens a sheet and filters stay in the URL", async ({ p
   await expect(page).toHaveURL(/q=lena/);
   await expect(page.getByRole("region", { name: "Earlier today" })).toHaveCount(0);
 });
+
+for (const width of [375, 390, 1440]) {
+  test(`grouped interests preserve selections and the five-interest limit at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/people?view=everyone");
+    await page.getByRole("button", { name: "everyone", exact: true }).click();
+    const sheet = page.getByRole("dialog", { name: "Who to show" });
+    await sheet.getByRole("radio", { name: "Women", exact: true }).click();
+    const interests = sheet.getByRole("region", { name: "Into", exact: true });
+    for (const category of ["Connection", "Play", "Couples & groups", "Power & kink", "Sensation", "Scene & social"]) {
+      await expect(interests.getByRole("group", { name: category, exact: true })).toBeAttached();
+    }
+    await interests.getByRole("heading", { name: "Into", exact: true }).evaluate((element) => element.scrollIntoView({ block: "start" }));
+    await page.screenshot({ path: `/tmp/intimo-filter-${width}.png` });
+    for (const label of ["Dating", "Friends with benefits", "Casual encounters", "Flirting & sexting", "Slow burn"]) {
+      await interests.getByRole("button", { name: label, exact: true }).click();
+    }
+    await expect(interests.getByRole("status")).toHaveText("5 of 5 selected");
+    const roleplay = interests.getByRole("button", { name: "Roleplay", exact: true });
+    await expect(roleplay).toBeDisabled();
+    await interests.getByRole("button", { name: "Dating", exact: true }).click();
+    await expect(roleplay).toBeEnabled();
+    await roleplay.click();
+    await expect(roleplay).toHaveAttribute("aria-pressed", "true");
+    await expect(sheet.getByRole("button", { name: "Show people", exact: true })).toBeInViewport();
+    expect(await sheet.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+    await sheet.getByRole("button", { name: "Show people", exact: true }).click();
+    await expect(page).toHaveURL(/who=WOMEN/);
+    await expect(page).toHaveURL(/roleplay/);
+    await page.getByRole("button", { name: "women", exact: true }).click();
+    await expect(roleplay).toHaveAttribute("aria-pressed", "true");
+    await interests.getByRole("button", { name: "Clear interests", exact: true }).click();
+    await expect(interests.getByRole("status")).toHaveText("0 of 5 selected");
+    await expect(sheet.getByRole("radio", { name: /^Women/ })).toHaveAttribute("aria-checked", "true");
+    await expect(roleplay).toBeEnabled();
+    await page.keyboard.press("Escape");
+    await expect(sheet).toHaveCount(0);
+  });
+}
