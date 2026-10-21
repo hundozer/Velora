@@ -179,7 +179,7 @@ export default function TonightPage() {
         <div aria-hidden className="absolute -right-24 top-10 -z-10 h-80 w-80 rounded-full bg-velora-copperLight/30 blur-3xl" />
         <header className="flex items-center justify-between px-6 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-10 md:pt-6">
           <Link href="/" className="font-display text-[28px] leading-none text-velora-ink md:invisible">Intimo</Link>
-          <Link href="/tonight/new" className="inline-flex min-h-11 items-center gap-1.5 text-[15px] font-semibold text-velora-paper"><Plus className="h-4 w-4" aria-hidden />Invite</Link>
+          <Link href="/tonight/new" className="inline-flex min-h-11 items-center gap-1.5 text-[15px] font-semibold text-velora-ink"><Plus className="h-4 w-4" aria-hidden />Invite</Link>
         </header>
         <div className="px-6 pb-10 pt-8 sm:px-10">
           <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-velora-copperInk">{now ? openingLine(now) : "Prague, tonight"}</p>
@@ -203,7 +203,7 @@ export default function TonightPage() {
                     <span className="block truncate text-[14px] text-velora-muted">{plan.authorName} · until {clock(plan.expiresAt)}</span>
                   </span>
                   {plan.canReply
-                    ? <Link href={replyHref(plan)} className="min-h-11 py-2 text-[15px] font-semibold text-velora-paper underline underline-offset-4">Reply</Link>
+                    ? <Link href={replyHref(plan)} className="min-h-11 py-2 text-[15px] font-semibold text-velora-ink underline underline-offset-4">Reply</Link>
                     : <span className="max-w-[7.5rem] text-right text-[13px] leading-tight text-velora-muted">{shortAudience(plan.audience)}</span>}
                 </li>
               ))}
