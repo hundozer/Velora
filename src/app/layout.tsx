@@ -15,7 +15,7 @@ import { DiscreetMode } from "@/components/privacy/DiscreetMode";
 export const metadata: Metadata = {
   title: "Intimo | Prague's sex-positive community",
   description:
-    "Kinky. Curious. Welcome. A free sex-positive community for adults in Prague. Find your people, share your desires and keep your boundaries.",
+    "Rope, roleplay, open relationships. Say what turns you on and what is off limits. Intimo is Prague's free kink and sex-positive community for adults.",
   metadataBase: new URL("https://intimo.live"),
   applicationName: "Intimo",
   appleWebApp: { capable: true, title: "Intimo", statusBarStyle: "black-translucent" },
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: "Intimo — Kinky. Curious. Welcome.",
-    description: "Prague's sex-positive community. Different desires, shared respect. Free to join. Strictly 18+.",
+    description: "Kink, curiosity and consenting adults in Prague. Your yes. Your no. Free to join. Strictly 18+.",
     url: "https://intimo.live",
     siteName: "Intimo",
     type: "website",

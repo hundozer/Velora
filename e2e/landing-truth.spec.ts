@@ -20,7 +20,7 @@ for (const width of [375, 390, 1440]) {
     await yes.click();
     await expect(dialog).toHaveCount(0);
     await expect(page.getByRole("heading", { level: 1, name: "Kinky. Curious. Welcome." })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Find your people" })).toHaveAttribute("href", "/register");
+    await expect(page.getByRole("link", { name: "Join Intimo", exact: true }).first()).toHaveAttribute("href", "/register");
     await expect(page.getByLabel("Everyone is welcome")).toContainText("Kink-curious.");
     await expect(page.getByText("Example plan", { exact: true }).first()).toBeVisible();
     await expect(page.locator("body")).not.toContainText("ends in 5 h");

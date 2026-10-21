@@ -39,7 +39,7 @@ function LoginForm() {
   };
 
   return (
-    <AuthShell title="Welcome back" subtitle="Sign in to Intimo" footer={<>New here? <Link href="/register" className="font-semibold text-velora-gold hover:underline">Create an account</Link></>}>
+    <AuthShell title="Back for more?" subtitle="Sign in to Intimo." footer={<>New here? <Link href="/register" className="font-semibold text-velora-gold hover:underline">Create an account</Link></>}>
       <form onSubmit={signIn} className="space-y-4" noValidate>
         <AuthField id="email" label="Email" type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <AuthField id="password" label="Password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />

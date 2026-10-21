@@ -51,7 +51,7 @@ test("an invitation is written as a sentence and sent with explicit start and en
     return r.fulfill({ json: { plans: [] } });
   });
   await page.goto("/tonight/new");
-  await page.getByPlaceholder("have a quiet drink").fill("have a quiet drink");
+  await page.getByPlaceholder("talk kink over a drink").fill("have a quiet drink");
   await page.getByLabel("Starts at").selectOption("22:00");
   await page.getByLabel("Ends at").selectOption("01:00");
   await expect(page.getByText(/It disappears at 01:00/)).toBeVisible();

@@ -22,7 +22,7 @@ export const Footer: React.FC = () => {
       <div className="mx-auto flex max-w-7xl flex-col gap-8 px-5 py-12 sm:px-8 md:flex-row md:items-end md:justify-between">
         <div>
           <Link href="/" className="font-display text-4xl leading-none text-velora-ink">Intimo</Link>
-          <p className="mt-3 max-w-sm text-base text-velora-ink2">Prague&apos;s sex-positive community. Different desires, shared respect. Strictly 18+.</p>
+          <p className="mt-3 max-w-sm text-base text-velora-ink2">Kink, curiosity and consenting adults in Prague. Your yes. Your no. Strictly 18+.</p>
         </div>
         <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-3 text-base text-velora-ink2">
           {LINKS.map(([label, href]) => <Link key={href} href={href} className="hover:text-velora-ink">{label}</Link>)}

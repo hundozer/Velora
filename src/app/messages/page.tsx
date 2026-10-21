@@ -106,7 +106,7 @@ function MessagesContent() {
     return (
       <div className="mx-auto max-w-2xl px-5 py-12">
         <h1 className="font-display text-[44px] leading-none text-velora-ink">Messages</h1>
-        <p className="mt-4 text-[17px] text-velora-ink2">No conversations yet. Open someone&apos;s portrait in People and begin a conversation.</p>
+        <p className="mt-4 text-[17px] text-velora-ink2">Curious about someone? Open their profile in People and say hello.</p>
         <Link href="/people" className="mt-6 inline-flex min-h-11 items-center text-[16px] font-semibold text-velora-ink underline underline-offset-4">Go to People</Link>
       </div>
     );

@@ -49,6 +49,10 @@ typography. The landing leads with “Kinky. Curious. Welcome.” and makes cons
 Carry the same tokens through registration, onboarding, member screens, settings and moderation. Keep photo
 overlays readable, forms clearly outlined and error states distinct. No neon, no swipe decks.
 
+Speak like people who can talk openly about kink: direct, warm and specific. Name desire, curiosity and hard
+limits without treating adventurousness as a requirement. Avoid product pitches, conversion promises and
+sign-up time claims. Keep consent, safety, privacy settings and account instructions plain and precise.
+
 ## Not in scope until density exists
 Generic feed, chat rooms, groups/forums, blogs, livestreaming, video calls, webcams, creator monetisation,
 AI features, premium tiers. (Order: `ROADMAP.md`.)

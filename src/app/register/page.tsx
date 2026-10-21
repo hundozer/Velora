@@ -26,7 +26,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthShell title="Join Intimo" subtitle="Free and private. 18+ only." footer={<>Already a member? <Link href="/login" className="font-semibold text-velora-gold">Sign in</Link></>}>
+    <AuthShell title="Come as you are." subtitle="Kinky, curious or still figuring it out. Free to join. Adults only." footer={<>Already a member? <Link href="/login" className="font-semibold text-velora-gold">Sign in</Link></>}>
       <form onSubmit={register} className="space-y-5" noValidate>
         <AuthField id="email" label="Email" type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <div className="space-y-2">
