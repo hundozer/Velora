@@ -55,7 +55,7 @@ export function AppOnThisDevice() {
       {permission !== "unsupported" && (
         <div className="space-y-1">
           {permission === "granted" ? (
-            <p className="flex items-center gap-2 text-xs text-emerald-700"><Bell className="h-3.5 w-3.5" aria-hidden />Notifications allowed on this device. They never show message text or names.</p>
+            <p className="flex items-center gap-2 text-xs text-velora-success"><Bell className="h-3.5 w-3.5" aria-hidden />Notifications allowed on this device. They never show message text or names.</p>
           ) : permission === "denied" ? (
             <p className="text-xs text-velora-textMuted">Notifications are blocked in your browser settings.</p>
           ) : (

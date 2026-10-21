@@ -13,9 +13,9 @@ import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistr
 import { DiscreetMode } from "@/components/privacy/DiscreetMode";
 
 export const metadata: Metadata = {
-  title: "Intimo | Prague's private, sex-positive network",
+  title: "Intimo | Prague's sex-positive community",
   description:
-    "Intimo is a free, members-only network for adults in Prague: share your desires and boundaries, see who's out tonight, and keep private photos for people you choose.",
+    "Kinky. Curious. Welcome. A free sex-positive community for adults in Prague. Find your people, share your desires and keep your boundaries.",
   metadataBase: new URL("https://intimo.live"),
   applicationName: "Intimo",
   appleWebApp: { capable: true, title: "Intimo", statusBarStyle: "black-translucent" },
@@ -29,8 +29,8 @@ export const metadata: Metadata = {
     "intimo live",
   ],
   openGraph: {
-    title: "Intimo — Prague's private, sex-positive network",
-    description: "Free and members-only. Desires, boundaries, plans for tonight and the Prague scene.",
+    title: "Intimo — Kinky. Curious. Welcome.",
+    description: "Prague's sex-positive community. Different desires, shared respect. Free to join. Strictly 18+.",
     url: "https://intimo.live",
     siteName: "Intimo",
     type: "website",
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#F4F0E8",
+  themeColor: "#191C20",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",

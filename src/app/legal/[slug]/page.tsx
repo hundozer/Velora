@@ -19,7 +19,7 @@ export default function LegalDraftPage({ params }: { params: { slug: string } })
   const policy = POLICIES[params.slug];
   if (!policy) notFound();
   return <main className="max-w-3xl mx-auto px-4 py-12 space-y-8">
-    <div><h1 className="font-serif font-bold text-ink text-5xl leading-[1.02] sm:text-6xl">{policy.title}</h1><p className="mt-2 text-xs text-velora-textMuted">Intimo • contact@intimo.live • Last updated: 2026-08-07</p></div>
+    <div><h1 className="font-display font-bold text-ink text-5xl leading-[1.02] sm:text-6xl">{policy.title}</h1><p className="mt-2 text-xs text-velora-textMuted">Intimo • contact@intimo.live • Last updated: 2026-08-07</p></div>
     {policy.sections.map(([title, body]) => <section key={title} className="space-y-2"><h2 className="text-lg font-bold text-velora-gold">{title}</h2><p className="text-sm leading-7 text-velora-textSecondary">{body}</p></section>)}
     <Link href="/settings" className="text-sm text-velora-gold underline">Open Privacy Center</Link>
   </main>;

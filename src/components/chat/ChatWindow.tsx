@@ -293,7 +293,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               const isMe = m.senderId === "user-current";
               return (
                 <li key={m.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                  <div className={`max-w-[85%] px-4 py-3 text-[16px] leading-relaxed md:max-w-md ${isMe ? "rounded-[20px] rounded-br-md bg-velora-ink text-velora-paper" : "rounded-[20px] rounded-bl-md bg-velora-sunken text-velora-ink"}`}>
+                  <div className={`max-w-[85%] px-4 py-3 text-[16px] leading-relaxed md:max-w-md ${isMe ? "rounded-[20px] rounded-br-md bg-velora-accent text-velora-paper" : "rounded-[20px] rounded-bl-md bg-velora-sunken text-velora-ink"}`}>
                     {m.mediaUrl && <div className={m.content ? "mb-2" : ""}><ChatPhoto src={m.mediaUrl} mine={isMe} /></div>}
                     {m.content && <p className="whitespace-pre-line">{m.content}</p>}
                   </div>
@@ -348,7 +348,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 className="max-h-32 w-full resize-none bg-transparent py-3 text-[16px] text-velora-ink placeholder:text-velora-muted focus:outline-none"
               />
             </label>
-            <button type="button" onClick={() => void handleSendMessage()} disabled={!inputMessage.trim()} aria-label="Send" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-velora-ink text-velora-paper disabled:opacity-40">
+            <button type="button" onClick={() => void handleSendMessage()} disabled={!inputMessage.trim()} aria-label="Send" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-velora-accent text-velora-paper disabled:opacity-40">
               <ArrowRight className="h-5 w-5" aria-hidden />
             </button>
           </div>

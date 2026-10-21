@@ -128,7 +128,7 @@ export function AlbumManager() {
   return <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
     <header className="border-b border-ink/10 pb-6">
       <p className="text-xs font-semibold uppercase tracking-[.2em] text-velora-accent">Your photos</p>
-      <h1 className="mt-2 font-serif font-semibold text-ink text-5xl leading-[1.02] sm:text-6xl">Photo albums</h1>
+      <h1 className="mt-2 font-display font-semibold text-ink text-5xl leading-[1.02] sm:text-6xl">Photo albums</h1>
       <p className="mt-2 text-velora-textSecondary">Create collections and choose who gets to see them.</p>
     </header>
     {error && <p role="alert" className="mt-5 rounded-xl border border-red-400/40 bg-red-500/10 p-4 text-red-100">{error}</p>}
@@ -162,7 +162,7 @@ export function AlbumManager() {
           </div>
           <fieldset className="mt-5"><legend className="text-sm font-semibold text-ink">What appears in this album?</legend><div className="mt-3 flex flex-wrap gap-2">{TOPICS.map((topic) => { const selectedTopic = active.tags.includes(topic); return <button type="button" key={topic} onClick={() => patchActive({ tags: selectedTopic ? active.tags.filter((item) => item !== topic) : [...active.tags, topic].slice(0, 20) })} className={`rounded-full border px-3 py-2 text-sm ${selectedTopic ? "border-velora-accent bg-velora-accent text-velora-paper" : "border-ink/15 text-ink"}`}>{topic}</button>; })}</div></fieldset>
           <label className="mt-5 flex min-h-11 items-center gap-3 text-sm text-ink"><input type="checkbox" checked={active.reactions_enabled !== false} onChange={(event) => patchActive({ reactions_enabled: event.target.checked })} /> Allow likes</label>
-          <div className="mt-4 flex flex-wrap gap-3"><button disabled={busy} onClick={() => updateAlbum(active)} className="min-h-11 rounded-xl bg-velora-accent px-5 font-bold text-velora-paper">Save album settings</button><button disabled={busy} onClick={() => removeAlbum(active)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-red-400/50 px-5 text-red-700"><Trash2 className="h-4 w-4" />Remove album</button></div>
+          <div className="mt-4 flex flex-wrap gap-3"><button disabled={busy} onClick={() => updateAlbum(active)} className="min-h-11 rounded-xl bg-velora-accent px-5 font-bold text-velora-paper">Save album settings</button><button disabled={busy} onClick={() => removeAlbum(active)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-red-400/50 px-5 text-velora-danger"><Trash2 className="h-4 w-4" />Remove album</button></div>
         </div>
 
         <div className="grid gap-5 xl:grid-cols-[1fr_300px]">

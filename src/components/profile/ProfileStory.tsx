@@ -188,7 +188,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
       <div className="relative">
         {profile.avatarUrl ? (
           <>
-            <Portrait src={profile.avatarUrl} name={name} priority sizes="(min-width: 768px) 672px, 100vw" dominantColor="#2b2420" className="aspect-[4/5] max-h-[62svh] w-full" monogramClassName="text-[8rem]" />
+            <Portrait src={profile.avatarUrl} name={name} priority sizes="(min-width: 768px) 672px, 100vw" dominantColor="#191c20" className="aspect-[4/5] max-h-[62svh] w-full" monogramClassName="text-[8rem]" />
             <div aria-hidden className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-velora-night/70 to-transparent" />
             <TopBar onBack={onBack} backLabel={backLabel} BackIcon={BackIcon} overPhoto menu={memberView && !isOwner ? { open: menuOpen, setOpen: setMenuOpen, favorite, onFavorite: toggleFavorite, onReport: () => { setMenuOpen(false); setReportOpen(true); }, onBlock: block } : undefined} />
           </>
@@ -295,17 +295,17 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
         <div className="mx-auto max-w-2xl">
           {isOwner ? (
             <div className="flex items-center gap-6">
-              <Link href="/settings" className="flex min-h-14 flex-1 items-center justify-center rounded-full bg-velora-ink text-[16px] font-semibold text-velora-paper">Edit profile</Link>
+              <Link href="/settings" className="flex min-h-14 flex-1 items-center justify-center rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper">Edit profile</Link>
               <Link href="/albums/manage" className="min-h-11 text-[16px] text-velora-ink underline underline-offset-4">Albums</Link>
             </div>
           ) : !authenticated || !memberView ? (
-            <button type="button" onClick={() => signIn()} className="flex min-h-14 w-full items-center justify-center rounded-full bg-velora-ink text-[16px] font-semibold text-velora-paper">Sign in to connect</button>
+            <button type="button" onClick={() => signIn()} className="flex min-h-14 w-full items-center justify-center rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper">Sign in to connect</button>
           ) : (
             <>
               {approach?.line && <p className="mb-2 text-[14px] text-velora-ink2">{approach.line}</p>}
               <div className="flex items-center gap-3">
                 {approach?.canWrite !== false ? (
-                  <Link href={`/messages?user=${encodeURIComponent(profile.id)}`} className="flex min-h-14 flex-1 items-center justify-center rounded-full bg-velora-ink text-[16px] font-semibold text-velora-paper hover:bg-black">
+                  <Link href={`/messages?user=${encodeURIComponent(profile.id)}`} className="flex min-h-14 flex-1 items-center justify-center rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper hover:bg-velora-accentHover">
                     {approach?.established ? "Continue the conversation" : "Begin a conversation"}
                   </Link>
                 ) : (
@@ -328,7 +328,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
 type Menu = { open: boolean; setOpen: (open: boolean) => void; favorite: boolean; onFavorite: () => void; onReport: () => void; onBlock: () => void };
 
 function TopBar({ onBack, backLabel, BackIcon, overPhoto = false, menu }: { onBack: () => void; backLabel: string; BackIcon: typeof ArrowDown; overPhoto?: boolean; menu?: Menu }) {
-  const tone = overPhoto ? "text-velora-paper" : "text-velora-ink";
+  const tone = overPhoto ? "text-velora-onPhoto" : "text-velora-ink";
   return (
     <div className={`${overPhoto ? "absolute inset-x-0 top-0" : "relative"} z-10 flex items-center justify-between px-4 pt-2 sm:px-8`}>
       <button type="button" onClick={onBack} className={`inline-flex min-h-11 items-center gap-1.5 text-[16px] font-semibold ${tone}`}><BackIcon className="h-4 w-4" aria-hidden />{backLabel}</button>

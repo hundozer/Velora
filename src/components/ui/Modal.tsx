@@ -84,7 +84,7 @@ export const Modal: React.FC<ModalProps> = ({
             className={`relative w-full ${maxWidthClasses[maxWidth]} glass-panel-gold rounded-3xl p-6 sm:p-8 shadow-2xl shadow-black z-10`}
           >
             <div className="flex items-center justify-between pb-4 border-b border-ink/10 mb-6">
-              {title && <h3 id={titleId} className="text-xl font-semibold tracking-wide text-velora-textPrimary font-serif">{title}</h3>}
+              {title && <h3 id={titleId} className="text-xl font-semibold tracking-wide text-velora-textPrimary font-display">{title}</h3>}
               {showCloseButton && (
                 <button
                   onClick={onClose}

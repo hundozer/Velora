@@ -21,7 +21,7 @@ export function PersonTile({ person, compact = false }: { person: Person; compac
       <div className="space-y-0.5 p-3">
         <p className="flex items-center gap-1 truncate text-sm font-semibold text-velora-textPrimary">
           <span className="truncate">{person.displayName}{person.age ? `, ${person.age}` : ""}</span>
-          {person.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-emerald-700" aria-label="Verified" />}
+          {person.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-velora-success" aria-label="Verified" />}
         </p>
         <p className="truncate text-[11px] text-velora-textMuted">{person.isCoupleProfile ? "Couple" : person.presenceLabel || " "}</p>
         {(person.areaName || person.distance) && (

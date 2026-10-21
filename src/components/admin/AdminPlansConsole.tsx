@@ -27,17 +27,17 @@ export function AdminPlansConsole() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-600">First plans from new members go live straight away and wait here. Remove anything offering paid services, contact details, minors or non-consent.</p>
-      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
-      {plans.length === 0 ? <p className="rounded-xl border bg-white p-5 text-sm text-slate-600">Nothing waiting.</p> : plans.map((plan) => (
-        <article key={plan.id} className="space-y-2 rounded-xl border bg-white p-4">
-          <p className="text-xs text-slate-500">{plan.categoryLabel} · by {plan.author_name} · posted {new Date(plan.created_at).toLocaleString()}</p>
+      <p className="text-sm text-velora-ink2">First plans from new members go live straight away and wait here. Remove anything offering paid services, contact details, minors or non-consent.</p>
+      {error && <p role="alert" className="text-sm text-velora-danger">{error}</p>}
+      {plans.length === 0 ? <p className="rounded-xl border bg-velora-surface p-5 text-sm text-velora-ink2">Nothing waiting.</p> : plans.map((plan) => (
+        <article key={plan.id} className="space-y-2 rounded-xl border bg-velora-surface p-4">
+          <p className="text-xs text-velora-muted">{plan.categoryLabel} · by {plan.author_name} · posted {new Date(plan.created_at).toLocaleString()}</p>
           <h3 className="font-bold">{plan.title}</h3>
-          <p className="whitespace-pre-line text-sm text-slate-700">{plan.text}</p>
-          <input value={reasons[plan.id] || ""} onChange={(event) => setReasons({ ...reasons, [plan.id]: event.target.value })} placeholder="Reason shown to the author if removed (min 10 characters)" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <p className="whitespace-pre-line text-sm text-velora-ink2">{plan.text}</p>
+          <input value={reasons[plan.id] || ""} onChange={(event) => setReasons({ ...reasons, [plan.id]: event.target.value })} placeholder="Reason shown to the author if removed (min 10 characters)" className="w-full rounded-lg border border-velora-control px-3 py-2 text-sm" />
           <div className="flex gap-2">
-            <button onClick={() => decide(plan.id, "APPROVED")} className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white">Approve</button>
-            <button onClick={() => decide(plan.id, "REJECTED")} className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-bold text-red-700">Remove</button>
+            <button onClick={() => decide(plan.id, "APPROVED")} className="rounded-lg bg-velora-accent px-3 py-1.5 text-xs font-bold text-velora-paper">Approve</button>
+            <button onClick={() => decide(plan.id, "REJECTED")} className="rounded-lg border border-velora-danger/40 px-3 py-1.5 text-xs font-bold text-velora-danger">Remove</button>
           </div>
         </article>
       ))}

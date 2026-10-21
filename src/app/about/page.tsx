@@ -12,7 +12,7 @@ export default function AboutPage() {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 text-left">
       <div className="text-center space-y-4">
         <Badge type="verified" label="Intimo Social Philosophy" />
-        <h1 className="font-serif font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">
+        <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">
           A Community Built for <br />
           <span className="gold-gradient-text">Adult Social Discovery</span>
         </h1>
@@ -24,7 +24,7 @@ export default function AboutPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card variant="goldBorder" className="p-8 space-y-4">
           <ShieldCheck className="w-8 h-8 text-velora-gold" />
-          <h2 className="text-4xl font-serif font-bold text-velora-textPrimary">
+          <h2 className="text-4xl font-display font-bold text-velora-textPrimary">
             Authenticity & Verification
           </h2>
           <p className="text-xs text-velora-textSecondary leading-relaxed">
@@ -33,8 +33,8 @@ export default function AboutPage() {
         </Card>
 
         <Card variant="glass" className="p-8 space-y-4">
-          <Lock className="w-8 h-8 text-emerald-700" />
-          <h2 className="text-4xl font-serif font-bold text-velora-textPrimary">
+          <Lock className="w-8 h-8 text-velora-success" />
+          <h2 className="text-4xl font-display font-bold text-velora-textPrimary">
             Discretion & Stealth Controls
           </h2>
           <p className="text-xs text-velora-textSecondary leading-relaxed">

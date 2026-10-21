@@ -19,7 +19,10 @@ for (const width of [375, 390, 1440]) {
     await expect(dialog).toBeVisible();
     await yes.click();
     await expect(dialog).toHaveCount(0);
-    await expect(page.getByText("Illustration · not a live member plan")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Kinky. Curious. Welcome." })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Find your people" })).toHaveAttribute("href", "/register");
+    await expect(page.getByLabel("Everyone is welcome")).toContainText("Kink-curious.");
+    await expect(page.getByText("Example plan", { exact: true }).first()).toBeVisible();
     await expect(page.locator("body")).not.toContainText("ends in 5 h");
     await expect(page.locator("body")).not.toContainText("Online now");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

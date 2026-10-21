@@ -35,10 +35,10 @@ export function AdminSceneConsole() {
     void load();
   }
 
-  const input = "rounded-lg border border-slate-300 px-3 py-2 text-sm";
+  const input = "rounded-lg border border-velora-control px-3 py-2 text-sm";
   return (
     <div className="space-y-6">
-      <form onSubmit={add} className="grid gap-3 rounded-xl border bg-white p-4 sm:grid-cols-2">
+      <form onSubmit={add} className="grid gap-3 rounded-xl border bg-velora-surface p-4 sm:grid-cols-2">
         <h2 className="font-bold sm:col-span-2">Add a listing (published immediately)</h2>
         <input className={input} placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
         <select className={input} value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })}>{SCENE_KINDS.map((kind) => <option key={kind.value} value={kind.value}>{kind.label}</option>)}</select>
@@ -47,16 +47,16 @@ export function AdminSceneConsole() {
         <input className={input} placeholder="Venue" value={form.venueName} onChange={(e) => setForm({ ...form, venueName: e.target.value })} />
         <input className={input} placeholder="https:// link" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} />
         <textarea className={`${input} sm:col-span-2`} placeholder="Short description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-        <button className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white sm:col-span-2">Publish listing</button>
+        <button className="rounded-lg bg-velora-accent px-4 py-2 text-sm font-bold text-velora-paper sm:col-span-2">Publish listing</button>
       </form>
-      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
-      <div className="overflow-x-auto rounded-xl border bg-white">
+      {error && <p role="alert" className="text-sm text-velora-danger">{error}</p>}
+      <div className="overflow-x-auto rounded-xl border bg-velora-surface">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-100"><tr>{["When", "Title", "Organiser", "Status", "Actions"].map((h) => <th key={h} scope="col" className="p-3">{h}</th>)}</tr></thead>
+          <thead className="bg-velora-sunken"><tr>{["When", "Title", "Organiser", "Status", "Actions"].map((h) => <th key={h} scope="col" className="p-3">{h}</th>)}</tr></thead>
           <tbody className="divide-y">{rows.map((row) => (
             <tr key={row.id}>
               <td className="p-3 whitespace-nowrap">{new Date(row.starts_at).toLocaleString()}</td>
-              <td className="p-3"><a href={row.url} target="_blank" rel="noopener noreferrer" className="underline">{row.title}</a><p className="text-xs text-slate-500">{row.kind}{row.venue_name ? ` · ${row.venue_name}` : ""}</p></td>
+              <td className="p-3"><a href={row.url} target="_blank" rel="noopener noreferrer" className="underline">{row.title}</a><p className="text-xs text-velora-muted">{row.kind}{row.venue_name ? ` · ${row.venue_name}` : ""}</p></td>
               <td className="p-3">{row.organiser}</td>
               <td className="p-3">{row.status}</td>
               <td className="p-3"><div className="flex gap-1">

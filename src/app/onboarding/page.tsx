@@ -122,7 +122,7 @@ export default function OnboardingPage() {
     }
   }
 
-  const errorLine = error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-5 py-4 text-base text-red-700">{error}</p> : null;
+  const errorLine = error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-5 py-4 text-base text-velora-danger">{error}</p> : null;
 
   if (step === "kind") return (
     <FlowScreen {...screen} title="Who's joining?">

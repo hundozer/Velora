@@ -31,7 +31,7 @@ export default function RegisterPage() {
         <AuthField id="email" label="Email" type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <div className="space-y-2">
           <AuthField id="password" label="Password" type="password" autoComplete="new-password" required minLength={MIN_PASSWORD} value={password} onChange={(e) => setPassword(e.target.value)} aria-describedby="password-hint" />
-          <p id="password-hint" className={`text-base ${password.length >= MIN_PASSWORD ? "text-emerald-700" : "text-velora-textMuted"}`}>{password.length >= MIN_PASSWORD ? "Good" : `${MIN_PASSWORD}+ characters`}</p>
+          <p id="password-hint" className={`text-base ${password.length >= MIN_PASSWORD ? "text-velora-success" : "text-velora-textMuted"}`}>{password.length >= MIN_PASSWORD ? "Good" : `${MIN_PASSWORD}+ characters`}</p>
         </div>
         <label className={`flex w-full cursor-pointer items-center gap-4 rounded-3xl border-2 px-5 py-4 text-base transition ${agreed ? "border-velora-accent bg-velora-accent/[0.06] text-velora-ink" : "border-velora-line bg-velora-surface text-velora-ink2"}`}>
           <input type="checkbox" className="peer sr-only" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />

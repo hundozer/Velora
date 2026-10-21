@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
-// Editorial design system: oversized surfaces, display serif headlines,
+// Shared community design: oversized surfaces, bold sans-serif headlines,
 // numbered chapters and one dominant action per block.
 
 export function Eyebrow({ children }: { children: React.ReactNode }) {
@@ -104,17 +104,17 @@ export function OversizedChoiceCard({ href, eyebrow, title, body, visual, cta }:
 }
 
 export function PrimaryAction({ href, children }: { href: string; children: React.ReactNode }) {
-  return <a href={href} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-velora-accent px-8 text-base font-semibold text-velora-paper transition hover:bg-velora-accentHover">{children}</a>;
+  return <a href={href} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-velora-accent px-8 text-base font-semibold text-velora-paper transition hover:bg-velora-accentHover">{children}</a>;
 }
 
 export function SecondaryAction({ href, children }: { href: string; children: React.ReactNode }) {
-  return <Link href={href} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full border border-velora-ink/15 px-8 text-base font-semibold text-velora-ink transition hover:border-velora-ink/40">{children}</Link>;
+  return <Link href={href} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl border border-velora-ink/15 px-8 text-base font-semibold text-velora-ink transition hover:border-velora-ink/40">{children}</Link>;
 }
 
 /** Closing invitation at the end of a story. */
 export function ContextualCTA({ title, body, action }: { title: React.ReactNode; body?: React.ReactNode; action: React.ReactNode }) {
   return (
-    <div className="rounded-card bg-velora-ink px-7 py-14 text-center text-velora-paper sm:px-16 sm:py-20">
+    <div className="rounded-card bg-velora-accent px-7 py-14 text-center text-velora-paper sm:px-16 sm:py-20">
       <h2 className="mx-auto max-w-2xl font-display text-5xl leading-[1.02] sm:text-6xl">{title}</h2>
       {body && <p className="mx-auto mt-5 max-w-lg text-lg text-velora-paper/75">{body}</p>}
       <div className="mt-9 flex justify-center">{action}</div>

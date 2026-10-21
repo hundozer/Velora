@@ -60,7 +60,7 @@ async function fetchIntroductions(): Promise<Person[]> {
 
 function ModeSwitch({ view, onChange, dark }: { view: View; onChange: (view: View) => void; dark: boolean }) {
   const item = (value: View, label: string) => (
-    <button type="button" aria-pressed={view === value} onClick={() => onChange(value)} className={`min-h-11 border-b-2 pb-0.5 text-[15px] transition-colors ${view === value ? `border-velora-copper font-semibold ${dark ? "text-velora-paper md:text-velora-ink" : "text-velora-ink"}` : `border-transparent ${dark ? "text-velora-paper/75 hover:text-velora-paper md:text-velora-muted md:hover:text-velora-ink" : "text-velora-muted hover:text-velora-ink"}`}`}>{label}</button>
+    <button type="button" aria-pressed={view === value} onClick={() => onChange(value)} className={`min-h-11 border-b-2 pb-0.5 text-[15px] transition-colors ${view === value ? `border-velora-copper font-semibold ${dark ? "text-velora-onPhoto md:text-velora-ink" : "text-velora-ink"}` : `border-transparent ${dark ? "text-velora-onPhoto/75 hover:text-velora-onPhoto md:text-velora-muted md:hover:text-velora-ink" : "text-velora-muted hover:text-velora-ink"}`}`}>{label}</button>
   );
   return <nav aria-label="People view" className="flex items-center gap-5">{item("introductions", "Introductions")}{item("everyone", "Everyone")}</nav>;
 }
@@ -191,7 +191,7 @@ export function MemberPeople() {
   return (
     <div className="min-h-screen bg-velora-surface pb-24 md:pb-16">
       <header className={`z-20 mx-auto flex ${showIntroductions ? "max-w-5xl" : "max-w-2xl"} items-center justify-between px-5 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-8 ${darkHeader ? "absolute inset-x-0 top-0 md:static md:pt-6" : "pt-4 md:pt-8"}`}>
-        <Link href="/" className={`font-display text-[28px] leading-none md:invisible ${darkHeader ? "text-velora-paper md:text-velora-ink" : "text-velora-ink"}`}>Intimo</Link>
+        <Link href="/" className={`font-display text-[28px] leading-none md:invisible ${darkHeader ? "text-velora-onPhoto md:text-velora-ink" : "text-velora-ink"}`}>Intimo</Link>
         <ModeSwitch view={view} onChange={switchView} dark={darkHeader} />
       </header>
 

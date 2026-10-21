@@ -44,9 +44,10 @@ A capability that does not strengthen this loop does not ship in Phase 1.
 8. **Fewer, finished capabilities.**
 
 ## Look and feel
-A private late-night Prague club: dark charcoal and warm neutrals with the **existing Intimo gold** as the primary
-accent, editorial typography and intimate editorial photography. Attraction through atmosphere, not explicit anatomy.
-No neon, no dashboards, no swipe decks.
+A welcoming, sex-positive and kinky Prague community: graphite backgrounds, ice-blue accents and bold sans-serif
+typography. The landing leads with “Kinky. Curious. Welcome.” and makes consent and boundaries explicit.
+Carry the same tokens through registration, onboarding, member screens, settings and moderation. Keep photo
+overlays readable, forms clearly outlined and error states distinct. No neon, no swipe decks.
 
 ## Not in scope until density exists
 Generic feed, chat rooms, groups/forums, blogs, livestreaming, video calls, webcams, creator monetisation,

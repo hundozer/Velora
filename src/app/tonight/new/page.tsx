@@ -133,7 +133,7 @@ export default function NewInvitationPage() {
         <p className="mt-6 text-[16px] text-velora-ink2">Kind of evening: <Blank onClick={() => setSheet("kind")} label="Kind of evening">{PLAN_CATEGORIES.find((item) => item.value === category)?.label.toLowerCase()}</Blank></p>
 
         {error && <p role="alert" className="mt-6 border-l-2 border-velora-crimson pl-4 text-[15px] text-velora-crimson">{error}</p>}
-        <button type="submit" disabled={!valid || submitting} className="mt-8 min-h-14 w-full rounded-full bg-velora-ink text-[16px] font-semibold text-velora-paper disabled:opacity-40">{submitting ? "Sending…" : "Send the invitation"}</button>
+        <button type="submit" disabled={!valid || submitting} className="mt-8 min-h-14 w-full rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper disabled:opacity-40">{submitting ? "Sending…" : "Send the invitation"}</button>
         {!valid && !timeProblem && <p className="mt-2 text-center text-[14px] text-velora-muted">Say what you&apos;d like to do and add a few words.</p>}
       </form>
 
@@ -162,7 +162,7 @@ export default function NewInvitationPage() {
         </div>
       </Sheet>
 
-      <Sheet open={sheet === "welcome"} onClose={() => setSheet(null)} label="Who may reply" footer={<button type="button" onClick={() => setSheet(null)} className="min-h-14 w-full rounded-full bg-velora-ink text-[16px] font-semibold text-velora-paper">Done</button>}>
+      <Sheet open={sheet === "welcome"} onClose={() => setSheet(null)} label="Who may reply" footer={<button type="button" onClick={() => setSheet(null)} className="min-h-14 w-full rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper">Done</button>}>
         <h2 className="font-display text-[40px] leading-none text-velora-ink">I&apos;d welcome</h2>
         <p className="mt-2 text-[14px] text-velora-muted">Choose none for everyone. Only people who fit can reply — it&apos;s checked when they send.</p>
         <div className="mt-4">

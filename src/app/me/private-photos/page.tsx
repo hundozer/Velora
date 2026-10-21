@@ -34,10 +34,10 @@ export default function PrivatePhotosPage() {
       <Link href="/me" className="inline-flex items-center gap-1 text-xs text-velora-textMuted hover:text-velora-textPrimary"><ArrowLeft className="h-3.5 w-3.5" aria-hidden />Me</Link>
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">Private photos</p>
-        <h1 className="font-serif font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">Who can see them</h1>
+        <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">Who can see them</h1>
         <p className="mt-1 text-sm text-velora-textSecondary">Photos in your private albums are visible only to people you approve here. Stopping access takes effect immediately.</p>
       </header>
-      {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-700">{error}</p>}
+      {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-velora-danger">{error}</p>}
       {!data ? <p className="text-sm text-velora-textMuted">Loading…</p> : (
         <>
           <section className="space-y-3">
@@ -60,7 +60,7 @@ export default function PrivatePhotosPage() {
                 <div className="w-24 shrink-0"><PersonTile person={entry.viewer} /></div>
                 <div className="flex-1 space-y-2">
                   <p className="text-xs text-velora-textMuted">{entry.grantType === "ONCE" && entry.expiresAt ? `Until ${new Date(entry.expiresAt).toLocaleString()}` : "Until you stop sharing"}</p>
-                  <button type="button" onClick={() => decide(entry.viewer.id, "REVOKE")} className={`${button} border border-red-400/40 text-red-700`}>Stop sharing</button>
+                  <button type="button" onClick={() => decide(entry.viewer.id, "REVOKE")} className={`${button} border border-velora-danger/40 text-velora-danger`}>Stop sharing</button>
                 </div>
               </div>
             ))}

@@ -3,10 +3,9 @@
 import React from "react";
 import Link from "next/link";
 import { ScenePreview } from "@/components/scene/ScenePreview";
-import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
-import { BadgeCheck, EyeOff, Lock, Mail, MapPin, ShieldCheck } from "lucide-react";
-import { ContextualCTA, EditorialHero, NumberedChapter, OversizedChoiceCard, PrimaryAction, SecondaryAction, SectionTitle, Showcase, StorySection } from "@/components/editorial/Editorial";
+import { ArrowUpRight, Asterisk, BadgeCheck, EyeOff, Lock, Mail, MapPin, ShieldCheck } from "lucide-react";
+import { ContextualCTA, NumberedChapter, OversizedChoiceCard, PrimaryAction, SecondaryAction, SectionTitle, Showcase, StorySection } from "@/components/editorial/Editorial";
 import { MemberActivityFeed } from "@/components/community/MemberActivityFeed";
 
 interface PublicProfile {
@@ -75,23 +74,30 @@ export function PublicCommunityHome() {
 
   return (
     <div>
-      <EditorialHero
-        eyebrow="Prague · 18+ · Members only"
-        title={<>Find your people.<br /><em className="text-velora-accent">Openly, privately.</em></>}
-        lead="A private network for singles and couples in Prague who know what they want — and say so."
-        actions={<><PrimaryAction href="/auth/login?screen_hint=signup">Join free</PrimaryAction><SecondaryAction href="#how">See how it works</SecondaryAction></>}
-        note="Free · No exact locations · Leave anytime"
-        media={
-          <div className="relative aspect-[4/5] overflow-hidden rounded-card shadow-card sm:aspect-[5/4] lg:aspect-[4/5]">
-            <Image src="/marketing/intimo-community-hero.jpg" alt="Adults talking over drinks in a candle-lit Prague bar" fill priority sizes="(max-width: 1024px) 100vw, 45vw" className="object-cover" style={{ objectPosition: "72% center" }} />
-            <div className="absolute inset-x-4 bottom-4 rounded-2xl bg-velora-surface/95 p-4 shadow-card backdrop-blur sm:inset-x-6 sm:bottom-6 sm:p-5">
-              <p className="mb-1 text-xs text-velora-muted">Illustration · not a live member plan</p>
-              <p className="text-sm font-semibold text-velora-ink">An example of a Tonight plan</p>
-              <p className="mt-1 text-sm text-velora-ink2">“Drinks tonight, see where it goes.”</p>
-            </div>
+      <section className="mx-auto grid max-w-7xl items-center gap-12 px-5 pb-14 pt-10 sm:px-8 lg:grid-cols-[1.1fr_1fr] lg:gap-20 lg:py-20" aria-labelledby="community-welcome">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-velora-muted">Prague · Sex-positive · 18+</p>
+          <h1 id="community-welcome" className="mt-6 font-display text-[clamp(3.5rem,8vw,7rem)] leading-[0.98]">Kinky.<br />Curious.<br /><span className="text-velora-accent">Welcome.</span></h1>
+          <p className="mt-7 max-w-lg text-lg leading-relaxed text-velora-ink2 sm:text-xl">A place for adults to be open about desire. Find your people. Explore your kinks. Keep your boundaries.</p>
+          <div className="mt-8 flex flex-wrap items-center gap-5">
+            <PrimaryAction href="/register">Find your people <ArrowUpRight className="h-5 w-5" aria-hidden /></PrimaryAction>
+            <p className="text-sm leading-relaxed text-velora-muted">Free to join.<br />No need to fit a mould.</p>
           </div>
-        }
-      />
+          <a href="#how" className="mt-6 inline-flex min-h-11 items-center text-sm font-semibold text-velora-accent underline-offset-4 hover:underline">Explore Intimo ↓</a>
+        </div>
+        <div className="mx-2 rounded-xl bg-velora-accent p-6 text-velora-paper sm:mx-4 sm:rotate-2 sm:p-8" aria-label="Everyone is welcome">
+          <div className="flex items-center justify-between border-b border-velora-paper/40 pb-4"><p className="text-xs font-bold uppercase tracking-[0.15em]">Come as you are</p><Asterisk className="h-7 w-7" aria-hidden /></div>
+          <div className="relative py-7 sm:py-9">
+            <ul className="space-y-1 font-display text-[clamp(2rem,5vw,4rem)] leading-[1.1]"><li>Singles.</li><li>Couples.</li><li>Queer.</li><li>Kink-curious.</li><li className="italic">You.</li></ul>
+            <p className="mt-6 inline-block -rotate-6 rounded-md bg-velora-paper px-5 py-4 text-xs font-bold uppercase leading-relaxed tracking-wider text-velora-ink sm:absolute sm:-right-5 sm:bottom-8 sm:mt-0">Ask first.<br />Respect always.</p>
+          </div>
+          <div className="flex items-center justify-between border-t border-velora-paper/40 pt-5"><p className="text-sm leading-relaxed">Different desires.<br />Shared respect.</p><ArrowUpRight className="h-9 w-9" aria-hidden /></div>
+        </div>
+      </section>
+      <div className="border-y border-velora-line"><div className="mx-auto flex max-w-7xl flex-wrap gap-x-7 gap-y-3 px-5 py-6 text-sm text-velora-ink2 sm:px-8"><span>Rope curious?</span><span>Leather lover?</span><span>Open relationship?</span><span>Still figuring it out?</span><strong className="text-velora-accent">There&apos;s room for you.</strong></div></div>
+      <div className="mx-auto grid max-w-7xl gap-8 px-5 py-12 sm:px-8 md:grid-cols-3">
+        {[["01", "Say what you're into.", "Desires and hard limits belong in the conversation."], ["02", "Meet on your terms.", "A date, a conversation, or a plan for tonight."], ["03", "Make consent clear.", "Your boundaries. Your photos. Your choice."]].map(([number, title, body]) => <div key={number}><span className="text-xs font-semibold text-velora-accent">{number}</span><h2 className="mt-3 text-xl font-bold tracking-tight">{title}</h2><p className="mt-2 text-sm leading-relaxed text-velora-ink2">{body}</p></div>)}
+      </div>
 
       <StorySection tone="sunken" id="journeys">
         <SectionTitle eyebrow="Two ways in" title={<>Meet someone,<br />or go out tonight.</>} />
@@ -130,7 +136,7 @@ export function PublicCommunityHome() {
       </StorySection>
 
       <div className="mx-auto max-w-7xl space-y-16 px-5 py-16 sm:px-8">
-        {data?.demoContentPresent && <div role="status" className="rounded-2xl bg-sky-100 px-5 py-4 text-sm text-sky-900"><strong>Staging demo content:</strong> profiles labeled Demo are fictional test records.</div>}
+        {data?.demoContentPresent && <div role="status" className="rounded-2xl bg-velora-accent/10 px-5 py-4 text-sm text-velora-accent"><strong>Staging demo content:</strong> profiles labeled Demo are fictional test records.</div>}
         <ScenePreview />
         {Boolean(data?.profiles.length) && !loading && (
           <section aria-labelledby="new-members">
@@ -141,7 +147,7 @@ export function PublicCommunityHome() {
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {data!.profiles.slice(0, 4).map((profile) => (
                 <Link key={profile.id} href={`/profile/${profile.id}`} className="rounded-card border border-velora-line bg-velora-surface p-7 transition hover:-translate-y-0.5 hover:border-velora-accent/40">
-                  <div className="flex items-center gap-3"><Initials name={profile.displayName} /><div className="min-w-0"><p className="flex items-center gap-1.5 truncate text-lg font-semibold text-velora-ink">{profile.displayName}{profile.verified && <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-700" aria-label="Verified" />}</p><p className="text-sm text-velora-muted">{profile.profileType === "COUPLE" ? "Couple" : "Individual"}{profile.age ? ` · ${profile.age}` : ""}</p></div></div>
+                  <div className="flex items-center gap-3"><Initials name={profile.displayName} /><div className="min-w-0"><p className="flex items-center gap-1.5 truncate text-lg font-semibold text-velora-ink">{profile.displayName}{profile.verified && <BadgeCheck className="h-4 w-4 shrink-0 text-velora-success" aria-label="Verified" />}</p><p className="text-sm text-velora-muted">{profile.profileType === "COUPLE" ? "Couple" : "Individual"}{profile.age ? ` · ${profile.age}` : ""}</p></div></div>
                   <p className="mt-5 line-clamp-2 text-base text-velora-ink2">{profile.headline || profile.bio || "New to Intimo."}</p>
                 </Link>
               ))}
@@ -203,7 +209,7 @@ function PeopleDemo() {
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-velora-accent/10 font-display text-xl text-velora-accent">{name[0]}</div>
           <p className="mt-4 text-base font-semibold text-velora-ink">{name}</p>
           <p className="text-sm text-velora-muted">{meta}</p>
-          <p className="mt-3 text-xs font-semibold text-emerald-700">{presence}</p>
+          <p className="mt-3 text-xs font-semibold text-velora-success">{presence}</p>
         </div>
       ))}
     </div>

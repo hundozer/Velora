@@ -3,10 +3,10 @@
 import React, { useState } from "react";
 
 const TONES = [
-  { bg: "rgb(231 220 205)", fg: "rgb(var(--copper-ink))" },
-  { bg: "rgb(221 227 220)", fg: "rgb(var(--sage))" },
-  { bg: "rgb(var(--ink))", fg: "rgb(var(--copper-light))" },
-  { bg: "rgb(237 230 218)", fg: "rgb(var(--ink-2))" },
+  { bg: "rgb(var(--surface))", fg: "rgb(var(--accent))" },
+  { bg: "rgb(var(--sunken))", fg: "rgb(var(--success))" },
+  { bg: "rgb(var(--blush))", fg: "rgb(var(--accent-hover))" },
+  { bg: "rgb(var(--paper))", fg: "rgb(var(--ink-2))" },
 ];
 
 /** Initials for the photo-free portrait: "Tomáš & Nina" -> "T&N", "Lena" -> "L". */

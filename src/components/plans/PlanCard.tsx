@@ -33,7 +33,7 @@ export function PlanCard({ plan, onEnd, onReport }: { plan: Plan; onEnd?: (id: s
           plan.live && onEnd && <button type="button" onClick={() => onEnd(plan.id)} className="min-h-11 text-[15px] text-velora-ink underline underline-offset-4">End it now</button>
         ) : (
           <>
-            {plan.canReply !== false && <Link href={replyHref(plan)} className="inline-flex min-h-11 items-center rounded-full bg-velora-ink px-5 text-[15px] font-semibold text-velora-paper">Reply to {plan.authorName}</Link>}
+            {plan.canReply !== false && <Link href={replyHref(plan)} className="inline-flex min-h-11 items-center rounded-full bg-velora-accent px-5 text-[15px] font-semibold text-velora-paper">Reply to {plan.authorName}</Link>}
             {onReport && <button type="button" onClick={() => onReport(plan)} className="min-h-11 text-[14px] text-velora-muted underline underline-offset-4">Report this plan</button>}
           </>
         )}

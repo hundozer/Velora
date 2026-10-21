@@ -18,7 +18,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyles =
-    "inline-flex items-center justify-center font-medium transition-all duration-300 rounded-full focus:outline-none focus:ring-2 focus:ring-velora-gold/50 disabled:opacity-50 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center font-medium transition-all duration-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-velora-gold/50 disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variants = {
     gold: "bg-gold-gradient text-velora-bg hover:brightness-110 shadow-gold-glow border border-velora-amber/40 active:scale-[0.98]",
@@ -27,7 +27,7 @@ export const Button: React.FC<ButtonProps> = ({
     outline:
       "bg-transparent text-velora-gold border border-velora-gold/50 hover:bg-velora-gold/10 hover:border-velora-gold active:scale-[0.98]",
     danger:
-      "bg-velora-crimson/80 text-ink hover:bg-velora-crimson border border-red-500/30 active:scale-[0.98]",
+      "bg-velora-crimson text-velora-paper hover:brightness-110 border border-velora-crimson/30 active:scale-[0.98]",
     ghost:
       "bg-transparent text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 active:scale-[0.98]",
   };
