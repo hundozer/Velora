@@ -26,7 +26,7 @@ for (const width of [375, 390, 1440]) {
     await expect(page.locator("body")).not.toContainText("ends in 5 h");
     await expect(page.locator("body")).not.toContainText("Online now");
     await expect(page.locator("body")).toContainText("Looking for sex, a date, or someone who shares your kink?");
-    const illustrations = page.locator("figure").filter({ hasText: "AI-generated illustration. Not real members or events." });
+    const illustrations = page.locator("figure").filter({ has: page.locator("img") });
     await expect(illustrations).toHaveCount(8);
     for (const figure of await illustrations.all()) {
       const photo = figure.getByRole("img");
@@ -40,12 +40,12 @@ for (const width of [375, 390, 1440]) {
 }
 
 for (const width of [375, 1440]) {
-  test(`About photos load and disclose their origin at ${width}px`, async ({ page, context }) => {
+  test(`About photos load and fit the page at ${width}px`, async ({ page, context }) => {
     await context.addInitScript(() => localStorage.setItem("intimo_age_verified", "true"));
     await page.route("**/api/auth/session", (route) => route.fulfill({ status: 401, json: { authenticated: false } }));
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/about");
-    const illustrations = page.locator("figure").filter({ hasText: "AI-generated illustration. Not real members or events." });
+    const illustrations = page.locator("figure").filter({ has: page.locator("img") });
     await expect(illustrations).toHaveCount(4);
     for (const figure of await illustrations.all()) {
       const photo = figure.getByRole("img");

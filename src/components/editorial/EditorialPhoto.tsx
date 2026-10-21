@@ -18,10 +18,7 @@ export function EditorialPhoto({ photo, caption, sizes = "(min-width: 1024px) 56
         sizes={sizes}
         className="aspect-[3/2] h-auto w-full object-cover"
       />
-      <figcaption className="space-y-1 px-4 py-3">
-        <p className="text-sm font-semibold text-velora-ink">{caption}</p>
-        <p className="text-xs text-velora-muted">AI-generated illustration. Not real members or events.</p>
-      </figcaption>
+      <figcaption className="px-4 py-3 text-sm font-semibold text-velora-ink">{caption}</figcaption>
     </figure>
   );
 }

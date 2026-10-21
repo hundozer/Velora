@@ -2,7 +2,8 @@
 
 The 12 photographic concepts generated during design review are static illustrations, separate from
 member uploads, public community records, profile examples and event listings. Each displayed image has
-an adjacent disclosure: “AI-generated illustration. Not real members or events.”
+a short editorial caption. Repeated generation notices were removed from the public pages at the owner's
+request; this document retains the asset provenance.
 
 The landing page starts with people and chemistry, explicitly including sex partners and dates alongside
 kink. About carries the remaining atmospheric photographs. None of these images establishes a real
@@ -36,7 +37,7 @@ there is no upscaling. The complete static set is approximately 2.2 MB before re
 
 `E2E_BASE_URL=http://localhost:3000 npx playwright test landing-truth --project=ui --trace=off`
 checks the landing at 375, 390 and 1440 px and About at 375 and 1440 px. It scrolls every photograph
-into view, verifies successful image decoding, requires a disclosure for every photograph and checks
+into view, verifies successful image decoding and checks
 for horizontal overflow. Existing age-gate keyboard checks remain in place.
 
 These are fixture-based UI checks, not authenticated member acceptance or new beta-readiness evidence.
