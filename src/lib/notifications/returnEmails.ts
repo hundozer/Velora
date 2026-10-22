@@ -16,7 +16,9 @@ export const EMAIL_CATEGORY_LABELS: Record<EmailCategory, string> = {
 };
 const THROTTLE_MS = 3 * 60 * 60 * 1000;
 const ACTIVE_NOW_MS = 10 * 60 * 1000;
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://intimo.live";
+const BASE_URL = process.env.VERCEL_ENV === "preview" && process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : process.env.NEXT_PUBLIC_APP_URL || "https://intimo.live";
 
 const COPY: Record<EmailCategory, { subject: string; line: string; cta: string; path: string }> = {
   MESSAGE: { subject: "You have a new message on Intimo", line: "Someone wrote to you.", cta: "Open messages", path: "/messages" },
@@ -46,19 +48,21 @@ export function unsubscribeUrl(profileId: string, category: string) {
   return `${BASE_URL}/api/email/unsubscribe?${params}`;
 }
 
-function render(category: EmailCategory, profileId: string) {
+export function renderReturnEmail(category: EmailCategory, profileId: string) {
   const copy = COPY[category];
-  return `<!doctype html><html><body style="margin:0;background:#0A0B0E;font-family:system-ui,sans-serif;color:#F5F1E8">
+  return `<!doctype html><html><body style="margin:0;background:#191C20;font-family:system-ui,sans-serif;color:#EDF1F4">
 <div style="max-width:480px;margin:0 auto;padding:32px 24px;text-align:center">
-<p style="font-family:Georgia,serif;font-size:22px;color:#D4AF37;margin:0 0 16px">Intimo</p>
+<p style="font-family:Georgia,serif;font-size:22px;color:#A8D5EF;margin:0 0 16px">Intimo</p>
 <p style="font-size:16px;margin:0 0 24px">${copy.line}</p>
-<a href="${BASE_URL}${copy.path}" style="display:inline-block;background:#D4AF37;color:#0A0B0E;text-decoration:none;font-weight:700;padding:12px 24px;border-radius:999px">${copy.cta}</a>
-<p style="font-size:12px;color:#8a857c;margin:32px 0 0">We never put names or messages in emails.<br><a href="${unsubscribeUrl(profileId, category)}" style="color:#8a857c">Stop these emails</a> · <a href="${unsubscribeUrl(profileId, "ALL")}" style="color:#8a857c">Stop all Intimo emails</a></p>
+<a href="${BASE_URL}${copy.path}" style="display:inline-block;background:#A8D5EF;color:#191C20;text-decoration:none;font-weight:700;padding:12px 24px;border-radius:999px">${copy.cta}</a>
+<p style="font-size:12px;color:#AAB7C3;margin:32px 0 0">We never put names or messages in emails.<br><a href="${unsubscribeUrl(profileId, category)}" style="color:#AAB7C3">Stop these emails</a> · <a href="${unsubscribeUrl(profileId, "ALL")}" style="color:#AAB7C3">Stop all Intimo emails</a></p>
 </div></body></html>`;
 }
 
 /** Sends a discreet return email if the rules allow it. Never throws. */
 export async function maybeSendReturnEmail(db: SupabaseClient, profileId: string, category: EmailCategory) {
+  // Message categories use the durable database-triggered outbox exclusively.
+  if (category === "MESSAGE" || category === "PLAN_REPLY") return;
   try {
     const { data: member } = await db.from("profiles").select("email,account_status,last_active_at,email_opt_out").eq("id", profileId).maybeSingle();
     if (!member?.email || member.account_status !== "ACTIVE") return;
@@ -67,10 +71,11 @@ export async function maybeSendReturnEmail(db: SupabaseClient, profileId: string
     if (member.last_active_at && Date.now() - new Date(member.last_active_at).getTime() < ACTIVE_NOW_MS) return;
     const { data: state } = await db.from("email_send_state").select("last_sent_at").eq("profile_id", profileId).eq("category", category).maybeSingle();
     if (state && Date.now() - new Date(state.last_sent_at).getTime() < THROTTLE_MS) return;
-    // Claim the slot first so concurrent events can't double-send.
+    // Legacy best-effort throttle for non-message categories. Message delivery
+    // uses the atomic durable queue instead.
     const { error: claimError } = await db.from("email_send_state").upsert({ profile_id: profileId, category, last_sent_at: new Date().toISOString() }, { onConflict: "profile_id,category" });
     if (claimError) return;
-    await ResendClient.sendEmail({ to: member.email, subject: COPY[category].subject, html: render(category, profileId) });
+    await ResendClient.sendEmail({ to: member.email, subject: COPY[category].subject, html: renderReturnEmail(category, profileId) });
   } catch (error) {
     console.error("Return email skipped", { category, message: error instanceof Error ? error.message : "unknown" });
   }

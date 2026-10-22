@@ -8,7 +8,7 @@ const DELETE_TABLES: Array<[string, string]> = [
   ["content_posts", "author_id"], ["dating_ads", "author_id"], ["notifications", "user_id"],
   ["connections", "follower_id"], ["connections", "followed_id"], ["user_blocks", "blocker_id"],
   ["user_blocks", "blocked_profile_id"], ["photo_albums", "owner_id"], ["videos", "owner_id"],
-  ["member_desires", "profile_id"], ["member_boundaries", "profile_id"],
+  ["unread_email_outbox", "profile_id"], ["member_desires", "profile_id"], ["member_boundaries", "profile_id"],
   ["profile_views", "viewer_id"], ["profile_views", "viewed_id"], ["interests", "from_id"], ["interests", "to_id"],
   ["album_access_grants", "owner_id"], ["album_access_grants", "viewer_id"],
 ];

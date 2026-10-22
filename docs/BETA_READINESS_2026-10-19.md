@@ -280,3 +280,21 @@ No destructive schema change, project/domain move, real-member content publicati
 ## Validation of the focused PRs
 
 Hosted CI passed for #83 (`7a72e5c`), #84 (`f30855f`), #85 (`0cd895e`) and #86 (`918e6b9`). #87's Message RLS workflow passed on actual disposable PostgreSQL 16. Preview smoke on #85 failed; separately authorized endpoint inspection confirms the application DB boundary is 503. The first four Preview builds are READY, which does not change that failure. No PR has been merged and no SQL has been applied by this takeover.
+
+
+## 21 October unread-message return email
+
+The previously deferred unread-message email check now has staging evidence. PR #100 implements the
+durable MESSAGE/PLAN_REPLY queue, stable provider idempotency, bounded retries and signed unsubscribe.
+The owner selected registration@intimo.live and confirmed exactly one actual email arrived. Two real
+synthetic sessions/messages, minute cron, provider acceptance, repeated-worker suppression, category
+and global unsubscribe passed. Cleanup and complete legacy-profile/media preservation independently
+verified; see `UNREAD_EMAIL_DELIVERY.md` for exact commits, deployment/run IDs and evidence limits.
+Production migration/worker enablement remain unapplied and require approval. Other notification
+categories, moderation-operator and scheduled physical-erasure checks retain their prior status.
+This closes the staging unread-email gap, not the overall beta decision.
+
+
+## 22 October 2026: approved unread-email production schema
+
+Production schema applied and verified through the official migration tool. Actual receipt `20261022044018` maps to repository/staging `20261021200009`; SQL MD5 matches exactly. Actual-role denial checks passed without member fixtures. Worker activation remains pending PR #100 merge/deployment. See [production evidence and migration-history discrepancy](UNREAD_EMAIL_PRODUCTION_2026-10-22.md). This is not a production email or beta GO claim.
