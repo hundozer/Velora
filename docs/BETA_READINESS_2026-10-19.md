@@ -298,3 +298,8 @@ This closes the staging unread-email gap, not the overall beta decision.
 ## 22 October 2026: approved unread-email production schema
 
 Production schema applied and verified through the official migration tool. Actual receipt `20261022044018` maps to repository/staging `20261021200009`; SQL MD5 matches exactly. Actual-role denial checks passed without member fixtures. Worker activation remains pending PR #100 merge/deployment. See [production evidence and migration-history discrepancy](UNREAD_EMAIL_PRODUCTION_2026-10-22.md). This is not a production email or beta GO claim.
+
+
+## 22 October 2026: production unread-email worker active
+
+PR #100 merged as `1917c10effb0dc41b4b8c2f303e4d81d6a5f541d`. Flag-bearing deployment `dpl_GQNQ5FK26o2wPF51xhvT1ZWUoLT5` is READY. Real production minute cron reached the worker at 04:50 UTC / 06:50 Prague with HTTP 200 and `{accepted:0,skipped:0,retry:0}`. Queue empty; no production member fixtures or test emails created. Actual inbox acceptance remains staging-proven. See [activation evidence and disable procedure](UNREAD_EMAIL_PRODUCTION_2026-10-22.md). This completes production activation of the unread-message email slice, not an overall beta GO.
