@@ -12,7 +12,7 @@ test("return emails are throttled, skipped when active or opted out, and discree
   assert.match(source, /const THROTTLE_MS = 3 \* 60 \* 60 \* 1000;/);
   assert.match(source, /if \(optOut\.includes\("ALL"\) \|\| optOut\.includes\(category\)\) return;/);
   assert.match(source, /Date\.now\(\) - new Date\(member\.last_active_at\)\.getTime\(\) < ACTIVE_NOW_MS\) return;/);
-  assert.match(source, /Claim the slot first/);
+  assert.match(source, /category === "MESSAGE" \|\| category === "PLAN_REPLY"/);
   assert.match(source, /We never put names or messages in emails/);
   assert.doesNotMatch(source, /display_name|content/);
 });

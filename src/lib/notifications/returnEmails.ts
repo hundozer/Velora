@@ -71,7 +71,8 @@ export async function maybeSendReturnEmail(db: SupabaseClient, profileId: string
     if (member.last_active_at && Date.now() - new Date(member.last_active_at).getTime() < ACTIVE_NOW_MS) return;
     const { data: state } = await db.from("email_send_state").select("last_sent_at").eq("profile_id", profileId).eq("category", category).maybeSingle();
     if (state && Date.now() - new Date(state.last_sent_at).getTime() < THROTTLE_MS) return;
-    // Claim the slot first so concurrent events can't double-send.
+    // Legacy best-effort throttle for non-message categories. Message delivery
+    // uses the atomic durable queue instead.
     const { error: claimError } = await db.from("email_send_state").upsert({ profile_id: profileId, category, last_sent_at: new Date().toISOString() }, { onConflict: "profile_id,category" });
     if (claimError) return;
     await ResendClient.sendEmail({ to: member.email, subject: COPY[category].subject, html: renderReturnEmail(category, profileId) });

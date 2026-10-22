@@ -117,4 +117,7 @@ Staging migration tool receipt `20261021200009`, name `durable_unread_message_em
 restricted worker RPCs and scheduling helpers; pg_cron/pg_net installed. No scheduled job or Vault
 configuration is created by the migration. Preserved profile/media hashes are unchanged; rollback-only
 SQL behavioral/role tests passed. See `docs/UNREAD_EMAIL_DELIVERY.md` for exact evidence and failures.
-Production has **not** received this migration. Its application requires separate reviewed approval.
+Actual two-account staging messages → minute cron → Resend acceptance → owner-confirmed single inbox
+delivery → category/global unsubscribe passed. Fixtures, queue, cron and Vault config independently
+verified absent afterward. Production has **not** received this migration. Its application requires
+separate reviewed approval.

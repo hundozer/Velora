@@ -53,8 +53,47 @@ An initial SQL-test variable alias was corrected; failed/rehearsal transactions 
 An expired-requestState during the full DDL rehearsal was followed by object/ledger checks before the
 scheduler-only rehearsal passed. Canonical application subsequently succeeded through apply_migration.
 
-208 source tests, TypeScript and lint pass. Real staging scheduler/provider/inbox acceptance is pending.
-The owner selected `registration@intimo.live` for the delivery test. No fixture was created yet.
+208 source tests, TypeScript and lint pass. Real staging acceptance is complete below.
+
+## Actual scheduler/provider/inbox acceptance
+
+Run `8734d527-4537-4e05-9d4e-7d3574e3dbd4`,21October2026, executed from opt-in build
+`dpl_frrE2M433a7bigUmJhU77VdSoGFS` (runner `ef0e2172604c318c978729fc2689c4da4ffac11b`),
+which completed READY. Fixed application target `dpl_DPfKRSQRMCz3gLkiaq8osCuDdwfk` /
+`https://velora-35etb5f50-hundozers-projects.vercel.app`, source
+`e1a6ae047413305ad26541fdde996f7eb7e5cde1`, independently verified READY on staging.
+One-off build: `node scripts/run-staging-unread-email.mjs && npm run build`.
+
+Two synthetic confirmed Auth identities signed in with real passwords, passed the signed adult gate,
+and onboarded via actual application HTTP. Two messages returned201 and coalesced into one pending
+job. Only fixture activity/due timestamps were advanced to make the recipient eligible; this does not
+measure the normal two-minute settling period. The real minute cron ran at20:11:00UTC (22:11 Prague);
+pg_net received application200 with `{accepted:1,skipped:0,retry:0}`. The harness observed acceptance
+after47572ms; Resend provider ID `01a16016-b284-7464-a640-f87f3d592fda`. The owner explicitly selected
+`registration@intimo.live` and then confirmed **exactly one email arrived** with subject
+“You have an update on Intimo”. Inbox evidence is owner-confirmed; the send-only provider key returned
+401 on receipt readback, so provider delivery-event/content readback is not claimed.
+
+Two concurrent repeat worker calls returned accepted0. Unsigned worker call returned404. Signed GET
+unsubscribe returned200 without changing preferences; signed category POST and global POST each
+prevented a subsequent actual message from producing email. Preferences reset via authenticated API
+returned200. This is real HTTP/account/message/queue/cron/provider/unsubscribe evidence, not a new
+full browser member journey or a live simulated provider outage. Provider503 retries are unit-tested;
+lease recovery, unchanged retry payload and throttle are tested in actual rollback-only SQL.
+
+The temporary cron config held a purpose-specific worker HMAC and short-lived same-project Preview
+OIDC token encrypted in Vault, with a15-minute expiry. No protection rule or production setting changed.
+The job and Vault config were removed during the test and again guarded by finally. No token was
+printed, committed or saved in environment settings. The earlier flag-creation attempt preceded remote
+branch creation and failed without creating a setting; the verified branch-scoped Preview flag now
+exists. Production has no such enabled flag.
+
+Finally cleanup PASS. Independent SQL: Auth0, profiles2, media5, messages0, Plans0, outbox0, send-state0,
+fixture audits/rate buckets0, worker cron0 and worker Vault entries0. Full preserved profile/media
+MD5 hashes above are unchanged. No uploaded file or Plan was created. Recorded cron/HTTP summaries
+contain no message body or recipient data. Branch-only flag `INTIMO_UNREAD_EMAIL_ENABLED=true` is
+limited to `codex/reliable-unread-email` Preview. Production schema was rechecked: outbox absent,
+migration receipt absent, existing restrictive message policy retained.
 
 ## Production rollout pending approval
 
@@ -63,3 +102,9 @@ then enable the worker and explicitly configure production cron. Deploy applicat
 its schema dependencies are installed. Do not copy staging protection credentials into production.
 Verify a non-destructive production health check; do not run fixture acceptance against real members.
 Until this sequence is complete, P1-11 is not live-accepted.
+
+Post-test security advisor:33 INFO for deliberately server-only RLS tables without client policies,
+including the outbox, and the existing authenticated message-safety helper warning. New worker/queue/
+configuration RPCs are not executable by anon/authenticated. No policy/grant was weakened to silence
+an advisor. Initial application commit CI verify/policy/smoke passed; the acceptance-runner build also
+completed READY after live tests and cleanup. Final documentation-only checks are visible on the PR.
