@@ -121,3 +121,8 @@ Actual two-account staging messages → minute cron → Resend acceptance → ow
 delivery → category/global unsubscribe passed. Fixtures, queue, cron and Vault config independently
 verified absent afterward. Production has **not** received this migration. Its application requires
 separate reviewed approval.
+
+
+### 22 October 2026: production unread-message queue
+
+Owner-approved official application on `bkdyjdbmtucqvgebqadp`: actual receipt `20261022044018`, name `durable_unread_message_emails`, source MD5 `6961890acc3b3a1eaa1716f81cd63002`. Repository/staging version is `20261021200009`. Exact SQL, different tool-generated receipt timestamp; no manual ledger repair. Do not blindly replay the file. Production RLS/function grants/trigger and rollback-only real-role denial checks verified. Scheduler remains unconfigured pending PR #100 deployment. See `docs/UNREAD_EMAIL_PRODUCTION_2026-10-22.md`.

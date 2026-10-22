@@ -293,3 +293,8 @@ verified; see `UNREAD_EMAIL_DELIVERY.md` for exact commits, deployment/run IDs a
 Production migration/worker enablement remain unapplied and require approval. Other notification
 categories, moderation-operator and scheduled physical-erasure checks retain their prior status.
 This closes the staging unread-email gap, not the overall beta decision.
+
+
+## 22 October 2026: approved unread-email production schema
+
+Production schema applied and verified through the official migration tool. Actual receipt `20261022044018` maps to repository/staging `20261021200009`; SQL MD5 matches exactly. Actual-role denial checks passed without member fixtures. Worker activation remains pending PR #100 merge/deployment. See [production evidence and migration-history discrepancy](UNREAD_EMAIL_PRODUCTION_2026-10-22.md). This is not a production email or beta GO claim.
