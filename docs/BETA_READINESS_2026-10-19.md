@@ -303,3 +303,12 @@ Production schema applied and verified through the official migration tool. Actu
 ## 22 October 2026: production unread-email worker active
 
 PR #100 merged as `1917c10effb0dc41b4b8c2f303e4d81d6a5f541d`. Flag-bearing deployment `dpl_GQNQ5FK26o2wPF51xhvT1ZWUoLT5` is READY. Real production minute cron reached the worker at 04:50 UTC / 06:50 Prague with HTTP 200 and `{accepted:0,skipped:0,retry:0}`. Queue empty; no production member fixtures or test emails created. Actual inbox acceptance remains staging-proven. See [activation evidence and disable procedure](UNREAD_EMAIL_PRODUCTION_2026-10-22.md). This completes production activation of the unread-message email slice, not an overall beta GO.
+
+
+## 23 October 2026: administrator album photo previews
+
+Fix based on main `276c0e0b25d2f7d49ceedfcdb75df6710d2c3982`: admin Content formerly rendered metadata/counts and decision controls without displaying photos. Album cards now open ordered photo previews; image cards also offer a preview. Click a thumbnail to enlarge it in a native modal with keyboard dismissal/focus handling. Empty, missing/removed/processing and load-error states are explicit. Failed count lookups no longer appear as zero photos.
+
+New album-photo listing and image-byte routes require existing `content:reveal_sensitive` authorization and MFA. Each byte request rechecks permission and persists an admin audit before delivery. Existing sanitation/proxy code strips image metadata, returns no reusable storage URL and fails closed without original-upload fallback. Chat images and removed/unavailable/unprocessed media are excluded. No member media permissions, migrations or production records changed.
+
+Verification: 214 automated tests passed, including six new behavior tests for denied roles/MFA guards, pending private images, lookup/audit/storage failures, unavailable/chat/non-image exclusion, ordered/missing album entries and empty-versus-failed lookup. Mobile390px and desktop1440px Chromium interaction checks passed with synthetic intercepted API/image responses: open album, thumbnail, enlarge/close, empty/unavailable states, no horizontal overflow. Temporary UI harness removed before commit. These checks do not claim a live authenticated staging storage/admin journey or approval of real member media. Deployed Preview/hosted check evidence is attached to the focused PR. Overall beta decision is unchanged.
