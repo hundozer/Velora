@@ -15,7 +15,7 @@ test("deployment serves public data and protects member/admin endpoints", async 
   const data = await community.json();
   expect(Array.isArray(data.profiles)).toBe(true);
   expect(data.demoContentPresent).toBe(false);
-  for (const path of ["/api/profile/me", "/api/discovery/profiles", "/api/messages", "/api/admin/overview"]) {
+  for (const path of ["/api/profile/me", "/api/discovery/profiles", "/api/messages", "/api/admin/overview", "/api/admin/albums/12345678-1234-4123-8123-123456789012/photos", "/api/admin/media/12345678-1234-4123-8123-123456789012/preview"]) {
     const response = await request.get(path, { maxRedirects: 0 });
     expect(response.status(), path).toBe(401);
   }
