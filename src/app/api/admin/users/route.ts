@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   if (!db) return NextResponse.json({ error: "User administration unavailable" }, { status: 503 });
   const query = (req.nextUrl.searchParams.get("q") || "").trim().slice(0, 120);
   const status = (req.nextUrl.searchParams.get("status") || "").trim();
-  let builder = db.from("profiles").select("id,auth_id,email,username,display_name,country,city,role,verification_status,verification_level,age_verification_status,account_status,profile_visibility,created_at,last_active_at,discovery_disabled,messaging_disabled,media_uploads_disabled").order("created_at", { ascending: false }).limit(100);
+  let builder = db.from("profiles").select("id,auth_id,email,username,display_name,country,city,role,verification_status,verification_level,age_verification_status,account_status,account_lifecycle_status,deletion_requested_at,deactivated_at,deleted_at,profile_visibility,created_at,last_active_at,discovery_disabled,messaging_disabled,media_uploads_disabled").order("created_at", { ascending: false }).limit(100);
   if (query) {
     const safe = query.replaceAll(",", "").replaceAll("(", "").replaceAll(")", "");
     const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(query);

@@ -5,10 +5,10 @@ import { createRequire } from 'node:module';
 import ts from 'typescript';
 const require = createRequire(import.meta.url);
 const target = '12345678-1234-4123-8123-123456789012';
-function setup({ fresh = true, denied = 0 } = {}) {
+function setup({ fresh = true, denied = 0, lifecycle = 'ACTIVE' } = {}) {
   const calls = [];
   const db = { from(table) { calls.push({ table }); const q = new Proxy({}, { get(_, key) {
-    if (key === 'then') return resolve => resolve({ data: { id: target, account_status: 'BANNED' } });
+    if (key === 'then') return resolve => resolve({ data: { id: target, account_status: 'BANNED', account_lifecycle_status: lifecycle } });
     if (key === 'update' || key === 'insert') return value => { calls.push({ [key]: value }); return q; };
     return () => q;
   }}); return q; } };
@@ -42,4 +42,9 @@ test('fresh confirmed action updates status and records the audit', async () => 
 });
 test('anonymous and unauthorized callers cannot reach account records', async () => {
   for (const denied of [401, 403]) { const x = setup({ denied }); assert.equal((await x.apply({ action: 'BAN', confirmation: 'CONFIRM BAN' })).status, denied); assert.equal(x.calls.length, 0); }
+});
+test('ordinary account actions cannot reactivate an account in the erasure lifecycle', async () => {
+  const x = setup({ lifecycle: 'DELETION_REQUESTED' });
+  assert.equal((await x.apply({ action: 'REACTIVATE', confirmation: 'CONFIRM REACTIVATE' })).status, 409);
+  assert.equal(x.calls.some(call => call.update), false);
 });
