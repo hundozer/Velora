@@ -34,7 +34,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const category = typeof body.category === "string" ? body.category.trim().slice(0, 100) : "";
   const notes = typeof body.notes === "string" ? body.notes.trim().slice(0, 4000) : null;
   if (!reason || !category) return NextResponse.json({ error: "Reason and category are required" }, { status: 400 });
-  if (definition.highRisk && (body.confirmation !== `CONFIRM ${body.action}` || !adminSessionFresh(auth.actor))) return NextResponse.json({ error: "Recent authentication and explicit confirmation are required" }, { status: 409 });
+  if (definition.highRisk && body.confirmation !== `CONFIRM ${body.action}`) return NextResponse.json({ code: "CONFIRMATION_REQUIRED", error: `Type CONFIRM ${body.action} to confirm this account action.` }, { status: 409 });
+  if (definition.highRisk && !adminSessionFresh(auth.actor)) return NextResponse.json({ code: "RECENT_AUTH_REQUIRED", error: "Sign in again, complete MFA if prompted, then review and submit this decision again. A sign-in within the last 30 minutes is required." }, { status: 409 });
   const db = getServerSupabase();
   if (!db) return NextResponse.json({ error: "User administration unavailable" }, { status: 503 });
   const { data: before } = await db.from("profiles").select("id,account_status,discovery_disabled,messaging_disabled,media_uploads_disabled,age_verification_status").eq("id", params.id).maybeSingle();

@@ -18,3 +18,11 @@ The Tonight invitation form now uses labelled activity, day, neighbourhood, star
 - Read-only staging schema inspection confirmed existing notification columns and failed-processing status support. No live member records were changed.
 
 These are component/browser rehearsals and automated API tests, not a live authenticated staging operator/storage journey. No real member photo was approved, no administrator grant changed, and no production fixture was created. Hosted CI and protected Preview smoke results belong to the PR checks. The overall Prague beta decision remains unchanged pending its separate operational acceptance gates.
+
+## Account decision recovery follow-up
+
+Base `ee0702869fffd099d423546e036bb4e7a22407be` includes merged PR #104. A production screenshot exposed an existing account-action form defect: it generated privileged confirmation text automatically and displayed a combined confirmation/recent-authentication error without a recovery path. The underlying freshness check uses the last interactive Supabase sign-in, not simply the most recent MFA verification.
+
+The account form now requires typed confirmation for suspend/ban/reactivate, explains the existing 30-minute sign-in window, and links to the existing login page with a safe return to the selected member. Reauthentication never submits the decision automatically. The API returns separate `CONFIRMATION_REQUIRED` and `RECENT_AUTH_REQUIRED` codes while retaining permission, MFA, self-action, freshness and audit checks. Network/server uncertainty blocks retries until the member record is refreshed. No authentication replacement or security relaxation.
+
+`npm test`: 226 passed. Four new API behavior tests exercise stale sign-in and wrong confirmation before data access, a fresh confirmed update plus audit, and denied callers. `node scripts/verify-admin-account-action.mjs`: synthetic Chromium checks at 390px/1440px passed typed-confirmation gating, stale-sign-in recovery link, successful decision and uncertain-result refresh with exactly one intercepted write each. No real account was banned or modified. This is not proof of a live authenticated production ban. TypeScript/lint/build and hosted Preview results are recorded in the follow-up PR.
