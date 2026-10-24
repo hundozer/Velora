@@ -1,6 +1,18 @@
 # Prague beta decision: NO-GO; staging member journey exercised
 
-Current evidence: 20 October 2026. Authoritative main, freshly fetched: `1eda06588dc4ed5166db43c445f08f3de23a5e05` (merged #92; includes #83–91). The sections below date earlier deployments and evidence explicitly. The owner-approved production message-read migration is now applied and verified after dashboard fallback. Earlier connector failures caused no change. The historical audit below is retained for context; this section supersedes older blocked/pending observations.
+Current evidence: 20 October 2026. Authoritative main, freshly fetched: `e48db8d0f02472c407b4e0b34db77295431591ff` (merged #95; includes #83–93; signup-decision PR #94 remains separate). The sections below date earlier deployments and evidence explicitly. The owner-approved production message-read migration is now applied and verified after dashboard fallback. Earlier connector failures caused no change. The historical audit below is retained for context; this section supersedes older blocked/pending observations.
+
+## Admission decision — normal signup link
+
+20 October 2026: when asked how beta members should join, the owner requested a sign-up link rather than approved email lists or manual invitations. The entry point is `https://intimo.live/register`. Registration remains open: the link may be forwarded, and possessing it is not an admission restriction. No invite system, allowlist, signup closure or Auth configuration change was made.
+
+This owner decision supersedes the earlier invite-only launch requirement. Controlled admission is no longer a beta blocker under this launch scope; it is not marked as an implemented or tested security control. Moderation, scheduled physical erasure and notification-email/unsubscribe drills were owner-deferred and remain unverified; leaked-password protection is unavailable on the owner's reported Free plan. See the follow-up evidence section for these decisions and the bounded16-save pass. No unqualified beta-readiness claim follows from deferred checks.
+
+## Post-merge #95 health verification
+
+20 October 2026: merged #95 at `e48db8d0f02472c407b4e0b34db77295431591ff` is live on READY production deployment `dpl_2Nz7nktwUwiW7EhbwE9BcYj6ubnw`. Hosted CI verify passed (run39481983965/job118832595697). Supabase integration check118832887024 reports **SUCCESS** on this exact main commit, superseding the earlier failed/skipped integration observations. No additional migration was inferred or replayed.
+
+Independent read-only production verification:35 active versions; canonical ledger MD5 `f6a323bcfebc40001fbe602c87b5adfc` unchanged; old active receipt0/private archived receipt1; helper MD5 `b5410de5cebab3460e5fe0566ca59367`; restrictive message policy present. Fresh public smoke passed **1/1** (37.3-second test/38.3-second total), with unchanged test/config sources matching main. Command: `E2E_BASE_URL=https://intimo.live E2E_HTTP_PROXY="${HTTPS_PROXY:-${HTTP_PROXY:-}}" npx playwright test --config=playwright.smoke.config.ts --trace=off`. Application home/public community, anonymous member/admin denial and signed age-cookie assertions all passed. No production member fixtures or destructive tests. The GitHub Preview-smoke job was intentionally skipped for the production deployment; this separately executed public smoke is the actual HTTP evidence.
 
 ## Production ledger repair completed
 
@@ -18,7 +30,7 @@ The latest main Supabase check observed is `118807445098`, **SKIPPED**, created 
 
 Fresh post-repair public smoke on authoritative main passed **1/1** (35.5-second test,36.2-second total): `E2E_BASE_URL=https://intimo.live E2E_HTTP_PROXY="${HTTPS_PROXY:-${HTTP_PROXY:-}}" npx playwright test --config=playwright.smoke.config.ts --trace=off`. It verified application home200, real public-community200/no demo content, anonymous profile/discovery/messages/admin401 and signed age cookie200. No production member account, content or upload was created.
 
-See `LEGACY_BOOTSTRAP_LEDGER_REPAIR.md` for source, rollback-only staging rehearsal and the exact bounded transaction. Beta remains **NO-GO**: controlled admission, moderator operator drill, scheduled retention/physical erasure, discreet return email/unsubscribe, disabled leaked-password protection and the earlier intermittent profile-edit failure remain unresolved or unproven. This repair and public smoke do not re-prove the prior authenticated staging journey.
+See `LEGACY_BOOTSTRAP_LEDGER_REPAIR.md` for source, rollback-only staging rehearsal and the exact bounded transaction. Beta remains **NO-GO** under the independent verification standard: moderator operator drill, scheduled retention/physical erasure, discreet return email/unsubscribe, disabled leaked-password protection and the earlier intermittent profile-edit failure remain unresolved or unproven. This repair and public smoke do not re-prove the prior authenticated staging journey.
 
 ## Post-merge verification: #91 and #92 (before ledger repair)
 
