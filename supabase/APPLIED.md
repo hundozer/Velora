@@ -1,5 +1,7 @@
 # Applied migrations
 
+24 October production filename reconciliation: see [migration history alignment](../docs/MIGRATION_HISTORY_2026-10-24.md). Three source filenames now match the verified production receipts; SQL bytes and both database ledgers remain unchanged. Historical filenames below describe observations at their original dates. Do not blindly push this directory to recovered staging.
+
 Source of truth for schema: `supabase/migrations/`. This file records what each environment actually has.
 Update it in the same PR that ships a migration, after the migration is applied.
 
