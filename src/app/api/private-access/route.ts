@@ -6,7 +6,6 @@ import { toMemberVisibleProfile } from "@/lib/supabase/publicProfile";
 import type { ProfileRow } from "@/lib/supabase/profileService";
 import { establishedDecision, resolveBoundaries } from "@/lib/boundaries.mjs";
 import { canRequest, decisionUpdate, grantIsActive } from "@/lib/privateAccess.mjs";
-import { maybeSendReturnEmail } from "@/lib/notifications/returnEmails";
 
 // Private Album Handshake (P1-06).
 export const dynamic = "force-dynamic";
@@ -97,10 +96,9 @@ export async function POST(req: NextRequest) {
   const allowed = canRequest(existing);
   if (!allowed.ok) return NextResponse.json({ error: allowed.reason }, { status: 409 });
 
-  const { error } = await db.from("album_access_grants").upsert({ owner_id: ownerId, viewer_id: actor.profileId, status: "REQUESTED", grant_type: null, expires_at: null, requested_at: new Date().toISOString(), decided_at: null }, { onConflict: "owner_id,viewer_id" });
+  const { data: saved, error } = await db.rpc("intimo_request_private_access", { p_owner: ownerId, p_viewer: actor.profileId });
   if (error) return NextResponse.json({ error: "Request could not be sent" }, { status: 502 });
-  await db.from("notifications").insert({ user_id: ownerId, type: "PRIVATE_ACCESS_REQUEST", title: "Photo access request", message: `${me.display_name} asked to see your private photos.`, actor_name: me.display_name, actor_avatar: me.avatar_url, target_link: "/me/private-photos", is_read: false });
-  await maybeSendReturnEmail(db, ownerId, "PRIVATE_ACCESS");
+  if (!saved) return NextResponse.json({ error: "This request is already pending, active or recently declined." }, { status: 409 });
   return NextResponse.json({ status: "REQUESTED" }, { status: 201, headers: noStore });
 }
 
@@ -114,14 +112,9 @@ export async function PATCH(req: NextRequest) {
   const viewerId = typeof body.viewerId === "string" ? body.viewerId : "";
   const update = decisionUpdate(body.decision);
   if (!UUID.test(viewerId) || !update) return NextResponse.json({ error: "Invalid decision" }, { status: 400 });
-  const { data, error } = await db.from("album_access_grants").update(update).eq("owner_id", actor.profileId).eq("viewer_id", viewerId).select("viewer_id").maybeSingle();
+  const { data, error } = await db.rpc("intimo_decide_private_access", { p_owner: actor.profileId, p_viewer: viewerId, p_decision: body.decision });
   if (error) return NextResponse.json({ error: "Decision could not be saved" }, { status: 502 });
   if (!data) return NextResponse.json({ error: "Request not found" }, { status: 404 });
-  if (update.status === "GRANTED") {
-    const { data: me } = await db.from("profiles").select("display_name,avatar_url").eq("id", actor.profileId).single();
-    if (me) await db.from("notifications").insert({ user_id: viewerId, type: "PRIVATE_ACCESS_GRANTED", title: "Photo access granted", message: update.grant_type === "ONCE" ? `${me.display_name} shared their private photos with you for 24 hours.` : `${me.display_name} shared their private photos with you.`, actor_name: me.display_name, actor_avatar: me.avatar_url, target_link: `/profile/${actor.profileId}`, is_read: false });
-    await maybeSendReturnEmail(db, viewerId, "PRIVATE_ACCESS");
-  }
   // Denials and revocations are silent: the requester simply sees no access.
-  return NextResponse.json({ status: update.status, grantType: update.grant_type, expiresAt: update.expires_at }, { headers: noStore });
+  return NextResponse.json({ status: data.status, grantType: data.grant_type, expiresAt: data.expires_at }, { headers: noStore });
 }

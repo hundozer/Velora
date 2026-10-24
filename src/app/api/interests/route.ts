@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
-import { maybeSendReturnEmail } from "@/lib/notifications/returnEmails";
 
 // Interest (P1-08): a one-tap signal. Mutual interest notifies both members.
 export const dynamic = "force-dynamic";
@@ -47,21 +46,9 @@ export async function POST(req: NextRequest) {
   ]);
   if (blockError || block || !target || target.account_status !== "ACTIVE" || !me) return NextResponse.json({ error: "Member not available" }, { status: 404 });
 
-  const { data: inserted, error } = await db.from("interests").upsert({ from_id: auth.profileId, to_id: targetId }, { onConflict: "from_id,to_id", ignoreDuplicates: true }).select("from_id");
+  const { error } = await db.rpc("intimo_save_interest", { p_from: auth.profileId, p_to: targetId });
   if (error) return NextResponse.json({ error: "Interest could not be saved" }, { status: 502 });
   const result = await state(db, auth.profileId, targetId);
-  // Notify only on a new signal, never on repeats.
-  if (inserted && inserted.length > 0) {
-    const notifications = result.mutual
-      ? [
-          { user_id: targetId, type: "MUTUAL_INTEREST", title: "You're both interested", message: `You and ${me.display_name} are both interested.`, actor_name: me.display_name, actor_avatar: me.avatar_url, target_link: `/profile/${auth.profileId}`, is_read: false },
-          { user_id: auth.profileId, type: "MUTUAL_INTEREST", title: "You're both interested", message: `You and ${target.display_name} are both interested.`, actor_name: target.display_name, actor_avatar: target.avatar_url, target_link: `/profile/${targetId}`, is_read: false },
-        ]
-      : [{ user_id: targetId, type: "INTEREST", title: "Someone is interested", message: `${me.display_name} is interested in you.`, actor_name: me.display_name, actor_avatar: me.avatar_url, target_link: "/activity", is_read: false }];
-    const { error: notifyError } = await db.from("notifications").insert(notifications);
-    if (notifyError) console.error("Interest notification failed", { code: notifyError.code });
-    await maybeSendReturnEmail(db, targetId, "INTEREST");
-  }
   return NextResponse.json(result, { status: 201, headers: noStore });
 }
 
