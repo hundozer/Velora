@@ -72,7 +72,8 @@ try {
 
   await interest(a, b, 'one-sided interest'); await interest(a, b, 'repeat interest');
   assert.equal(result(await allJobs(), 'one-sided queue').length, 0);
-  await interest(b, a, 'mutual interest');
+  await call(a.client, 'clear one-sided signal before race', 'DELETE', `/api/interests?targetProfileId=${b.id}`);
+  await Promise.all([interest(a, b, 'concurrent interest A'), interest(b, a, 'concurrent interest B')]);
   assert.equal(result(await allJobs(), 'mutual queue').filter(job => job.category === 'INTEREST').length, 2);
   await makeDue('INTEREST');
   schedulerAttempted = true;
