@@ -18,6 +18,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     (db as any).from("profiles").select(fields).eq("id", params.id).single(), db.from("moderation_cases").select("id", { count: "exact", head: true }).eq("reported_user_id", params.id), db.from("moderation_cases").select("id", { count: "exact", head: true }).eq("reporter_id", params.id), db.from("user_blocks").select("id", { count: "exact", head: true }).or(`blocker_id.eq.${params.id},blocked_profile_id.eq.${params.id}`), db.from("media_objects").select("id", { count: "exact", head: true }).eq("owner_id", params.id), db.from("admin_action_events").select("id,action,category,reason,created_at,actor_role").eq("resource_type", "USER").eq("resource_id", params.id).order("created_at", { ascending: false }).limit(50),
   ]);
   if (profile.error) return NextResponse.json({ error: "User not found" }, { status: 404 });
+  if ([against, submitted, blocks, media, actions].some(result => result.error)) return NextResponse.json({ error: "Member history could not be loaded" }, { status: 502 });
   return NextResponse.json({ user: profile.data, counts: { reportsAgainst: against.count || 0, reportsSubmitted: submitted.count || 0, blocks: blocks.count || 0, media: media.count || 0 }, actions: actions.data || [], sensitiveAccess: sensitive }, { headers: { "Cache-Control": "private, no-store" } });
 }
 

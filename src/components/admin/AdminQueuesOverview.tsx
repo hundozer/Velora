@@ -25,7 +25,7 @@ export function AdminQueuesOverview() {
             <p className="text-sm font-semibold">{queue.label}</p>
             <p className="mt-1 text-2xl font-bold">{queue.count ?? "—"}</p>
             <p className={`text-xs ${late ? "font-bold text-velora-danger" : "text-velora-muted"}`}>
-              {queue.oldestHours === null ? "Nothing waiting" : `Oldest waiting ${queue.oldestHours} h · target ${queue.targetHours} h`}
+              {queue.count === null ? "Queue check unavailable" : queue.oldestHours === null ? "Nothing waiting" : `Oldest waiting ${queue.oldestHours} h · target ${queue.targetHours} h`}
             </p>
           </Link>
         );

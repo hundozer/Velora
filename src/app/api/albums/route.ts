@@ -10,11 +10,11 @@ export async function GET(req: NextRequest) {
   const auth = await resolveServerActor(req);
   if (auth.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: auth.status === "unauthenticated" ? 401 : 503 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Albums unavailable" }, { status: 503 });
-  const { data: albums, error } = await db.from("media_albums").select("id,title,description,category,tags,visibility,comment_policy,reactions_enabled,moderation_status,cover_media_id,published_at,created_at,updated_at").eq("owner_id", auth.actor.profileId).neq("moderation_status", "REMOVED").order("updated_at", { ascending: false }).limit(100);
+  const { data: albums, error } = await db.from("media_albums").select("id,title,description,category,tags,visibility,comment_policy,reactions_enabled,moderation_status,moderator_note,cover_media_id,published_at,created_at,updated_at").eq("owner_id", auth.actor.profileId).neq("moderation_status", "REMOVED").order("updated_at", { ascending: false }).limit(100);
   if (error) return NextResponse.json({ error: "Album lookup failed" }, { status: 502 });
   const ids = (albums || []).map((album) => album.id);
   const { data: items } = ids.length ? await db.from("media_album_items").select("album_id,media_id,sort_order").in("album_id", ids).order("sort_order", { ascending: true }) : { data: [] };
-  return NextResponse.json({ albums: (albums || []).map((album) => ({ ...album, mediaIds: (items || []).filter((item) => item.album_id === album.id).map((item) => item.media_id), coverUrl: album.cover_media_id ? `/api/media/${album.cover_media_id}` : null })) }, { headers: { "Cache-Control": "private, no-store" } });
+  return NextResponse.json({ albums: (albums || []).map(({ moderator_note, ...album }) => ({ ...album, reviewFeedback: moderator_note?.startsWith("Changes requested:") ? moderator_note.slice("Changes requested:".length).trim() : null, mediaIds: (items || []).filter((item) => item.album_id === album.id).map((item) => item.media_id), coverUrl: album.cover_media_id ? `/api/media/${album.cover_media_id}` : null })) }, { headers: { "Cache-Control": "private, no-store" } });
 }
 
 export async function POST(req: NextRequest) {

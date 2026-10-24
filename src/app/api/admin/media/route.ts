@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requestSecurityMetadata, requireAdminPermission } from "@/lib/auth/adminApi";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { contentDecisionNotice } from "@/lib/admin/contentNotice";
 
 export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -14,6 +15,7 @@ export async function GET(req: NextRequest) {
   if (!db) return NextResponse.json({ error: "Content service unavailable" }, { status: 503 });
   let query = db.from("media_objects").select("id,owner_id,media_type,mime_type,byte_size,visibility,upload_status,processing_status,moderation_status,title,description,category,tags,moderator_note,created_at,updated_at,published_at").order("created_at", { ascending: true }).limit(200);
   if (status && DECISIONS.has(status)) query = query.eq("moderation_status", status);
+  if (req.nextUrl.searchParams.get("queue") === "1") query = query.in("moderation_status", ["PENDING_REVIEW", "UNDER_REVIEW"]).eq("upload_status", "AVAILABLE");
   // Chat photos are private 1:1 media: moderated when reported, not queued proactively.
   query = query.or("category.is.null,category.neq.MESSAGE");
   const { data, error } = await query;
@@ -26,10 +28,12 @@ export async function PATCH(req: NextRequest) {
   if ("response" in auth) return auth.response;
   let body: unknown;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
-  const input = body as { id?: unknown; decision?: unknown; reason?: unknown; confirmation?: unknown };
+  const input = body as { id?: unknown; decision?: unknown; reason?: unknown; confirmation?: unknown; requestChanges?: unknown; notifyMember?: unknown };
   const id = typeof input.id === "string" ? input.id : "";
   const decision = typeof input.decision === "string" ? input.decision : "";
   const reason = typeof input.reason === "string" ? input.reason.trim().slice(0, 4_000) : "";
+  const requestChanges = input.requestChanges === true;
+  if (requestChanges && decision !== "REJECTED") return NextResponse.json({ error: "Changes requested must leave content unpublished" }, { status: 400 });
   if (!UUID.test(id) || !DECISIONS.has(decision) || reason.length < 10) return NextResponse.json({ error: "Valid media, decision, and a specific reason are required" }, { status: 400 });
   if (["REJECTED", "REMOVED"].includes(decision) && input.confirmation !== `CONFIRM ${decision}`) return NextResponse.json({ error: `Type CONFIRM ${decision} to continue` }, { status: 400 });
   const db = getServerSupabase();
@@ -38,11 +42,12 @@ export async function PATCH(req: NextRequest) {
   if (!before) return NextResponse.json({ error: "Media not found" }, { status: 404 });
   if (decision === "APPROVED" && (before.upload_status !== "AVAILABLE" || before.processing_status !== "READY")) return NextResponse.json({ error: "Only available, fully processed media can be approved" }, { status: 409 });
   const now = new Date().toISOString();
-  const update = { moderation_status: decision, moderator_note: reason, published_at: decision === "APPROVED" ? now : null, updated_at: now };
+  const update = { moderation_status: decision, moderator_note: requestChanges ? `Changes requested: ${reason}` : reason, published_at: decision === "APPROVED" ? now : null, updated_at: now };
   const { data: after, error } = await db.from("media_objects").update(update).eq("id", id).select("id,owner_id,media_type,visibility,upload_status,processing_status,moderation_status,moderator_note,published_at").single();
   if (error || !after) return NextResponse.json({ error: "Media decision failed" }, { status: 502 });
   const { error: auditError } = await db.from("admin_action_events").insert({ actor_profile_id: auth.actor.profileId, actor_role: auth.actor.role, action: `MEDIA_${decision}`, category: "CONTENT_MODERATION", resource_type: "MEDIA", resource_id: id, reason, previous_state: before, new_state: after, security_metadata: requestSecurityMetadata(req) });
   if (auditError) return NextResponse.json({ error: "Decision saved but audit append failed; escalate immediately" }, { status: 502 });
   await db.from("audit_events").insert({ actor_profile_id: auth.actor.profileId, actor_user_id: auth.actor.userId, action: `MEDIA_${decision}`, resource_type: "MEDIA", resource_id: id, outcome: "SUCCESS", metadata: { reason } });
-  return NextResponse.json({ media: after });
+  const notice = await contentDecisionNotice(db, { requested: input.notifyMember === true, ownerId: before.owner_id, kind: 'photo', decision, requestChanges, reason });
+  return NextResponse.json({ media: after, ...notice });
 }

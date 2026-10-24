@@ -16,7 +16,7 @@ type SheetName = "day" | "area" | "welcome" | "kind" | null;
 
 function Blank({ children, onClick, label }: { children: React.ReactNode; onClick: () => void; label: string }) {
   return (
-    <button type="button" onClick={onClick} aria-label={label} className="inline text-velora-copperInk underline decoration-velora-copper decoration-dotted decoration-2 underline-offset-[6px] hover:decoration-solid">
+    <button type="button" onClick={onClick} aria-label={label} className="inline-flex min-h-11 max-w-full items-center rounded-lg border border-velora-control bg-velora-sunken px-3 py-2 text-left text-base font-semibold text-velora-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent">
       {children}
     </button>
   );
@@ -26,10 +26,10 @@ function pad(n: number) { return String(n).padStart(2, "0"); }
 const SLOTS = Array.from({ length: 48 }, (_, i) => `${pad(Math.floor(i / 2))}:${i % 2 ? "30" : "00"}`);
 
 /** A 24-hour time in half-hour steps that reads as part of the sentence. */
-function TimeSelect({ value, onChange, className }: { value: string; onChange: (value: string) => void; className: string }) {
+function TimeSelect({ value, onChange, className, label }: { value: string; onChange: (value: string) => void; className: string; label: string }) {
   const options = value && !SLOTS.includes(value) ? [value, ...SLOTS] : SLOTS;
   return (
-    <select value={value} onChange={(event) => onChange(event.target.value)} className={className} required>
+    <select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} className={className} required>
       {!value && <option value="">--:--</option>}
       {options.map((slot) => <option key={slot} value={slot}>{slot}</option>)}
     </select>
@@ -48,8 +48,8 @@ function plusHours(time: string, hours: number) {
 }
 
 /**
- * Extend an invitation (approved v33): one sentence with tappable blanks —
- * "Tonight I'd like to … in …, from … until …. I'd welcome …." The server validates
+ * Extend an invitation: explicit activity, location, time and reply controls.
+ * The server validates
  * everything again (start within 36 hours, 30 minutes to 12 hours, 18+ ages).
  */
 export default function NewInvitationPage() {
@@ -99,7 +99,7 @@ export default function NewInvitationPage() {
     router.push("/tonight");
   }
 
-  const timeInput = "mx-1 inline-block cursor-pointer appearance-none border-b-2 border-dotted border-velora-copper bg-transparent px-0.5 text-center text-velora-copperInk focus:border-solid focus:outline-none";
+  const timeInput = "mt-2 min-h-12 w-full cursor-pointer rounded-lg border border-velora-control bg-velora-sunken px-3 text-lg text-velora-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent";
 
   return (
     <main className="mx-auto min-h-screen max-w-2xl bg-velora-surface px-6 pb-28 pt-4 sm:px-10 md:my-6 md:rounded-[28px] md:pt-8">
@@ -107,18 +107,11 @@ export default function NewInvitationPage() {
       <h1 className="mt-4 font-display text-[44px] leading-none text-velora-ink">Extend an invitation</h1>
 
       <form onSubmit={submit} className="mt-8">
-        <p className="font-display text-[clamp(1.6rem,7vw,2.1rem)] leading-[1.75] text-velora-ink">
-          <Blank onClick={() => setSheet("day")} label={`Day: ${day}`}>{day === "tonight" ? "Tonight" : "Tomorrow"}</Blank> I&apos;d like to{" "}
-          <label className="inline">
-            <span className="sr-only">What you&apos;d like to do</span>
-            <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} placeholder="talk kink over a drink" size={Math.max(14, title.length + 1)} className="max-w-full border-b-2 border-dotted border-velora-copper bg-transparent text-velora-copperInk placeholder:text-velora-copper/60 focus:border-solid focus:outline-none" />
-          </label>{" "}
-          in <Blank onClick={() => setSheet("area")} label={`Area: ${area?.name || "choose"}`}>{area?.kind === "PRAGUE_DISTRICT" ? area.label.split(" · ")[0] : area?.name || "Prague"}</Blank>, from
-          <label className="inline"><span className="sr-only">Starts at</span><TimeSelect value={from} onChange={setFrom} className={timeInput} /></label>
-          until
-          <label className="inline"><span className="sr-only">Ends at</span><TimeSelect value={until} onChange={setUntil} className={timeInput} /></label>.
-          {" "}I&apos;d welcome <Blank onClick={() => setSheet("welcome")} label={`Who may reply: ${welcomeLine}`}>{welcomeLine}</Blank>.
-        </p>
+        <label className="block text-sm font-semibold text-velora-ink">What would you like to do?
+          <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} placeholder="Talk kink over a drink" required className="mt-2 min-h-12 w-full rounded-lg border border-velora-control bg-velora-sunken px-3 text-lg font-normal text-velora-ink placeholder:text-velora-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent"/>
+        </label>
+        <fieldset className="mt-6"><legend className="text-sm font-semibold">When & where</legend><div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2"><div><p className="mb-2 text-xs text-velora-ink2">Day</p><Blank onClick={() => setSheet("day")} label={`Day: ${day}`}>{day === "tonight" ? "Tonight" : "Tomorrow"}</Blank></div><div><p className="mb-2 text-xs text-velora-ink2">Neighbourhood</p><Blank onClick={() => setSheet("area")} label={`Area: ${area?.name || "choose"}`}>{area?.kind === "PRAGUE_DISTRICT" ? area.label.split(" · ")[0] : area?.name || "Choose neighbourhood"}</Blank></div></div><div className="mt-4 grid grid-cols-2 gap-4"><label className="min-w-0 text-sm font-semibold">Starts at<TimeSelect label="Starts at" value={from} onChange={setFrom} className={timeInput}/></label><label className="min-w-0 text-sm font-semibold">Ends at<TimeSelect label="Ends at" value={until} onChange={setUntil} className={timeInput}/></label></div></fieldset>
+        <div className="mt-6"><p className="mb-2 text-sm font-semibold">Who may reply?</p><Blank onClick={() => setSheet("welcome")} label={`Who may reply: ${welcomeLine}`}>{welcomeLine}</Blank></div>
 
         {timeProblem ? <p role="status" className="mt-3 text-[15px] text-velora-crimson">{timeProblem}</p> : (
           <p className="mt-3 text-[15px] text-velora-muted">It disappears at {untilWords(until)}{hours > 0 && new Date(slot!.endsAt).getDate() !== new Date(slot!.startsAt).getDate() ? " (after midnight)" : ""}. Only the neighbourhood is shown.</p>
@@ -126,7 +119,7 @@ export default function NewInvitationPage() {
 
         <label className="mt-8 block">
           <span className="text-[13px] font-semibold uppercase tracking-[0.18em] text-velora-ink2">A few words for whoever reads it</span>
-          <textarea value={text} onChange={(event) => setText(event.target.value)} maxLength={1000} rows={4} placeholder="What do you have in mind? What should someone know before saying yes?" className="mt-2 w-full resize-y border-b border-velora-ink/50 bg-transparent py-2 text-[17px] leading-relaxed text-velora-ink placeholder:text-velora-muted focus:border-velora-ink focus:outline-none" />
+          <textarea value={text} onChange={(event) => setText(event.target.value)} maxLength={1000} rows={4} required placeholder="What do you have in mind? What should someone know before saying yes?" className="mt-2 w-full resize-y rounded-lg border border-velora-control bg-velora-sunken p-3 text-[17px] leading-relaxed text-velora-ink placeholder:text-velora-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent" />
           <span className="block text-[14px] text-velora-muted">No payment, services or contact details. Invitations offering paid services are removed.</span>
         </label>
 
