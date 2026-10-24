@@ -1,6 +1,6 @@
 -- Requires canonical interests, album_access_grants and durable unread outbox.
 -- No backfill, scheduler change, new secret or client write grant.
--- Deploy the application removal of legacy direct sends before production apply.
+-- Install schema before deploying RPC callers; old direct writes stay compatible.
 begin;
 alter table public.unread_email_outbox drop constraint unread_email_outbox_category_check;
 alter table public.unread_email_outbox add constraint unread_email_outbox_category_check
