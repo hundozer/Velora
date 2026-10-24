@@ -18,7 +18,7 @@ CLI generated `20261024153700_durable_interest_access_alerts.sql`. Apply after c
 
 Staging applied through the migration tool as receipt `20261024155242`, name `durable_interest_access_alerts`. Source filename retains CLI version `20261024153700`; no ledger history was inserted or edited. Applied raw SQL MD5: `ddff6a880355a1b1a888823b0baf8e6d`. One repository header comment was then corrected to say schema first, matching the final transactional RPC design; executable SQL is unchanged. Current source raw MD5: `771edca4f99bf30ee38fd2929415a06c`. SQL normalized by removing comment lines/collapsing whitespace matches exactly on both sides: `278e51675118a44625e5e757fb0264b7`. No compatibility SQL or schema adjustment was needed.
 
-Production application requires explicit approval after staging evidence. Do not merge/deploy new RPC callers into production before the schema dependency is installed. Keep the existing minute worker; do not create another scheduler or blindly replay the migration. On an ambiguous migration response, inspect ledger and objects before retrying.
+The owner explicitly approved production application after staging verification; the installation and checks are recorded below. Keep the existing minute worker; do not create another scheduler or blindly replay the migration. On an ambiguous migration response, inspect ledger and objects before retrying.
 
 ## Verification
 
@@ -56,4 +56,12 @@ At `de07491cf901eab9e0388d271e0f337e406bf0e0`: CI run `40109629352`, PostgreSQL/
 
 ## Production decision
 
-Read-only verification: new migration absent, reference table absent, required source tables/queue present, queue categories still MESSAGE/PLAN_REPLY, existing unread worker active. No production data, schema, worker flag, scheduler or secret was changed. Request explicit approval for this exact additive migration, install and verify its ledger/objects/privileges, then merge/deploy the new RPC callers. Existing old writes remain compatible until deployment. This proves the social-alert slice on staging; it does not change the overall Prague beta decision or prove the separate full member/physical-erasure journeys.
+Pre-approval read-only verification found the new migration/reference table absent, prerequisites present, queue categories still MESSAGE/PLAN_REPLY and the existing worker active. Production installation was held for explicit approval. Existing old writes remain compatible until application deployment. This proves the social-alert slice on staging; it does not change the overall Prague beta decision or prove the separate full member/physical-erasure journeys.
+
+### Approved production installation
+
+Following the owner's explicit “Approved” instruction, a fresh preflight confirmed the migration, reference table and new RPC were still absent. The official migration tool then applied the reviewed SQL on production `bkdyjdbmtucqvgebqadp`, receipt `20261024201630`, name `durable_interest_access_alerts`. Recorded statement MD5 `771edca4f99bf30ee38fd2929415a06c` matches the repository source exactly. No ledger rows were manually inserted or repaired. Production and staging receipt versions differ from the CLI source version; staging's sole header-comment difference is explained above.
+
+Post-install inspection confirmed forced RLS on `return_email_events`, no event-table read/write or new RPC execution for `anon`/`authenticated`, and intended service-role privileges. No historical social jobs or references appeared. The existing minute scheduler remained active without configuration or secret changes. Its first verified post-install run, 24 October at 22:17 Prague / 20:17 UTC, succeeded and received HTTP200 `{accepted:0,skipped:0,retry:0}`. Public `/api/public/community?limit=1` returned200, a valid profiles array and `demoContentPresent:false`.
+
+No production test accounts, interactions, uploaded files or test emails were created. New application activation remains dependent on PR #106 merge/deployment; this installation alone does not replace the old callers. The schema dependency is now satisfied, so the PR can move out of draft. No full production member journey or inbox-delivery claim is added.
