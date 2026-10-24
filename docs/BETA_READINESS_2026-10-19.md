@@ -283,6 +283,10 @@ Safe after beta begins: detailed Activity/visitors, reactions, sophisticated tru
 - Design tokens: `velora-*` Tailwind names are internal; no bulk rename.
 - Historical migrations/archives: retain history and contextual Auth0 references. They are not runtime auth.
 
+## 24 October 2026: event company invitations
+
+PR #107 adds explicitly published member Plans linked to Scene events. Actual two-member staging HTTP acceptance passed, including eligibility, messaging, blocking, rescheduling and hidden events; cleanup independently preserved the two legacy profiles and five media records. Approved production migration receipt `20261024205326` matches repository SQL exactly, with effective triggers/privileges and public/worker health verified. Application activation awaits merge/deployment. See [exact scope, failed first attempt, successful fresh run and migration mappings](SCENE_COMPANY_2026-10-24.md). This feature does not change the overall beta decision or prove media, erasure and retention journeys.
+
 ## Owner/access actions and explicit limits
 
 Supabase installation is now confirmed. Its project/SQL tools have not appeared in this session’s callable registry, so no live database action was possible through it in this audit. Use it to verify production ledger/grants, actual staging state, auth admission settings and an isolated migration run. GitHub administration is needed to inspect/configure branch protection and test environment secrets. External Auth0 tenant removal is an owner task, not a runtime dependency. Retention requires the server-only cron secret and authenticated scheduler; neither execution nor configuration is proved here.

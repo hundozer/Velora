@@ -65,7 +65,7 @@ test("start times arrive through an additive migration and the API falls back un
   assert.match(sql, /Rollback:/);
   const plans = await read("src/app/api/dating-ads/route.ts");
   assert.match(plans, /first\.error\?\.code === UNDEFINED_COLUMN \? buildQuery\(LEGACY_PLAN_COLUMNS, false\)/);
-  assert.match(plans, /if \(error\?\.code === UNDEFINED_COLUMN\)/);
+  assert.match(plans, /if \(error\?\.code === UNDEFINED_COLUMN && !sceneEventId\)/);
   assert.match(plans, /startsAt: planStartsAt\(row\)/);
 });
 

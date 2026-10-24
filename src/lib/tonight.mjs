@@ -59,6 +59,7 @@ export function groupTonight(plans, now = new Date()) {
 export function glanceTime(plan, now = new Date()) {
   if (new Date(plan.startsAt).getTime() <= now.getTime()) return "Now";
   if (nightKey(plan.startsAt) === nightKey(now)) return clock(plan.startsAt);
+  if (new Date(plan.startsAt).getTime() - now.getTime() > 36 * 3600000) return `${new Intl.DateTimeFormat('en-GB', { timeZone: ZONE, day: 'numeric', month: 'short' }).format(new Date(plan.startsAt))} ${clock(plan.startsAt)}`;
   return `${weekday(plan.startsAt).slice(0, 3)} ${clock(plan.startsAt)}`;
 }
 

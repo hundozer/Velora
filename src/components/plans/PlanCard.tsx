@@ -11,9 +11,13 @@ export type Plan = {
   status: string; live: boolean; isMine: boolean;
   /** Who may reply, in words, and whether this viewer can — computed by the server's reply rule. */
   audience?: string; canReply?: boolean; replyReason?: string | null; eligibilityText?: string | null;
+  sceneEventId?: string | null;
 };
 
 export const replyHref = (plan: Plan) => `/messages?user=${encodeURIComponent(plan.authorId)}&datingAd=${encodeURIComponent(plan.id)}`;
+export function PlanEventLink({ plan }: { plan: Plan }) {
+  return plan.sceneEventId ? <Link href={`/scene?event=${encodeURIComponent(plan.sceneEventId)}`} className="mt-2 inline-flex min-h-11 items-center text-sm text-velora-accent underline">View linked event</Link> : null;
+}
 
 /**
  * One plan as an editorial entry (used on profiles): when, what, who, whether you can
@@ -26,6 +30,7 @@ export function PlanCard({ plan, onEnd, onReport }: { plan: Plan; onEnd?: (id: s
         {glanceTime(plan)}<span className="ml-2 font-sans text-[14px] text-velora-muted">until {clock(plan.expiresAt)}{plan.areaName ? ` · ${plan.areaName}` : ""}</span>
       </p>
       <h3 className="mt-2 font-display text-[24px] leading-tight text-velora-ink">{plan.title}</h3>
+      <PlanEventLink plan={plan}/>
       {plan.text && <p className="mt-1 whitespace-pre-line text-[15px] leading-relaxed text-velora-ink2">{plan.text}</p>}
       {plan.eligibilityText && <p className="mt-2 text-[14px] text-velora-ink2">{plan.canReply ? "✓ " : ""}{plan.eligibilityText}</p>}
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">

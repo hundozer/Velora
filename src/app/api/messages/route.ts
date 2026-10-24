@@ -8,6 +8,7 @@ import { establishedDecision, firstMessageDecision, resolveBoundaries } from "@/
 import { presenceBucket } from "@/lib/presence.mjs";
 import { areFriends } from "@/lib/social/friendship";
 import { isVerifiedMember, planReplyEligibility } from "@/lib/planEligibility.mjs";
+import { scenePlanCurrent } from "@/lib/sceneCompany.mjs";
 
 export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -109,10 +110,15 @@ export async function POST(req: NextRequest) {
   if (!sender) return NextResponse.json({ error: "Sender profile unavailable" }, { status: 502 });
   const verifiedSender = isVerifiedMember(sender);
   if (datingAdId) {
-    const { data: ad, error: adError } = await supabase.from("dating_ads").select("id,author_id,status,expires_at,moderation_status,allowed_reply_genders,min_age,max_age,require_media,require_verified").eq("id", datingAdId).maybeSingle();
+    const { data: ad, error: adError } = await supabase.from("dating_ads").select("id,author_id,status,starts_at,expires_at,scene_event_id,moderation_status,allowed_reply_genders,min_age,max_age,require_media,require_verified").eq("id", datingAdId).maybeSingle();
     if (adError) return NextResponse.json({ error: "Dating ad eligibility could not be checked" }, { status: 502 });
     if (!ad) return NextResponse.json({ error: "This plan is no longer available" }, { status: 404 });
     if (ad.author_id !== receiverId) return NextResponse.json({ error: "This plan is no longer available" }, { status: 404 });
+    if (ad.scene_event_id) {
+      const { data: scene, error: sceneError } = await supabase.from("scene_events").select("status,starts_at,ends_at").eq("id", ad.scene_event_id).maybeSingle();
+      if (sceneError) return NextResponse.json({ error: "Event eligibility could not be checked" }, { status: 502 });
+      if (!scenePlanCurrent(ad, scene)) return NextResponse.json({ error: "The linked event changed or is unavailable. This invitation cannot receive replies." }, { status: 409 });
+    }
     let hasApprovedMedia = false;
     if (ad.require_media === true) {
       const { data: media, error: mediaError } = await supabase.from("media_objects").select("id").eq("owner_id", actor.actor.profileId).eq("upload_status", "AVAILABLE").eq("moderation_status", "APPROVED").limit(1).maybeSingle();

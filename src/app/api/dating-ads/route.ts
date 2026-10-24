@@ -7,6 +7,7 @@ import { appendDurableAudit } from "@/lib/auth/durableAudit";
 import { MAX_LIVE_PLANS, endsInLabel, planCategoryLabel, planStartsAt, validatePlanInput } from "@/lib/plans.mjs";
 import { eligibilityText, planAudienceText, planReplyEligibility, type Eligibility } from "@/lib/planEligibility.mjs";
 import { areaById, distanceBucket, DISTANCE_BUCKET_LABELS } from "@/lib/areas.mjs";
+import { sceneCompanyWindow, scenePlanCurrent } from "@/lib/sceneCompany.mjs";
 
 // Tonight / Plans (P1-07). Stored in dating_ads; members-only, server-mediated.
 export const dynamic = "force-dynamic";
@@ -15,16 +16,17 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 const noStore = { "Cache-Control": "private, no-store" };
 const LEGACY_PLAN_COLUMNS = "id,author_id,category,title,text,validity_days,expires_at,area_id,allowed_reply_genders,min_age,max_age,require_verified,require_media,status,moderation_status,created_at";
 // starts_at arrives with migration 20261102; until it is applied, reads and writes fall back.
-const PLAN_COLUMNS = `${LEGACY_PLAN_COLUMNS},starts_at`;
+const PLAN_COLUMNS = `${LEGACY_PLAN_COLUMNS},starts_at,scene_event_id`;
 const UNDEFINED_COLUMN = "42703";
 
-type PlanRow = { id: string; author_id: string; category: string; title: string; text: string; expires_at: string; starts_at?: string | null; area_id: string | null; allowed_reply_genders: string[]; min_age: number; max_age: number; require_verified: boolean; require_media: boolean; status: string; moderation_status: string; created_at: string };
+type PlanRow = { id: string; author_id: string; category: string; title: string; text: string; expires_at: string; starts_at?: string | null; scene_event_id?: string | null; area_id: string | null; allowed_reply_genders: string[]; min_age: number; max_age: number; require_verified: boolean; require_media: boolean; status: string; moderation_status: string; created_at: string };
 type Author = { id: string; display_name: string; avatar_url: string | null; age: number | null; is_couple_profile: boolean; verification_status: string; area_id: string | null };
 
 function toPlan(row: PlanRow, author: Author | undefined, viewerAreaId: string | null, viewerId: string, now: Date, eligibility?: Eligibility) {
   const bucket = viewerAreaId && row.area_id ? distanceBucket(viewerAreaId, row.area_id) : null;
   return {
     id: row.id,
+    sceneEventId: row.scene_event_id || null,
     authorId: row.author_id,
     authorName: author?.display_name || "Member",
     authorAvatar: author?.avatar_url || "",
@@ -70,9 +72,12 @@ export async function GET(req: NextRequest) {
   const authorId = params.get("authorId");
   if (authorId && !UUID.test(authorId)) return NextResponse.json({ error: "Invalid member" }, { status: 400 });
   const category = params.get("category");
+  const sceneEventId = params.get("sceneEventId");
+  if (sceneEventId && !UUID.test(sceneEventId)) return NextResponse.json({ error: "Invalid event" }, { status: 400 });
 
   const buildQuery = (columns: string, withStart: boolean) => {
     let query = supabase.from("dating_ads").select(columns).order(mine || !withStart ? "created_at" : "starts_at", { ascending: !mine && withStart }).limit(mine ? 20 : 100);
+    if (sceneEventId) query = query.eq("scene_event_id", sceneEventId);
     if (mine) {
       query = query.eq("author_id", viewerId);
     } else {
@@ -93,8 +98,12 @@ export async function GET(req: NextRequest) {
     supabase.from("user_blocks").select("blocker_id,blocked_profile_id").or(`blocker_id.eq.${viewerId},blocked_profile_id.eq.${viewerId}`),
   ]);
   if (error || blockError) return NextResponse.json({ error: "Plans lookup failed" }, { status: 502 });
+  const eventIds = [...new Set(((rows || []) as unknown as PlanRow[]).map(row => row.scene_event_id).filter((id): id is string => !!id))];
+  const events = eventIds.length ? await supabase.from("scene_events").select("id,status,starts_at,ends_at").in("id", eventIds) : { data: [], error: null };
+  if (events.error) return NextResponse.json({ error: "Event lookup failed" }, { status: 502 });
+  const eventMap = new Map((events.data || []).map(event => [event.id, event]));
   const blocked = new Set((blockRows || []).map((block) => block.blocker_id === viewerId ? block.blocked_profile_id : block.blocker_id));
-  const visibleRows = ((rows || []) as unknown as PlanRow[]).filter((row) => !blocked.has(row.author_id));
+  const visibleRows = ((rows || []) as unknown as PlanRow[]).filter((row) => !blocked.has(row.author_id) && (!row.scene_event_id || mine || scenePlanCurrent(row, eventMap.get(row.scene_event_id), now)));
 
   const authorIds = [...new Set(visibleRows.map((row) => row.author_id))];
   const { data: authors, error: authorError } = authorIds.length
@@ -125,11 +134,22 @@ export async function POST(req: NextRequest) {
 
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
-  const validated = validatePlanInput(body);
-  if (!validated.plan) return NextResponse.json({ error: validated.error }, { status: 400 });
-
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Plans unavailable" }, { status: 503 });
+  const sceneEventId = body.sceneEventId == null ? null : typeof body.sceneEventId === "string" ? body.sceneEventId : "";
+  if (sceneEventId !== null && !UUID.test(sceneEventId)) return NextResponse.json({ error: "Invalid event" }, { status: 400 });
+  let eventWindow = null;
+  let eventArea: string | null = null;
+  if (sceneEventId) {
+    if (body.publishEventInvitation !== true) return NextResponse.json({ error: "Confirm publishing this invitation to signed-in adult members." }, { status: 400 });
+    const { data: scene, error: sceneError } = await supabase.from("scene_events").select("id,status,starts_at,ends_at,area_id").eq("id", sceneEventId).eq("status", "PUBLISHED").maybeSingle();
+    if (sceneError) return NextResponse.json({ error: "Event lookup failed" }, { status: 502 });
+    eventWindow = scene && sceneCompanyWindow(scene);
+    if (!eventWindow) return NextResponse.json({ error: "This event is unavailable for a company invitation. Choose a published upcoming event within 90 days." }, { status: 409 });
+    eventArea = scene?.area_id || null;
+  }
+  const validated = validatePlanInput(body, new Date(), eventWindow);
+  if (!validated.plan) return NextResponse.json({ error: validated.error }, { status: 400 });
   const profileId = actor.actor.profileId;
   const [{ data: profile, error: profileError }, { data: previous, error: previousError }] = await Promise.all([
     supabase.from("profiles").select("display_name,avatar_url,verification_level,area_id").eq("id", profileId).single(),
@@ -140,11 +160,12 @@ export async function POST(req: NextRequest) {
   const live = (previous || []).filter((row) => row.status === "active" && new Date(row.expires_at).getTime() > now && row.moderation_status !== "REJECTED");
   if (live.length >= MAX_LIVE_PLANS) return NextResponse.json({ error: `You can have up to ${MAX_LIVE_PLANS} live plans. End one first.` }, { status: 409 });
 
-  const areaId = typeof body.areaId === "string" && areaById(body.areaId) ? body.areaId : profile.area_id;
+  const areaId = sceneEventId ? eventArea : typeof body.areaId === "string" && areaById(body.areaId) ? body.areaId : profile.area_id;
   // A member's first Plan goes live immediately but is queued for moderator review.
   const moderationStatus = (previous || []).some((row) => row.moderation_status === "APPROVED") ? "APPROVED" : "PENDING_REVIEW";
   const row = {
     ...validated.plan,
+    scene_event_id: sceneEventId,
     author_id: profileId,
     author_name: profile.display_name,
     author_avatar: profile.avatar_url,
@@ -157,9 +178,9 @@ export async function POST(req: NextRequest) {
     moderation_status: moderationStatus,
   };
   let { data, error } = await supabase.from("dating_ads").insert(row).select(PLAN_COLUMNS).single();
-  if (error?.code === UNDEFINED_COLUMN) {
+  if (error?.code === UNDEFINED_COLUMN && !sceneEventId) {
     // Before migration 20261102: store the plan without its start time (it starts when posted).
-    const { starts_at: _startsAt, ...legacyRow } = row;
+    const { starts_at: _startsAt, scene_event_id: _sceneEventId, ...legacyRow } = row;
     ({ data, error } = await supabase.from("dating_ads").insert(legacyRow).select(LEGACY_PLAN_COLUMNS).single());
   }
   if (error || !data) return NextResponse.json({ error: "Your plan could not be posted" }, { status: 502 });
