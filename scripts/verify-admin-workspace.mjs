@@ -77,9 +77,10 @@ try {
   if (page) { await page.screenshot({ path: `${output}/failure.png`, fullPage: true }); console.log(`Failure screenshot: ${output}/failure.png`); }
   throw error;
 } finally {
-  await browser?.close(); try { process.kill(-server.pid, 'SIGTERM'); } catch {}
+  await browser?.close();
   await unlink(fixtureFile); await rmdir(fixtureDir);
   // Next dev creates a route type for this temporary fixture. Do not leave it
   // pointing at a removed page when the next command runs tsc.
   await unlink(new URL('../.next/types/app/register/workspace-fixture/page.ts', import.meta.url)).catch(error => { if (error.code !== 'ENOENT') throw error; });
+  try { process.kill(-server.pid, 'SIGTERM'); } catch {}
 }

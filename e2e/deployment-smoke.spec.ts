@@ -19,6 +19,9 @@ test("deployment serves public data and protects member/admin endpoints", async 
     const response = await request.get(path, { maxRedirects: 0 });
     expect(response.status(), path).toBe(401);
   }
+  // No confirmation or reason: cannot initiate deletion even if auth regresses.
+  const deletion = await request.post("/api/admin/users/12345678-1234-4123-8123-123456789012/deletion", { data: {}, maxRedirects: 0 });
+  expect(deletion.status(), "anonymous administrator deletion must be denied").toBe(401);
   const age = await request.post("/api/access/age-declaration", { data: { adult: true }, maxRedirects: 0 });
   expect(age.status(), "signed age cookie must work on this deployment").toBe(200);
   expect(age.headers()["set-cookie"]).toContain("intimo_age_declaration=");
