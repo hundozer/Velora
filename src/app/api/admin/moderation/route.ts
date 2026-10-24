@@ -10,7 +10,9 @@ export async function GET(req: NextRequest) {
   if ("response" in auth) return auth.response;
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Moderation service unavailable" }, { status: 503 });
-  const { data, error } = await supabase.from("moderation_cases").select("*").order("priority", { ascending: true }).order("created_at", { ascending: true }).limit(500);
+  let query = supabase.from("moderation_cases").select("*");
+  if (req.nextUrl.searchParams.get("queue") === "1") query = query.in("status", ["OPEN", "UNDER_REVIEW", "ACTION_REQUIRED", "ESCALATED", "APPEALED"]);
+  const { data, error } = await query.order("priority", { ascending: true }).order("created_at", { ascending: true }).limit(500);
   if (error) return NextResponse.json({ error: "Moderation queue lookup failed" }, { status: 502 });
   return NextResponse.json({ cases: data || [] }, { headers: { "Cache-Control": "private, no-store" } });
 }

@@ -307,6 +307,8 @@ PR #100 merged as `1917c10effb0dc41b4b8c2f303e4d81d6a5f541d`. Flag-bearing deplo
 
 ## 23 October 2026: administrator album photo previews
 
+Follow-up, 24 October: the approved unified admin workspace and labelled Tonight invitation controls are implemented on main `a13d21477b852f25001a80a3e6e2da3c26474a74`. See [scope, verification and live-journey limits](ADMIN_WORKSPACE_2026-10-24.md). No migrations or production record changes. Overall beta decision unchanged.
+
 Fix based on main `276c0e0b25d2f7d49ceedfcdb75df6710d2c3982`: admin Content formerly rendered metadata/counts and decision controls without displaying photos. Album cards now open ordered photo previews; image cards also offer a preview. Click a thumbnail to enlarge it in a native modal with keyboard dismissal/focus handling. Empty, missing/removed/processing and load-error states are explicit. Failed count lookups no longer appear as zero photos.
 
 New album-photo listing and image-byte routes require existing `content:reveal_sensitive` authorization and MFA. Each byte request rechecks permission and persists an admin audit before delivery. Existing sanitation/proxy code strips image metadata, returns no reusable storage URL and fails closed without original-upload fallback. Chat images and removed/unavailable/unprocessed media are excluded. No member media permissions, migrations or production records changed.

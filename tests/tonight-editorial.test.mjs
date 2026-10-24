@@ -53,8 +53,8 @@ test("Tonight shows every plan's times, place and reply eligibility from the ser
   assert.match(page, /contentType="POST"/);
   assert.doesNotMatch(page, /rounded-full border px-3 text-xs|PLAN_CATEGORIES/, "no category pills");
   const create = await read("src/app/tonight/new/page.tsx");
-  assert.match(create, /I&apos;d like to/);
-  assert.match(create, /I&apos;d welcome/);
+  assert.match(create, /What would you like to do\?/);
+  assert.match(create, /Who may reply\?/);
   assert.match(create, /Only the neighbourhood is shown/);
   assert.match(create, /startsAt: slot\.startsAt, endsAt: slot\.endsAt/);
   assert.match(create, /Invitations last up to 12 hours/);

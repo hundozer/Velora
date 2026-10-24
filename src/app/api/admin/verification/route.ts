@@ -5,7 +5,9 @@ const DECISIONS = new Set(["VERIFIED","FAILED","REVIEW_REQUIRED","RETRY_REQUESTE
 export async function GET(req: NextRequest) {
   const auth = await requireAdminPermission(req, "verification:view"); if ("response" in auth) return auth.response;
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Verification administration unavailable" }, { status: 503 });
-  const { data, error } = await db.from("verification_reviews").select("id,profile_id,verification_type,status,provider_method,provider_reference,submitted_at,reviewed_at,reviewed_by,reason").order("submitted_at", { ascending: true }).limit(250);
+  let query = db.from("verification_reviews").select("id,profile_id,verification_type,status,provider_method,provider_reference,submitted_at,reviewed_at,reviewed_by,reason");
+  if (req.nextUrl.searchParams.get("queue") === "1") query = query.in("status", ["PENDING", "REVIEW_REQUIRED"]);
+  const { data, error } = await query.order("submitted_at", { ascending: true }).limit(250);
   if (error) return NextResponse.json({ error: "Verification queue failed" }, { status: 502 });
   return NextResponse.json({ reviews: data || [] }, { headers: { "Cache-Control": "private, no-store" } });
 }
