@@ -34,6 +34,7 @@ try {
     assert.equal(await submit.isEnabled(), true);
     assert.equal(await page.getByLabel('Starts at', { exact: true }).count(), 0, 'Event time must come from the published listing');
     assert.equal(await page.locator('body').evaluate(element => element.scrollWidth > innerWidth), false);
+    await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: `${output}/invitation-${width}.png`, fullPage: true });
     await submit.click(); await page.waitForURL(/\/tonight\?event=/);
     assert.equal(writes.length, 1); assert.equal(writes[0].sceneEventId, event.id); assert.equal(writes[0].publishEventInvitation, true);

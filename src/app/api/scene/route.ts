@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: "Scene lookup failed" }, { status: 502 });
   if (eventId && !data?.length) return NextResponse.json({ error: "Event unavailable" }, { status: 404 });
   const events = (data || []).map((row) => ({ id: row.id, title: row.title, kind: row.kind, kindLabel: sceneKindLabel(row.kind), startsAt: row.starts_at, endsAt: row.ends_at, venueName: row.venue_name, areaId: row.area_id, areaName: areaById(row.area_id)?.name || null, organiser: row.organiser, description: row.description, url: row.url, companyWindow: sceneCompanyWindow(row) }));
-  return NextResponse.json({ events }, { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } });
+  return NextResponse.json({ events }, { headers: { "Cache-Control": eventId ? "private, no-store" : "public, max-age=60, stale-while-revalidate=300" } });
 }
 
 export async function POST(req: NextRequest) {
