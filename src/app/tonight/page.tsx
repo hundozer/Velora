@@ -121,6 +121,7 @@ function Tomorrow({ plans, onReport }: { plans: Plan[]; onReport: (plan: Plan) =
 export default function TonightPage() {
   const { user } = useAuth();
   const [plans, setPlans] = React.useState<Plan[] | null>(null);
+  const [eventFilter, setEventFilter] = React.useState<string | null>(null);
   const [mine, setMine] = React.useState<Plan[]>([]);
   const [error, setError] = React.useState("");
   const [reporting, setReporting] = React.useState<Plan | null>(null);
@@ -132,6 +133,7 @@ export default function TonightPage() {
 
   const load = React.useCallback(async () => {
     setError("");
+    setEventFilter(new URLSearchParams(window.location.search).get("event"));
     const [allResponse, mineResponse] = await Promise.all([
       fetch(`/api/dating-ads${new URLSearchParams(window.location.search).get("event") ? `?sceneEventId=${encodeURIComponent(new URLSearchParams(window.location.search).get("event")!)}` : ""}`, { credentials: "same-origin", cache: "no-store" }),
       fetch(`/api/dating-ads?mine=true${new URLSearchParams(window.location.search).get("event") ? `&sceneEventId=${encodeURIComponent(new URLSearchParams(window.location.search).get("event")!)}` : ""}`, { credentials: "same-origin", cache: "no-store" }),
@@ -179,10 +181,11 @@ export default function TonightPage() {
         <div aria-hidden className="absolute -right-24 top-10 -z-10 h-80 w-80 rounded-full bg-velora-copperLight/30 blur-3xl" />
         <header className="flex items-center justify-between px-6 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-10 md:pt-6">
           <Link href="/" className="font-display text-[28px] leading-none text-velora-ink md:invisible">Intimo</Link>
-          <Link href="/tonight/new" className="inline-flex min-h-11 items-center gap-1.5 text-[15px] font-semibold text-velora-ink"><Plus className="h-4 w-4" aria-hidden />Invite</Link>
+          <Link href={eventFilter ? `/tonight/new?event=${encodeURIComponent(eventFilter)}` : "/tonight/new"} className="inline-flex min-h-11 items-center gap-1.5 text-[15px] font-semibold text-velora-ink"><Plus className="h-4 w-4" aria-hidden />Invite</Link>
         </header>
         <div className="px-6 pb-10 pt-8 sm:px-10">
           <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-velora-copperInk">{now ? openingLine(now) : "Prague, tonight"}</p>
+          {eventFilter && <p className="mt-3 text-sm text-velora-ink2">Company invitations for this event · <Link href={`/scene?event=${encodeURIComponent(eventFilter)}`} className="text-velora-accent underline">View event</Link> · <a href="/tonight" className="text-velora-accent underline">All Plans</a></p>}
           <h1 className="mt-3 font-display text-[clamp(3rem,13vw,4.5rem)] leading-[0.98] text-velora-ink">A few hours.<br /><em className="text-velora-copperInk">A city full of possibilities.</em></h1>
 
           {error && <p role="alert" className="mt-6 border-l-2 border-velora-crimson pl-4 text-[15px] text-velora-crimson">{error}</p>}
@@ -191,7 +194,7 @@ export default function TonightPage() {
           ) : glance.length === 0 ? (
             <div className="mt-8">
               <p className="text-[17px] text-velora-ink2">Nobody has invited anyone yet tonight. Invitations appear here in time order, and disappear when they end.</p>
-              <Link href="/tonight/new" className="mt-5 inline-flex min-h-12 items-center rounded-full bg-velora-accent px-6 text-[16px] font-semibold text-velora-paper">Extend an invitation</Link>
+              <Link href={eventFilter ? `/tonight/new?event=${encodeURIComponent(eventFilter)}` : "/tonight/new"} className="mt-5 inline-flex min-h-12 items-center rounded-full bg-velora-accent px-6 text-[16px] font-semibold text-velora-paper">Extend an invitation</Link>
             </div>
           ) : (
             <ol aria-label="At a glance" className="mt-8 divide-y divide-velora-line/80">
@@ -236,7 +239,7 @@ export default function TonightPage() {
           <section aria-label="Extend an invitation" className="px-6 py-12 sm:px-10">
             <h2 className="font-display text-[40px] leading-none text-velora-ink">Extend an invitation</h2>
             <p className="mt-4 font-display text-[24px] leading-[1.5] text-velora-muted">Tonight I&apos;d like to … in … from … until … I&apos;d welcome …</p>
-            <Link href="/tonight/new" className="mt-5 inline-flex min-h-12 items-center rounded-full bg-velora-accent px-6 text-[16px] font-semibold text-velora-paper">Write yours</Link>
+            <Link href={eventFilter ? `/tonight/new?event=${encodeURIComponent(eventFilter)}` : "/tonight/new"} className="mt-5 inline-flex min-h-12 items-center rounded-full bg-velora-accent px-6 text-[16px] font-semibold text-velora-paper">Write yours</Link>
           </section>
         )}
       </div>
