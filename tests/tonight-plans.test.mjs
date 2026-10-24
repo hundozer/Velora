@@ -57,7 +57,7 @@ test("expired, ended or rejected plans are not live", () => {
 
 test("plans are members-only, block-aware, capped, and first plans are queued for review", async () => {
   const collection = await read("src/app/api/dating-ads/route.ts");
-  assert.match(collection, /\.filter\(\(row\) => !blocked\.has\(row\.author_id\)\)/);
+  assert.match(collection, /\.filter\(\(row\) => !blocked\.has\(row\.author_id\)/);
   assert.match(collection, /live\.length >= MAX_LIVE_PLANS/);
   assert.match(collection, /\? "APPROVED" : "PENDING_REVIEW"/);
   assert.match(await read("src/app/api/public/community/route.ts"), /const datingAds: Array<Record<string, unknown>> = \[\];/);

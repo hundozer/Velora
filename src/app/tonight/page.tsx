@@ -7,8 +7,8 @@ import { useAuth } from "@/context/AuthContext";
 import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
 import { ReportModal } from "@/components/safety/ReportModal";
 import { Portrait } from "@/components/media/Portrait";
-import { replyHref, type Plan } from "@/components/plans/PlanCard";
-import { byHour, clock, glanceTime, groupTonight, openingLine, shortAudience, weekday } from "@/lib/tonight.mjs";
+import { replyHref, PlanEventLink, type Plan } from "@/components/plans/PlanCard";
+import { byHour, clock, glanceTime, groupTonight, openingLine, shortAudience } from "@/lib/tonight.mjs";
 import { useDarkNav } from "@/lib/ui/navTone";
 
 const portraitOf = (plan: Plan) => `${plan.authorIsCouple ? "Their" : "The"} portrait`;
@@ -40,7 +40,7 @@ function Featured({ plan, onReport }: { plan: Plan; onReport: (plan: Plan) => vo
       )}
       <div className="px-6 pb-10 pt-40 sm:px-10 md:max-w-2xl md:pb-14">
         <p className="flex items-center gap-2 text-[14px] text-velora-onPhoto/85"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-velora-copperLight" />Happening now · since {clock(plan.startsAt)}</p>
-        <h2 className="mt-3 font-display text-[clamp(2rem,8.5vw,3rem)] leading-[1.08]">{plan.title}</h2>
+        <h2 className="mt-3 font-display text-[clamp(2rem,8.5vw,3rem)] leading-[1.08]">{plan.title}</h2><PlanEventLink plan={plan}/>
         <p className="mt-4 text-[15px] text-velora-onPhoto/85">{plan.authorName}{plan.authorAge && !plan.authorIsCouple ? `, ${plan.authorAge}` : ""} · until {clock(plan.expiresAt)}{plan.areaName ? ` · ${plan.areaName}` : ""}</p>
         {plan.text && <p className="mt-2 max-w-lg text-[15px] leading-relaxed text-velora-onPhoto/80">{plan.text}</p>}
         <div className="mt-3"><Eligibility plan={plan} dark /></div>
@@ -68,7 +68,7 @@ function Later({ title, plans, onReport }: { title: string; plans: Plan[]; onRep
                 <li key={plan.id} className="relative">
                   <span aria-hidden className="absolute -left-[1.84rem] top-3 h-2.5 w-2.5 rounded-full bg-velora-copper" />
                   <p className="font-display text-[34px] leading-none text-velora-copperLight">{clock(plan.startsAt)}<span className="ml-2 font-sans text-[14px] text-velora-onPhoto/75">until {clock(plan.expiresAt)}</span></p>
-                  <h3 className="mt-2 font-display text-[25px] leading-[1.15]">{plan.title}</h3>
+                  <h3 className="mt-2 font-display text-[25px] leading-[1.15]">{plan.title}</h3><PlanEventLink plan={plan}/>
                   <p className="mt-1 text-[14px] text-velora-onPhoto/75">{plan.authorName}{plan.areaName ? ` · ${plan.areaName}` : ""}</p>
                   <div className="mt-2"><Eligibility plan={plan} dark /></div>
                   <div className="mt-3 flex flex-wrap items-center gap-x-5">
@@ -90,13 +90,13 @@ function Later({ title, plans, onReport }: { title: string; plans: Plan[]; onRep
 /** Tomorrow (or the night after): quieter, on paper. */
 function Tomorrow({ plans, onReport }: { plans: Plan[]; onReport: (plan: Plan) => void }) {
   return (
-    <section aria-label="Tomorrow" className="px-6 py-12 sm:px-10">
-      <h2 className="font-display text-[40px] leading-none text-velora-ink">Tomorrow</h2>
+    <section aria-label="Upcoming" className="px-6 py-12 sm:px-10">
+      <h2 className="font-display text-[40px] leading-none text-velora-ink">Upcoming</h2>
       <ol className="mt-6 divide-y divide-velora-line">
         {plans.map((plan) => (
           <li key={plan.id} className="py-6 first:pt-0">
-            <p className="font-display text-[30px] leading-none text-velora-copperInk">{clock(plan.startsAt)}<span className="ml-2 font-sans text-[14px] text-velora-muted">{weekday(plan.startsAt)} · until {clock(plan.expiresAt)}</span></p>
-            <h3 className="mt-2 font-display text-[24px] leading-[1.15] text-velora-ink">{plan.title}</h3>
+            <p className="font-display text-[30px] leading-none text-velora-copperInk">{glanceTime(plan)}<span className="ml-2 font-sans text-[14px] text-velora-muted">until {clock(plan.expiresAt)}</span></p>
+            <h3 className="mt-2 font-display text-[24px] leading-[1.15] text-velora-ink">{plan.title}</h3><PlanEventLink plan={plan}/>
             <p className="mt-1 text-[14px] text-velora-muted">{plan.authorName}{plan.areaName ? ` · ${plan.areaName}` : ""}</p>
             <div className="mt-2"><Eligibility plan={plan} /></div>
             <div className="mt-3 flex flex-wrap items-center gap-x-5">
@@ -133,8 +133,8 @@ export default function TonightPage() {
   const load = React.useCallback(async () => {
     setError("");
     const [allResponse, mineResponse] = await Promise.all([
-      fetch("/api/dating-ads", { credentials: "same-origin", cache: "no-store" }),
-      fetch("/api/dating-ads?mine=true", { credentials: "same-origin", cache: "no-store" }),
+      fetch(`/api/dating-ads${new URLSearchParams(window.location.search).get("event") ? `?sceneEventId=${encodeURIComponent(new URLSearchParams(window.location.search).get("event")!)}` : ""}`, { credentials: "same-origin", cache: "no-store" }),
+      fetch(`/api/dating-ads?mine=true${new URLSearchParams(window.location.search).get("event") ? `&sceneEventId=${encodeURIComponent(new URLSearchParams(window.location.search).get("event")!)}` : ""}`, { credentials: "same-origin", cache: "no-store" }),
     ]);
     const all = await allResponse.json().catch(() => ({}));
     const own = await mineResponse.json().catch(() => ({}));
@@ -220,7 +220,7 @@ export default function TonightPage() {
               {mine.map((plan) => (
                 <li key={plan.id} className="py-4">
                   <p className="font-display text-[24px] leading-none text-velora-copperInk">{clock(plan.startsAt)}<span className="ml-2 font-sans text-[14px] text-velora-muted">until {clock(plan.expiresAt)}</span></p>
-                  <p className="mt-1.5 font-display text-[22px] leading-tight text-velora-ink">{plan.title}</p>
+                  <p className="mt-1.5 font-display text-[22px] leading-tight text-velora-ink">{plan.title}</p><PlanEventLink plan={plan}/>
                   <p className="mt-1 text-[14px] text-velora-muted">Open to {plan.audience || "everyone"}. Replies arrive in Messages.</p>
                   <button type="button" onClick={() => void endPlan(plan.id)} className="mt-1 min-h-11 text-[15px] text-velora-ink underline underline-offset-4">End it now</button>
                 </li>

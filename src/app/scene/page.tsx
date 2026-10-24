@@ -17,7 +17,7 @@ export default function ScenePage() {
   const [message, setMessage] = React.useState<{ ok: boolean; text: string } | null>(null);
 
   React.useEffect(() => {
-    fetch("/api/scene", { cache: "no-store" }).then((response) => (response.ok ? response.json() : { events: [] })).then((payload) => setEvents(payload.events || [])).catch(() => setEvents([]));
+    fetch(`/api/scene${new URLSearchParams(window.location.search).get("event") ? `?id=${encodeURIComponent(new URLSearchParams(window.location.search).get("event")!)}` : ""}`, { cache: "no-store" }).then(async response => { const payload = await response.json(); if (!response.ok) throw Error(payload.error || "Events unavailable"); return payload; }).then((payload) => setEvents(payload.events || [])).catch(cause => { setMessage({ ok: false, text: cause instanceof Error ? cause.message : "Events unavailable" }); setEvents([]); });
   }, []);
 
   async function suggest(event: React.FormEvent) {
@@ -41,6 +41,7 @@ export default function ScenePage() {
         </div>
         {user && !suggesting && <button type="button" onClick={() => setSuggesting(true)} className="min-h-11 shrink-0 rounded-full border border-ink/15 px-4 text-sm font-semibold text-velora-textPrimary hover:border-velora-gold/50">Suggest</button>}
       </header>
+      <a href="/scene" className="inline-flex min-h-11 items-center text-sm text-velora-accent underline">All Prague events</a>
 
       {message && <p role="status" className={`rounded-2xl border p-4 text-sm ${message.ok ? "border-emerald-400/30 bg-emerald-400/10 text-velora-success" : "border-red-500/40 bg-red-500/10 text-velora-danger"}`}>{message.text}</p>}
 

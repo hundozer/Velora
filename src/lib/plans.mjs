@@ -47,7 +47,7 @@ export function planCategoryLabel(value) {
  * database column names (author fields are added by the server).
  * @param {Record<string, unknown>} input @param {Date} [now]
  */
-export function validatePlanInput(input, now = new Date()) {
+export function validatePlanInput(input, now = new Date(), trustedEventWindow = null) {
   const title = typeof input.title === "string" ? input.title.trim() : "";
   const text = typeof input.text === "string" ? input.text.trim() : "";
   const category = typeof input.category === "string" ? input.category : "";
@@ -59,7 +59,9 @@ export function validatePlanInput(input, now = new Date()) {
   if (title.length < 3 || title.length > 80) return { error: "Give your plan a short title (3–80 characters)." };
   if (text.length < 10 || text.length > 1_000) return { error: "Describe your plan in 10–1000 characters." };
   if (!startsAt || Number.isNaN(startsAt.getTime()) || !endsAt || Number.isNaN(endsAt.getTime())) return { error: "Choose when your plan starts and ends." };
-  if (startsAt.getTime() < now.getTime() - PLAN_START_GRACE_MS || startsAt.getTime() > now.getTime() + PLAN_START_HORIZON_MS) return { error: "Plans start within the next 36 hours." };
+  if (trustedEventWindow) {
+    if (startsAt.toISOString() !== trustedEventWindow.startsAt || endsAt.toISOString() !== trustedEventWindow.endsAt) return { error: "The event time changed. Refresh the event and review your invitation." };
+  } else if (startsAt.getTime() < now.getTime() - PLAN_START_GRACE_MS || startsAt.getTime() > now.getTime() + PLAN_START_HORIZON_MS) return { error: "Plans start within the next 36 hours." };
   const duration = endsAt.getTime() - startsAt.getTime();
   if (duration < PLAN_MIN_DURATION_MS || duration > PLAN_MAX_DURATION_MS) return { error: "Plans last between 30 minutes and 12 hours." };
   if (!Number.isInteger(minAge) || !Number.isInteger(maxAge) || minAge < 18 || maxAge > 99 || minAge > maxAge) return { error: "Choose a valid age range (18+)." };

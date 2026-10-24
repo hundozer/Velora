@@ -1,0 +1,11 @@
+# Event-linked company invitations
+
+Base main `16414dc3553d038f6b95235693d438d02fa97026`. Owner authorized implementation and production installation in advance, with handoff when the PR is ready to merge. Staging evidence must precede production changes. No attendee directory, RSVP, ticketing or organiser dashboard is added.
+
+Published Scene cards link to an invitation draft and to member-only company invitations. Opening the draft publishes nothing. The author supplies their own message and reply preferences, then explicitly confirms publication to signed-in adult members. Existing Plan author visibility, blocking, moderation, three-live-plan limit and reply enforcement remain authoritative. An invitation is not proof of attendance or admission; organiser booking stays external.
+
+The server looks up the published event and binds the time and area to it. Ordinary Plans keep the 36-hour start horizon. Event-linked invitations may be created up to 90 days ahead, run from the published start for at most 12 hours, and default to three hours if no event end is supplied. Shorter than 30-minute events and already-started events cannot create new company invitations. There is no alternate-day choice for a multi-day event in this slice. Dates display in Prague time; upcoming invitations show a calendar date rather than an ambiguous weekday.
+
+The additive migration links `dating_ads.scene_event_id` to Scene and indexes it. Database guards reject forged times/areas and stale replies; hiding, rescheduling or deleting an event closes its active invitations. Re-publishing does not revive them. APIs recheck event eligibility and preserve existing age/type/verification/media reply rules. Neither the public Scene API nor its cards expose invitation authors, attendee counts or membership data. Member data continues through the existing authenticated Plan API.
+
+Verification in progress: local behavior tests, responsive browser rehearsal, disposable PostgreSQL, actual-role staging SQL and isolated authenticated HTTP acceptance. No production acceptance fixtures or readiness claims before those checks. Exact migration receipts, hashes, environments, commands and results will be recorded below.
