@@ -32,3 +32,10 @@ jobs:
         run: psql -h localhost -U postgres -d intimo_policy_test -f tests/sql/message-rls.sql
         env:
           PGPASSWORD: disposable-test-only
+      - name: Verify durable social alerts and existing message eligibility
+        run: |
+          createdb -h localhost -U postgres intimo_social_test
+          awk '/-- Free-plan scheduler/{exit}{print}' supabase/migrations/20261021200009_durable_unread_message_emails.sql > /tmp/intimo-unread-core.sql
+          psql -h localhost -U postgres -d intimo_social_test -f tests/sql/social-return-email-disposable.sql
+        env:
+          PGPASSWORD: disposable-test-only

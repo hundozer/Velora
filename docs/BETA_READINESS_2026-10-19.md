@@ -319,6 +319,8 @@ PR #100 merged as `1917c10effb0dc41b4b8c2f303e4d81d6a5f541d`. Flag-bearing deplo
 
 ## 23 October 2026: administrator album photo previews
 
+24 October social-alert follow-up: reliable mutual-interest and private-photo request/approval delivery has actual authenticated staging HTTP, cron and provider-acceptance evidence with full fixture cleanup. The owner then explicitly approved production migration `20261024201630`; source SQL hash, service-only privileges, existing worker HTTP200 and public health were verified. Application activation awaits PR #106 merge/deployment; inbox arrivals remain owner-unconfirmed. See [exact environments, migration receipt discrepancy and live results](SOCIAL_RETURN_ALERTS_2026-10-24.md). Overall beta decision unchanged.
+
 Follow-up, 24 October: the approved unified admin workspace and labelled Tonight invitation controls are implemented on main `a13d21477b852f25001a80a3e6e2da3c26474a74`. See [scope, verification and live-journey limits](ADMIN_WORKSPACE_2026-10-24.md). No migrations or production record changes. Overall beta decision unchanged.
 
 Fix based on main `276c0e0b25d2f7d49ceedfcdb75df6710d2c3982`: admin Content formerly rendered metadata/counts and decision controls without displaying photos. Album cards now open ordered photo previews; image cards also offer a preview. Click a thumbnail to enlarge it in a native modal with keyboard dismissal/focus handling. Empty, missing/removed/processing and load-error states are explicit. Failed count lookups no longer appear as zero photos.

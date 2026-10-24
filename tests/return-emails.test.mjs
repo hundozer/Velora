@@ -9,10 +9,10 @@ const read = (file) => fs.readFile(path.join(root, file), "utf8");
 
 test("return emails are throttled, skipped when active or opted out, and discreet", async () => {
   const source = await read("src/lib/notifications/returnEmails.ts");
-  assert.match(source, /const THROTTLE_MS = 3 \* 60 \* 60 \* 1000;/);
-  assert.match(source, /if \(optOut\.includes\("ALL"\) \|\| optOut\.includes\(category\)\) return;/);
-  assert.match(source, /Date\.now\(\) - new Date\(member\.last_active_at\)\.getTime\(\) < ACTIVE_NOW_MS\) return;/);
-  assert.match(source, /category === "MESSAGE" \|\| category === "PLAN_REPLY"/);
+  const queue = await read("supabase/migrations/20261021200009_durable_unread_message_emails.sql");
+  assert.match(queue, /interval '3 hours'/);
+  assert.match(queue, /interval '10 minutes'/);
+  assert.match(queue, /'ALL'=any\(p.email_opt_out\)/);
   assert.match(source, /We never put names or messages in emails/);
   assert.doesNotMatch(source, /display_name|content/);
 });
@@ -29,8 +29,8 @@ test("events trigger return emails", async () => {
   assert.doesNotMatch(await read("src/app/api/messages/route.ts"), /maybeSendReturnEmail\(/);
   const queue = await read("supabase/migrations/20261021200009_durable_unread_message_emails.sql");
   assert.match(queue, /create trigger queue_unread_email after insert on public.direct_messages/);
-  assert.match(await read("src/app/api/interests/route.ts"), /maybeSendReturnEmail\(db, targetId, "INTEREST"\)/);
-  assert.equal(((await read("src/app/api/private-access/route.ts")).match(/maybeSendReturnEmail\(/g) || []).length, 2);
+  assert.doesNotMatch(await read("src/app/api/interests/route.ts"), /maybeSendReturnEmail|ResendClient/);
+  assert.doesNotMatch(await read("src/app/api/private-access/route.ts"), /maybeSendReturnEmail|ResendClient/);
   const sql = await read("supabase/migrations/20261026_return_emails.sql");
   assert.match(sql, /revoke all on public\.email_send_state from anon, authenticated;/);
 });

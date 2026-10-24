@@ -4,8 +4,8 @@ import React from "react";
 
 const CATEGORIES = [
   { value: "MESSAGE", label: "New messages" },
-  { value: "INTEREST", label: "Interest and matches" },
-  { value: "PRIVATE_ACCESS", label: "Private photo requests" },
+  { value: "INTEREST", label: "Mutual interest" },
+  { value: "PRIVATE_ACCESS", label: "Private photo requests and approvals" },
   { value: "PLAN_REPLY", label: "Replies to your plans" },
 ];
 
