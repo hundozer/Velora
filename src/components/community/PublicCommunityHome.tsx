@@ -106,6 +106,7 @@ export function PublicCommunityHome() {
         <Link href="/photos" className="inline-flex min-h-11 items-center hover:text-velora-ink">Photos</Link>
         <Link href="/videos" className="inline-flex min-h-11 items-center hover:text-velora-ink">Videos</Link>
         <Link href="/scene" className="inline-flex min-h-11 items-center hover:text-velora-ink">Prague Scene</Link>
+        <Link href="/rooms" className="inline-flex min-h-11 items-center hover:text-velora-ink">Prague Room</Link>
       </nav>
     </div>
   );

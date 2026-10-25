@@ -52,3 +52,9 @@ jobs:
           psql -h localhost -U postgres -d intimo_guests_test -f tests/sql/guest-list-disposable.sql
         env:
           PGPASSWORD: disposable-test-only
+      - name: Verify Prague Room role boundary
+        run: |
+          createdb -h localhost -U postgres intimo_room_test
+          psql -h localhost -U postgres -d intimo_room_test -f tests/sql/prague-room-disposable.sql
+        env:
+          PGPASSWORD: disposable-test-only
