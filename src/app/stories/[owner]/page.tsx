@@ -3,8 +3,10 @@ import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ReportModal } from "@/components/safety/ReportModal";
+import { useAuth } from "@/context/AuthContext";
 type Story={id:string;ownerId:string;mediaId:string;caption:string;expiresAt:string;audience:string;url:string;owner?:{display_name:string};viewed:boolean};
 export default function StoryViewer({params}:{params:{owner:string}}){
+ const {profile}=useAuth();const isOwner=profile?.id===params.owner;
  const router=useRouter();const [stories,setStories]=React.useState<Story[]>([]);const [index,setIndex]=React.useState(0);
  const [error,setError]=React.useState("");const [loaded,setLoaded]=React.useState(false);const [report,setReport]=React.useState(false);
  const [visible,setVisible]=React.useState(true);const [loading,setLoading]=React.useState(true);
@@ -49,8 +51,8 @@ export default function StoryViewer({params}:{params:{owner:string}}){
     <button type="button" disabled={index>=stories.length-1} onClick={()=>setIndex(i=>i+1)} className="min-h-12 px-4 disabled:opacity-40">Next</button>
    </nav>
    <div className="mt-3 flex items-center justify-between">
-    <Link href={`/messages?user=${story.ownerId}`} className="min-h-11 py-3 underline">Reply privately</Link>
-    <button type="button" disabled={!loaded} onClick={()=>setReport(true)} className="min-h-11 px-3 underline disabled:opacity-40">Report photo</button>
+    {isOwner?<Link href="/stories" className="min-h-11 py-3 underline">Manage your stories</Link>:<Link href={`/messages?user=${story.ownerId}`} className="min-h-11 py-3 underline">Reply privately</Link>}
+    {!isOwner&&<button type="button" disabled={!loaded} onClick={()=>setReport(true)} className="min-h-11 px-3 underline disabled:opacity-40">Report photo</button>}
    </div>
    {report&&<ReportModal isOpen={report} onClose={()=>setReport(false)} contentType="PHOTO" contentId={story.mediaId} targetProfileId={story.ownerId} targetUsername={story.owner?.display_name||"this member"}/>}
   </>}

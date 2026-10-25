@@ -285,6 +285,8 @@ Safe after beta begins: detailed Activity/visitors, reactions, sophisticated tru
 
 ## 24 October 2026: event company invitations
 
+25 October photo Stories: implemented on PR #111 with audience-aware aura rings, isolated sanitized media delivery and dedicated story-only cleanup. Actual-role rollback tests, responsive synthetic browser checks and real staging Auth/R2/scheduled-cleanup acceptance passed with full fixture cleanup. Production story migrations/cleanup activation remain unapplied pending separate approval. See [exact evidence, limitations and rollout scope](PHOTO_STORIES_2026-10-25.md). This does not change the overall beta decision.
+
 Post-merge: application main `ea540bbc03102eadc75b8c81768a2f25bffd81d8` is live and healthy. Supabase's automatic check failed on three source/receipt version mismatches despite installed SQL. See [focused filename reconciliation and staging limits](MIGRATION_HISTORY_2026-10-24.md); no database ledger edits or SQL replay are proposed.
 
 PR #107 adds explicitly published member Plans linked to Scene events. Actual two-member staging HTTP acceptance passed, including eligibility, messaging, blocking, rescheduling and hidden events; cleanup independently preserved the two legacy profiles and five media records. Approved production migration receipt `20261024205326` matches repository SQL exactly, with effective triggers/privileges and public/worker health verified. Application activation awaits merge/deployment. See [exact scope, failed first attempt, successful fresh run and migration mappings](SCENE_COMPANY_2026-10-24.md). This feature does not change the overall beta decision or prove media, erasure and retention journeys.
