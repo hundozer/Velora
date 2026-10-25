@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowDown, ArrowLeft, Heart, MoreHorizontal } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Portrait, monogram } from "@/components/media/Portrait";
+import { StoryAvatar } from "@/components/stories/StoryAvatar";
 import { ReportModal } from "@/components/safety/ReportModal";
 import { ProfilePlans } from "@/components/plans/ProfilePlans";
 import { LikeButton } from "@/components/media/LikeButton";
@@ -202,6 +203,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
 
       <div className="space-y-10 px-6 pb-10 pt-6 sm:px-10">
         <header>
+          {memberView&&<div className="mb-4"><StoryAvatar ownerId={id} name={name} src={profile.avatarUrl} size={76}/></div>}
           {status && (
             <p className="flex items-center gap-2 text-[14px] text-velora-ink2">
               {profile.presence === "ONLINE" && <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-velora-copper" />}{status}

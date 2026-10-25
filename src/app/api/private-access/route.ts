@@ -29,7 +29,7 @@ async function blockedBetween(db: Db, first: string, second: string) {
 
 async function privateCount(db: Db, ownerId: string) {
   const { count } = await db.from("media_objects").select("id", { count: "exact", head: true })
-    .eq("owner_id", ownerId).eq("visibility", "PRIVATE").eq("upload_status", "AVAILABLE").eq("moderation_status", "APPROVED").or("category.is.null,category.neq.MESSAGE");
+    .eq("owner_id", ownerId).eq("visibility", "PRIVATE").eq("upload_status", "AVAILABLE").eq("moderation_status", "APPROVED").or("category.is.null,and(category.neq.MESSAGE,category.neq.STORY)");
   return count || 0;
 }
 

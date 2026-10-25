@@ -27,6 +27,10 @@ export async function POST(req: NextRequest) {
     const fileSize = Number(body.fileSize);
     const folder = ALLOWED_FOLDERS.has(body.folder) ? body.folder : "general";
     const isProfileImage = folder === "avatars" || folder === "covers";
+    const isStory = body.category === "STORY" && !isProfileImage;
+    if (isStory && (!PROFILE_IMAGE_MIME_TYPES.has(fileType) || body.contentRating !== "NON_EXPLICIT")) {
+      return NextResponse.json({ error: "Stories support non-explicit JPEG, PNG or WebP photos" }, { status: 400 });
+    }
     const visibility = isProfileImage
       ? "MEMBERS_ONLY"
       : (["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY", "PRIVATE", "APPROVED_USERS_ONLY"].includes(body.visibility) ? body.visibility : "PRIVATE");
@@ -64,7 +68,7 @@ export async function POST(req: NextRequest) {
       media_type: mediaType,
       mime_type: fileType,
       byte_size: fileSize,
-      visibility,
+      visibility: isStory ? "PRIVATE" : visibility,
       content_rating: contentRating,
       upload_status: "PENDING",
       processing_status: mediaType === "VIDEO" ? "UPLOADING" : "READY",

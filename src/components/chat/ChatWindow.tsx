@@ -7,7 +7,7 @@ import { Modal } from "@/components/ui/Modal";
 import { ReportModal } from "@/components/safety/ReportModal";
 import { ArrowLeft, ArrowRight, MoreHorizontal, Plus, Search } from "lucide-react";
 import { ChatPhoto } from "@/components/chat/ChatPhoto";
-import { Portrait } from "@/components/media/Portrait";
+import { StoryAvatar } from "@/components/stories/StoryAvatar";
 import { requestParticipantDeclaration, uploadFileToR2 } from "@/lib/storage/clientUpload";
 import { desireById } from "@/lib/desires.mjs";
 import { possessive } from "@/lib/peopleCopy.mjs";
@@ -225,16 +225,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             const isActive = activeConversation.id === c.id;
             return (
               <li key={c.id}>
-                <button type="button" onClick={() => onSelectConversation(c)} aria-current={isActive ? "true" : undefined} className={`flex min-h-[76px] w-full items-center gap-4 border-b border-velora-line/70 py-3 text-left ${isActive ? "md:bg-velora-sunken/60 md:-mx-5 md:w-[calc(100%+2.5rem)] md:px-5" : ""}`}>
-                  <Portrait src={c.participant.avatarUrl} name={c.participant.displayName} sizes="44px" className="h-[55px] w-11 shrink-0" monogramClassName="text-xl" />
-                  <span className="min-w-0 flex-1">
+                <div className={`flex min-h-[76px] w-full items-center gap-4 border-b border-velora-line/70 py-3 text-left ${isActive ? "md:bg-velora-sunken/60 md:-mx-5 md:w-[calc(100%+2.5rem)] md:px-5" : ""}`}>
+                  <StoryAvatar ownerId={c.participant.id} src={c.participant.avatarUrl} name={c.participant.displayName}/>
+                  <button type="button" onClick={() => onSelectConversation(c)} aria-current={isActive?"true":undefined} className="min-w-0 flex-1 py-2 text-left">
                     <span className="flex items-baseline justify-between gap-2">
                       <span className={`truncate font-display text-[22px] leading-tight ${c.unreadCount > 0 ? "text-velora-ink" : "text-velora-ink"}`}>{c.participant.displayName}</span>
                       {c.participant.isOnline && <span className="h-2 w-2 shrink-0 rounded-full bg-velora-copper" role="img" aria-label="Here now" />}
                     </span>
                     <span className={`block truncate text-[14px] ${c.unreadCount > 0 ? "font-semibold text-velora-ink" : "text-velora-muted"}`}>{c.lastMessage?.content || "Conversation started"}</span>
-                  </span>
-                </button>
+                  </button>
+                </div>
               </li>
             );
           })}
@@ -249,8 +249,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       <section aria-label={`Conversation with ${name}`} className={`${phonePane === "thread" ? "flex" : "hidden"} min-h-0 flex-col bg-velora-surface md:flex`}>
         <header className="flex items-center gap-3 border-b border-velora-line px-3 py-2 md:px-6">
           <button type="button" onClick={onBackToList} aria-label="Back to conversations" className="flex h-11 w-11 items-center justify-center text-velora-ink md:hidden"><ArrowLeft className="h-5 w-5" aria-hidden /></button>
+          <StoryAvatar ownerId={participantId} src={participant.avatarUrl} name={name} size={46}/>
           <Link href={`/profile/${participantId}`} className="flex min-w-0 flex-1 items-center gap-3">
-            <Portrait src={participant.avatarUrl} name={name} sizes="40px" className="h-10 w-10 shrink-0 rounded-full" monogramClassName="text-lg" />
             <span className="min-w-0">
               <span className="block truncate font-display text-[24px] leading-tight text-velora-ink">{name}</span>
               {status && <span className="block text-[13px] text-velora-muted">{status}</span>}

@@ -26,10 +26,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!supabase) return NextResponse.json({ error: "Media service unavailable" }, { status: 503 });
   const modern = await supabase.from("media_objects").select("id,owner_id,object_key,visibility,upload_status,moderation_status,processing_status,category,mime_type").eq("id", params.id).maybeSingle();
   const legacy = modern.error
-    ? await supabase.from("media_objects").select("id,owner_id,object_key,visibility,upload_status,mime_type").eq("id", params.id).maybeSingle()
+    ? await supabase.from("media_objects").select("id,owner_id,object_key,visibility,upload_status,mime_type,category").eq("id", params.id).maybeSingle()
     : null;
   const media = modern.data || legacy?.data;
   if (!media || media.upload_status !== "AVAILABLE") return NextResponse.json({ error: "Media not found" }, { status: 404 });
+  if ("category" in media && media.category === "STORY") return NextResponse.json({ error: "Media not found" }, { status: 404, headers: { "Cache-Control": "private, no-store" } });
   const isOwner = media.owner_id === actor.actor.profileId;
   const moderationStatus = "moderation_status" in media ? media.moderation_status : null;
   const processingStatus = "processing_status" in media ? media.processing_status : null;
@@ -95,6 +96,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const tags = Array.isArray(body.tags) ? body.tags.filter((tag: unknown): tag is string => typeof tag === "string").map((tag: string) => tag.trim().slice(0,50)).filter(Boolean).slice(0,20) : [];
   if (title.length > 160 || description.length > 4000 || category.length > 100) return NextResponse.json({ error: "Invalid media details" }, { status: 400 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Media service unavailable" }, { status: 503 });
+  const { data: existing, error: existingError } = await db.from("media_objects").select("category").eq("id", params.id).eq("owner_id", actor.actor.profileId).maybeSingle();
+  if (existingError) return NextResponse.json({ error: "Media lookup failed" }, { status: 502 });
+  if (existing?.category === "STORY" || category === "STORY") return NextResponse.json({ error: "Manage story photos in Stories" }, { status: 409 });
   const { data, error } = await db.from("media_objects").update({ title: title || null, description: description || null, category: category || null, tags, visibility, moderation_status: "PENDING_REVIEW", published_at: null, updated_at: new Date().toISOString() }).eq("id", params.id).eq("owner_id", actor.actor.profileId).neq("upload_status", "REMOVED").select("id,title,description,category,tags,visibility,moderation_status,processing_status,upload_status").maybeSingle();
   if (error) return NextResponse.json({ error: "Media update failed" }, { status: 502 }); if (!data) return NextResponse.json({ error: "Media not found" }, { status: 404 });
   const audited = await appendDurableAudit(db, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MEDIA_UPDATE", resourceType: "MEDIA", resourceId: data.id, outcome: "SUCCESS", metadata: { visibility } });

@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     const { data: block, error: blockError } = await db.from("user_blocks").select("id").or(`and(blocker_id.eq.${auth.actor.profileId},blocked_profile_id.eq.${ownerId}),and(blocker_id.eq.${ownerId},blocked_profile_id.eq.${auth.actor.profileId})`).limit(1).maybeSingle();
     if (blockError || block) return NextResponse.json({ error: "No access" }, { status: 403 });
   }
-  const { data, error } = await db.from("media_objects").select("id,title,created_at").eq("owner_id", ownerId).eq("visibility", "PRIVATE").eq("upload_status", "AVAILABLE").eq("moderation_status", "APPROVED").or("category.is.null,category.neq.MESSAGE").order("created_at", { ascending: false }).limit(60);
+  const { data, error } = await db.from("media_objects").select("id,title,created_at").eq("owner_id", ownerId).eq("visibility", "PRIVATE").eq("upload_status", "AVAILABLE").eq("moderation_status", "APPROVED").or("category.is.null,and(category.neq.MESSAGE,category.neq.STORY)").order("created_at", { ascending: false }).limit(60);
   if (error) return NextResponse.json({ error: "Private photos lookup failed" }, { status: 502 });
   return NextResponse.json({ media: (data || []).map((row) => ({ id: row.id, title: row.title || "", url: `/api/media/${row.id}` })) }, { headers: { "Cache-Control": "private, no-store" } });
 }
