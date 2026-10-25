@@ -17,13 +17,13 @@ function load(path, mocks) {
 const id = "12345678-1234-4123-8123-123456789012";
 const ownerId = "22345678-1234-4123-8123-123456789012";
 
-function route({ ownerStatus = "ACTIVE", blockError = null, deliver = async () => new Response("pixels") } = {}) {
+function route({ ownerStatus = "ACTIVE", blockError = null, category = null, deliver = async () => new Response("pixels") } = {}) {
   const db = { from(table) {
     let columns = "";
     const q = new Proxy({}, { get(_, key) {
       if (key === "select") return (value) => { columns = value; return q; };
       if (key === "then") return (resolve) => resolve(table === "media_objects"
-        ? { data: columns === "variants" ? { variants: null } : { id, owner_id: ownerId, object_key: "photos/raw.jpg", mime_type: "image/jpeg", upload_status: "AVAILABLE", visibility: "MEMBERS_ONLY", moderation_status: "APPROVED", processing_status: "READY" }, error: null }
+        ? { data: columns === "variants" ? { variants: null } : { id, owner_id: ownerId, category, object_key: "photos/raw.jpg", mime_type: "image/jpeg", upload_status: "AVAILABLE", visibility: "MEMBERS_ONLY", moderation_status: "APPROVED", processing_status: "READY" }, error: null }
         : table === "user_blocks" ? { data: null, error: blockError }
         : { data: { account_status: ownerStatus, discovery_disabled: false }, error: null });
       return () => q;
@@ -41,6 +41,11 @@ function route({ ownerStatus = "ACTIVE", blockError = null, deliver = async () =
   });
 }
 const request = () => ({ nextUrl: new URL("https://example.test/api/media/" + id), headers: new Headers() });
+
+test("story photos cannot escape audience/expiry checks through generic media delivery",async()=>{
+ let reads=0;const api=route({category:"STORY",deliver:async()=>{reads++;return new Response("leak");}});
+ assert.equal((await api.GET(request(),{params:{id}})).status,404);assert.equal(reads,0);
+});
 
 test("widthless delivery strips GPS and EXIF; corrupt input fails instead of returning the original", async () => {
   const original = await sharp({ create: { width: 16, height: 12, channels: 3, background: "red" } })

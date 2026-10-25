@@ -12,6 +12,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   const uniqueIds = [...new Set(mediaIds)]; const coverMediaId = typeof body.coverMediaId === "string" && UUID.test(body.coverMediaId) ? body.coverMediaId : null;
   if (uniqueIds.length !== mediaIds.length || uniqueIds.length > 30 || (coverMediaId && !uniqueIds.includes(coverMediaId))) return NextResponse.json({ error: "An album can contain no more than 30 photos" }, { status: 400 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Albums unavailable" }, { status: 503 });
+  if (uniqueIds.length) {
+    const { data: stories, error: storyError } = await db.from("media_objects").select("id").in("id", uniqueIds).eq("category", "STORY");
+    if (storyError) return NextResponse.json({ error: "Photo lookup failed" }, { status: 502 });
+    if (stories?.length) return NextResponse.json({ error: "Story photos cannot be added to albums" }, { status: 409 });
+  }
   const { error } = await db.rpc("intimo_set_album_media", { p_album_id: params.id, p_owner_id: auth.actor.profileId, p_media_ids: uniqueIds, p_cover_media_id: coverMediaId });
   if (error) {
     const reason = /invalid_album_media/.test(error.message) ? "One of these photos hasn't finished uploading or was removed. Refresh and try again."

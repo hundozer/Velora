@@ -33,6 +33,8 @@ export async function GET(req: NextRequest) {
     media: supabase.from("media_objects").select("id,media_type,mime_type,byte_size,visibility,upload_status,moderation_status,processing_status,title,description,category,tags,published_at,created_at,updated_at").eq("owner_id", profileId),
     participantDeclarations: supabase.from("content_participant_declarations").select("media_id,contains_other_identifiable_participants,all_participants_adults,recording_consented,publication_consented,declaration_version,declared_at").eq("uploader_id", profileId),
     posts: supabase.from("content_posts").select("*").eq("author_id", profileId),
+    stories: supabase.from("member_stories").select("id,media_id,caption,audience,recipients,created_at,expires_at,deleted_at").eq("owner_id", profileId),
+    storiesViewed: supabase.from("story_views").select("story_id,viewed_at").eq("viewer_id", profileId),
     comments: supabase.from("content_comments").select("*").eq("author_id", profileId),
     privatePhotoAccess: supabase.from("album_access_grants").select("owner_id,viewer_id,status,grant_type,expires_at,requested_at,decided_at").or(`owner_id.eq.${profileId},viewer_id.eq.${profileId}`),
     interestsSent: supabase.from("interests").select("to_id,created_at").eq("from_id", profileId),

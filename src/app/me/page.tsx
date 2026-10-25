@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useTranslation, LANGUAGES } from "@/context/LanguageContext";
 import { useDurableNotifications } from "@/lib/notifications/useDurableNotifications";
 import { AppOnThisDevice } from "@/components/pwa/AppOnThisDevice";
+import { StoryAvatar } from "@/components/stories/StoryAvatar";
 
 const ADMIN_ROLES = new Set(["SUPER_ADMIN", "SYSTEM_ADMIN", "TRUST_AND_SAFETY_ADMIN", "CONTENT_MODERATOR", "PRIVACY_ADMIN", "SUPPORT_ADMIN", "COMMUNITY_ADMIN"]);
 
@@ -46,12 +47,13 @@ export default function MePage() {
   return (
     <main className="mx-auto max-w-lg space-y-5 px-4 py-6">
       <div className="flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-velora-gold/50 bg-velora-card">
+        {profile?.id&&<StoryAvatar ownerId={profile.id} name={name} src={profile.avatarUrl} size={64} fallbackHref="/stories"/>}
+        {!profile?.id&&<div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-velora-gold/50 bg-velora-card">
           {profile?.avatarUrl
             ? // eslint-disable-next-line @next/next/no-img-element
               <img src={profile.avatarUrl} alt="" className="h-full w-full object-cover" />
             : <span className="text-xl font-bold text-velora-gold">{name.slice(0, 1).toUpperCase()}</span>}
-        </div>
+        </div>}
         <div className="min-w-0">
           <h1 className="truncate font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">{name}</h1>
           <p className="truncate text-xs text-velora-textMuted">{user.email}</p>
@@ -65,6 +67,7 @@ export default function MePage() {
         <Row href="/me/desires" icon={Flame} label="My desires" />
         <Row href="/me/boundaries" icon={Hand} label="My boundaries" />
         <Row href="/albums/manage" icon={ImageIcon} label="My photos & albums" />
+        <Row href="/stories" icon={ImageIcon} label="Stories · your next 24 hours" />
         <Row href="/me/private-photos" icon={Lock} label="Private photo access" />
         <Row href="/favorites" icon={Bookmark} label="Saved" />
         <Row href="/settings#privacy" icon={EyeOff} label="Privacy Center" />

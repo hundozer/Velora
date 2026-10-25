@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { anonymizeDeletedProfile } from "@/lib/privacy/retention";
+import { cleanupStoryPhotos } from "@/lib/stories/cleanup";
 import { isAuthorizedCronRequest } from "@/lib/security/cronAuth";
 import { getServerSupabase } from "@/lib/supabase/server";
 
@@ -20,10 +21,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Retention candidate lookup failed" }, { status: 502 });
   }
   const results = [];
+  const stories = await cleanupStoryPhotos(db);
   for (const profile of profiles || []) results.push(await anonymizeDeletedProfile(db, run.id, String(profile.id)));
-  const failed = results.filter((item) => item.status === "FAILED").length;
+  const failed = results.filter((item) => item.status === "FAILED").length + stories.failed;
   const skipped = results.filter((item) => item.status === "SKIPPED").length;
   const completed = results.filter((item) => item.status === "COMPLETED").length;
   await db.from("retention_runs").update({ status: failed ? "COMPLETED_WITH_ERRORS" : "COMPLETED", completed_at: new Date().toISOString(), processed_count: results.length, completed_count: completed, failed_count: failed, skipped_count: skipped }).eq("id", run.id);
-  return NextResponse.json({ runId: run.id, processed: results.length, completed, failed, skipped }, { headers: { "Cache-Control": "no-store" } });
+  return NextResponse.json({ runId: run.id, processed: results.length, completed, failed, skipped, stories }, { headers: { "Cache-Control": "no-store" } });
 }

@@ -4,6 +4,7 @@ import { EmailNotificationService } from "@/lib/notifications/emailService";
 
 type Result = { profileId: string; status: "COMPLETED" | "SKIPPED" | "FAILED"; reason?: string };
 const DELETE_TABLES: Array<[string, string]> = [
+  ["story_views", "viewer_id"], ["member_stories", "owner_id"],
   ["content_reactions", "profile_id"], ["saved_items", "profile_id"], ["content_comments", "author_id"],
   ["content_posts", "author_id"], ["dating_ads", "author_id"], ["notifications", "user_id"],
   ["connections", "follower_id"], ["connections", "followed_id"], ["user_blocks", "blocker_id"],

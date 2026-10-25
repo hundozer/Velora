@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Portrait } from "@/components/media/Portrait";
+import { StoryAvatar } from "@/components/stories/StoryAvatar";
 import { ACTIVITY_GROUPS } from "@/lib/people.mjs";
 import { metaLine } from "@/lib/peopleCopy.mjs";
 import type { Person } from "@/components/people/PersonTile";
@@ -11,14 +11,14 @@ import type { Person } from "@/components/people/PersonTile";
 export function IndexRow({ person }: { person: Person }) {
   return (
     <li className="[content-visibility:auto] [contain-intrinsic-size:auto_84px]">
-      <Link href={`/profile/${person.id}`} className="group flex min-h-[84px] items-center gap-4 py-3 outline-offset-4">
-        <Portrait src={person.avatarUrl} name={person.displayName} sizes="48px" className="h-[60px] w-12 shrink-0" monogramClassName="text-2xl" />
-        <span className="min-w-0 flex-1">
+      <div className="group flex min-h-[84px] items-center gap-4 py-3 outline-offset-4">
+        <StoryAvatar ownerId={person.id} src={person.avatarUrl} name={person.displayName} size={60}/>
+        <Link href={`/profile/${person.id}`} className="min-w-0 flex-1 py-3">
           <span className="block truncate font-display text-[24px] leading-tight text-velora-ink group-hover:text-velora-copperInk">{person.displayName}</span>
           <span className="block truncate text-[14px] text-velora-muted">{metaLine(person) || " "}</span>
-        </span>
+        </Link>
         {person.presence === "ONLINE" && <span className="h-2 w-2 shrink-0 rounded-full bg-velora-copper" aria-label="Here now" role="img" />}
-      </Link>
+      </div>
     </li>
   );
 }

@@ -39,3 +39,9 @@ jobs:
           psql -h localhost -U postgres -d intimo_social_test -f tests/sql/social-return-email-disposable.sql
         env:
           PGPASSWORD: disposable-test-only
+      - name: Verify story audiences, expiry and direct role denials
+        run: |
+          createdb -h localhost -U postgres intimo_stories_test
+          psql -h localhost -U postgres -d intimo_stories_test -f tests/sql/stories-disposable.sql
+        env:
+          PGPASSWORD: disposable-test-only

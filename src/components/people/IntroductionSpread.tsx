@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { ArrowDown } from "lucide-react";
 import { Portrait, monogram } from "@/components/media/Portrait";
+import { StoryAvatar } from "@/components/stories/StoryAvatar";
 import { possessive, statusLine, ownWords } from "@/lib/peopleCopy.mjs";
 import type { Person } from "@/components/people/PersonTile";
 
@@ -37,6 +38,7 @@ export function IntroductionSpread({ person, next, priority = false, onNext }: {
       )}
 
       <div className="px-6 pb-8 pt-28 sm:px-10 md:max-w-[52%] md:pb-14 md:pl-14">
+        <div className="mb-5"><StoryAvatar ownerId={person.id} name={person.displayName} src={person.avatarUrl} size={64}/></div>
         {hasPhoto || !words ? (
           <>
             {status && (

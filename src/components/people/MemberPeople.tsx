@@ -194,6 +194,7 @@ export function MemberPeople() {
         <Link href="/" className={`font-display text-[28px] leading-none md:invisible ${darkHeader ? "text-velora-onPhoto md:text-velora-ink" : "text-velora-ink"}`}>Intimo</Link>
         <ModeSwitch view={view} onChange={switchView} dark={darkHeader} />
       </header>
+      <div className={`mx-auto max-w-2xl px-5 py-3 text-sm sm:px-8 ${showIntroductions?"relative z-20 mt-16 text-velora-onPhoto md:mt-0 md:text-velora-ink":"text-velora-ink"}`}><Link href="/stories" className="inline-flex min-h-11 items-center underline underline-offset-4">Stories · see what people are sharing</Link></div>
 
       {showIntroductions && introductions && (
         <div ref={spreads} className="mx-auto max-w-5xl md:space-y-6 md:px-8 md:pt-4">
