@@ -27,7 +27,11 @@ export async function GET(req: NextRequest) {
  const ids=[...new Set(rows.map(r=>r.owner_id))];
  const profiles=ids.length?await db.from("profiles").select("id,display_name,avatar_url").in("id",ids):{data:[],error:null};
  if(profiles.error)return storyJson({error:"Stories unavailable"},502);
- return storyJson({stories:rows.map(row=>({id:row.id,ownerId:row.owner_id,mediaId:row.media_id,caption:row.caption,audience:row.audience,expiresAt:row.expires_at,viewed:row.viewed,owner:profiles.data?.find(p=>p.id===row.owner_id),url:`/api/stories/${row.id}/image`}))});
+ const links=rows.length?await db.from("member_stories").select("id,plan_id").in("id",rows.map(row=>row.id)):{data:[],error:null};
+ // Older deployments can still read unlinked Stories before the additive migration.
+ if(links.error&&links.error.code!=="42703")return storyJson({error:"Stories unavailable"},502);
+ const planLinks=new Map((links.data||[]).map(row=>[row.id,row.plan_id]));
+ return storyJson({stories:rows.map(row=>({planId:planLinks.get(row.id)||null,id:row.id,ownerId:row.owner_id,mediaId:row.media_id,caption:row.caption,audience:row.audience,expiresAt:row.expires_at,viewed:row.viewed,owner:profiles.data?.find(p=>p.id===row.owner_id),url:`/api/stories/${row.id}/image`}))});
 }
 export async function POST(req: NextRequest) {
  const access=await storyActor(req);if(!access.ok)return access.response;
@@ -40,7 +44,9 @@ export async function POST(req: NextRequest) {
  if(!uuid.test(body.mediaId??"")||caption.length>240||!["MEMBERS","FRIENDS","SELECTED"].includes(body.audience)||body.confirmPublish!==true||
  recipients.length>20||recipients.some(id=>typeof id!=="string"||!uuid.test(id)||id===actor.profileId)||
  (body.audience==="SELECTED"?recipients.length===0:recipients.length!==0))return storyJson({error:"Choose a photo, audience and confirm publication"},400);
- const {data,error}=await db.rpc("intimo_publish_story",{p_owner:actor.profileId,p_media:body.mediaId,p_caption:caption,p_audience:body.audience,p_recipients:recipients});
+ if(body.planId!=null&&!uuid.test(body.planId))return storyJson({error:"Invalid invitation"},400);
+ const args={p_owner:actor.profileId,p_media:body.mediaId,p_caption:caption,p_audience:body.audience,p_recipients:recipients};
+ const {data,error}=await db.rpc(body.planId?"intimo_publish_plan_story":"intimo_publish_story",body.planId?{...args,p_plan:body.planId}:args);
  if(error)return storyJson({error:"Story could not be published. Check your active stories before retrying."},409);
  return storyJson({id:data},201);
 }

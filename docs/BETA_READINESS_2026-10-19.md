@@ -336,3 +336,8 @@ Fix based on main `276c0e0b25d2f7d49ceedfcdb75df6710d2c3982`: admin Content form
 New album-photo listing and image-byte routes require existing `content:reveal_sensitive` authorization and MFA. Each byte request rechecks permission and persists an admin audit before delivery. Existing sanitation/proxy code strips image metadata, returns no reusable storage URL and fails closed without original-upload fallback. Chat images and removed/unavailable/unprocessed media are excluded. No member media permissions, migrations or production records changed.
 
 Verification: 214 automated tests passed, including six new behavior tests for denied roles/MFA guards, pending private images, lookup/audit/storage failures, unavailable/chat/non-image exclusion, ordered/missing album entries and empty-versus-failed lookup. Mobile390px and desktop1440px Chromium interaction checks passed with synthetic intercepted API/image responses: open album, thumbnail, enlarge/close, empty/unavailable states, no horizontal overflow. Temporary UI harness removed before commit. These checks do not claim a live authenticated staging storage/admin journey or approval of real member media. Deployed Preview/hosted check evidence is attached to the focused PR. Overall beta decision is unchanged.
+
+
+## 25 October: Take Us Out invitation slice
+
+Implementation and synthetic mobile/desktop rehearsal documented in [Take Us Out evidence](TAKE_US_OUT_2026-10-25.md). Additive Story-to-Plan linkage applied to staging only; production unmodified. Actual staging fixture verification remains unproven after ambiguous tool errors; independent legacy counts preserved. Hosted SQL/Preview and authenticated live acceptance remain release gates. No beta decision change.

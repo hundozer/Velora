@@ -71,12 +71,15 @@ export async function GET(req: NextRequest) {
   const mine = params.get("mine") === "true";
   const authorId = params.get("authorId");
   if (authorId && !UUID.test(authorId)) return NextResponse.json({ error: "Invalid member" }, { status: 400 });
+  const planId = params.get("id");
+  if (planId && !UUID.test(planId)) return NextResponse.json({ error: "Invalid invitation" }, { status: 400 });
   const category = params.get("category");
   const sceneEventId = params.get("sceneEventId");
   if (sceneEventId && !UUID.test(sceneEventId)) return NextResponse.json({ error: "Invalid event" }, { status: 400 });
 
   const buildQuery = (columns: string, withStart: boolean) => {
     let query = supabase.from("dating_ads").select(columns).order(mine || !withStart ? "created_at" : "starts_at", { ascending: !mine && withStart }).limit(mine ? 20 : 100);
+    if (planId) query = query.eq("id", planId);
     if (sceneEventId) query = query.eq("scene_event_id", sceneEventId);
     if (mine) {
       query = query.eq("author_id", viewerId);

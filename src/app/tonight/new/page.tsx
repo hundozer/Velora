@@ -116,7 +116,7 @@ export default function NewInvitationPage() {
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) { setError(payload.error || "Your invitation could not be sent."); setSubmitting(false); return; }
-    router.push(eventId ? `/tonight?event=${encodeURIComponent(eventId)}` : "/tonight");
+    router.push(`/tonight/invitation/${payload.plan.id}`);
     } catch { setError("Your invitation could not be confirmed. Check your invitations before trying again."); setSubmitting(false); }
   }
 
@@ -125,13 +125,13 @@ export default function NewInvitationPage() {
   return (
     <main className="mx-auto min-h-screen max-w-2xl bg-velora-surface px-6 pb-28 pt-4 sm:px-10 md:my-6 md:rounded-[28px] md:pt-8">
       <Link href="/tonight" className="inline-flex min-h-11 items-center gap-1.5 text-[15px] font-semibold text-velora-ink"><ArrowLeft className="h-4 w-4" aria-hidden />Tonight</Link>
-      <h1 className="mt-4 font-display text-[44px] leading-none text-velora-ink">{eventId ? "Find company for this event" : "Extend an invitation"}</h1>
+      <h1 className="mt-4 font-display text-[44px] leading-none text-velora-ink">{eventId ? "Find company for this event" : "Make them want to join you"}</h1>
 
       {eventLoading && <p role="status" className="mt-4">Loading invitation…</p>}
       {linkedEvent && <section aria-label="Linked event" className="mt-6 rounded-xl border border-velora-control p-4"><h2 className="font-semibold">{linkedEvent.title}</h2><p className="mt-2 text-sm text-velora-ink2">{new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Prague", dateStyle: "medium", timeStyle: "short" }).format(new Date(linkedEvent.startsAt))} · Prague time{linkedEvent.areaName ? ` · ${linkedEvent.areaName}` : ""}</p><p className="mt-2 text-sm text-velora-ink2">Invitation ends {linkedEvent.companyWindow && new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Prague", dateStyle: "medium", timeStyle: "short" }).format(new Date(linkedEvent.companyWindow.endsAt))} (Prague time), within 12 hours of the event start. This is an invitation to meet, not a ticket, RSVP or confirmation of admission.</p><a className="mt-2 inline-block text-sm text-velora-accent underline" href={linkedEvent.url} target="_blank" rel="noopener noreferrer">Details & tickets</a></section>}
       <form onSubmit={submit} className="mt-8">
         <label className="block text-sm font-semibold text-velora-ink">What would you like to do?
-          <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} placeholder="Talk kink over a drink" required className="mt-2 min-h-12 w-full rounded-lg border border-velora-control bg-velora-sunken px-3 text-lg font-normal text-velora-ink placeholder:text-velora-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent"/>
+          <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} placeholder="A table for three. Who’s our third?" required className="mt-2 min-h-12 w-full rounded-lg border border-velora-control bg-velora-sunken px-3 text-lg font-normal text-velora-ink placeholder:text-velora-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent"/>
         </label>
         {!eventId && <>        <fieldset className="mt-6"><legend className="text-sm font-semibold">When & where</legend><div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2"><div><p className="mb-2 text-xs text-velora-ink2">Day</p><Blank onClick={() => setSheet("day")} label={`Day: ${day}`}>{day === "tonight" ? "Tonight" : "Tomorrow"}</Blank></div><div><p className="mb-2 text-xs text-velora-ink2">Neighbourhood</p><Blank onClick={() => setSheet("area")} label={`Area: ${area?.name || "choose"}`}>{area?.kind === "PRAGUE_DISTRICT" ? area.label.split(" · ")[0] : area?.name || "Choose neighbourhood"}</Blank></div></div><div className="mt-4 grid grid-cols-2 gap-4"><label className="min-w-0 text-sm font-semibold">Starts at<TimeSelect label="Starts at" value={from} onChange={setFrom} className={timeInput}/></label><label className="min-w-0 text-sm font-semibold">Ends at<TimeSelect label="Ends at" value={until} onChange={setUntil} className={timeInput}/></label></div></fieldset></>}
         <div className="mt-6"><p className="mb-2 text-sm font-semibold">Who may reply?</p><Blank onClick={() => setSheet("welcome")} label={`Who may reply: ${welcomeLine}`}>{welcomeLine}</Blank></div>
@@ -142,15 +142,16 @@ export default function NewInvitationPage() {
 
         <label className="mt-8 block">
           <span className="text-[13px] font-semibold uppercase tracking-[0.18em] text-velora-ink2">A few words for whoever reads it</span>
-          <textarea value={text} onChange={(event) => setText(event.target.value)} maxLength={1000} rows={4} required placeholder="What do you have in mind? What should someone know before saying yes?" className="mt-2 w-full resize-y rounded-lg border border-velora-control bg-velora-sunken p-3 text-[17px] leading-relaxed text-velora-ink placeholder:text-velora-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent" />
+          <textarea value={text} onChange={(event) => setText(event.target.value)} maxLength={1000} rows={4} required placeholder="Set the scene. Who are you hoping to meet? What would make their first message catch your eye?" className="mt-2 w-full resize-y rounded-lg border border-velora-control bg-velora-sunken p-3 text-[17px] leading-relaxed text-velora-ink placeholder:text-velora-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent" />
           <span className="block text-[14px] text-velora-muted">No payment, services or contact details. Invitations offering paid services are removed.</span>
         </label>
 
+        <p className="mt-6 text-sm text-velora-ink2">Replies arrive privately in Messages. Choose who to talk to, then agree together. An invitation is never consent to sex. Keep exact addresses and contact details for private conversation.</p>
         <p className="mt-6 text-[16px] text-velora-ink2">Kind of evening: <Blank onClick={() => setSheet("kind")} label="Kind of evening">{PLAN_CATEGORIES.find((item) => item.value === category)?.label.toLowerCase()}</Blank></p>
 
         {eventId && <label className="mt-6 flex items-start gap-3 rounded-lg border border-velora-control p-4 text-sm"><input type="checkbox" checked={publishEventInvitation} onChange={event => setPublishEventInvitation(event.target.checked)} className="mt-1"/><span>Publish this invitation to signed-in adult members. My profile and invitation will appear in Plans and on my profile, subject to existing visibility and blocking rules. Who may reply is controlled above. Clicking Find company alone shares nothing.</span></label>}
         {error && <p role="alert" className="mt-6 border-l-2 border-velora-crimson pl-4 text-[15px] text-velora-crimson">{error}</p>}
-        <button type="submit" disabled={!valid || submitting} className="mt-8 min-h-14 w-full rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper disabled:opacity-40">{submitting ? "Sending…" : "Send the invitation"}</button>
+        <button type="submit" disabled={!valid || submitting} className="mt-8 min-h-14 w-full rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper disabled:opacity-40">{submitting ? "Sending…" : "Publish invitation"}</button>
         {!valid && !timeProblem && <p className="mt-2 text-center text-[14px] text-velora-muted">Say what you&apos;d like to do and add a few words.</p>}
       </form>
 
