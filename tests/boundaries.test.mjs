@@ -9,7 +9,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (file) => fs.readFile(path.join(root, file), "utf8");
 
 test("migration kind list matches src/lib/boundaries.mjs", async () => {
-  const sql = await read("supabase/migrations/20261022_member_boundaries.sql");
+  const sql = await read("supabase/migrations/20261022000000_member_boundaries.sql");
   const list = sql.match(/kind text not null check \(kind in \(([^)]+)\)\)/)[1].split(",").map((item) => item.trim().replace(/'/g, ""));
   assert.deepEqual(list, BOUNDARY_KINDS.map((kind) => kind.id));
   assert.match(sql, /revoke all on public\.member_boundaries from anon, authenticated;/);

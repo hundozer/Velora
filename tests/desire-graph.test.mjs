@@ -9,7 +9,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (file) => fs.readFile(path.join(root, file), "utf8");
 
 test("migration seed matches the desire catalogue", async () => {
-  const sql = await read("supabase/migrations/20261021_desire_graph.sql");
+  const sql = await read("supabase/migrations/20261021000000_desire_graph.sql");
   const seeded = [...sql.matchAll(/^\s+\('([a-z0-9-]+)', '([a-z]+)', '((?:[^']|'')+)', \d+\)/gm)];
   assert.equal(seeded.length, DESIRES.length);
   for (const [, id, category, label] of seeded) {
@@ -20,7 +20,7 @@ test("migration seed matches the desire catalogue", async () => {
 });
 
 test("desire tables are member-read-only and never visible to anon", async () => {
-  const sql = await read("supabase/migrations/20261021_desire_graph.sql");
+  const sql = await read("supabase/migrations/20261021000000_desire_graph.sql");
   assert.match(sql, /revoke all on public\.member_desires from anon, authenticated;/);
   assert.match(sql, /grant select on public\.member_desires to authenticated;/);
   assert.match(sql, /using \(profile_id = auth\.uid\(\)\)/);

@@ -29,7 +29,7 @@ test("retention execution is secret-authenticated, legal-hold aware, durable, an
   const route = await read("src/app/api/internal/retention/run/route.ts");
   const auth = await read("src/lib/security/cronAuth.ts");
   const worker = await read("src/lib/privacy/retention.ts");
-  const migration = await read("supabase/migrations/20260815_retention_execution.sql");
+  const migration = await read("supabase/migrations/20260815000000_retention_execution.sql");
   assert.match(route, /isAuthorizedCronRequest\(req\)/);
   assert.match(route, /ANONYMIZATION_IN_PROGRESS/);
   assert.match(auth, /timingSafeEqual/);
@@ -184,7 +184,7 @@ test("verification screen resends through the server email route without polling
 });
 
 test("RLS lockdown removes public allow-all policies and revokes browser roles", async () => {
-  const source = await read("supabase/migrations/20260807_lock_down_auth0_boundary.sql");
+  const source = await read("supabase/migrations/20260807000000_lock_down_auth0_boundary.sql");
   assert.doesNotMatch(source, /create\s+policy[\s\S]*using\s*\(true\)/i);
   assert.doesNotMatch(source, /create\s+policy[\s\S]*with\s+check\s*\(true\)/i);
   assert.match(source, /revoke all on table public\.profiles from anon, authenticated/i);
@@ -285,7 +285,7 @@ test("friendships are mutual, accepted, server-owned, block-aware, and enforce p
   const messages = await read("src/app/api/messages/route.ts");
   const privacy = await read("src/app/api/privacy/settings/route.ts");
   const profile = await read("src/components/profile/ProfileStory.tsx");
-  const migration = await read("supabase/migrations/20260820_mutual_friendships.sql");
+  const migration = await read("supabase/migrations/20260820000000_mutual_friendships.sql");
   assert.match(route, /resolveServerActor\(req\)/);
   assert.match(route, /intimo_friend_action/);
   assert.match(route, /appendDurableAudit/);
@@ -404,7 +404,7 @@ test("plans cannot advertise commercial sexual services or require VIP", async (
   const browsePage = await read("src/app/tonight/page.tsx");
   const plans = await read("src/lib/plans.mjs");
   const collection = await read("src/app/api/dating-ads/route.ts");
-  const migration = await read("supabase/migrations/20261023_tonight_plans.sql");
+  const migration = await read("supabase/migrations/20261023000000_tonight_plans.sql");
   assert.doesNotMatch(createPage + plans, /offering services|Erotic services|Incall apartments|S\/M studios/i);
   assert.doesNotMatch(createPage, /Require VIP Membership/);
   assert.doesNotMatch(browsePage, /INITIAL_ADS|images\.unsplash\.com|Prince Charming/);
@@ -438,7 +438,7 @@ test("reports use structured categories and immediately escalate critical harms"
 });
 
 test("report and appeal case transitions are transactional and unavailable to browser roles", async () => {
-  const migration = await read("supabase/migrations/20260816_transactional_safety_actions.sql");
+  const migration = await read("supabase/migrations/20260816000000_transactional_safety_actions.sql");
   const appeal = await read("src/app/api/reports/[id]/appeal/route.ts");
   assert.match(migration, /create or replace function public\.intimo_create_report/);
   assert.match(migration, /insert into public\.moderation_events/);
@@ -472,7 +472,7 @@ test("admin console enforces MFA, granular permissions, audit history, and free-
   const api = await read("src/lib/auth/adminApi.ts");
   const userActions = await read("src/app/api/admin/users/[id]/route.ts");
   const settings = await read("src/app/api/admin/settings/route.ts");
-  const migration = await read("supabase/migrations/20260811_admin_command_center.sql");
+  const migration = await read("supabase/migrations/20260811000000_admin_command_center.sql");
   assert.match(actor, /INTIMO_ADMIN_ROLE_ASSIGNMENTS/);
   assert.doesNotMatch(actor, /FINANCE_ADMIN/);
   assert.match(api, /adminMfaSatisfied/);
@@ -491,7 +491,7 @@ test("God Mode is a short-lived, MFA-backed, audited SUPER_ADMIN elevation witho
   const session = await read("src/app/api/admin/god/session/route.ts");
   const admins = await read("src/app/api/admin/god/admins/route.ts");
   const sensitive = await read("src/app/api/admin/god/sensitive-access/route.ts");
-  const migration = await read("supabase/migrations/20260812_super_admin_elevation.sql");
+  const migration = await read("supabase/migrations/20260812000000_super_admin_elevation.sql");
   assert.match(god, /GOD_MODE_TTL_SECONDS = 15 \* 60/);
   assert.match(god, /createHash\("sha256"\)/);
   assert.match(god, /httpOnly: true/);
@@ -568,8 +568,8 @@ test("public media requires adult declaration, moderation approval, and member a
   const declaration = await read("src/lib/auth/ageDeclaration.ts");
   const publicFile = await read("src/app/api/public/media/[id]/route.ts");
   const memberFile = await read("src/app/api/media/[id]/route.ts");
-  const migration = await read("supabase/migrations/20260814_public_community_content.sql");
-  const ratingMigration = await read("supabase/migrations/20260823_explicit_media_and_photo_verification.sql");
+  const migration = await read("supabase/migrations/20260814000000_public_community_content.sql");
+  const ratingMigration = await read("supabase/migrations/20260823000000_explicit_media_and_photo_verification.sql");
   assert.match(declaration, /createHmac\("sha256"/);
   assert.match(declaration, /timingSafeEqual/);
   assert.match(publicFile, /verifyAgeDeclarationValue/);
@@ -685,7 +685,7 @@ test("messaging entry points use the durable message screen, not a local chat st
 });
 
 test("albums use canonical media objects with owner, moderation, public privacy, and admin parity", async () => {
-  const migration = await read("supabase/migrations/20260817_canonical_media_albums.sql");
+  const migration = await read("supabase/migrations/20260817000000_canonical_media_albums.sql");
   const owner = await read("src/app/api/albums/route.ts");
   const assignment = await read("src/app/api/albums/[id]/media/route.ts");
   const publicAlbum = await read("src/app/api/public/albums/[id]/route.ts");
@@ -708,7 +708,7 @@ test("obsolete simulated media management and gated marketing claims are not mou
 });
 
 test("blocking is atomic, relationship-ending, and durably audited", async () => {
-  const migration = await read("supabase/migrations/20260818_transactional_blocking.sql");
+  const migration = await read("supabase/migrations/20260818000000_transactional_blocking.sql");
   const blocks = await read("src/app/api/blocks/route.ts");
   const connections = await read("src/app/api/connections/route.ts");
   const profile = await read("src/app/api/profile/me/route.ts");
@@ -735,7 +735,7 @@ test("anonymous search stays privacy-filtered while the redundant search page ro
 
 test("demo profiles are staging-only, visibly labeled, reversible, and cannot impersonate activity", async () => {
   const seed = await read("scripts/seed-staging-demo.mjs");
-  const migration = await read("supabase/migrations/20260819_demo_content_marker.sql");
+  const migration = await read("supabase/migrations/20260819000000_demo_content_marker.sql");
   const publicRoute = await read("src/app/api/public/community/route.ts");
   const home = await read("src/components/community/PublicCommunityHome.tsx");
   const people = await read("src/components/people/PublicPeopleBrowse.tsx");
@@ -770,7 +770,7 @@ test("auth emails are server-sent, enumeration-safe and rate-limited", async () 
 });
 
 test("member reads run under RLS with owner-only policies", async () => {
-  const migration = await read("supabase/migrations/20261019_member_read_rls.sql");
+  const migration = await read("supabase/migrations/20261019000000_member_read_rls.sql");
   for (const table of ["profiles", "direct_messages", "notifications", "saved_items", "user_blocks", "media_objects", "user_consents", "privacy_requests"]) {
     assert.match(migration, new RegExp(`on public\\.${table}\\s+for select to authenticated using`));
   }

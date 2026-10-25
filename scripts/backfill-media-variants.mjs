@@ -7,7 +7,7 @@
 //
 // Requires: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
 // CLOUDFLARE_R2_ACCOUNT_ID, CLOUDFLARE_R2_ACCESS_KEY_ID, CLOUDFLARE_R2_SECRET_ACCESS_KEY,
-// CLOUDFLARE_R2_BUCKET_NAME. Needs migration 20261101_media_variants.sql applied.
+// CLOUDFLARE_R2_BUCKET_NAME. Needs migration 20261101000000_media_variants.sql applied.
 import { createClient } from "@supabase/supabase-js";
 import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { processMediaVariants } from "../src/lib/media/variants.mjs";
