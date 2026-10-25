@@ -15,4 +15,7 @@ create table public.retention_holds(profile_id uuid,status text);
 \ir ../../supabase/migrations/20261025034408_private_photo_stories.sql
 \ir ../../supabase/migrations/20261025042415_story_author_adult_guard.sql
 \ir /tmp/intimo-story-cleanup-core.sql
+create table public.dating_ads(id uuid primary key,author_id uuid references public.profiles(id),author_name text,category text,title text,text text,starts_at timestamptz,expires_at timestamptz,status text,moderation_status text,validity_days integer);
+\ir ../../supabase/migrations/20261025062004_story_plan_invitations.sql
 \ir stories-staging.sql
+\ir story-plan-staging.sql

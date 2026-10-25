@@ -8,6 +8,10 @@ export default function NewStory(){
  const [caption,setCaption]=React.useState("");const [audience,setAudience]=React.useState("FRIENDS");const [selected,setSelected]=React.useState<Member[]>([]);
  const [query,setQuery]=React.useState("");const [results,setResults]=React.useState<Member[]>([]);const [consent,setConsent]=React.useState(false);
  const [busy,setBusy]=React.useState(false);const [error,setError]=React.useState("");const [uploaded,setUploaded]=React.useState<string|null>(null);
+ const [planId,setPlanId]=React.useState<string|null>(null);const [planTitle,setPlanTitle]=React.useState("");const [planReady,setPlanReady]=React.useState(false);
+ React.useEffect(()=>{const id=new URLSearchParams(window.location.search).get("plan");if(!id){setPlanReady(true);return;}setPlanId(id);const c=new AbortController();
+  void fetch(`/api/dating-ads?mine=true&id=${encodeURIComponent(id)}`,{cache:"no-store",signal:c.signal}).then(async r=>{const d=await r.json();const p=d.plans?.find((p:{id:string;live:boolean;isMine:boolean})=>p.id===id&&p.live&&p.isMine);if(!r.ok||!p)throw new Error("This invitation is no longer available to share.");setPlanTitle(p.title);setCaption(p.title.slice(0,240));setPlanReady(true);}).catch(()=>{if(!c.signal.aborted)setError("This invitation is no longer available to share.");});return()=>c.abort();
+ },[]);
  const [others,setOthers]=React.useState(false);
  React.useEffect(()=>{if(!file){setPreview("");return;}const url=URL.createObjectURL(file);setPreview(url);return()=>URL.revokeObjectURL(url);},[file]);
  React.useEffect(()=>{const c=new AbortController();if(audience!=="SELECTED"||query.trim().length<2){setResults([]);return;}
@@ -16,7 +20,7 @@ export default function NewStory(){
  },[query,audience]);
  async function json(url:string,body:unknown){const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw new Error(d.error||"Request failed");return d;}
  async function publish(e:React.FormEvent){
-  e.preventDefault();if(!file||!consent||busy)return;setBusy(true);setError("");
+  e.preventDefault();if(!file||!consent||busy||!planReady)return;setBusy(true);setError("");
   try{
    let id=uploaded;
    if(!id){
@@ -26,7 +30,7 @@ export default function NewStory(){
     if(!put.ok)throw new Error("Photo upload failed. Discard it and try again.");
    }
    await json(`/api/media/${id}/complete`,{});
-   await json("/api/stories",{mediaId:id,caption,audience,recipients:audience==="SELECTED"?selected.map(p=>p.id):[],confirmPublish:true});
+   await json("/api/stories",{mediaId:id,caption,audience,recipients:audience==="SELECTED"?selected.map(p=>p.id):[],confirmPublish:true,...(planId?{planId}:{})});
    setUploaded(null);window.dispatchEvent(new Event("stories-changed"));router.push("/stories");
   }catch(e){setError((e instanceof Error?e.message:"Publication failed")+" Check Your stories before retrying if publication was interrupted.");}
   finally{setBusy(false);}
@@ -34,6 +38,7 @@ export default function NewStory(){
  async function discard(){if(!uploaded)return;setBusy(true);try{const r=await fetch(`/api/media/${uploaded}`,{method:"DELETE"});if(!r.ok)throw new Error();setUploaded(null);setFile(null);setError("");}catch{setError("Photo cleanup failed. Please retry discard.");}finally{setBusy(false);}}
  return <main className="mx-auto max-w-lg px-5 py-8"><Link href="/stories" className="underline">Back to Stories</Link><h1 className="mt-6 font-display text-5xl">Your next 24 hours.</h1>
   <p className="mt-4 text-velora-ink2">A real photo. A little context. Only the people you choose. Photos are reviewed before others can see them.</p>
+  {planTitle&&<aside className="mt-6 rounded-xl border border-velora-accent p-4"><p className="text-sm text-velora-muted">Invitation attached</p><p className="mt-1 font-display text-2xl">{planTitle}</p><p className="mt-2 text-sm">Viewers can open the invitation and send a private pitch if eligible. The photo keeps this Story’s audience and expiry.</p></aside>}
   <form onSubmit={publish} className="mt-8 space-y-6">
    <label className="block">Photo <input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy||Boolean(uploaded)} onChange={e=>{const f=e.target.files?.[0]||null;if(f&&f.size>15*1024*1024){setError("Choose a photo under 15 MB.");return;}setFile(f);setConsent(false);}} className="mt-2 block w-full text-sm"/></label>
    {/* Local blob preview; never sent to an image optimiser. */}
@@ -48,7 +53,7 @@ export default function NewStory(){
    <p className="text-sm text-velora-muted">Expiry stops viewing; storage cleanup follows our retention process. People can still save what they see.</p>
    {error&&<p role="alert">{error}</p>}
    {uploaded&&<button type="button" disabled={busy} onClick={discard} className="min-h-11 underline">Discard uploaded photo</button>}
-   <button type="submit" disabled={busy||!file||!consent||(audience==="SELECTED"&&!selected.length)} className="min-h-12 w-full rounded-full bg-velora-accent px-6 font-semibold text-velora-paper disabled:opacity-40">{busy?"Publishing…":"Publish story"}</button>
+   <button type="submit" disabled={busy||!planReady||!file||!consent||(audience==="SELECTED"&&!selected.length)} className="min-h-12 w-full rounded-full bg-velora-accent px-6 font-semibold text-velora-paper disabled:opacity-40">{busy?"Publishing…":"Publish story"}</button>
   </form>
  </main>;
 }

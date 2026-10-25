@@ -341,7 +341,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               <textarea
                 ref={inputRef}
                 rows={1}
-                placeholder={emptyThread ? "Introduce yourself…" : "Write a message…"}
+                placeholder={datingAdId ? "Your pitch: a place, a little chemistry…" : emptyThread ? "Introduce yourself…" : "Write a message…"}
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void handleSendMessage(); } }}

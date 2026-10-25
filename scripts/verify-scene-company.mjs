@@ -20,7 +20,7 @@ try {
     await page.route('**/api/access/age-declaration', route => route.fulfill({ json: { declared: true } }));
     await page.route('**/api/scene**', route => route.fulfill(unavailable ? { status: 404, json: { error: 'Event unavailable' } } : { json: { events: [event] } }));
     await page.route('**/api/dating-ads**', route => {
-      if (route.request().method() === 'POST') { writes.push(route.request().postDataJSON()); return route.fulfill({ status: 201, json: { plan: { id: 'synthetic-plan' } } }); }
+      if (route.request().method() === 'POST') { writes.push(route.request().postDataJSON()); return route.fulfill({ status: 201, json: { plan: { id: '78100200-0000-4000-8000-000000000003' } } }); }
       return route.fulfill({ json: { plans: [] } });
     });
     await page.goto('http://127.0.0.1:3122/scene');
@@ -31,7 +31,7 @@ try {
     assert.equal(writes.length, 0, 'Opening a draft must not publish interest');
     await expect(page.getByLabel('What would you like to do?')).toHaveValue('Company for Synthetic Prague Munch');
     await page.getByLabel('A few words for whoever reads it').fill('Meet first, respect boundaries, and decide together.');
-    const submit = page.getByRole('button', { name: 'Send the invitation', exact: true });
+    const submit = page.getByRole('button', { name: 'Publish invitation', exact: true });
     assert.equal(await submit.isDisabled(), true);
     await page.getByRole('checkbox', { name: /^Publish this invitation to signed-in adult members/ }).check();
     assert.equal(await submit.isEnabled(), true);
@@ -39,13 +39,14 @@ try {
     assert.equal(await page.locator('body').evaluate(element => element.scrollWidth > innerWidth), false);
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: `${output}/invitation-${width}.png`, fullPage: true });
-    await submit.click(); await page.waitForURL(/\/tonight\?event=/);
+    await submit.click(); await page.waitForURL(/\/tonight\/invitation\//);
+    await page.goto(`http://127.0.0.1:3122/tonight?event=${event.id}`);
     await expect(page.getByRole('link', { name: 'Invite', exact: true })).toHaveAttribute('href', `/tonight/new?event=${event.id}`);
     assert.equal(writes.length, 1); assert.equal(writes[0].sceneEventId, event.id); assert.equal(writes[0].publishEventInvitation, true);
     assert.equal(writes[0].startsAt, startsAt); assert.equal(writes[0].endsAt, endsAt);
     unavailable = true; await page.goto(`http://127.0.0.1:3122/tonight/new?event=${event.id}`);
     await page.getByRole('alert').filter({ hasText: 'This event is unavailable' }).waitFor();
-    assert.equal(await page.getByRole('button', { name: 'Send the invitation', exact: true }).isDisabled(), true);
+    assert.equal(await page.getByRole('button', { name: 'Publish invitation', exact: true }).isDisabled(), true);
     assert.equal(writes.length, 1);
     console.log(`PASS ${width}px: draft privacy, event prefill, Prague time across browser timezone, publication consent, payload and unavailable event`);
     await context.close();

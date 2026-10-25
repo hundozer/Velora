@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ReportModal } from "@/components/safety/ReportModal";
 import { useAuth } from "@/context/AuthContext";
-type Story={id:string;ownerId:string;mediaId:string;caption:string;expiresAt:string;audience:string;url:string;owner?:{display_name:string};viewed:boolean};
+type Story={planId?:string|null;id:string;ownerId:string;mediaId:string;caption:string;expiresAt:string;audience:string;url:string;owner?:{display_name:string};viewed:boolean};
 export default function StoryViewer({params}:{params:{owner:string}}){
  const {profile}=useAuth();const isOwner=profile?.id===params.owner;
  const router=useRouter();const [stories,setStories]=React.useState<Story[]>([]);const [index,setIndex]=React.useState(0);
@@ -46,6 +46,7 @@ export default function StoryViewer({params}:{params:{owner:string}}){
    </div>
    {error&&<p role="alert" className="mt-3">{error}</p>}
    <p className="mt-4 whitespace-pre-wrap break-words text-lg">{story.caption}</p>
+   {story.planId&&<Link href={`/tonight/invitation/${story.planId}`} className="mt-4 inline-flex min-h-12 items-center rounded-full bg-velora-accent px-6 font-semibold text-velora-paper">Open invitation</Link>}
    <nav aria-label="Story navigation" className="mt-4 flex justify-between">
     <button type="button" disabled={index===0} onClick={()=>setIndex(i=>i-1)} className="min-h-12 px-4 disabled:opacity-40">Previous</button>
     <button type="button" disabled={index>=stories.length-1} onClick={()=>setIndex(i=>i+1)} className="min-h-12 px-4 disabled:opacity-40">Next</button>

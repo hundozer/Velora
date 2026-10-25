@@ -87,3 +87,13 @@ test("dedicated story cleanup requires its own purpose-specific bearer before da
  const token=createHmac("sha256","synthetic-test-only").update("intimo-story-cleanup-v1").digest("hex");
  assert.equal((await api.POST({headers:new Headers({authorization:"Bearer "+token})})).status,200);assert.equal(touches,1);
 });
+
+test("invitation story publication uses the atomic owner-checked RPC and preserves audience",async()=>{
+ let calls=0;const db={rpc:async(name,args)=>{calls++;assert.equal(name,"intimo_publish_plan_story");assert.equal(args.p_owner,a);assert.equal(args.p_plan,story);assert.equal(args.p_audience,"FRIENDS");return{data:story,error:null};}};
+ const api=route("src/app/api/stories/route.ts",db);
+ const input={mediaId:b,audience:"FRIENDS",recipients:[],confirmPublish:true,planId:story};
+ assert.equal((await api.POST({json:async()=>({...input,planId:"bad"})})).status,400);assert.equal(calls,0);
+ assert.equal((await api.POST({json:async()=>input})).status,201);assert.equal(calls,1);
+ db.rpc=async()=>({data:null,error:{message:"Invitation unavailable"}});
+ assert.equal((await api.POST({json:async()=>input})).status,409);
+});

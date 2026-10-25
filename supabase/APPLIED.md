@@ -132,3 +132,7 @@ separate reviewed approval.
 ### 22 October 2026: production unread-message queue
 
 Owner-approved official application on `bkdyjdbmtucqvgebqadp`: actual receipt `20261022044018`, name `durable_unread_message_emails`, source MD5 `6961890acc3b3a1eaa1716f81cd63002`. Repository/staging version is `20261021200009`. Exact SQL, different tool-generated receipt timestamp; no manual ledger repair. Do not blindly replay the file. Production RLS/function grants/trigger and rollback-only real-role denial checks verified. Scheduler remains unconfigured pending PR #100 deployment. See `docs/UNREAD_EMAIL_PRODUCTION_2026-10-22.md`.
+
+## 25 October: invitation links in photo Stories (PR #114)
+
+Staging `fuczjjcwtxzzvoxilrme` applied `story_plan_invitations` as receipt `20261025062004`; repository filename aligned to that actual receipt from CLI-generated `20261025061806` with exact SQL bytes unchanged. MD5 `340554efc682460026c9f6a7c83d0fb3`. Nullable Plan FK and service-only atomic wrapper only; no new table/member grants. Independently verified anon/authenticated EXECUTE false. Production `bkdyjdbmtucqvgebqadp` rechecked: receipt and column both absent. Production approval remains pending for this migration; earlier cleanup approval did not cover it. See `docs/TAKE_US_OUT_2026-10-25.md` for behavior and verification limits.
