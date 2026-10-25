@@ -30,7 +30,7 @@ export function PlanCard({ plan, onEnd, onReport, showTitle = true }: { showTitl
       <p className="font-display text-[26px] leading-none text-velora-copperInk">
         {glanceTime(plan)}<span className="ml-2 font-sans text-[14px] text-velora-muted">until {clock(plan.expiresAt)}{plan.areaName ? ` · ${plan.areaName}` : ""}</span>
       </p>
-      {showTitle && <h3 className="mt-2 font-display text-[24px] leading-tight text-velora-ink">{plan.title}</h3>}
+      {showTitle && <h3 className="mt-2 font-display text-[24px] leading-tight text-velora-ink"><Link href={`/tonight/invitation/${plan.id}`} className="hover:underline">{plan.title}</Link></h3>}
       <PlanEventLink plan={plan}/>
       {plan.text && <p className="mt-1 whitespace-pre-line text-[15px] leading-relaxed text-velora-ink2">{plan.text}</p>}
       {plan.eligibilityText && <p className="mt-2 text-[14px] text-velora-ink2">{plan.canReply ? "✓ " : ""}{plan.eligibilityText}</p>}
