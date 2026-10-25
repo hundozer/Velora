@@ -46,3 +46,9 @@ jobs:
           psql -h localhost -U postgres -d intimo_stories_test -f tests/sql/stories-disposable.sql
         env:
           PGPASSWORD: disposable-test-only
+      - name: Verify private Guest List decisions and role denials
+        run: |
+          createdb -h localhost -U postgres intimo_guests_test
+          psql -h localhost -U postgres -d intimo_guests_test -f tests/sql/guest-list-disposable.sql
+        env:
+          PGPASSWORD: disposable-test-only

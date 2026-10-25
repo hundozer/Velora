@@ -42,6 +42,7 @@ export default function ScenePage() {
         {user && !suggesting && <button type="button" onClick={() => setSuggesting(true)} className="min-h-11 shrink-0 rounded-full border border-ink/15 px-4 text-sm font-semibold text-velora-textPrimary hover:border-velora-gold/50">Suggest</button>}
       </header>
       <a href="/scene" className="inline-flex min-h-11 items-center text-sm text-velora-accent underline">All Prague events</a>
+      <a href="/guest-list" className="inline-flex min-h-11 items-center text-sm text-velora-accent underline">Small gatherings · Guest List</a>
 
       {message && <p role="status" className={`rounded-2xl border p-4 text-sm ${message.ok ? "border-emerald-400/30 bg-emerald-400/10 text-velora-success" : "border-red-500/40 bg-red-500/10 text-velora-danger"}`}>{message.text}</p>}
 
