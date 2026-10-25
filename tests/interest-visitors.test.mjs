@@ -8,7 +8,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (file) => fs.readFile(path.join(root, file), "utf8");
 
 test("migration: one view per viewer per day, server-written, owner-read", async () => {
-  const sql = await read("supabase/migrations/20261024_interest_visitors.sql");
+  const sql = await read("supabase/migrations/20261024000000_interest_visitors.sql");
   assert.match(sql, /primary key \(viewer_id, viewed_id, viewed_on\)/);
   assert.match(sql, /primary key \(from_id, to_id\)/);
   assert.match(sql, /revoke all on public\.profile_views from anon, authenticated;/);

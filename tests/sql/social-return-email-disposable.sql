@@ -13,8 +13,8 @@ create table public.profiles(id uuid primary key,auth_id text,email text,display
 create table public.user_blocks(id uuid primary key default gen_random_uuid(),blocker_id uuid,blocked_profile_id uuid);
 create table public.direct_messages(id uuid primary key default gen_random_uuid(),conversation_id text,sender_id uuid,receiver_id uuid,sender_name text,content text,plan_id uuid,is_opened boolean default false,status text default 'SENT');
 create table public.notifications(id uuid primary key default gen_random_uuid(),user_id uuid references public.profiles(id),type text,title text,message text,actor_name text,actor_avatar text,target_link text,is_read boolean default false,created_at timestamptz default now());
-\ir ../../supabase/migrations/20261024_interest_visitors.sql
-\ir ../../supabase/migrations/20261025_private_access.sql
+\ir ../../supabase/migrations/20261024000000_interest_visitors.sql
+\ir ../../supabase/migrations/20261025000000_private_access.sql
 -- Generated from the actual original migration by the CI command. Scheduler
 -- extensions are Supabase-specific and are not altered by the new migration.
 \ir /tmp/intimo-unread-core.sql
@@ -24,6 +24,6 @@ create table public.areas(id text primary key);
 create table public.dating_ads(id uuid primary key default gen_random_uuid(),author_id uuid references public.profiles(id),author_name text,category text,title text,text text,validity_days integer,status text default 'active',moderation_status text default 'PENDING_REVIEW',starts_at timestamptz,expires_at timestamptz,area_id text);
 alter table public.dating_ads enable row level security;
 revoke all on public.dating_ads from anon,authenticated;
-\ir ../../supabase/migrations/20261027_scene_events.sql
+\ir ../../supabase/migrations/20261027000000_scene_events.sql
 \ir ../../supabase/migrations/20261024205326_scene_company_plans.sql
 \ir scene-company-staging.sql

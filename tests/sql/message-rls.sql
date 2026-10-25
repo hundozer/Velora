@@ -25,9 +25,9 @@ insert into public.profiles values
  ('00000000-0000-4000-8000-000000000002','ACTIVE'),
  ('00000000-0000-4000-8000-000000000003','ACTIVE');
 insert into public.direct_messages values (1,'00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','private');
-\ir ../../supabase/migrations/20261104_block_aware_message_reads.sql
+\ir ../../supabase/migrations/20261104000000_block_aware_message_reads.sql
 -- Idempotent policy/function replacement.
-\ir ../../supabase/migrations/20261104_block_aware_message_reads.sql
+\ir ../../supabase/migrations/20261104000000_block_aware_message_reads.sql
 
 set role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',false);

@@ -1,5 +1,19 @@
 # Production migration filename alignment
 
+## 25 October: sorting failure and completed normalization
+
+The filename-only fix in PR #108 was incomplete: post-merge Supabase still failed on main `286ae6769bb63ed4368da9f51f87bcab61090ca5`. Set equality missed an ordering requirement. CLI lists local files in filename order but compares extracted versions against database version order. For example, `20261022044018_queue.sql` sorts before `20261022_member.sql`, while version `20261022` sorts before `20261022044018`. Its two-pointer comparison consequently reports an existing migration missing.
+
+Source inspected: Supabase CLI `apps/cli-go/pkg/migration/list.go` and `apply.go` on develop. The regression test reproduces that exact comparison and rejects mixed-length filenames.
+
+The owner instructed “Fix it” after the production-history issue was identified. All 35 legacy eight-digit source versions are now padded with six zeros; SQL content is unchanged. All executable test/script references follow the renames. The three existing 14-digit source versions stay unchanged. This is identifier normalization, not a claim that old migrations executed at midnight.
+
+Guarded operational SQL is retained in `supabase/ops/20261025_normalize_production_versions.sql` and its staging counterpart, outside the automatic migration directory. Each pins the complete observed ledger (versions, names, stored SQL hashes), takes a bounded exclusive ledger lock, refuses destination collisions or unexpected triggers, checks the exact update count and asserts every non-version field is identical before/after. Both ran successfully inside rollback-only transactions first, then committed through execute_sql. No migration SQL was rerun or marked applied, no receipt row was added/deleted, and no application schema, grants or member data changed.
+
+Production normalized 35 existing identifiers, retains 38 ledger rows, and now has only 14-digit versions. Staging normalized 34 existing identifiers, retaining 42 rows and its distinct recovery receipts. Its missing earlier blocking migration remains absent; its later superseding definition was not relabelled as proof of earlier execution. The scripts intentionally refuse a second execution against an already-normalized ledger. Reversal, if required, must use the reviewed mapping and collision checks; do not blindly truncate every identifier.
+
+Validation: 243 tests pass, including mixed-length failure reproduction and zero-pending comparison for canonical files. Production version/name order matches the 38 canonical filenames exactly. Historical notes below describe the superseded filename-only attempt. Final hosted policy/build/Preview results are attached to the repair PR; the production integration can be confirmed only after merge. Staging still has recovery-only receipts and three distinct application receipts, so a blind staging push remains unsupported. Fresh chronological replay remains outside this repair.
+
 On main `ea540bbc03102eadc75b8c81768a2f25bffd81d8`, Supabase's post-merge check failed with “Remote migration versions not found in local migrations directory.” Production application deployment was READY and public health passed. A read-only comparison of all 38 production ledger rows identified exactly three versions missing from the repository. Their SQL matches byte-for-byte; the migration tool assigned execution timestamps instead of retaining CLI filename timestamps.
 
 | Migration | Previous source version | Production / new filename version | Raw SQL MD5 |

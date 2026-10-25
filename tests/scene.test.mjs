@@ -20,7 +20,7 @@ test("listings require https links, a future start and a known kind", () => {
 });
 
 test("migration matches kinds; only published upcoming listings are public", async () => {
-  const sql = await read("supabase/migrations/20261027_scene_events.sql");
+  const sql = await read("supabase/migrations/20261027000000_scene_events.sql");
   const kinds = sql.match(/check \(kind in \(([^)]+)\)\)/)[1].split(",").map((item) => item.trim().replace(/'/g, ""));
   assert.deepEqual(kinds, SCENE_KINDS.map((kind) => kind.value));
   assert.match(sql, /check \(url like 'https:\/\/%'\)/);

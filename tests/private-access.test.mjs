@@ -42,7 +42,7 @@ test("requests respect the owner's boundary and only the owner can decide", asyn
   assert.match(route, /resolveBoundaries\(boundaryRows\)\.PRIVATE_ALBUM_REQUESTS/);
   assert.match(route, /establishedDecision\(preference, Boolean\(repliedBefore\)\)/);
   assert.match(route, /rpc\("intimo_decide_private_access", \{ p_owner: actor.profileId, p_viewer: viewerId, p_decision: body.decision \}\)/);
-  const sql = await read("supabase/migrations/20261025_private_access.sql");
+  const sql = await read("supabase/migrations/20261025000000_private_access.sql");
   assert.match(sql, /revoke all on public\.album_access_grants from anon, authenticated;/);
   assert.match(sql, /check \(grant_type is distinct from 'ONCE' or expires_at is not null\)/);
 });

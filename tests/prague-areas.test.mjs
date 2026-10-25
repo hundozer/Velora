@@ -16,7 +16,7 @@ test("area list covers all 22 Prague districts with unique ids", () => {
 });
 
 test("migration seed matches src/lib/areas.mjs exactly", async () => {
-  const sql = await read("supabase/migrations/20261020_prague_areas.sql");
+  const sql = await read("supabase/migrations/20261020000000_prague_areas.sql");
   const seeded = [...sql.matchAll(/^\s+\('([a-z0-9-]+)', '([^']+)', '([^']+)', '([A-Z_]+)', ([\d.]+|null), ([\d.]+|null), \d+\)/gm)];
   assert.equal(seeded.length, AREAS.length);
   for (const [, id, name, label, kind, lat, lng] of seeded) {
@@ -27,7 +27,7 @@ test("migration seed matches src/lib/areas.mjs exactly", async () => {
 });
 
 test("areas are public reference data but never member-writable", async () => {
-  const sql = await read("supabase/migrations/20261020_prague_areas.sql");
+  const sql = await read("supabase/migrations/20261020000000_prague_areas.sql");
   assert.match(sql, /revoke all on public\.areas from anon, authenticated;/);
   assert.match(sql, /grant select on public\.areas to anon, authenticated;/);
   assert.doesNotMatch(sql, /grant (insert|update|delete|all)[^;]*areas/i);

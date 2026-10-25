@@ -18,7 +18,7 @@ test("rate limits are shared in Postgres with an in-memory fallback", async () =
   assert.match(limiter, /export async function checkRateLimit\(/);
   assert.match(limiter, /db\.rpc\("intimo_rate_limit_hit"/);
   assert.match(limiter, /return checkInMemory\(identifier, limit, windowSeconds\);/);
-  const sql = await read("supabase/migrations/20261028_rate_limits.sql");
+  const sql = await read("supabase/migrations/20261028000000_rate_limits.sql");
   assert.match(sql, /on conflict \(key\) do update/);
   assert.match(sql, /revoke all on function public\.intimo_rate_limit_hit\(text, integer, integer\) from public, anon, authenticated;/);
 });

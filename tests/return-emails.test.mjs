@@ -31,7 +31,7 @@ test("events trigger return emails", async () => {
   assert.match(queue, /create trigger queue_unread_email after insert on public.direct_messages/);
   assert.doesNotMatch(await read("src/app/api/interests/route.ts"), /maybeSendReturnEmail|ResendClient/);
   assert.doesNotMatch(await read("src/app/api/private-access/route.ts"), /maybeSendReturnEmail|ResendClient/);
-  const sql = await read("supabase/migrations/20261026_return_emails.sql");
+  const sql = await read("supabase/migrations/20261026000000_return_emails.sql");
   assert.match(sql, /revoke all on public\.email_send_state from anon, authenticated;/);
 });
 

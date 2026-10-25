@@ -1,5 +1,7 @@
 # Applied migrations
 
+25 October: owner-authorized identifier normalization is applied to both ledgers. Legacy eight-digit versions now have six trailing zeros; existing 14-digit receipts, names, statements and all other metadata remain intact. See [the repair evidence and guarded operational SQL](../docs/MIGRATION_HISTORY_2026-10-24.md). Earlier version labels below are historical.
+
 24 October production filename reconciliation: see [migration history alignment](../docs/MIGRATION_HISTORY_2026-10-24.md). Three source filenames now match the verified production receipts; SQL bytes and both database ledgers remain unchanged. Historical filenames below describe observations at their original dates. Do not blindly push this directory to recovered staging.
 
 Source of truth for schema: `supabase/migrations/`. This file records what each environment actually has.

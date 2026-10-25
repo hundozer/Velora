@@ -58,7 +58,7 @@ test("one rule for both sides: the messages route enforces it and the plans API 
 });
 
 test("start times arrive through an additive migration and the API falls back until it is applied", async () => {
-  const sql = await read("supabase/migrations/20261102_plan_start_times.sql");
+  const sql = await read("supabase/migrations/20261102000000_plan_start_times.sql");
   assert.match(sql, /add column if not exists starts_at timestamptz/);
   assert.match(sql, /update public\.dating_ads set starts_at = created_at where starts_at is null/);
   assert.match(sql, /check \(expires_at > starts_at\)/);

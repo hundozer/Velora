@@ -71,6 +71,6 @@ test("introductions honour opt-out, blocks, FRIENDS_ONLY and hidden status on th
   assert.doesNotMatch(context.match(/DISCOVERY_COLUMNS = \[[\s\S]*?\]/)[0], /email|date_of_birth|auth_id|erogenous|pubic|favourite_sex/);
   const settings = await read("src/app/api/privacy/settings/route.ts");
   assert.match(settings, /show_in_introductions: input\.showInIntroductions !== false/);
-  const sql = await read("supabase/migrations/20261103_introductions.sql");
+  const sql = await read("supabase/migrations/20261103000000_introductions.sql");
   assert.match(sql, /add column if not exists show_in_introductions boolean not null default true/);
 });

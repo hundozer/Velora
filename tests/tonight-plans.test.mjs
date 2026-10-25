@@ -11,7 +11,7 @@ const now = new Date("2026-10-17T18:00:00Z");
 const base = { category: "DATE", title: "Drinks in Vinohrady", text: "Drinks first, then see where it goes.", startsAt: "2026-10-17T19:00:00Z", endsAt: "2026-10-17T22:30:00Z" };
 
 test("migration constraints match the plan categories and durations", async () => {
-  const sql = await read("supabase/migrations/20261023_tonight_plans.sql");
+  const sql = await read("supabase/migrations/20261023000000_tonight_plans.sql");
   const categories = sql.match(/check \(category in \(([^)]+)\)\)/)[1].split(",").map((item) => item.trim().replace(/'/g, ""));
   assert.deepEqual(categories, PLAN_CATEGORIES.map((item) => item.value));
   const days = sql.match(/check \(validity_days in \(([^)]+)\)\)/)[1].split(",").map((item) => Number(item.trim()));
