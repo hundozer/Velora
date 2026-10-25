@@ -28,6 +28,15 @@ export const LANGUAGES: LanguageInfo[] = [
 
 const DICTIONARIES: Record<SupportedLanguage, any> = { en, cs, hu, ro, sk, de };
 
+/**
+ * Languages members can actually choose. Only the navigation labels are translated so far
+ * and every page is English, so offering the others would promise translations that don't
+ * exist. Add a code here once that language covers the whole app; the pickers reappear
+ * automatically when there is more than one.
+ */
+export const AVAILABLE_LANGUAGES: LanguageInfo[] = LANGUAGES.filter((lang) => lang.code === "en");
+const AVAILABLE = new Set(AVAILABLE_LANGUAGES.map((lang) => lang.code));
+
 interface LanguageContextType {
   language: SupportedLanguage;
   setLanguage: (lang: SupportedLanguage) => void;
@@ -42,14 +51,18 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     const saved = (localStorage.getItem("intimo_lang") || localStorage.getItem("velora_lang")) as SupportedLanguage;
-    if (saved && DICTIONARIES[saved]) {
+    if (saved && DICTIONARIES[saved] && AVAILABLE.has(saved)) {
       setLanguageState(saved);
       localStorage.setItem("intimo_lang", saved);
-      localStorage.removeItem("velora_lang");
+    } else if (saved) {
+      // A language chosen before it was withdrawn: fall back to English everywhere.
+      localStorage.setItem("intimo_lang", "en");
     }
+    localStorage.removeItem("velora_lang");
   }, []);
 
   const setLanguage = (lang: SupportedLanguage) => {
+    if (!AVAILABLE.has(lang)) return;
     setLanguageState(lang);
     localStorage.setItem("intimo_lang", lang);
   };

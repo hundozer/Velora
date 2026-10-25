@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { isFlowPath } from "@/lib/flowRoutes";
 import { useAuth } from "@/context/AuthContext";
-import { useTranslation, LANGUAGES, SupportedLanguage } from "@/context/LanguageContext";
+import { useTranslation, AVAILABLE_LANGUAGES } from "@/context/LanguageContext";
 import { NotificationDrawer } from "@/components/notifications/NotificationDrawer";
 import { Badge } from "@/components/ui/Badge";
 import {
@@ -87,14 +87,14 @@ export const Navbar: React.FC = () => {
             </div>
           )}
 
-          {/* Global Language Selector Dropdown (on phones it lives on the Me page) */}
-          <div className="relative hidden sm:block">
+          {/* Language selector (on phones it lives on the Me page); shown only when a second language is complete. */}
+          {AVAILABLE_LANGUAGES.length > 1 && <div className="relative hidden sm:block">
             <button
               onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-ink/5 border border-ink/10 text-xs font-semibold text-velora-textPrimary hover:bg-ink/10 transition-colors"
               title="Change platform language"
             >
-              <span>{LANGUAGES.find((l) => l.code === language)?.flag || "🇬🇧"}</span>
+              <span>{AVAILABLE_LANGUAGES.find((l) => l.code === language)?.flag || "🇬🇧"}</span>
               <span className="uppercase text-[11px] font-bold">{language}</span>
               <ChevronDown className="w-3 h-3 text-velora-textMuted" />
             </button>
@@ -107,7 +107,7 @@ export const Navbar: React.FC = () => {
                 <div className="px-3 py-1 text-[10px] uppercase font-bold text-velora-textMuted border-b border-ink/10 mb-1">
                   Language / Jazyk
                 </div>
-                {LANGUAGES.map((lang) => (
+                {AVAILABLE_LANGUAGES.map((lang) => (
                   <button
                     key={lang.code}
                     onClick={() => setLanguage(lang.code)}
@@ -126,7 +126,7 @@ export const Navbar: React.FC = () => {
                 ))}
               </div>
             )}
-          </div>
+          </div>}
 
           {/* USER ACCOUNT DROPDOWN VS PUBLIC GUEST SIGN-IN / REGISTER CTAS */}
           {user ? (
