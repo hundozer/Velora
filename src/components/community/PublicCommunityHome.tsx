@@ -11,9 +11,9 @@ const EXAMPLE_PROFILES = [
   { name: "Eva & Sam, 34 & 36", photo: "club-chemistry", bio: "Exploring together. A drink and an honest conversation to start.", interests: ["Couples", "Exploring"] },
 ] as const;
 
-function LandingPhoto({ photo, hero = false }: { photo: EditorialPhotoId; hero?: boolean }) {
+function LandingPhoto({ photo, hero = false, className = "" }: { photo: EditorialPhotoId; hero?: boolean; className?: string }) {
   const image = editorialPhotos[photo];
-  return <Image src={image.src} alt={image.alt} width={image.width} height={image.height} priority={hero} sizes={hero ? "(min-width: 1024px) 600px, 100vw" : "(min-width: 1024px) 400px, (min-width: 640px) 50vw, 100vw"} className={hero ? "h-full min-h-72 w-full object-cover lg:min-h-[32rem]" : "aspect-[4/3] w-full object-cover"} />;
+  return <Image src={image.src} alt={image.alt} width={image.width} height={image.height} priority={hero} sizes={hero ? "(min-width: 1024px) 600px, 100vw" : "(min-width: 1024px) 560px, (min-width: 640px) 50vw, 100vw"} className={`${hero ? "h-full min-h-72 w-full object-cover lg:min-h-[32rem]" : "aspect-[4/3] w-full object-cover"} ${className}`} />;
 }
 
 function ExploreLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -46,7 +46,7 @@ export function PublicCommunityHome() {
       </section>
 
       <section id="people" className="scroll-mt-24 grid overflow-hidden rounded-2xl border border-velora-line bg-velora-surface lg:grid-cols-2" aria-labelledby="people-title">
-        <div className="min-h-80 overflow-hidden lg:min-h-[32rem]"><LandingPhoto photo="shared-chemistry" /></div>
+        <div className="relative min-h-80 overflow-hidden lg:min-h-[32rem]"><LandingPhoto photo="shared-chemistry" className="absolute inset-0 h-full" /></div>
         <div className="flex flex-col justify-center p-7 sm:p-10 lg:p-14">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-velora-accent">01 / People</p>
           <h2 id="people-title" className="mt-4 font-display text-4xl leading-tight sm:text-5xl">Meet people who mean what they say.</h2>
@@ -66,7 +66,7 @@ export function PublicCommunityHome() {
         <section id="private" className="scroll-mt-24 overflow-hidden rounded-2xl border border-velora-line bg-velora-surface" aria-labelledby="private-title"><div className="relative h-64 overflow-hidden"><div className="absolute inset-0"><LandingPhoto photo="satin-and-lace" /></div><div className="absolute bottom-5 left-6 flex items-center gap-3 rounded-full bg-velora-night/90 px-4 py-3 text-sm font-semibold text-velora-onPhoto"><LockKeyhole className="h-5 w-5" aria-hidden />Your photos. Your call.</div></div><div className="p-7 sm:p-9"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-velora-accent">04 / Private albums</p><h2 id="private-title" className="mt-3 font-display text-4xl">Show more when you choose to.</h2><p className="mt-4 leading-relaxed text-velora-ink2">Keep an album private. Someone can request access; you decide whether to grant it and can revoke it later. Say what&apos;s off limits, block, or report when you need to.</p><ExploreLink href="/register">Make your profile</ExploreLink></div></section>
       </div>
 
-      <section id="scene" className="mt-8 scroll-mt-24 grid overflow-hidden rounded-2xl border border-velora-line bg-velora-surface lg:grid-cols-2" aria-labelledby="scene-title"><div className="p-7 sm:p-10 lg:p-14"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-velora-accent">05 / Out in Prague</p><h2 id="scene-title" className="mt-4 font-display text-4xl leading-tight sm:text-5xl">The city is part of the story.</h2><p className="mt-5 leading-relaxed text-velora-ink2">Browse published events in the Prague Scene, or look for a small Guest List gathering when a host has confirmed one. For a Guest List, you send a private note; the host decides, and only accepted guests receive the address.</p><div className="flex flex-wrap gap-x-6"><ExploreLink href="/scene">Explore Prague Scene</ExploreLink><ExploreLink href="/guest-list">See the Guest List</ExploreLink></div><p className="mt-4 text-sm text-velora-muted">Guest Lists appear only when a real gathering is confirmed.</p></div><div className="min-h-72 overflow-hidden"><LandingPhoto photo="balcony-connection" /></div></section>
+      <section id="scene" className="mt-8 scroll-mt-24 grid overflow-hidden rounded-2xl border border-velora-line bg-velora-surface lg:grid-cols-2" aria-labelledby="scene-title"><div className="p-7 sm:p-10 lg:p-14"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-velora-accent">05 / Out in Prague</p><h2 id="scene-title" className="mt-4 font-display text-4xl leading-tight sm:text-5xl">The city is part of the story.</h2><p className="mt-5 leading-relaxed text-velora-ink2">Browse published events in the Prague Scene, or look for a small Guest List gathering when a host has confirmed one. For a Guest List, you send a private note; the host decides, and only accepted guests receive the address.</p><div className="flex flex-wrap gap-x-6"><ExploreLink href="/scene">Explore Prague Scene</ExploreLink><ExploreLink href="/guest-list">See the Guest List</ExploreLink></div><p className="mt-4 text-sm text-velora-muted">Guest Lists appear only when a real gathering is confirmed.</p></div><div className="relative min-h-72 overflow-hidden"><LandingPhoto photo="balcony-connection" className="absolute inset-0 h-full" /></div></section>
 
       <section className="mt-14 border-t border-velora-line py-12" aria-labelledby="example-profiles-title">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-velora-accent">A look inside</p>
