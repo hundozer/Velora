@@ -285,7 +285,7 @@ Safe after beta begins: detailed Activity/visitors, reactions, sophisticated tru
 
 ## 24 October 2026: event company invitations
 
-25 October photo Stories: implemented on PR #111 with audience-aware aura rings, isolated sanitized media delivery and dedicated story-only cleanup. Actual-role rollback tests, responsive synthetic browser checks and real staging Auth/R2/scheduled-cleanup acceptance passed with full fixture cleanup. Owner-approved production story migrations are installed and verified, with canonical ledger versions matching source; hourly cleanup activation is approved and awaits merged application deployment. See [exact evidence, limitations and rollout scope](PHOTO_STORIES_2026-10-25.md). This does not change the overall beta decision.
+25 October photo Stories: PR #111 merged as `89bcbbe8c21beedf457608e870a0e8e368ad5c20` and is live. Actual-role rollback tests, responsive synthetic browser checks and real staging Auth/R2/scheduled-cleanup acceptance passed with full fixture cleanup. Owner-approved production migrations match canonical source versions; dedicated hourly story-photo cleanup is active. Immediate production tick returned HTTP 200 with removed/failed/held all zero; no destructive production fixtures or member-photo deletion test. See [exact evidence, worker disable procedure and verification limits](PHOTO_STORIES_2026-10-25.md). This does not change the overall beta decision.
 
 Post-merge: application main `ea540bbc03102eadc75b8c81768a2f25bffd81d8` is live and healthy. Supabase's automatic check failed on three source/receipt version mismatches despite installed SQL. See [focused filename reconciliation and staging limits](MIGRATION_HISTORY_2026-10-24.md); no database ledger edits or SQL replay are proposed.
 
