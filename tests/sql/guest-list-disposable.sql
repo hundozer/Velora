@@ -7,7 +7,8 @@ end $$;
 create table public.profiles(id uuid primary key,auth_id text,account_status text,age_verification_status text,discovery_disabled boolean not null default false);
 create table public.areas(id text primary key);
 create table public.user_blocks(blocker_id uuid,blocked_profile_id uuid);
-grant select on public.profiles,public.areas,public.user_blocks to service_role;
+grant select on public.profiles,public.areas to service_role;
+grant all on public.user_blocks to service_role;
 \ir ../../supabase/migrations/20261025114006_guest_list_pilot.sql
 begin;
 insert into public.profiles values
