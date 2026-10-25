@@ -1,5 +1,7 @@
 # Applied migrations
 
+25 October post-merge Stories activation is complete on production main `89bcbbe8c21beedf457608e870a0e8e368ad5c20`. Dedicated cron `intimo-story-cleanup` is active hourly at minute 7, run `93905cc8-a6dc-4ce9-a27b-746294891a46`; manual tick request `4334` returned HTTP 200 with removed/failed/held all zero. No production member fixtures. See [activation evidence and scoped disable procedure](../docs/PHOTO_STORIES_2026-10-25.md). Earlier pending-activation entries below are historical.
+
 25 October photo Stories production rollout: owner-approved source SQL installed and verified for `private_photo_stories`, `story_author_adult_guard` and `story_cleanup_worker`. Actual tool receipts `20261025045313`, `20261025045318`, `20261025045448` were hash-verified, then aligned with the guarded reviewed operation to canonical source versions `20261025034408`, `20261025042415`, `20261025043422`. RLS/role denials and media guard verified without fixtures. Hourly story-only cleanup is authorized but awaits merged application deployment; no story job is active yet. See [exact hashes, role checks, staging acceptance and rollout evidence](../docs/PHOTO_STORIES_2026-10-25.md).
 
 25 October: owner-authorized identifier normalization is applied to both ledgers. Legacy eight-digit versions now have six trailing zeros; existing 14-digit receipts, names, statements and all other metadata remain intact. See [the repair evidence and guarded operational SQL](../docs/MIGRATION_HISTORY_2026-10-24.md). Earlier version labels below are historical.

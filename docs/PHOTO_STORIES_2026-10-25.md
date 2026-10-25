@@ -1,5 +1,17 @@
 # Photo Stories and aura rings
 
+## Production activation completed
+
+PR #111 merged as `89bcbbe8c21beedf457608e870a0e8e368ad5c20`. Automatic production deployment `dpl_6hvE1TBXZYJYgdcd1UcqZJYg3RSR` became READY before activation. CI verify and Supabase's production migration check passed. Live public-community and Scene returned valid HTTP 200 responses; anonymous story list/summary returned 401 with private/no-store headers, and an unauthenticated cleanup POST returned 404.
+
+The already-approved operator script then ran through production deployment `dpl_7ys9Cg1SzvZHKhfu1XsyXuC1jHc4`, source the same merged commit, using the per-deployment build override `npm run build && INTIMO_APPROVED_STORIES_COMMIT=89bcbbe8c21beedf457608e870a0e8e368ad5c20 node scripts/activate-story-cleanup-production.mjs`. Its project/environment/Supabase-host/commit checks passed. Deployment is READY and serves `intimo.live`. No secret was printed or committed.
+
+Activation run `93905cc8-a6dc-4ce9-a27b-746294891a46`; exact cron job `intimo-story-cleanup` is active with `7 * * * *` (hourly at minute 7). Only its purpose-specific Vault configuration was added. An immediate invocation of the same tick function enqueued pg_net request `4334`, which returned HTTP 200 with `{removed:0,failed:0,held:0}`. This is a real production idle worker check, not a member-photo deletion acceptance test; the first timed hourly run had not occurred at this checkpoint. Scheduled deletion was previously proven with synthetic fixtures on staging.
+
+Existing production member data was not used for destructive testing, and no production test accounts/photos/stories were created. Post-merge authenticated browser acceptance is not claimed. The approved physical cleanup now complements request-time 24-hour access expiry. This completes this feature's activation, not an overall beta GO.
+
+Disable only this worker if needed: call service-only `intimo_disable_story_cleanup('93905cc8-a6dc-4ce9-a27b-746294891a46')`. It checks the run identifier before removing its exact cron/Vault entries. This does not disable story expiry or change the unread-email worker.
+
 Based on merged main `0390217b2d389e5e5424297dcc2cfb84d8bd2585`. Owner approved photo Stories and Instagram-like profile rings. This slice adds photo publishing, audience choice, 24-hour viewing expiry, viewer, reporting, private message entry and owner deletion. Video, audio and Plan attachments are deferred.
 
 Audience choices: friends (default), selected people (up to 20), or eligible signed-in adults. Profile visibility, account status, media review and blocks remain additional restrictions. Only approved, processed, non-explicit story photos are shown to other members. Authors can preview pending stories. Review does not restart the 24-hour clock. Captions are copied into media review details at publication.
