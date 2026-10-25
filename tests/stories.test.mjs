@@ -80,7 +80,7 @@ test("dedicated story cleanup requires its own purpose-specific bearer before da
   "@/lib/supabase/server":{getServerSupabase:()=>{touches++;return {};}},
   "@/lib/stories/cleanup":{cleanupStoryPhotos:async()=>({removed:0,failed:0,held:0})},
  });
- for(const value of ["","Bearer wrong","Bearer "+createHmac("sha256","synthetic-test-only").update("unrelated-worker").digest("hex")]){
+ for(const value of ["","Bearer wrong","Bearer "+"é".repeat(64),createHmac("sha256","synthetic-test-only").update("intimo-story-cleanup-v1").digest("hex"),"Bearer "+createHmac("sha256","synthetic-test-only").update("unrelated-worker").digest("hex")]){
   assert.equal((await api.POST({headers:new Headers({authorization:value})})).status,404);
  }
  assert.equal(touches,0);
