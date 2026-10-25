@@ -77,7 +77,7 @@ try{
  assert.equal(data.privateCount,0);
  await call(b.client,"block story author","POST","/api/blocks",{targetProfileId:a.id},201);
  await call(b.client,"blocked photo denied","GET",`/api/stories/${story}/image`,undefined,404);
- await call(b.client,"unblock fixture","DELETE","/api/blocks",{targetProfileId:a.id});
+ await call(b.client,"unblock fixture","DELETE",`/api/blocks?targetProfileId=${a.id}`);
  await call(a.client,"delete live story","DELETE",`/api/stories/${story}`);
  await call(b.client,"deleted photo denied","GET",`/api/stories/${story}/image`,undefined,404);
  const expiredPhoto=await upload(a);
