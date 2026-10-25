@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Activity, Bell, Bookmark, ChevronRight, EyeOff, Flame, Hand, Lock, Image as ImageIcon, LogOut, Settings, Shield, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { useTranslation, LANGUAGES } from "@/context/LanguageContext";
+import { useTranslation, AVAILABLE_LANGUAGES } from "@/context/LanguageContext";
 import { useDurableNotifications } from "@/lib/notifications/useDurableNotifications";
 import { AppOnThisDevice } from "@/components/pwa/AppOnThisDevice";
 
@@ -74,12 +74,12 @@ export default function MePage() {
 
       <AppOnThisDevice />
 
-      <label className="block rounded-2xl border border-ink/10 bg-ink/[0.02] px-4 py-3">
+      {AVAILABLE_LANGUAGES.length > 1 && <label className="block rounded-2xl border border-ink/10 bg-ink/[0.02] px-4 py-3">
         <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">Language</span>
         <select value={language} onChange={(event) => setLanguage(event.target.value as typeof language)} className="min-h-11 w-full rounded-xl border border-ink/10 bg-velora-bg px-3 text-sm text-velora-textPrimary">
-          {LANGUAGES.map((lang) => <option key={lang.code} value={lang.code}>{lang.flag} {lang.nativeName}</option>)}
+          {AVAILABLE_LANGUAGES.map((lang) => <option key={lang.code} value={lang.code}>{lang.flag} {lang.nativeName}</option>)}
         </select>
-      </label>
+      </label>}
 
       <button onClick={() => signOut("/")} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-red-400/30 text-sm font-semibold text-velora-danger hover:bg-red-500/10">
         <LogOut className="h-4 w-4" aria-hidden /> Sign out

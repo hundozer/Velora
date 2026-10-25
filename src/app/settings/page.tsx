@@ -12,8 +12,6 @@ import { readDiscreet, writeDiscreet } from "@/lib/discreet";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { VerificationWizard } from "@/components/verification/VerificationWizard";
-import { SUPPORTED_LANGUAGES } from "@/lib/i18n";
-import { LanguageCode } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { requestParticipantDeclaration, uploadFileToR2 } from "@/lib/storage/clientUpload";
 import {
@@ -40,7 +38,6 @@ export default function SettingsPage() {
   const { user, profile, updateUserProfile, logout, signOut } = useAuth();
   const [nickname, setNickname] = useState(profile?.displayName || user?.username || "");
   const [areaId, setAreaId] = useState(profile?.areaId || "");
-  const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>("en");
   const [privacy, setPrivacy] = useState({
     profileVisibility: "MEMBERS_ONLY",
     sensitiveFieldsVisibility: "PRIVATE",
@@ -269,7 +266,7 @@ export default function SettingsPage() {
               Privacy, Safety & Regional Settings
             </h1>
             <p className="text-xs text-velora-textSecondary mt-1">
-              Manage messaging permissions, privacy rights, consent, language, and safety controls.
+              Manage messaging permissions, privacy rights, consent and safety controls.
             </p>
           </div>
         </div>
@@ -379,34 +376,6 @@ export default function SettingsPage() {
               Members see your district and a rough distance, never your position.
             </p>
           </div>
-        </div>
-      </Card>
-
-      {/* SECTION 1: GLOBAL & REGIONAL SETTINGS */}
-      <Card variant="glass" className="p-6 space-y-6">
-        <h2 className="text-sm font-display font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-ink/10 pb-3">
-          <Globe className="w-4 h-4 text-velora-gold" />
-          Language
-        </h2>
-
-        <div className="grid grid-cols-1 gap-6">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
-              Display Language
-            </label>
-            <select
-              value={selectedLanguage}
-              onChange={(e) => setSelectedLanguage(e.target.value as LanguageCode)}
-              className="w-full bg-ink/5 border border-ink/10 rounded-2xl px-4 py-2.5 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
-            >
-              {SUPPORTED_LANGUAGES.map((lang) => (
-                <option key={lang.code} value={lang.code} className="bg-velora-card text-ink">
-                  {lang.flag} {lang.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
         </div>
       </Card>
 
