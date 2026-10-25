@@ -2,8 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { deleteStoredObject, deleteVariantObjects } from "@/lib/storage/r2";
 /** Called by the existing protected retention runner; delivery expires independently. */
 export async function cleanupStoryPhotos(db:SupabaseClient){
- const now=new Date().toISOString();const dayAgo=new Date(Date.now()-86400000).toISOString();
- const {data:photos,error}=await db.from("media_objects").select("id,owner_id,object_key").eq("category","STORY").lt("created_at",dayAgo).order("created_at").limit(50);
+ const now=new Date().toISOString();
+ const {data:photos,error}=await db.rpc("intimo_story_cleanup_candidates");
  if(error)return {removed:0,failed:1,held:0};
  let removed=0,failed=0,held=0;
  for(const photo of photos||[]){

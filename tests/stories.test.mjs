@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {createRequire} from "node:module";
 import ts from "typescript";
+import {createHmac} from "node:crypto";
 const require=createRequire(import.meta.url);
 function load(path,mocks){
  const code=ts.transpileModule(readFileSync(new URL("../"+path,import.meta.url),"utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
@@ -63,11 +64,26 @@ test("authorized story delivery uses the sanitizing proxy and fails closed on st
 test("expired-photo cleanup preserves active stories and legal holds, and retries storage failures",async()=>{
  for(const scenario of ["active","hold","lookup-failure","storage-failure","expired"]){
   let removals=0;
-  const db={from(table){const q=new Proxy({}, {get(_,key){if(key==="then")return resolve=>resolve(table==="media_objects"?{data:[{id:story,owner_id:a,object_key:"stories/private"}],error:null}:table==="member_stories"?{data:scenario==="active"?{expires_at:"2999-01-01",deleted_at:null}:null,error:null}:{data:scenario==="hold"?{id:b}:null,error:scenario==="lookup-failure"?{code:"offline"}:null});return()=>q;}});return q;}};
+  const db={rpc:async()=>({data:[{id:story,owner_id:a,object_key:"stories/private"}],error:null}),from(table){const q=new Proxy({}, {get(_,key){if(key==="then")return resolve=>resolve(table==="media_objects"?{data:null,error:null}:table==="member_stories"?{data:scenario==="active"?{expires_at:"2999-01-01",deleted_at:null}:null,error:null}:{data:scenario==="hold"?{id:b}:null,error:scenario==="lookup-failure"?{code:"offline"}:null});return()=>q;}});return q;}};
   const {cleanupStoryPhotos}=load("src/lib/stories/cleanup.ts",{"@/lib/storage/r2":{deleteStoredObject:async()=>{removals++;if(scenario==="storage-failure")throw Error("failed");},deleteVariantObjects:async()=>{}}});
   const result=await cleanupStoryPhotos(db);
   assert.equal(removals,["storage-failure","expired"].includes(scenario)?1:0);
   assert.equal(result.failed,["lookup-failure","storage-failure"].includes(scenario)?1:0);
   assert.equal(result.removed,scenario==="expired"?1:0);
  }
+});
+test("dedicated story cleanup requires its own purpose-specific bearer before database access",async(t)=>{
+ const old=process.env.SUPABASE_SERVICE_ROLE_KEY;process.env.SUPABASE_SERVICE_ROLE_KEY="synthetic-test-only";
+ t.after(()=>{if(old===undefined)delete process.env.SUPABASE_SERVICE_ROLE_KEY;else process.env.SUPABASE_SERVICE_ROLE_KEY=old;});
+ let touches=0;
+ const api=load("src/app/api/internal/stories/cleanup/route.ts",{
+  "@/lib/supabase/server":{getServerSupabase:()=>{touches++;return {};}},
+  "@/lib/stories/cleanup":{cleanupStoryPhotos:async()=>({removed:0,failed:0,held:0})},
+ });
+ for(const value of ["","Bearer wrong","Bearer "+createHmac("sha256","synthetic-test-only").update("unrelated-worker").digest("hex")]){
+  assert.equal((await api.POST({headers:new Headers({authorization:value})})).status,404);
+ }
+ assert.equal(touches,0);
+ const token=createHmac("sha256","synthetic-test-only").update("intimo-story-cleanup-v1").digest("hex");
+ assert.equal((await api.POST({headers:new Headers({authorization:"Bearer "+token})})).status,200);assert.equal(touches,1);
 });

@@ -10,6 +10,9 @@ create table public.profiles(id uuid primary key,auth_id text,email text,display
 create table public.user_blocks(blocker_id uuid,blocked_profile_id uuid);
 create table public.friendships(requester_id uuid,addressee_id uuid,status text);
 create table public.media_objects(id uuid primary key,owner_id uuid references public.profiles(id),object_key text,media_type text,mime_type text,byte_size integer,visibility text,upload_status text,processing_status text,moderation_status text,content_rating text,category text,description text);
+alter table public.media_objects add column created_at timestamptz not null default now();
+create table public.retention_holds(profile_id uuid,status text);
 \ir ../../supabase/migrations/20261025034408_private_photo_stories.sql
 \ir ../../supabase/migrations/20261025042415_story_author_adult_guard.sql
+\ir /tmp/intimo-story-cleanup-core.sql
 \ir stories-staging.sql

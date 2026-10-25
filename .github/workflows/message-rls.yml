@@ -42,6 +42,7 @@ jobs:
       - name: Verify story audiences, expiry and direct role denials
         run: |
           createdb -h localhost -U postgres intimo_stories_test
+          awk '/-- Supabase scheduler/{exit}{print}' supabase/migrations/20261025043422_story_cleanup_worker.sql > /tmp/intimo-story-cleanup-core.sql
           psql -h localhost -U postgres -d intimo_stories_test -f tests/sql/stories-disposable.sql
         env:
           PGPASSWORD: disposable-test-only

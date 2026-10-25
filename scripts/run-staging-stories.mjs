@@ -1,6 +1,6 @@
 // Opt-in protected Preview acceptance. Synthetic accounts and storage; guaranteed cleanup.
 import assert from "node:assert/strict";
-import {randomUUID,randomBytes,createHash} from "node:crypto";
+import {randomUUID,randomBytes,createHash,createHmac} from "node:crypto";
 import {createClient} from "@supabase/supabase-js";
 import {createServerClient} from "@supabase/ssr";
 import {request} from "@playwright/test";
@@ -53,7 +53,7 @@ try{
  }
  const [a,b,c]=members,photo=await upload(a);
  const input={mediaId:photo,caption:"Synthetic private story",audience:"SELECTED",recipients:[b.id],confirmPublish:true};
- await call(b.client,"wrong photo owner denied","POST","/api/stories",input,409);
+ await call(b.client,"wrong photo owner denied","POST","/api/stories",{...input,recipients:[a.id]},409);
  await call(a.client,"publication acknowledgement required","POST","/api/stories",{...input,confirmPublish:false},400);
  const story=(await (await call(a.client,"publish selected story","POST","/api/stories",input,201)).json()).id;storyIds.push(story);
  let data=await (await call(b.client,"pending review has no ring","GET",`/api/stories?summary=true&owners=${a.id}`)).json();assert.deepEqual(data.summary,{});
@@ -88,10 +88,21 @@ try{
  await call(a.client,"expired owner photo denied","GET",`/api/stories/${expired}/image`,undefined,404);
  await call(b.client,"expired reader photo denied","GET",`/api/stories/${expired}/image`,undefined,404);
  data=await (await call(b.client,"expired ring absent","GET",`/api/stories?summary=true&owners=${a.id}`)).json();assert.deepEqual(data.summary,{});
+ result(await db.from("media_objects").update({created_at:new Date(oldStart).toISOString()}).eq("id",expiredPhoto),"age expired photo");
+ const bearer=createHmac("sha256",process.env.SUPABASE_SERVICE_ROLE_KEY).update("intimo-story-cleanup-v1").digest("hex");
+ result(await db.rpc("intimo_configure_story_cleanup",{p_url:base+"/api/internal/stories/cleanup",p_bearer:bearer,p_run:run,p_protection:process.env.VERCEL_OIDC_TOKEN,p_expires_at:new Date(Date.now()+15*60000).toISOString()}),"configure staging cleanup");
+ let purged=false;
+ for(let i=0;i<24;i++){
+  const r=await db.from("media_objects").select("id",{count:"exact",head:true}).eq("id",expiredPhoto);result(r,"scheduled cleanup lookup");
+  if(r.count===0){purged=true;break;}await new Promise(resolve=>setTimeout(resolve,5000));
+ }
+ assert.equal(purged,true,"Scheduled story cleanup did not remove expired fixture");
+ console.log("STORY_ACCEPT scheduled_expired_photo_cleanup=PASS");
  console.log("STORY_ACCEPT real_auth_upload_R2_audiences_review_rings_views_GPS_proxy_block_delete_expiry=PASS");
 }catch(error){console.log("STORY_ACCEPT FAILED check="+(typeof error?.message==="string"&&!/https|cookie|token|Authorization/i.test(error.message)?error.message.split("\n")[0].slice(0,130):"details_redacted"));process.exitCode=1;}
 finally{
  const failures=[];async function attempt(label,action){try{await action();}catch{failures.push(label);}}
+ await attempt("disable own cleanup worker",async()=>result(await db.rpc("intimo_disable_story_cleanup",{p_run:run}),"disable worker"));
  await attempt("recover ambiguous users",async()=>{for(const user of result(await db.auth.admin.listUsers({page:1,perPage:1000}),"users").users)if(user.user_metadata?.intimo_stories_acceptance_run===run&&!members.some(m=>m.id===user.id))members.push({id:user.id});});
  const ids=members.map(m=>m.id);
  if(ids.length){
