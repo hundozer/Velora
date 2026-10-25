@@ -9,7 +9,7 @@ const read = (file) => fs.readFile(path.join(root, file), "utf8");
 
 test("return emails are throttled, skipped when active or opted out, and discreet", async () => {
   const source = await read("src/lib/notifications/returnEmails.ts");
-  const queue = await read("supabase/migrations/20261021200009_durable_unread_message_emails.sql");
+  const queue = await read("supabase/migrations/20261022044018_durable_unread_message_emails.sql");
   assert.match(queue, /interval '3 hours'/);
   assert.match(queue, /interval '10 minutes'/);
   assert.match(queue, /'ALL'=any\(p.email_opt_out\)/);
@@ -27,7 +27,7 @@ test("unsubscribe links are signed and work without login", async () => {
 
 test("events trigger return emails", async () => {
   assert.doesNotMatch(await read("src/app/api/messages/route.ts"), /maybeSendReturnEmail\(/);
-  const queue = await read("supabase/migrations/20261021200009_durable_unread_message_emails.sql");
+  const queue = await read("supabase/migrations/20261022044018_durable_unread_message_emails.sql");
   assert.match(queue, /create trigger queue_unread_email after insert on public.direct_messages/);
   assert.doesNotMatch(await read("src/app/api/interests/route.ts"), /maybeSendReturnEmail|ResendClient/);
   assert.doesNotMatch(await read("src/app/api/private-access/route.ts"), /maybeSendReturnEmail|ResendClient/);

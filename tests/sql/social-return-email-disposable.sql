@@ -18,12 +18,12 @@ create table public.notifications(id uuid primary key default gen_random_uuid(),
 -- Generated from the actual original migration by the CI command. Scheduler
 -- extensions are Supabase-specific and are not altered by the new migration.
 \ir /tmp/intimo-unread-core.sql
-\ir ../../supabase/migrations/20261024153700_durable_interest_access_alerts.sql
+\ir ../../supabase/migrations/20261024201630_durable_interest_access_alerts.sql
 \ir social-return-email-staging.sql
 create table public.areas(id text primary key);
 create table public.dating_ads(id uuid primary key default gen_random_uuid(),author_id uuid references public.profiles(id),author_name text,category text,title text,text text,validity_days integer,status text default 'active',moderation_status text default 'PENDING_REVIEW',starts_at timestamptz,expires_at timestamptz,area_id text);
 alter table public.dating_ads enable row level security;
 revoke all on public.dating_ads from anon,authenticated;
 \ir ../../supabase/migrations/20261027_scene_events.sql
-\ir ../../supabase/migrations/20261024202832_scene_company_plans.sql
+\ir ../../supabase/migrations/20261024205326_scene_company_plans.sql
 \ir scene-company-staging.sql
