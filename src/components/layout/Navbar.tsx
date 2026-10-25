@@ -47,12 +47,13 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 lg:h-20 flex items-center justify-between gap-4">
         <Link href="/" aria-label="Intimo" className="shrink-0 font-display text-3xl leading-none text-velora-ink">intimo<span className="text-velora-accent" aria-hidden>↗</span></Link>
 
-        {/* Home · People · Tonight · Messages; Me lives in the account menu. */}
+        {/* Me lives in the account menu. */}
         <nav className="hidden lg:flex items-center gap-1" aria-label="Primary navigation">
           {[
             { href: "/", label: "Home", active: pathname === "/" },
             { href: "/people", label: "People", active: pathname.startsWith("/people") },
             { href: "/tonight", label: "Tonight", active: pathname.startsWith("/tonight") },
+            ...(user ? [{ href: "/rooms", label: "Prague Room", active: pathname.startsWith("/rooms") }] : []),
             ...(user ? [{ href: "/messages", label: t("nav.messages"), active: pathname.startsWith("/messages") }] : []),
           ].map((item) => (
             <Link key={item.href} href={item.href} aria-current={item.active ? "page" : undefined} className={`rounded-full px-4 py-2 text-[15px] font-medium transition ${item.active ? "bg-velora-accent text-velora-paper" : "text-velora-ink2 hover:bg-velora-ink/5 hover:text-velora-ink"}`}>
