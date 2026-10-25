@@ -3,7 +3,7 @@ import React from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { StoryAvatar } from "@/components/stories/StoryAvatar";
-type Story={id:string;ownerId:string;caption:string;owner?:{display_name:string;avatar_url:string};audience:string;expires_at?:string;media_objects?:{moderation_status:string}};
+type Story={id:string;ownerId:string;caption:string;owner?:{display_name:string;avatar_url:string};audience:string;expires_at?:string;deleted_at?:string|null;media_objects?:{moderation_status:string}};
 export default function StoriesPage(){
  const {profile}=useAuth();const [stories,setStories]=React.useState<Story[]>([]);const [mine,setMine]=React.useState<Story[]>([]);const [error,setError]=React.useState("");const [loading,setLoading]=React.useState(true);
  const load=React.useCallback(async()=>{try{
@@ -25,7 +25,7 @@ export default function StoriesPage(){
    <section aria-label="Member stories" className="mt-8 flex flex-wrap gap-5">{owners.map(s=><div key={s.ownerId} className="w-20 text-center"><StoryAvatar ownerId={s.ownerId} name={s.owner?.display_name||"Member"} src={s.owner?.avatar_url} size={72}/><Link href={`/profile/${s.ownerId}`} className="mt-2 block truncate text-sm">{s.owner?.display_name||"Member"}</Link></div>)}</section>
    {!owners.length&&!error&&<p className="mt-8 text-velora-muted">No stories available to you yet.</p>}
    <section aria-label="My stories" className="mt-10"><h2 className="font-display text-3xl">Your stories</h2><p className="mt-2 text-sm text-velora-muted">Photos are reviewed before others can see them. The 24-hour window starts when you publish.</p>
-    {mine.map(s=><div key={s.id} className="mt-4 flex items-center justify-between gap-4 border-b border-velora-line pb-4"><div><p className="break-words">{s.caption||"Photo story"}</p><p className="text-sm text-velora-muted">{s.audience} · {s.media_objects?.moderation_status?.replaceAll("_"," ")||"Review pending"}</p></div><div className="flex gap-3"><Link href={`/stories/${profile?.id}`} className="min-h-11 py-3 underline">View</Link><button type="button" onClick={()=>remove(s.id)} className="min-h-11 underline">Delete</button></div></div>)}
+    {mine.map(s=><div key={s.id} className="mt-4 flex items-center justify-between gap-4 border-b border-velora-line pb-4"><div><p className="break-words">{s.caption||"Photo story"}</p><p className="text-sm text-velora-muted">{s.audience} · {s.deleted_at?"Hidden · cleanup pending":s.media_objects?.moderation_status?.replaceAll("_"," ")||"Review pending"}</p></div><div className="flex gap-3">{!s.deleted_at&&<Link href={`/stories/${profile?.id}`} className="min-h-11 py-3 underline">View</Link>}<button type="button" onClick={()=>remove(s.id)} className="min-h-11 underline">{s.deleted_at?"Retry cleanup":"Delete"}</button></div></div>)}
     {!mine.length&&<p className="mt-4 text-velora-muted">You have no active stories.</p>}
    </section>
   </>}

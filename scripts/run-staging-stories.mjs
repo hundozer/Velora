@@ -24,7 +24,8 @@ async function upload(owner){
  const image=await sharp({create:{width:40,height:60,channels:3,background:"#559cb4"}}).withExif({IFD0:{Make:"Synthetic test"},IFD3:{GPSLatitudeRef:"N",GPSLatitude:"50/1 5/1 0/1"}}).jpeg().toBuffer();
  const r=await call(owner.client,"presign story photo","POST","/api/media/presign-upload",{fileName:"synthetic-story-"+run+".jpg",fileType:"image/jpeg",fileSize:image.length,folder:"photos",category:"STORY",visibility:"MEMBERS_ONLY",contentRating:"NON_EXPLICIT",participantDeclaration:{containsOtherIdentifiableParticipants:false,allParticipantsAdults:true,recordingConsented:true,publicationConsented:true}});
  const p=await r.json();mediaIds.push(p.mediaId);keys.add(p.objectKey);
- assert.equal(new URL(p.uploadUrl).hostname,process.env.CLOUDFLARE_R2_ACCOUNT_ID+".r2.cloudflarestorage.com");
+ const storageHost=process.env.CLOUDFLARE_R2_ACCOUNT_ID+".r2.cloudflarestorage.com";
+ assert.ok([storageHost,bucket+"."+storageHost].includes(new URL(p.uploadUrl).hostname),"Unexpected staging R2 upload host");
  const put=await fetch(p.uploadUrl,{method:"PUT",headers:{"Content-Type":"image/jpeg"},body:image,redirect:"error"});assert.equal(put.ok,true,"R2 upload");
  await call(owner.client,"complete story photo","POST",`/api/media/${p.mediaId}/complete`,{});
  const stored=result(await db.from("media_objects").select("variants").eq("id",p.mediaId).single(),"stored variants");
@@ -68,6 +69,12 @@ try{
  await call(a.client,"story media cannot be repurposed","PATCH",`/api/media/${photo}`,{category:"ordinary",visibility:"PUBLIC"},409);
  await call(b.client,"mark story viewed","POST",`/api/stories/${story}`,{});
  data=await (await call(b.client,"viewed ring state","GET",`/api/stories?summary=true&owners=${a.id}`)).json();assert.equal(data.summary[a.id].unread,false);
+ const exported=await (await call(a.client,"export includes own stories","GET","/api/privacy/export")).json();
+ assert.ok(exported.stories.some(s=>s.id===story));
+ const viewedExport=await (await call(b.client,"export includes own viewing history","GET","/api/privacy/export")).json();
+ assert.ok(viewedExport.storiesViewed.some(s=>s.story_id===story));
+ data=await (await call(c.client,"story absent from private-photo count","GET",`/api/private-access?ownerId=${a.id}`)).json();
+ assert.equal(data.privateCount,0);
  await call(b.client,"block story author","POST","/api/blocks",{targetProfileId:a.id},201);
  await call(b.client,"blocked photo denied","GET",`/api/stories/${story}/image`,undefined,404);
  await call(b.client,"unblock fixture","DELETE","/api/blocks",{targetProfileId:a.id});
@@ -90,7 +97,7 @@ finally{
  if(ids.length){
   await attempt("recover all fixture storage",async()=>{for(const row of result(await db.from("media_objects").select("id,object_key,variants").in("owner_id",ids),"media")){if(!mediaIds.includes(row.id))mediaIds.push(row.id);keys.add(row.object_key);for(const key of Object.values(row.variants||{}))keys.add(key);}});
   for(const key of keys)await attempt("delete/verify object",async()=>{await s3.send(new DeleteObjectCommand({Bucket:bucket,Key:key}));try{await s3.send(new HeadObjectCommand({Bucket:bucket,Key:key}));throw Error("Object remains");}catch(e){if(e.$metadata?.httpStatusCode!==404)throw e;}});
-  for(const [table,column]of [["story_views","viewer_id"],["member_stories","owner_id"],["media_objects","owner_id"],["notifications","user_id"]])await attempt(table,async()=>result(await db.from(table).delete().in(column,ids),table));
+  for(const [table,column]of [["story_views","viewer_id"],["member_stories","owner_id"],["media_objects","owner_id"],["notifications","user_id"],["privacy_requests","profile_id"]])await attempt(table,async()=>result(await db.from(table).delete().in(column,ids),table));
   for(const col of ["actor_profile_id","actor_user_id","resource_id"])await attempt("audit",async()=>result(await db.from("audit_events").delete().in(col,[...ids,...mediaIds,...storyIds]),"audit"));
   await attempt("rate buckets",async()=>result(await db.from("rate_limit_buckets").delete().in("key",ids.flatMap(id=>["profile-create:","profile-update:","notifications-preferences:","story-publish:","stories-read:","story-image:","media-presign:","media-complete:","media-view:","block:"].map(prefix=>prefix+id))),"rates"));
   await attempt("profiles",async()=>result(await db.from("profiles").delete().in("id",ids),"profiles"));
