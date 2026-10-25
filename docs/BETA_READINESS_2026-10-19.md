@@ -340,4 +340,4 @@ Verification: 214 automated tests passed, including six new behavior tests for d
 
 ## 25 October: Take Us Out invitation slice
 
-Implementation and synthetic mobile/desktop rehearsal documented in [Take Us Out evidence](TAKE_US_OUT_2026-10-25.md). Additive Story-to-Plan linkage applied to staging only; production unmodified. Actual staging fixture verification remains unproven after ambiguous tool errors; independent legacy counts preserved. Hosted SQL/Preview and authenticated live acceptance remain release gates. No beta decision change.
+Implementation and synthetic mobile/desktop rehearsal documented in [Take Us Out evidence](TAKE_US_OUT_2026-10-25.md). Additive Story-to-Plan linkage applied to staging only; production unmodified. Actual staging fixture verification remains unproven after ambiguous tool errors; independent legacy counts preserved. Hosted SQL/Preview and authenticated live staging acceptance now pass, including actual private pitch, linked photo Story, blocking/end and verified complete fixture cleanup. Production migration approval remains pending. No beta decision change.
