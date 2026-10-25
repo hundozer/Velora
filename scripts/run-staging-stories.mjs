@@ -15,10 +15,10 @@ for(const key of ["SUPABASE_SERVICE_ROLE_KEY","VERCEL_OIDC_TOKEN","CLOUDFLARE_R2
 const db=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
 const bucket=process.env.CLOUDFLARE_R2_BUCKET_NAME;
 const s3=new S3Client({region:"auto",endpoint:`https://${process.env.CLOUDFLARE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,credentials:{accessKeyId:process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,secretAccessKey:process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY}});
-const run=randomUUID(),password=randomBytes(30).toString("base64url"),members=[],clients=[],mediaIds=[],storyIds=[],keys=new Set();let baseline;
+const run=randomUUID(),password=randomBytes(30).toString("base64url"),members=[],clients=[],mediaIds=[],storyIds=[],planIds=[],keys=new Set();let baseline;
 const protection={"x-vercel-trusted-oidc-idp-token":process.env.VERCEL_OIDC_TOKEN};
 function result(r,label){if(r.error)throw Error(label+":"+(r.error.code||r.error.status||"failed"));return r.data;}
-async function fingerprint(){const hashes={};for(const table of ["profiles","media_objects","member_stories","story_views"])hashes[table]=createHash("sha256").update(JSON.stringify(result(await db.from(table).select("*").order(table==="story_views"?"story_id":"id"),"baseline"))).digest("hex");return hashes;}
+async function fingerprint(){const hashes={};for(const table of ["profiles","media_objects","member_stories","story_views","dating_ads"])hashes[table]=createHash("sha256").update(JSON.stringify(result(await db.from(table).select("*").order(table==="story_views"?"story_id":"id"),"baseline"))).digest("hex");return hashes;}
 async function call(client,label,method,path,data,status=200){const r=await client.fetch(path,{method,data,maxRedirects:0,timeout:60000});console.log(`STORY_ACCEPT ${label} status=${r.status()}`);assert.equal(r.status(),status,label);return r;}
 async function upload(owner){
  const image=await sharp({create:{width:40,height:60,channels:3,background:"#559cb4"}}).withExif({IFD0:{Make:"Synthetic test"},IFD3:{GPSLatitudeRef:"N",GPSLatitude:"50/1 5/1 0/1"}}).jpeg().toBuffer();
@@ -51,8 +51,12 @@ try{
   await call(member.client,label+" onboarding","POST","/api/profile/me",{displayName:"Story fixture "+label,dateOfBirth:"1990-01-01",profileType:"SINGLE",gender:label==="A"?"FEMALE":"MALE",relationshipStatus:"SINGLE",areaId:"praha-2",lookingFor:["DATES"],messagePermission:"EVERYONE"},201);
   await call(member.client,label+" disable email","PUT","/api/notifications/preferences",{optOut:["ALL"]});
  }
- const [a,b,c]=members,photo=await upload(a);
- const input={mediaId:photo,caption:"Synthetic private story",audience:"SELECTED",recipients:[b.id],confirmPublish:true};
+ const [a,b,c]=members;
+ const invitation=(await (await call(a.client,"publish invitation","POST","/api/dating-ads",{category:"DATE",title:"Synthetic Take Us Out",text:"Synthetic invitation, no meeting will take place.",startsAt:new Date(Date.now()+60000).toISOString(),endsAt:new Date(Date.now()+3600000).toISOString(),allowedReplyGenders:[],minAge:18,maxAge:99},201)).json()).plan.id;planIds.push(invitation);
+ let invitationData=await (await call(b.client,"eligible invitation detail","GET",`/api/dating-ads?id=${invitation}`)).json();assert.equal(invitationData.plans[0].canReply,true);
+ await call(b.client,"private invitation pitch","POST","/api/messages",{receiverId:a.id,content:"Synthetic private pitch: cocktails and conversation.",datingAdId:invitation},201);
+ const photo=await upload(a);
+ const input={planId:invitation,mediaId:photo,caption:"Synthetic private story",audience:"SELECTED",recipients:[b.id],confirmPublish:true};
  await call(b.client,"wrong photo owner denied","POST","/api/stories",{...input,recipients:[a.id]},409);
  await call(a.client,"publication acknowledgement required","POST","/api/stories",{...input,confirmPublish:false},400);
  const story=(await (await call(a.client,"publish selected story","POST","/api/stories",input,201)).json()).id;storyIds.push(story);
@@ -61,6 +65,7 @@ try{
  result(await db.from("media_objects").update({moderation_status:"APPROVED"}).eq("id",photo).eq("owner_id",a.id),"approve synthetic");
  data=await (await call(b.client,"selected reader sees new ring","GET",`/api/stories?summary=true&owners=${a.id}`)).json();assert.equal(data.summary[a.id].unread,true);
  data=await (await call(c.client,"excluded reader sees no ring","GET",`/api/stories?summary=true&owners=${a.id}`)).json();assert.deepEqual(data.summary,{});
+ const linked=await (await call(b.client,"authorized story invitation link","GET",`/api/stories?owners=${a.id}`)).json();assert.equal(linked.stories[0].planId,invitation);
  const image=await call(b.client,"selected reader photo delivery","GET",`/api/stories/${story}/image`);
  assert.equal(image.headers()["cache-control"],"private, no-store");assert.equal(image.headers().location,undefined);assert.equal((await sharp(await image.body()).metadata()).exif,undefined);
  await call(c.client,"excluded direct photo denied","GET",`/api/stories/${story}/image`,undefined,404);
@@ -76,12 +81,16 @@ try{
  data=await (await call(c.client,"story absent from private-photo count","GET",`/api/private-access?ownerId=${a.id}`)).json();
  assert.equal(data.privateCount,0);
  await call(b.client,"block story author","POST","/api/blocks",{targetProfileId:a.id},201);
+ invitationData=await (await call(b.client,"blocked invitation absent","GET",`/api/dating-ads?id=${invitation}`)).json();assert.equal(invitationData.plans.length,0);
  await call(b.client,"blocked photo denied","GET",`/api/stories/${story}/image`,undefined,404);
  await call(b.client,"unblock fixture","DELETE",`/api/blocks?targetProfileId=${a.id}`);
  await call(a.client,"delete live story","DELETE",`/api/stories/${story}`);
  await call(b.client,"deleted photo denied","GET",`/api/stories/${story}/image`,undefined,404);
+ await call(a.client,"end invitation","PATCH",`/api/dating-ads/${invitation}`,{action:"END"});
+ invitationData=await (await call(b.client,"ended invitation absent","GET",`/api/dating-ads?id=${invitation}`)).json();assert.equal(invitationData.plans.length,0);
+ console.log("STORY_ACCEPT invitation_create_detail_private_pitch_story_link_block_end=PASS");
  const expiredPhoto=await upload(a);
- const expired=(await (await call(a.client,"publish expiring fixture","POST","/api/stories",{...input,mediaId:expiredPhoto},201)).json()).id;storyIds.push(expired);
+ const expired=(await (await call(a.client,"publish expiring fixture","POST","/api/stories",{...input,planId:undefined,mediaId:expiredPhoto},201)).json()).id;storyIds.push(expired);
  result(await db.from("media_objects").update({moderation_status:"APPROVED"}).eq("id",expiredPhoto),"approve second synthetic");
  const oldStart=Date.now()-25*3600000;
  result(await db.from("member_stories").update({created_at:new Date(oldStart).toISOString(),expires_at:new Date(oldStart+24*3600000).toISOString()}).eq("id",expired),"expire fixture");
@@ -108,9 +117,9 @@ finally{
  if(ids.length){
   await attempt("recover all fixture storage",async()=>{for(const row of result(await db.from("media_objects").select("id,object_key,variants").in("owner_id",ids),"media")){if(!mediaIds.includes(row.id))mediaIds.push(row.id);keys.add(row.object_key);for(const key of Object.values(row.variants||{}))keys.add(key);}});
   for(const key of keys)await attempt("delete/verify object",async()=>{await s3.send(new DeleteObjectCommand({Bucket:bucket,Key:key}));try{await s3.send(new HeadObjectCommand({Bucket:bucket,Key:key}));throw Error("Object remains");}catch(e){if(e.$metadata?.httpStatusCode!==404)throw e;}});
-  for(const [table,column]of [["story_views","viewer_id"],["member_stories","owner_id"],["media_objects","owner_id"],["notifications","user_id"],["privacy_requests","profile_id"]])await attempt(table,async()=>result(await db.from(table).delete().in(column,ids),table));
-  for(const col of ["actor_profile_id","actor_user_id","resource_id"])await attempt("audit",async()=>result(await db.from("audit_events").delete().in(col,[...ids,...mediaIds,...storyIds]),"audit"));
-  await attempt("rate buckets",async()=>result(await db.from("rate_limit_buckets").delete().in("key",ids.flatMap(id=>["profile-create:","profile-update:","notifications-preferences:","story-publish:","stories-read:","story-image:","media-presign:","media-complete:","media-view:","block:"].map(prefix=>prefix+id))),"rates"));
+  for(const [table,column]of [["messages","sender_id"],["messages","receiver_id"],["dating_ads","author_id"],["story_views","viewer_id"],["member_stories","owner_id"],["media_objects","owner_id"],["notifications","user_id"],["privacy_requests","profile_id"]])await attempt(table,async()=>result(await db.from(table).delete().in(column,ids),table));
+  for(const col of ["actor_profile_id","actor_user_id","resource_id"])await attempt("audit",async()=>result(await db.from("audit_events").delete().in(col,[...ids,...mediaIds,...storyIds,...planIds]),"audit"));
+  await attempt("rate buckets",async()=>result(await db.from("rate_limit_buckets").delete().in("key",ids.flatMap(id=>["profile-create:","profile-update:","notifications-preferences:","story-publish:","stories-read:","story-image:","media-presign:","media-complete:","media-view:","block:","plan-create:","plan-end:","message-send:"].map(prefix=>prefix+id))),"rates"));
   await attempt("profiles",async()=>result(await db.from("profiles").delete().in("id",ids),"profiles"));
   for(const m of members)await attempt("Auth cleanup",async()=>{const response=await db.auth.admin.deleteUser(m.id);if(response.error?.status!==404)result(response,"Auth");});
   for(const [table,column]of [["profiles","id"],["member_stories","owner_id"],["story_views","viewer_id"],["media_objects","owner_id"],["notifications","user_id"],["unread_email_outbox","profile_id"],["email_send_state","profile_id"]])await attempt("verify "+table,async()=>{const r=await db.from(table).select("*",{head:true,count:"exact"}).in(column,ids);result(r,"absence");assert.equal(r.count,0);});

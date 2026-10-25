@@ -27,7 +27,7 @@ begin
   raise exception 'Expired invitation allowed';
  exception when raise_exception then if sqlerrm<>'Invitation unavailable' then raise; end if; end;
  update public.dating_ads set expires_at=now()+interval '3 hours' where id=invitation;
- story:=public.intimo_publish_plan_story(a,media,'Join us','SELECTED',array[b]);
+ story:=public.intimo_publish_plan_story(a,media,'Join us','SELECTED',array[b],invitation);
  if not exists(select 1 from public.member_stories where id=story and plan_id=invitation and audience='SELECTED' and recipients=array[b]) then raise exception 'Link/audience lost'; end if;
  if public.intimo_story_visible(b,story) then raise exception 'Unreviewed cover leaked'; end if;
  update public.media_objects set moderation_status='APPROVED' where id=media;
