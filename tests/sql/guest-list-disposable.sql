@@ -9,7 +9,7 @@ create table public.areas(id text primary key);
 create table public.user_blocks(blocker_id uuid,blocked_profile_id uuid);
 grant select on public.profiles,public.areas to service_role;
 grant all on public.user_blocks to service_role;
-\ir ../../supabase/migrations/20261025114006_guest_list_pilot.sql
+\ir ../../supabase/migrations/20261025115112_guest_list_pilot.sql
 begin;
 insert into public.profiles values
 ('78100500-0000-4000-8000-000000000001','host','ACTIVE','AGE_DECLARED'),
