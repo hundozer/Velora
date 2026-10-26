@@ -26,9 +26,9 @@ export async function GET(req: NextRequest) {
   if (messages.error || blocks.error) return reply({ error: "Room unavailable" }, 502);
   const hidden = new Set((blocks.data || []).map(b => b.blocker_id === actor.profileId ? b.blocked_profile_id : b.blocker_id));
   const ids = [...new Set((messages.data || []).map(m => m.sender_id).filter(id => !hidden.has(id)))];
-  const profiles = ids.length ? await db.from("profiles").select("id,display_name,account_status,auth_id,is_demo").in("id", ids) : { data: [], error: null };
+  const profiles = ids.length ? await db.from("profiles").select("id,username,display_name,account_status,auth_id,is_demo").in("id", ids) : { data: [], error: null };
   if (profiles.error) return reply({ error: "Room unavailable" }, 502);
-  const byId = new Map((profiles.data || []).filter(p => p.account_status === "ACTIVE" && p.auth_id && !p.is_demo).map(p => [p.id, p.display_name]));
+  const byId = new Map((profiles.data || []).filter(p => p.account_status === "ACTIVE" && p.auth_id && !p.is_demo).map(p => [p.id, p.username || p.display_name]));
   return reply({ messages: (messages.data || []).filter(m => byId.has(m.sender_id)).reverse().map(m => ({ id: m.id, senderId: m.sender_id, senderName: byId.get(m.sender_id), body: m.body, createdAt: m.created_at })) });
 }
 

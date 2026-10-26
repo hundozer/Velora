@@ -32,3 +32,17 @@ test("room post uses server identity, not submitted sender", async () => {
  const route = api({ db }); const response = await route.POST({ headers: new Headers(), json: async () => ({ sender_id: peer, body: "Hello Prague" }) });
  assert.equal(response.status, 201); assert.equal(inserted.sender_id, member); assert.equal(inserted.room_id, "prague");
 });
+
+test("presence never reads the database for signed-out or inactive members", async () => {
+ const source = readFileSync(new URL("../src/app/api/rooms/prague/presence/route.ts", import.meta.url), "utf8");
+ const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+ for (const [denied, adult, status] of [[true, true, 401], [false, false, 403]]) {
+  const m = { exports: {} };
+  new Function("require", "module", "exports", code)(name => ({
+   "next/server": { NextResponse: { json: (body, { status = 200, headers = {} } = {}) => Response.json(body, { status, headers }) } },
+   "@/lib/auth/serverActor": { resolveServerActor: async () => denied ? { status: "unauthenticated" } : { status: "authenticated", actor: { profileId: member } }, hasAdultAccess: () => adult },
+   "@/lib/supabase/server": { getServerSupabase: () => { throw Error("DB touched"); } },
+  })[name], m, m.exports);
+  for (const method of ["GET", "POST", "DELETE"]) assert.equal((await m.exports[method]({})).status, status);
+ }
+});
