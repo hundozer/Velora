@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const guard = await requireAdminPermission(req, "community:moderate"); if ("response" in guard) return guard.response;
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Room unavailable" }, { status: 503 });
-  const { data, error } = await db.from("room_messages").select("id,sender_id,body,status,created_at").eq("room_id", "prague").order("created_at", { ascending: false }).limit(100);
+  const { data, error } = await db.from("room_messages").select("id,room_id,sender_id,body,status,created_at").order("created_at", { ascending: false }).limit(100);
   return error ? NextResponse.json({ error: "Room unavailable" }, { status: 502 }) : NextResponse.json({ messages: data }, { headers: { "Cache-Control": "private, no-store" } });
 }
 

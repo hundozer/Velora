@@ -68,7 +68,7 @@ export default function MePage() {
         <Row href="/me/boundaries" icon={Hand} label="My boundaries" />
         <Row href="/albums/manage" icon={ImageIcon} label="My photos & albums" />
         <Row href="/stories" icon={ImageIcon} label="Stories · your next 24 hours" />
-        <Row href="/rooms" icon={MessageSquare} label="Prague Room" />
+        <Row href="/rooms" icon={MessageSquare} label="Rooms" />
         <Row href="/me/private-photos" icon={Lock} label="Private photo access" />
         <Row href="/favorites" icon={Bookmark} label="Saved" />
         <Row href="/settings#privacy" icon={EyeOff} label="Privacy Center" />
