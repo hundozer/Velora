@@ -105,6 +105,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   }, [participantId, datingAdId]);
 
   const [inputMessage, setInputMessage] = useState("");
+  const sendingRef = React.useRef(false);
+  const [sending, setSending] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [blockModalOpen, setBlockModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -150,12 +152,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   };
 
   const handleSendMessage = async (mediaId?: string) => {
-    if (!inputMessage.trim() && !mediaId) return;
+    const content = inputMessage.trim();
+    if ((!content && !mediaId) || sendingRef.current) return;
+    sendingRef.current = true;
+    setSending(true);
     setSendError("");
-
+    try {
     const response = await fetch("/api/messages", {
       method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ receiverId: participantId, content: inputMessage.trim(), datingAdId, mediaId }),
+      body: JSON.stringify({ receiverId: participantId, content, datingAdId, mediaId }),
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -169,13 +174,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       senderId: "user-current",
       senderName: "You",
       senderAvatar: "",
-      content: inputMessage.trim(),
+      content,
       mediaUrl: payload.message?.media_url || undefined,
       status: "SENT",
       createdAt: new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
     };
-    setMessages((current) => [...current, newMsg]);
-    setInputMessage("");
+    setMessages((current) => current.some((message) => message.id === newMsg.id) ? current : [...current, newMsg]);
+    setInputMessage((current) => current.trim() === content ? "" : current);
+    } catch { setSendError("Message could not be sent. Try again."); }
+    finally { sendingRef.current = false; setSending(false); }
   };
 
   const hideOpeners = () => {
@@ -344,11 +351,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 placeholder={datingAdId ? "Your pitch: a place, a little chemistry…" : emptyThread ? "Introduce yourself…" : "Write a message…"}
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void handleSendMessage(); } }}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!sendingRef.current) void handleSendMessage(); } }}
                 className="max-h-32 w-full resize-none bg-transparent py-3 text-[16px] text-velora-ink placeholder:text-velora-muted focus:outline-none"
               />
             </label>
-            <button type="button" onClick={() => void handleSendMessage()} disabled={!inputMessage.trim()} aria-label="Send" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-velora-accent text-velora-paper disabled:opacity-40">
+            <button type="button" onClick={() => void handleSendMessage()} disabled={sending || !inputMessage.trim()} aria-label="Send" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-velora-accent text-velora-paper disabled:opacity-40">
               <ArrowRight className="h-5 w-5" aria-hidden />
             </button>
           </div>

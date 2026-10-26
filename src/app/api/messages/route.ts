@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "node:crypto";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
@@ -175,6 +176,9 @@ export async function POST(req: NextRequest) {
       }
     }
   }
+  // Suppress an identical retry while the first request is still completing.
+  const duplicateKey = createHash("sha256").update(JSON.stringify([actor.actor.profileId, receiverId, content, datingAdId, mediaId])).digest("hex");
+  if (!(await checkRateLimit(`message-repeat:${duplicateKey}`, 1, 10)).allowed) return NextResponse.json({ error: "This message was just sent. Wait a moment before sending it again." }, { status: 429 });
   const row = { conversation_id: conversationId(actor.actor.profileId, receiverId), sender_id: actor.actor.profileId, receiver_id: receiverId, sender_name: sender.display_name, sender_avatar: sender.avatar_url, content, media_url: mediaId ? `/api/media/${mediaId}` : null, attachment_type: mediaId ? "IMAGE" : null, plan_id: datingAdId, is_disappearing: false, is_opened: false, status: "SENT", is_locked: false, unlock_price: null, is_unlocked: true };
   const { data, error } = await supabase.from("direct_messages").insert(row).select("id,conversation_id,sender_id,receiver_id,content,media_url,attachment_type,status,created_at").single();
   if (error || !data) return NextResponse.json({ error: "Message could not be sent" }, { status: 502 });
