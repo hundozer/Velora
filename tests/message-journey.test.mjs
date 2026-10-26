@@ -19,7 +19,9 @@ test("thread framing: plan window, explicit-photo rule, openers from shared cont
 
 test("the chat keeps every server-side rule and only frames them", async () => {
   const chat = await read("src/components/chat/ChatWindow.tsx");
-  assert.match(chat, /body: JSON\.stringify\(\{ receiverId: participantId, content: inputMessage\.trim\(\), datingAdId, mediaId \}\)/);
+  assert.match(chat, /body: JSON\.stringify\(\{ receiverId: participantId, content, datingAdId, mediaId \}\)/);
+  assert.match(chat, /sendingRef\.current = true/);
+  assert.match(chat, /disabled=\{sending \|\| !inputMessage\.trim\(\)\}/);
   assert.match(chat, /photoExplicit \? "EXPLICIT" : "NON_EXPLICIT"/);
   // Explicit is off until the boundary allows it; the server re-checks on send.
   assert.match(chat, /checked=\{photoExplicit && explicitAllowed\} disabled=\{!explicitAllowed\}/);
