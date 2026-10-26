@@ -37,7 +37,7 @@ export function destinationForAccountState(state, requestedReturnTo) {
 
 const MEMBER_ROUTE_PREFIXES = [
   "/dashboard", "/messages", "/settings", "/favorites", "/notifications",
-  "/albums/manage", "/tonight/new", "/tonight/invitation", "/stories", "/guest-list", "/admin", "/admin-mfa",
+  "/albums/manage", "/tonight/new", "/tonight/invitation", "/stories", "/guest-list", "/rooms", "/admin", "/admin-mfa",
 ];
 
 /** @param {string} pathname */

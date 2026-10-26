@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Activity, Bell, Bookmark, ChevronRight, EyeOff, Flame, Hand, Lock, Image as ImageIcon, LogOut, Settings, Shield, User } from "lucide-react";
+import { Activity, Bell, Bookmark, ChevronRight, EyeOff, Flame, Hand, Lock, Image as ImageIcon, LogOut, MessageSquare, Settings, Shield, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation, AVAILABLE_LANGUAGES } from "@/context/LanguageContext";
 import { useDurableNotifications } from "@/lib/notifications/useDurableNotifications";
@@ -68,6 +68,7 @@ export default function MePage() {
         <Row href="/me/boundaries" icon={Hand} label="My boundaries" />
         <Row href="/albums/manage" icon={ImageIcon} label="My photos & albums" />
         <Row href="/stories" icon={ImageIcon} label="Stories · your next 24 hours" />
+        <Row href="/rooms" icon={MessageSquare} label="Prague Room" />
         <Row href="/me/private-photos" icon={Lock} label="Private photo access" />
         <Row href="/favorites" icon={Bookmark} label="Saved" />
         <Row href="/settings#privacy" icon={EyeOff} label="Privacy Center" />
