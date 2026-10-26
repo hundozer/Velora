@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   const { data: profile, error: profileError } = await auth.db.from("profiles").select("id").eq("id", auth.actor.profileId).eq("is_demo", false).maybeSingle();
   if (profileError) return reply({ error: "Room unavailable" }, 502);
   if (!profile) return reply({ error: "Member account required" }, 403);
-  const { error } = await auth.db.from("room_presence").upsert({ profile_id: auth.actor.profileId, room_id: "prague", last_seen_at: new Date().toISOString() }, { onConflict: "profile_id" });
+  const { error } = await auth.db.from("room_presence").upsert({ profile_id: auth.actor.profileId, room_id: "prague", last_seen_at: new Date().toISOString() }, { onConflict: "room_id,profile_id" });
   return error ? reply({ error: "Presence unavailable" }, 502) : reply({ present: true });
 }
 
@@ -40,6 +40,6 @@ export async function GET(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const auth = await access(req); if ("error" in auth) return auth.error;
-  const { error } = await auth.db.from("room_presence").delete().eq("profile_id", auth.actor.profileId);
+  const { error } = await auth.db.from("room_presence").delete().eq("profile_id", auth.actor.profileId).eq("room_id", "prague");
   return error ? reply({ error: "Presence unavailable" }, 502) : reply({ present: false });
 }

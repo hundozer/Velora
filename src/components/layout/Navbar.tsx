@@ -53,7 +53,7 @@ export const Navbar: React.FC = () => {
             { href: "/", label: "Home", active: pathname === "/" },
             { href: "/people", label: "People", active: pathname.startsWith("/people") },
             { href: "/tonight", label: "Tonight", active: pathname.startsWith("/tonight") },
-            ...(user ? [{ href: "/rooms", label: "Prague Room", active: pathname.startsWith("/rooms") }] : []),
+            ...(user ? [{ href: "/rooms", label: "Rooms", active: pathname.startsWith("/rooms") }] : []),
             ...(user ? [{ href: "/messages", label: t("nav.messages"), active: pathname.startsWith("/messages") }] : []),
           ].map((item) => (
             <Link key={item.href} href={item.href} aria-current={item.active ? "page" : undefined} className={`rounded-full px-4 py-2 text-[15px] font-medium transition ${item.active ? "bg-velora-accent text-velora-paper" : "text-velora-ink2 hover:bg-velora-ink/5 hover:text-velora-ink"}`}>
