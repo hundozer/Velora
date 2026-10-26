@@ -4,11 +4,11 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { FeedInteractions } from "./FeedInteractions";
-import { BadgeCheck, CalendarHeart, Images, ImageIcon, MessageSquareText, Play, UserPlus } from "lucide-react";
+import { BadgeCheck, CalendarHeart, Images, ImageIcon, MessageSquareText, Play, UserPlus, UsersRound, CalendarDays } from "lucide-react";
 
 type FeedItem = {
   id: string;
-  type: "PROFILE" | "DATING_AD" | "POST" | "ALBUM" | "IMAGE" | "VIDEO";
+  type: "PROFILE" | "DATING_AD" | "POST" | "ALBUM" | "IMAGE" | "VIDEO" | "EVENT" | "ROOM";
   actor: { id: string; displayName: string; avatarUrl?: string; verified: boolean };
   title: string;
   body?: string;
@@ -25,6 +25,8 @@ const typeDetails = {
   ALBUM: { label: "New album", icon: Images, color: "text-cyan-300" },
   IMAGE: { label: "New photo", icon: ImageIcon, color: "text-velora-accent" },
   VIDEO: { label: "New video", icon: Play, color: "text-velora-signal" },
+  EVENT: { label: "Public event", icon: CalendarDays, color: "text-velora-accent" },
+  ROOM: { label: "Open room", icon: UsersRound, color: "text-velora-accent" },
 };
 
 function relativeTime(value: string) {
@@ -73,7 +75,7 @@ export function MemberActivityFeed() {
             {[['newest','Newest'],['followed','Followed'],['friends','Friends']].map(([value, label]) => <button key={value} type="button" onClick={() => setScope(value)} aria-pressed={scope === value} className={`relative min-h-14 px-3 text-sm font-semibold transition sm:px-5 ${scope === value ? 'text-ink' : 'text-velora-textSecondary hover:text-ink'}`}>{label}{scope === value && <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-velora-accent" />}</button>)}
           </div>
           <div className="flex gap-2 overflow-x-auto p-3 sm:p-4">
-            {[['all','All'],['albums','Albums'],['photos','Photos'],['videos','Videos'],['posts','Text posts'],['dating','Dating']].map(([value, label]) => <button key={value} type="button" onClick={() => setContentType(value)} aria-pressed={contentType === value} className={`min-h-10 shrink-0 rounded-full px-4 text-sm font-semibold transition ${contentType === value ? 'bg-velora-accent text-velora-paper' : 'bg-ink/5 text-ink hover:bg-ink/10 hover:text-ink'}`}>{label}</button>)}
+            {[['all','All'],['albums','Albums'],['photos','Photos'],['videos','Videos'],['posts','Text posts'],['dating','Dating'],['events','Events'],['rooms','Rooms']].map(([value, label]) => <button key={value} type="button" onClick={() => setContentType(value)} aria-pressed={contentType === value} className={`min-h-10 shrink-0 rounded-full px-4 text-sm font-semibold transition ${contentType === value ? 'bg-velora-accent text-velora-paper' : 'bg-ink/5 text-ink hover:bg-ink/10 hover:text-ink'}`}>{label}</button>)}
           </div>
         </section>
         {loading ? <div className="space-y-4" aria-label="Loading activity">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-56 animate-pulse rounded-2xl border border-ink/10 bg-ink/5" />)}</div>
@@ -81,10 +83,10 @@ export function MemberActivityFeed() {
           : items.length === 0 ? <div className="rounded-2xl border border-ink/10 bg-velora-surface p-10 text-center"><h2 className="text-xl font-semibold text-ink">Nothing here yet</h2><p className="mt-2 text-velora-textSecondary">{scope === 'followed' ? 'Follow members to see what they share here.' : scope === 'friends' ? 'Activity from mutually accepted friends will appear here.' : 'New community activity will appear here.'}</p><Link href="/people" className="mt-5 inline-flex rounded-lg bg-velora-accent px-5 py-3 font-bold text-velora-paper">Meet people</Link></div>
           : <div className="space-y-5">{items.map((item) => { const details = typeDetails[item.type]; const Icon = details.icon; return (
             <article id={`feed-${item.id}`} key={item.id} className="overflow-hidden rounded-2xl border border-ink/10 bg-velora-surface shadow-xl shadow-black/10">
-              <div className="flex items-center gap-3 p-5"><Link href={`/profile/${item.actor.id}`}><Avatar item={item} /></Link><div className="min-w-0 flex-1"><div className="flex items-center gap-1.5"><Link href={`/profile/${item.actor.id}`} className="truncate font-semibold text-ink hover:text-velora-accent">{item.actor.displayName}</Link>{item.actor.verified && <BadgeCheck className="h-4 w-4 text-velora-success" aria-label="Verified member" />}</div><div className={`mt-1 flex items-center gap-1.5 text-xs ${details.color}`}><Icon className="h-3.5 w-3.5" />{details.label}<span className="text-velora-textMuted">·</span><time className="text-velora-textSecondary" dateTime={item.occurredAt}>{relativeTime(item.occurredAt)}</time></div></div></div>
+              <div className="flex items-center gap-3 p-5">{item.actor.id ? <Link href={`/profile/${item.actor.id}`}><Avatar item={item} /></Link> : <Avatar item={item} />}<div className="min-w-0 flex-1"><div className="flex items-center gap-1.5">{item.actor.id ? <Link href={`/profile/${item.actor.id}`} className="truncate font-semibold text-ink hover:text-velora-accent">{item.actor.displayName}</Link> : <span className="font-semibold text-ink">{item.actor.displayName}</span>}{item.actor.verified && <BadgeCheck className="h-4 w-4 text-velora-success" aria-label="Verified member" />}</div><div className={`mt-1 flex items-center gap-1.5 text-xs ${details.color}`}><Icon className="h-3.5 w-3.5" />{details.label}<span className="text-velora-textMuted">·</span><time className="text-velora-textSecondary" dateTime={item.occurredAt}>{relativeTime(item.occurredAt)}</time></div></div></div>
               {item.mediaUrl && <Link href={item.href} className="relative block aspect-[16/10] bg-black"><Image unoptimized src={item.mediaUrl} alt={item.title} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" />{item.type === "VIDEO" && <span className="absolute inset-0 flex items-center justify-center"><span className="flex h-16 w-16 items-center justify-center rounded-full bg-black/65 text-white backdrop-blur"><Play className="h-7 w-7 fill-current" /></span></span>}</Link>}
               <Link href={item.href} className="block p-5 pt-4 hover:bg-ink/[0.02]"><div className="flex items-start justify-between gap-4"><h2 className="text-xl font-semibold text-ink">{item.title}</h2>{item.category && <span className="shrink-0 rounded-full border border-ink/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink">{item.category}</span>}</div>{item.body && <p className="mt-2 line-clamp-3 text-sm leading-6 text-ink">{item.body}</p>}</Link>
-              {item.type !== "PROFILE" && <FeedInteractions feedId={item.id} targetType={item.type === "IMAGE" || item.type === "VIDEO" ? "MEDIA" : item.type} targetId={item.id.split(":")[1]} />}
+              {item.type !== "PROFILE" && item.type !== "EVENT" && item.type !== "ROOM" && <FeedInteractions feedId={item.id} targetType={item.type === "IMAGE" || item.type === "VIDEO" ? "MEDIA" : item.type} targetId={item.id.split(":")[1]} />}
             </article>
           ); })}</div>}
       </div>

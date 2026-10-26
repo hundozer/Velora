@@ -30,6 +30,15 @@ test("feed interactions cover album and notify the owner without bypassing acces
   assert.match(access, /moderation_status === "APPROVED"/);
   assert.match(comments, /type: "NEW_COMMENT"/);
   assert.match(route, /!error && !isOwner/);
-  assert.match(feed, /item.type !== "PROFILE" && <FeedInteractions/);
+  assert.match(feed, /item.type !== "PROFILE" && item.type !== "EVENT" && item.type !== "ROOM" && <FeedInteractions/);
   assert.match(migration, /'DATING_AD','ALBUM'/);
+});
+
+test("feed only promotes published events and open active member rooms", () => {
+  const api = readFileSync(new URL("../src/app/api/feed/route.ts", import.meta.url), "utf8");
+  assert.match(api, /\.eq\("status", "PUBLISHED"\)/);
+  assert.match(api, /\.eq\("builtin", false\)\.eq\("locked", false\)/);
+  assert.match(api, /expires_at\.is\.null,expires_at\.gt/);
+  assert.match(api, /href: `\/scene\?event=\$\{event\.id\}`/);
+  assert.match(api, /href: `\/rooms\/\$\{room\.id\}`/);
 });
