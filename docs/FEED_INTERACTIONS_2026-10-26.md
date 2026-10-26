@@ -1,0 +1,7 @@
+# Home feed likes and comments
+
+Base `main` at `3c45ede6859db31b584567b079e83189b2c35428`. Feed cards for photos, videos, text posts, dating ads and albums now show likes and a collapsible comment conversation. Profile-joined events remain informational. Existing server access checks enforce active adult membership, moderation/visibility and blocks; likes use the existing unique reaction key and comments use the existing audit and rate limits. Owners receive in-app notifications for someone else's like or comment, not their own actions. The notification points to the album or back to the feed item. Comment authors or Intimo admins can remove comments.
+
+Staging `fuczjjcwtxzzvoxilrme`: migration `album_feed_interactions` ledger version `20261026185748` expands the two existing target-type checks to include `ALBUM`. No rows were changed. Direct `authenticated` insert privilege on `content_comments` remains false. Production `bkdyjdbmtucqvgebqadp` has not received this migration; apply the same SQL with separate authorization before merging the application change. Do not infer deployment from passing tests.
+
+Local `npm run check` and hosted CI results are tracked in the PR. An authenticated multi-member live like/comment notification journey has not yet been proven.
