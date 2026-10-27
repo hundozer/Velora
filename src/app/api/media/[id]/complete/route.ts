@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
-import { deleteStoredObject, getStoredObject, inspectStoredObject, putStoredObject } from "@/lib/storage/r2";
+import { deleteStoredObject, getPresignedDownloadUrl, getStoredObject, inspectStoredObject, putStoredObject } from "@/lib/storage/r2";
 import { processMediaVariants } from "@/lib/media/variants.mjs";
 import { MAX_VIDEO_BYTES, sanitizeVideo } from "@/lib/media/sanitizeVideo.mjs";
 import { getServerSupabase } from "@/lib/supabase/server";
@@ -8,6 +8,7 @@ import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export const maxDuration = 300;
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const actor = await resolveServerActor(req);
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
     if (media.mime_type.startsWith("video/")) {
       if (media.byte_size > MAX_VIDEO_BYTES || !["video/mp4", "video/webm"].includes(media.mime_type)) return NextResponse.json({ error: "This video format or size cannot be processed" }, { status: 422 });
-      const safe = await sanitizeVideo(await getStoredObject(media.object_key), media.mime_type);
+      const safe = await sanitizeVideo(await getPresignedDownloadUrl(media.object_key), media.mime_type, Number(media.byte_size));
       const safeKey = `variants/${media.id}/safe.${media.mime_type === "video/mp4" ? "mp4" : "webm"}`;
       await putStoredObject(safeKey, safe, media.mime_type, "private, no-store");
       // The original key remains recorded for deletion and cannot be delivered
