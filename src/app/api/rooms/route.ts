@@ -2,12 +2,13 @@ import { NextRequest } from "next/server";
 import { roomActor, roomReply as reply } from "@/lib/rooms/access";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
+import { presentRoom } from "@/lib/rooms/presentation";
 
 export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const auth = await roomActor(req); if ("error" in auth) return auth.error;
   const { data, error } = await auth.db.from("rooms").select("id,title,description,creator_id,builtin,locked,created_at,expires_at").or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`).order("builtin", { ascending: false }).order("created_at", { ascending: false }).limit(100);
-  return error ? reply({ error: "Rooms unavailable" }, 502) : reply({ rooms: data || [] });
+  return error ? reply({ error: "Rooms unavailable" }, 502) : reply({ rooms: (data || []).map(presentRoom) });
 }
 
 export async function POST(req: NextRequest) {
