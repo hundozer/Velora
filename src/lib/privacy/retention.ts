@@ -25,9 +25,9 @@ export async function anonymizeDeletedProfile(db: SupabaseClient, runId: string,
   if (holdError) return { profileId, status: "FAILED", reason: "Legal-hold lookup failed" };
   if (hold) { const result: Result = { profileId, status: "SKIPPED", reason: "Active legal hold" }; await record(db, runId, result); return result; }
 
-  const { data: media, error: mediaError } = await db.from("media_objects").select("id,object_key").eq("owner_id", profileId);
+  const { data: media, error: mediaError } = await db.from("media_objects").select("id,object_key,variants").eq("owner_id", profileId);
   if (mediaError) return { profileId, status: "FAILED", reason: "Media inventory failed" };
-  try { for (const item of media || []) { await deleteStoredObject(String(item.object_key)); await deleteVariantObjects(String(item.id)); } }
+  try { for (const item of media || []) { await deleteStoredObject(String(item.object_key)); const source = (item.variants as { source?: string } | null)?.source; if (source) await deleteStoredObject(source); await deleteVariantObjects(String(item.id)); } }
   catch { const result: Result = { profileId, status: "FAILED", reason: "Object-store deletion failed" }; await record(db, runId, result); return result; }
 
   const startedAt = new Date().toISOString();
