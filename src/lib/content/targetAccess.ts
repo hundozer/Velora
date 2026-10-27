@@ -1,7 +1,7 @@
 import { getServerSupabase } from "@/lib/supabase/server";
 import type { ServerActor } from "@/lib/auth/serverActor";
 
-export const CONTENT_TARGET_TYPES = ["PROFILE", "MEDIA", "POST", "DATING_AD"] as const;
+export const CONTENT_TARGET_TYPES = ["PROFILE", "MEDIA", "POST", "DATING_AD", "ALBUM"] as const;
 export type ContentTargetType = (typeof CONTENT_TARGET_TYPES)[number];
 
 export async function resolveContentTarget(actor: ServerActor, targetType: ContentTargetType, targetId: string) {
@@ -14,6 +14,9 @@ export async function resolveContentTarget(actor: ServerActor, targetType: Conte
   } else if (targetType === "MEDIA") {
     const { data } = await db.from("media_objects").select("id,owner_id,visibility,upload_status,processing_status,moderation_status").eq("id", targetId).maybeSingle();
     if (data) target = { id: data.id, ownerId: data.owner_id, visibility: data.visibility, available: data.upload_status === "AVAILABLE" && data.processing_status === "READY" && data.moderation_status === "APPROVED" };
+  } else if (targetType === "ALBUM") {
+    const { data } = await db.from("media_albums").select("id,owner_id,visibility,moderation_status").eq("id", targetId).maybeSingle();
+    if (data) target = { id: data.id, ownerId: data.owner_id, visibility: data.visibility, available: data.moderation_status === "APPROVED" };
   } else if (targetType === "POST") {
     const { data } = await db.from("content_posts").select("id,author_id,visibility,moderation_status").eq("id", targetId).maybeSingle();
     if (data) target = { id: data.id, ownerId: data.author_id, visibility: data.visibility, available: data.moderation_status === "APPROVED" };

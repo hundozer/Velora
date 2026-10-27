@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 type FeedItem = {
   id: string;
-  type: "PROFILE" | "DATING_AD" | "POST" | "ALBUM" | "IMAGE" | "VIDEO";
+  type: "PROFILE" | "DATING_AD" | "POST" | "ALBUM" | "IMAGE" | "VIDEO" | "EVENT" | "ROOM";
   actor: { id: string; displayName: string; avatarUrl?: string; verified: boolean };
   title: string;
   body?: string;
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
 
   const url = new URL(req.url);
   const scope = ["newest", "followed", "friends"].includes(url.searchParams.get("scope") || "") ? url.searchParams.get("scope")! : "newest";
-  const contentType = ["all", "albums", "photos", "videos", "posts", "dating"].includes(url.searchParams.get("type") || "") ? url.searchParams.get("type")! : "all";
+  const contentType = ["all", "albums", "photos", "videos", "posts", "dating", "events", "rooms"].includes(url.searchParams.get("type") || "") ? url.searchParams.get("type")! : "all";
 
   const [{ data: blocks, error: blockError }, { data: follows, error: followError }, { data: friendships, error: friendshipError }] = await Promise.all([
     db.from("user_blocks").select("blocker_id,blocked_profile_id").or(`blocker_id.eq.${auth.actor.profileId},blocked_profile_id.eq.${auth.actor.profileId}`),
@@ -69,21 +69,34 @@ export async function GET(req: NextRequest) {
     .in("visibility", scope === "followed" ? ["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY"] : ["PUBLIC", "MEMBERS_ONLY"])
     .eq("upload_status", "AVAILABLE").eq("processing_status", "READY").eq("moderation_status", "APPROVED")
     .order("published_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }).limit(40);
+  let eventQuery = db.from("scene_events").select("id,title,description,kind,starts_at,ends_at,venue_name,submitted_by,reviewed_at,created_at")
+    .eq("status", "PUBLISHED")
+    .or(`ends_at.gt.${new Date().toISOString()},and(ends_at.is.null,starts_at.gt.${new Date(Date.now() - 6 * 3_600_000).toISOString()})`)
+    .order("created_at", { ascending: false }).limit(40);
+  let roomQuery = db.from("rooms").select("id,title,description,creator_id,locked,expires_at,created_at")
+    .eq("builtin", false).eq("locked", false)
+    .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+    .order("created_at", { ascending: false }).limit(40);
   if (audienceIds) {
     profileQuery = profileQuery.in("id", audienceIds);
     adQuery = adQuery.in("author_id", audienceIds);
     postQuery = postQuery.in("author_id", audienceIds);
     albumQuery = albumQuery.in("owner_id", audienceIds);
     mediaQuery = mediaQuery.in("owner_id", audienceIds);
+    eventQuery = eventQuery.in("submitted_by", audienceIds);
+    roomQuery = roomQuery.in("creator_id", audienceIds);
   }
 
-  const [{ data: profileRows }, { data: adRows }, { data: postRows }, { data: albumRows }, { data: mediaRows }] = await Promise.all([profileQuery, adQuery, postQuery, albumQuery, mediaQuery]);
+  const [{ data: profileRows, error: profileError }, { data: adRows, error: adError }, { data: postRows, error: postError }, { data: albumRows, error: albumError }, { data: mediaRows, error: mediaError }, { data: eventRows, error: eventError }, { data: roomRows, error: roomError }] = await Promise.all([profileQuery, adQuery, postQuery, albumQuery, mediaQuery, eventQuery, roomQuery]);
+  if (profileError || adError || postError || albumError || mediaError || eventError || roomError) return NextResponse.json({ error: "Feed unavailable" }, { status: 502 });
 
   const ownerIds = new Set<string>();
   for (const row of adRows || []) ownerIds.add(row.author_id);
   for (const row of postRows || []) ownerIds.add(row.author_id);
   for (const row of albumRows || []) ownerIds.add(row.owner_id);
   for (const row of mediaRows || []) ownerIds.add(row.owner_id);
+  for (const row of eventRows || []) if (row.submitted_by) ownerIds.add(row.submitted_by);
+  for (const row of roomRows || []) if (row.creator_id) ownerIds.add(row.creator_id);
   for (const row of profileRows || []) ownerIds.add(row.id);
   for (const id of excluded) ownerIds.delete(id);
 
@@ -125,8 +138,19 @@ export async function GET(req: NextRequest) {
     const type = media.media_type as "IMAGE" | "VIDEO";
     items.push({ id: `${type}:${media.id}`, type, actor, title: media.title || `${actor.displayName} added a new ${type === "IMAGE" ? "photo" : "video"}`, body: media.description || undefined, category: media.category || undefined, mediaUrl: `/api/media/${media.id}`, href: type === "IMAGE" ? "/photos" : "/videos", occurredAt: media.published_at || media.created_at });
   }
+  for (const event of eventRows || []) {
+    // Admin-curated events have no submitting member; present them as Intimo.
+    if (event.submitted_by && excluded.has(event.submitted_by)) continue;
+    const actor = event.submitted_by ? (actorFor(event.submitted_by) || { id: "", displayName: "Intimo member", verified: false }) : { id: "", displayName: "Intimo", verified: false };
+    items.push({ id: `EVENT:${event.id}`, type: "EVENT", actor, title: event.title, body: [event.venue_name, new Date(event.starts_at).toLocaleString("en-GB", { timeZone: "Europe/Prague", dateStyle: "medium", timeStyle: "short" }), event.description].filter(Boolean).join(" · "), category: event.kind, href: `/scene?event=${event.id}`, occurredAt: event.reviewed_at || event.created_at });
+  }
+  for (const room of roomRows || []) {
+    if (!room.creator_id || excluded.has(room.creator_id)) continue;
+    const actor = actorFor(room.creator_id) || { id: "", displayName: "Intimo member", verified: false };
+    items.push({ id: `ROOM:${room.id}`, type: "ROOM", actor, title: `${actor.displayName} started ${room.title}`, body: room.description, href: `/rooms/${room.id}`, occurredAt: room.created_at });
+  }
 
-  const permittedTypes: Record<string, FeedItem["type"][]> = { albums: ["ALBUM"], photos: ["IMAGE"], videos: ["VIDEO"], posts: ["POST"], dating: ["DATING_AD"] };
+  const permittedTypes: Record<string, FeedItem["type"][]> = { albums: ["ALBUM"], photos: ["IMAGE"], videos: ["VIDEO"], posts: ["POST"], dating: ["DATING_AD"], events: ["EVENT"], rooms: ["ROOM"] };
   const filtered = contentType === "all" ? items : items.filter((item) => permittedTypes[contentType]?.includes(item.type));
   filtered.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || a.id.localeCompare(b.id));
   return NextResponse.json({ items: filtered.slice(0, 60), scope, contentType, ranking: "occurred_at_desc_then_id_asc" }, { headers: { "Cache-Control": "private, no-store" } });

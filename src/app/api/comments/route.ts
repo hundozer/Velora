@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   if (error || !data) return NextResponse.json({ error: "Comment could not be created" }, { status: 502 });
   const audited = await appendDurableAudit(access.db, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "COMMENT_CREATE", resourceType: targetType, resourceId: targetId, outcome: "SUCCESS", metadata: { commentId: data.id } });
   if (!audited) return NextResponse.json({ error: "Comment created but audit recording failed; contact support" }, { status: 503 });
-  if (!access.isOwner) { const { data: author } = await access.db.from("profiles").select("display_name,avatar_url").eq("id", actor.actor.profileId).maybeSingle(); if (author) await access.db.from("notifications").insert({ user_id: access.target.ownerId, type: "NEW_COMMENT", title: "New comment", message: `${author.display_name} commented on your content.`, actor_name: author.display_name, actor_avatar: author.avatar_url, target_link: `/${targetType.toLowerCase()}/${targetId}`, is_read: false }); }
+  if (!access.isOwner) { const { data: author } = await access.db.from("profiles").select("display_name,avatar_url").eq("id", actor.actor.profileId).maybeSingle(); if (author) await access.db.from("notifications").insert({ user_id: access.target.ownerId, type: "NEW_COMMENT", title: "New comment", message: `${author.display_name} commented on your content.`, actor_name: author.display_name, actor_avatar: author.avatar_url, target_link: targetType === "ALBUM" ? `/album/${targetId}` : `/?feedItem=${targetType}:${targetId}`, is_read: false }); }
   return NextResponse.json({ comment: data }, { status: 201 });
 }
 
