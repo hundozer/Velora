@@ -159,7 +159,8 @@ export async function uploadFileToR2(
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", uploadUrl, true);
-    xhr.timeout = 5 * 60 * 1000;
+    // Direct R2 PUT URLs expire after 15 minutes. Allow slower video uploads.
+    xhr.timeout = 14 * 60 * 1000;
     xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
 
     if (xhr.upload && onProgress) {
