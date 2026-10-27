@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
-import { getStoredObject, inspectStoredObject, putStoredObject } from "@/lib/storage/r2";
+import { deleteStoredObject, getStoredObject, inspectStoredObject, putStoredObject } from "@/lib/storage/r2";
 import { processMediaVariants } from "@/lib/media/variants.mjs";
+import { MAX_VIDEO_BYTES, sanitizeVideo } from "@/lib/media/sanitizeVideo.mjs";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
@@ -29,13 +30,24 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       if (!audited) return NextResponse.json({ error: "Upload quarantined but audit recording failed; contact support" }, { status: 503 });
       return NextResponse.json({ error: "Stored object did not match the authorized upload" }, { status: 422 });
     }
-    const { error: updateError } = await supabase.from("media_objects").update({ upload_status: "AVAILABLE", updated_at: new Date().toISOString() }).eq("id", media.id).eq("owner_id", actor.actor.profileId).eq("upload_status", "PENDING");
-    if (updateError) return NextResponse.json({ error: "Upload could not be finalized" }, { status: 502 });
-    // MP4/WebM are served as uploaded; there is no video transcoding worker.
-    // Keep the moderation gate: other members cannot see them until approved.
-    const browserReady = !media.mime_type.startsWith("video/") || ["video/mp4", "video/webm"].includes(media.mime_type);
-    const { error: processingError } = await supabase.from("media_objects").update({ processing_status: browserReady ? "READY" : "PROCESSING", moderation_status: "PENDING_REVIEW" }).eq("id", media.id).eq("owner_id", actor.actor.profileId);
-    if (processingError) return NextResponse.json({ error: "Media processing state could not be initialized" }, { status: 502 });
+    if (media.mime_type.startsWith("video/")) {
+      if (media.byte_size > MAX_VIDEO_BYTES || !["video/mp4", "video/webm"].includes(media.mime_type)) return NextResponse.json({ error: "This video format or size cannot be processed" }, { status: 422 });
+      const safe = await sanitizeVideo(await getStoredObject(media.object_key), media.mime_type);
+      const safeKey = `variants/${media.id}/safe.${media.mime_type === "video/mp4" ? "mp4" : "webm"}`;
+      await putStoredObject(safeKey, safe, media.mime_type, "private, no-store");
+      // The original key remains recorded for deletion and cannot be delivered
+      // by the app once this atomic row update points to the sanitized copy.
+      const { data: changed, error: safeError } = await supabase.from("media_objects").update({ object_key: safeKey, byte_size: safe.length, variants: { source: media.object_key }, variants_status: "READY", upload_status: "AVAILABLE", processing_status: "READY", moderation_status: "PENDING_REVIEW", updated_at: new Date().toISOString() }).eq("id", media.id).eq("owner_id", actor.actor.profileId).eq("upload_status", "PENDING").select("id").maybeSingle();
+      if (safeError || !changed) return NextResponse.json({ error: "Video could not be finalized" }, { status: 502 });
+      // A signed PUT can replay until expiry. Keep variants.source for erasure
+      // even after this best-effort removal of the private original.
+      await deleteStoredObject(media.object_key).catch(() => {});
+    } else {
+      const { error: updateError } = await supabase.from("media_objects").update({ upload_status: "AVAILABLE", updated_at: new Date().toISOString() }).eq("id", media.id).eq("owner_id", actor.actor.profileId).eq("upload_status", "PENDING");
+      if (updateError) return NextResponse.json({ error: "Upload could not be finalized" }, { status: 502 });
+      const { error: processingError } = await supabase.from("media_objects").update({ processing_status: "READY", moderation_status: "PENDING_REVIEW" }).eq("id", media.id).eq("owner_id", actor.actor.profileId);
+      if (processingError) return NextResponse.json({ error: "Media processing state could not be initialized" }, { status: 502 });
+    }
     const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MEDIA_UPLOAD_COMPLETED", resourceType: "MEDIA", resourceId: media.id, outcome: "SUCCESS", metadata: { mimeType: media.mime_type, byteSize: media.byte_size } });
     if (!audited) return NextResponse.json({ error: "Upload finalized but audit recording failed; contact support" }, { status: 503 });
     // Resized copies for fast photography. Best effort: on failure or timeout the original
