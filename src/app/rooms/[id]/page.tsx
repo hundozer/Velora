@@ -72,7 +72,7 @@ export default function RoomsPage() {
     <Link href="/rooms" className="mt-3 inline-block text-sm text-velora-accent underline">← All rooms</Link>
     <h1 className="mt-3 font-display text-5xl">{room?.title || (id === "prague" ? "Prague Room" : "Room")}</h1>
     <p className="mt-4 max-w-xl text-velora-ink2">{room?.description || (id === "prague" ? "The city-wide conversation. Say hello, talk about the scene, or find company." : "")}</p>
-    <p className="mt-3 text-sm text-velora-muted">{room?.locked ? "Only approved members can read and post here. " : "Members can read and post here. "}Keep addresses and private details in a private conversation. Blocked members are hidden from your view.</p>
+    {room?.locked && <p className="mt-3 text-sm text-velora-muted">Only approved members can read and post here.</p>}
     {room?.creator_id === profile?.id && <Link href={`/rooms/${encodeURIComponent(id)}/settings`} className="mt-3 inline-block text-velora-accent underline">Manage room and members</Link>}
     {!user ? <Link href="/register" className="mt-6 inline-flex min-h-11 items-center text-velora-accent underline">Join to enter the room</Link> : <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]"><div className="min-w-0">
       {error && <p role="status" className="mt-5 text-velora-accent">{error}</p>}
