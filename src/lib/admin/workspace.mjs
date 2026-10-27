@@ -11,7 +11,7 @@ export function normalizeWork(kind, rows) {
     : kind === 'verification' ? ['PENDING', 'REVIEW_REQUIRED'].includes(row.status)
     : ['PENDING_REVIEW', 'UNDER_REVIEW'].includes(row.moderation_status) && (kind !== 'photo' || (row.category !== 'MESSAGE' && row.upload_status === 'AVAILABLE')))
     .map(row => ({ key: `${kind}:${row.id}`, kind, id: row.id, row,
-      title: row.title || (kind === 'report' ? `${readable(row.content_type || 'Member')} report` : kind === 'verification' ? `${readable(row.verification_type)} verification` : 'Untitled photo'),
+      title: row.title || (kind === 'report' ? `${readable(row.content_type || 'Member')} report` : kind === 'verification' ? `${readable(row.verification_type)} verification` : row.media_type === 'VIDEO' ? 'Untitled video' : 'Untitled photo'),
       ownerId: row.owner_id || row.reported_user_id || row.profile_id,
       createdAt: row.submitted_at || row.created_at,
       urgent: kind === 'report' && (row.priority === 'CRITICAL' || urgentReasons.has(row.reason)),

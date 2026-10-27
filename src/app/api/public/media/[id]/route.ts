@@ -17,6 +17,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!db) return NextResponse.json({ error: "Public media unavailable" }, { status: 503 });
   const { data: media } = await db.from("media_objects").select("id,owner_id,object_key,content_rating,mime_type").eq("id", params.id).eq("visibility", "PUBLIC").eq("upload_status", "AVAILABLE").eq("processing_status", "READY").eq("moderation_status", "APPROVED").maybeSingle();
   if (!media) return NextResponse.json({ error: "Media not found" }, { status: 404 });
+  if (media.mime_type.startsWith("video/") && !media.object_key.startsWith(`variants/${media.id}/safe.`)) return NextResponse.json({ error: "Media not found" }, { status: 404 });
   const actor = await resolveServerActor(req);
   if (media.content_rating !== "NON_EXPLICIT") {
     if (actor.status !== "authenticated") return NextResponse.json({ error: "Sign in to view explicit media" }, { status: 401 });

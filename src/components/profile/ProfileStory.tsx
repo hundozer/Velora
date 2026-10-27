@@ -77,11 +77,12 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
     (async () => {
       const key = encodeURIComponent(id);
       // Everything the story needs, in parallel; member-only calls simply fail when signed out.
-      const [profileResponse, approachPayload, desiresPayload, mediaPayload, albumsPayload, interestPayload, favoritesPayload] = await Promise.all([
+      const [profileResponse, approachPayload, desiresPayload, photosPayload, videosPayload, albumsPayload, interestPayload, favoritesPayload] = await Promise.all([
         fetch(`/api/profiles/${key}`, { credentials: "same-origin", cache: "no-store" }),
         json<Approach>(`/api/profiles/${key}/approach`),
         json<Desires>(`/api/profiles/${key}/desires`),
-        json<{ media: Media[] }>(`/api/public/media?ownerId=${key}&limit=12`),
+        json<{ media: Media[] }>(`/api/public/media?ownerId=${key}&type=IMAGE&limit=6`),
+        json<{ media: Media[] }>(`/api/public/media?ownerId=${key}&type=VIDEO&limit=8`),
         json<{ albums: Album[] }>(`/api/public/albums?ownerId=${key}&limit=8`),
         json<{ interested: boolean; mutual: boolean }>(`/api/interests?targetProfileId=${key}`),
         json<{ connections: { followed_id: string }[] }>("/api/connections?type=favorite"),
@@ -98,7 +99,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
       setMemberView(members);
       setApproach(approachPayload);
       setDesires(desiresPayload);
-      setMedia((mediaPayload?.media || []).filter((item) => item.type === "IMAGE"));
+      setMedia([...(photosPayload?.media || []), ...(videosPayload?.media || [])]);
       setAlbums(albumsPayload?.albums || []);
       if (interestPayload) setInterest(interestPayload);
       setFavorite((favoritesPayload?.connections || []).some((item) => item.followed_id === id));
@@ -257,11 +258,11 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
           </section>
         )}
 
-        {(media.length > 0 || (access && access.privateCount > 0)) && (
+        {(media.some((item) => item.type === "IMAGE") || (access && access.privateCount > 0)) && (
           <section aria-label="Photographs">
             <H2>Photographs</H2>
             <div className="mt-4 grid grid-cols-3 gap-2">
-              {media.slice(0, 6).map((item, index) => (
+              {media.filter((item) => item.type === "IMAGE").slice(0, 6).map((item, index) => (
                 <div key={item.id} className={`relative ${index === 0 && media.length > 1 ? "col-span-2 row-span-2" : ""}`}>
                   <a href={item.mediaUrl} target="_blank" rel="noreferrer" aria-label={`Open photograph ${index + 1} of ${name}`} className="block h-full">
                     <Portrait src={item.mediaUrl} name={name} sizes="(min-width: 768px) 440px, 66vw" className="aspect-[4/5] h-full w-full" />
@@ -287,9 +288,10 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
         {albums.length > 0 && (
           <section aria-label="Albums">
             <H2>Albums</H2>
-            <ul className="mt-3 space-y-1">{albums.map((album) => <li key={album.id}><Link href={`/album/${album.id}`} className="inline-flex min-h-11 items-center font-display text-[24px] text-velora-ink underline decoration-velora-line underline-offset-4 hover:decoration-velora-ink">{album.title}</Link></li>)}</ul>
+            <div className="mt-4 grid grid-cols-2 gap-3">{albums.map((album) => <Link key={album.id} href={`/album/${album.id}`} className="overflow-hidden rounded-xl border border-velora-line bg-velora-surface"><div className="aspect-[4/3] bg-velora-sunken">{album.coverUrl && <Portrait src={album.coverUrl} name={album.title} sizes="(min-width: 768px) 220px, 45vw" className="h-full w-full" />}</div><span className="block p-3 font-semibold text-velora-ink">{album.title}</span></Link>)}</div>
           </section>
         )}
+        {media.some((item) => item.type === "VIDEO") && <section aria-label="Videos"><H2>Videos</H2><div className="mt-4 grid grid-cols-2 gap-3">{media.filter((item) => item.type === "VIDEO").map((item) => <div key={item.id} className="overflow-hidden rounded-xl border border-velora-line bg-velora-surface"><video src={item.mediaUrl} controls preload="none" playsInline className="aspect-video w-full bg-black object-contain" aria-label={item.title} /><p className="p-3 font-semibold text-velora-ink">{item.title}</p></div>)}</div></section>}
         {notice && <p role="status" className="border-l-2 border-velora-copper pl-4 text-[15px] text-velora-ink2">{notice}</p>}
       </div>
 
@@ -299,6 +301,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
             <div className="flex items-center gap-6">
               <Link href="/settings" className="flex min-h-14 flex-1 items-center justify-center rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper">Edit profile</Link>
               <Link href="/albums/manage" className="min-h-11 text-[16px] text-velora-ink underline underline-offset-4">Albums</Link>
+              <Link href="/videos/upload" className="min-h-11 text-[16px] text-velora-ink underline underline-offset-4">Add video</Link>
             </div>
           ) : !authenticated || !memberView ? (
             <button type="button" onClick={() => signIn()} className="flex min-h-14 w-full items-center justify-center rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper">Sign in to connect</button>

@@ -23,22 +23,24 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     .eq("id", params.id).maybeSingle();
   if (error) return fail("Preview lookup unavailable", 503);
   // Private chat photos are reviewed only in their reported-case workflow.
-  if (!media || media.category === "MESSAGE" || media.media_type !== "IMAGE" ||
-    !media.mime_type?.startsWith("image/") || media.upload_status !== "AVAILABLE" ||
+  const image = media?.media_type === "IMAGE" && media.mime_type?.startsWith("image/");
+  const video = media?.media_type === "VIDEO" && ["video/mp4", "video/webm"].includes(media.mime_type) &&
+    media.object_key.startsWith(`variants/${media.id}/safe.`);
+  if (!media || media.category === "MESSAGE" || (!image && !video) || media.upload_status !== "AVAILABLE" ||
     media.processing_status !== "READY" || media.moderation_status === "REMOVED") {
-    return fail("Photo unavailable for preview", 404);
+    return fail("Media unavailable for preview", 404);
   }
   const { error: auditError } = await db.from("admin_action_events").insert({
     actor_profile_id: auth.actor.profileId, actor_role: auth.actor.role,
     action: "MEDIA_PREVIEW", category: "CONTENT_MODERATION", resource_type: "MEDIA", resource_id: media.id,
-    reason: "Administrator explicitly opened a photo for moderation review.",
+    reason: "Administrator explicitly opened media for moderation review.",
     previous_state: {}, new_state: {}, security_metadata: requestSecurityMetadata(req),
   });
   if (auditError) return fail("Preview audit unavailable", 503);
   try {
     // Proxy sanitized bytes. No original-upload fallback or reusable storage URL.
-    return await deliverMedia(media.object_key, media.mime_type);
+    return await deliverMedia(media.object_key, media.mime_type, video ? req.headers.get("range") || undefined : undefined);
   } catch {
-    return fail("Photo unavailable for preview", 503);
+    return fail("Media unavailable for preview", 503);
   }
 }

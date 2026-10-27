@@ -30,6 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     : null;
   const media = modern.data || legacy?.data;
   if (!media || media.upload_status !== "AVAILABLE") return NextResponse.json({ error: "Media not found" }, { status: 404 });
+  if (media.mime_type.startsWith("video/") && !media.object_key.startsWith(`variants/${media.id}/safe.`)) return NextResponse.json({ error: "Media not found" }, { status: 404 });
   if ("category" in media && media.category === "STORY") return NextResponse.json({ error: "Media not found" }, { status: 404, headers: { "Cache-Control": "private, no-store" } });
   const isOwner = media.owner_id === actor.actor.profileId;
   const moderationStatus = "moderation_status" in media ? media.moderation_status : null;
@@ -110,8 +111,8 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   const actor = await resolveServerActor(req); if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!UUID.test(params.id)) return NextResponse.json({ error: "Media not found" }, { status: 404 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Media service unavailable" }, { status: 503 });
-  const { data: media } = await db.from("media_objects").select("id,object_key").eq("id", params.id).eq("owner_id", actor.actor.profileId).maybeSingle(); if (!media) return NextResponse.json({ error: "Media not found" }, { status: 404 });
-  try { await deleteStoredObject(media.object_key); await deleteVariantObjects(media.id); } catch { return NextResponse.json({ error: "Stored media could not be removed" }, { status: 502 }); }
+  const { data: media } = await db.from("media_objects").select("id,object_key,variants").eq("id", params.id).eq("owner_id", actor.actor.profileId).maybeSingle(); if (!media) return NextResponse.json({ error: "Media not found" }, { status: 404 });
+  try { await deleteStoredObject(media.object_key); const source = (media.variants as { source?: string } | null)?.source; if (source) await deleteStoredObject(source); await deleteVariantObjects(media.id); } catch { return NextResponse.json({ error: "Stored media could not be removed" }, { status: 502 }); }
   const { error } = await db.from("media_objects").delete().eq("id", media.id).eq("owner_id", actor.actor.profileId); if (error) return NextResponse.json({ error: "Media metadata could not be removed" }, { status: 502 });
   const audited = await appendDurableAudit(db, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MEDIA_DELETE", resourceType: "MEDIA", resourceId: media.id, outcome: "SUCCESS" });
   if (!audited) return NextResponse.json({ error: "Media was deleted but audit evidence failed", mediaId: media.id }, { status: 502 });

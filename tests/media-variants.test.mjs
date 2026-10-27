@@ -101,7 +101,10 @@ test("deleting media, by the owner or by retention, removes its variants too", a
   const route = await read("src/app/api/media/[id]/route.ts");
   const retention = await read("src/lib/privacy/retention.ts");
   const r2 = await read("src/lib/storage/r2.ts");
-  assert.match(route, /deleteStoredObject\(media\.object_key\); await deleteVariantObjects\(media\.id\)/);
+  assert.match(route, /deleteStoredObject\(media\.object_key\)/);
+  assert.match(route, /if \(source\) await deleteStoredObject\(source\)/);
+  assert.match(route, /deleteVariantObjects\(media\.id\)/);
+  assert.match(retention, /if \(source\) await deleteStoredObject\(source\)/);
   assert.match(retention, /deleteVariantObjects\(String\(item\.id\)\)/);
   assert.match(r2, /Prefix: `variants\/\$\{mediaId\}\/`/);
   assert.match(r2, /if \(!objectKey\.startsWith\("variants\/"\)/);

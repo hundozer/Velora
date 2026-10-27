@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    outputFileTracingIncludes: {
+      "/api/media/[id]/complete": ["./node_modules/ffmpeg-static/ffmpeg"],
+    },
+  },
   // Dating became Tonight (P1-07); keep old links working.
   async redirects() {
     return [
