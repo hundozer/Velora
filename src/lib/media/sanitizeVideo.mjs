@@ -6,7 +6,7 @@ import { promisify } from "node:util";
 import ffmpeg from "ffmpeg-static";
 
 const run = promisify(execFile);
-export const MAX_VIDEO_BYTES = 40 * 1024 * 1024;
+export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 
 // Remux only the first video/audio streams. No source chapters, attachments,
 // subtitles, tags, location or device metadata survive into the output.
@@ -18,7 +18,7 @@ export async function sanitizeVideo(input, mimeType) {
     const source = join(dir, `source.${ext}`);
     const output = join(dir, `safe.${ext}`);
     await writeFile(source, input, { flag: "wx" });
-    await run(ffmpeg, ["-nostdin", "-hide_banner", "-loglevel", "error", "-i", source, "-map", "0:v:0", "-map", "0:a:0?", "-map_metadata", "-1", "-map_metadata:s", "-1", "-map_chapters", "-1", "-c", "copy", ...(ext === "mp4" ? ["-movflags", "+faststart"] : []), output], { timeout: 45_000, maxBuffer: 1024 * 1024 });
+    await run(ffmpeg, ["-nostdin", "-hide_banner", "-loglevel", "error", "-i", source, "-map", "0:v:0", "-map", "0:a:0?", "-map_metadata", "-1", "-map_metadata:s", "-1", "-map_chapters", "-1", "-c", "copy", ...(ext === "mp4" ? ["-movflags", "+faststart"] : []), output], { timeout: 90_000, maxBuffer: 1024 * 1024 });
     const safe = await readFile(output);
     if (!safe.length || safe.length > MAX_VIDEO_BYTES) throw new Error("Video processing failed");
     return safe;
