@@ -3,6 +3,7 @@ import { roomAccess, roomReply as reply } from "@/lib/rooms/access";
 
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
+import { presentRoom } from "@/lib/rooms/presentation";
 
 export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const profiles = ids.length ? await db.from("profiles").select("id,username,display_name,account_status,auth_id,is_demo").in("id", ids) : { data: [], error: null };
   if (profiles.error) return reply({ error: "Room unavailable" }, 502);
   const byId = new Map((profiles.data || []).filter(p => p.account_status === "ACTIVE" && p.auth_id && !p.is_demo).map(p => [p.id, p.username || p.display_name]));
-  return reply({ room: auth.room, messages: (messages.data || []).filter(m => byId.has(m.sender_id)).reverse().map(m => ({ id: m.id, senderId: m.sender_id, senderName: byId.get(m.sender_id), body: m.body, createdAt: m.created_at })) });
+  return reply({ room: presentRoom(auth.room), messages: (messages.data || []).filter(m => byId.has(m.sender_id)).reverse().map(m => ({ id: m.id, senderId: m.sender_id, senderName: byId.get(m.sender_id), body: m.body, createdAt: m.created_at })) });
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
