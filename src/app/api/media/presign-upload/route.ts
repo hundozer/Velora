@@ -10,7 +10,7 @@ const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "im
 const ALLOWED_FOLDERS = new Set(["photos", "videos", "avatars", "covers", "general"]);
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 // Bounded by synchronous metadata-safe remux in the completion function.
-const MAX_VIDEO_BYTES = 40 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 const PROFILE_IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function POST(req: NextRequest) {
