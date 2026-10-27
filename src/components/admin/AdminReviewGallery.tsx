@@ -13,6 +13,10 @@ export function AdminReviewGallery({ photos, index, onIndex }: { photos: ReviewP
   const title = photo.title || `Photo ${index + 1}`;
   const url = `/api/admin/media/${photo.id}/preview`;
   const available = photoReady(photo) && failed !== photo.id;
+  if (photo.media_type === 'VIDEO') return <section aria-label="Review video" className="rounded-xl border border-velora-line bg-velora-sunken p-3">
+    {available ? <video src={url} controls playsInline preload="metadata" onError={() => setFailed(photo.id)} className="max-h-[65vh] w-full bg-black" aria-label={title}/> : <p role="alert">Video preview unavailable. Do not approve without reviewing it.</p>}
+    <p className="mt-3 text-sm">{title} · Private review; video access is logged.</p>
+  </section>;
   return <section aria-label="Review photos" onKeyDown={event => {
     if (expanded) return;
     if (event.key === 'ArrowRight') { event.preventDefault(); onIndex(Math.min(index + 1, photos.length - 1)); }
