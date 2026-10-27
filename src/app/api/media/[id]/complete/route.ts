@@ -33,7 +33,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if (updateError) return NextResponse.json({ error: "Upload could not be finalized" }, { status: 502 });
     // MP4/WebM are served as uploaded; there is no video transcoding worker.
     // Keep the moderation gate: other members cannot see them until approved.
-    const { error: processingError } = await supabase.from("media_objects").update({ processing_status: "READY", moderation_status: "PENDING_REVIEW" }).eq("id", media.id).eq("owner_id", actor.actor.profileId);
+    const browserReady = !media.mime_type.startsWith("video/") || ["video/mp4", "video/webm"].includes(media.mime_type);
+    const { error: processingError } = await supabase.from("media_objects").update({ processing_status: browserReady ? "READY" : "PROCESSING", moderation_status: "PENDING_REVIEW" }).eq("id", media.id).eq("owner_id", actor.actor.profileId);
     if (processingError) return NextResponse.json({ error: "Media processing state could not be initialized" }, { status: 502 });
     const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MEDIA_UPLOAD_COMPLETED", resourceType: "MEDIA", resourceId: media.id, outcome: "SUCCESS", metadata: { mimeType: media.mime_type, byteSize: media.byte_size } });
     if (!audited) return NextResponse.json({ error: "Upload finalized but audit recording failed; contact support" }, { status: 503 });
