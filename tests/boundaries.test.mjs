@@ -52,7 +52,7 @@ test("message sending enforces boundaries server-side for uninvited first messag
   const route = await read("src/app/api/messages/route.ts");
   assert.doesNotMatch(route, /require_verification_to_message/);
   assert.match(route, /\.eq\("sender_id", receiverId\)\.eq\("receiver_id", actor\.actor\.profileId\)/);
-  assert.match(route, /const invited = Boolean\(repliedBefore\) \|\| Boolean\(datingAdId\);/);
+  assert.match(route, /const invited = Boolean\(repliedBefore\) \|\| Boolean\(datingAdId\) \|\| Boolean\(personalAdId\);/);
   assert.match(route, /if \(!invited\) \{[\s\S]*message_permission === "PRIVATE"[\s\S]*from\("member_boundaries"\)[\s\S]*firstMessageDecision\(/);
   assert.match(route, /recipient\.allow_direct_messages === false/);
 });

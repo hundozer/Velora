@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
     blocks: supabase.from("user_blocks").select("blocked_profile_id,created_at").eq("blocker_id", profileId),
     messages: supabase.from("direct_messages").select("id,conversation_id,sender_id,receiver_id,content,media_url,attachment_type,status,is_disappearing,disappear_timer_sec,is_opened,created_at").or(`sender_id.eq.${profileId},receiver_id.eq.${profileId}`).order("created_at", { ascending: true }).limit(50000),
     datingAds: supabase.from("dating_ads").select("*").eq("author_id", profileId),
+    personalAds: supabase.from("personal_ads").select("*").eq("author_id", profileId),
     media: supabase.from("media_objects").select("id,media_type,mime_type,byte_size,visibility,upload_status,moderation_status,processing_status,title,description,category,tags,published_at,created_at,updated_at").eq("owner_id", profileId),
     participantDeclarations: supabase.from("content_participant_declarations").select("media_id,contains_other_identifiable_participants,all_participants_adults,recording_consented,publication_consented,declaration_version,declared_at").eq("uploader_id", profileId),
     posts: supabase.from("content_posts").select("*").eq("author_id", profileId),

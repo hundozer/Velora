@@ -21,6 +21,7 @@ export const MobileNavigation: React.FC = () => {
   const items = user
     ? [
         { href: "/people", label: t("nav.people") },
+        { href: "/dating", label: "Dating" },
         { href: "/tonight", label: t("nav.tonight") },
         { href: "/messages", label: t("nav.messages") },
         { href: "/me", label: t("nav.me") },
@@ -43,7 +44,7 @@ export const MobileNavigation: React.FC = () => {
               key={item.href}
               href={item.href}
               aria-current={active ? "page" : undefined}
-              className={`relative flex min-w-[64px] flex-col items-center justify-center text-[15px] transition-colors ${active ? (dark ? "font-semibold text-velora-onPhoto" : "font-semibold text-velora-ink") : dark ? "text-velora-onPhoto/70 hover:text-velora-onPhoto" : "text-velora-muted hover:text-velora-ink"}`}
+              className={`relative flex min-w-[54px] flex-col items-center justify-center text-[14px] transition-colors ${active ? (dark ? "font-semibold text-velora-onPhoto" : "font-semibold text-velora-ink") : dark ? "text-velora-onPhoto/70 hover:text-velora-onPhoto" : "text-velora-muted hover:text-velora-ink"}`}
             >
               {item.label}
               <span aria-hidden className={`mt-1.5 h-1 w-1 rounded-full ${active ? "bg-velora-copper" : "bg-transparent"}`} />
