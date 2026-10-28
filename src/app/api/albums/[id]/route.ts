@@ -47,7 +47,24 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const tags = Array.isArray(body.tags) ? body.tags.filter((tag: unknown): tag is string => typeof tag === "string").map((tag: string) => tag.trim().slice(0,50)).filter(Boolean).slice(0,20) : [];
   if (!title || title.length > 160 || description.length > 4000 || category.length > 100) return NextResponse.json({ error: "Invalid album details" }, { status: 400 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Albums unavailable" }, { status: 503 });
-  const { data, error } = await db.from("media_albums").update({ title, description: description || null, category: category || null, tags, visibility, comment_policy: commentPolicy, reactions_enabled: reactionsEnabled, moderation_status: "PENDING_REVIEW", published_at: null, updated_at: new Date().toISOString() }).eq("id", params.id).eq("owner_id", auth.actor.profileId).neq("moderation_status", "REMOVED").select("id,title,description,category,tags,visibility,comment_policy,reactions_enabled,moderation_status,cover_media_id,updated_at").maybeSingle();
+  const { data: before, error: lookupError } = await db.from("media_albums").select("id,title,description,category,tags,visibility,moderation_status,published_at").eq("id", params.id).eq("owner_id", auth.actor.profileId).neq("moderation_status", "REMOVED").maybeSingle();
+  if (lookupError) return NextResponse.json({ error: "Album lookup failed" }, { status: 502 });
+  if (!before) return NextResponse.json({ error: "Album not found" }, { status: 404 });
+  const contentUnchanged = before.title === title && (before.description || "") === description && (before.category || "") === category && JSON.stringify(before.tags || []) === JSON.stringify(tags);
+  const keepApproved = before.moderation_status === "APPROVED" && contentUnchanged;
+  if (keepApproved && visibility !== before.visibility) {
+    const { data: links, error: linksError } = await db.from("media_album_items").select("media_id").eq("album_id", params.id);
+    if (linksError) return NextResponse.json({ error: "Album photos could not be checked" }, { status: 502 });
+    const ids = (links || []).map(link => link.media_id);
+    if (!ids.length) return NextResponse.json({ error: "Add photos before changing the audience" }, { status: 409 });
+    const { data: photos, error: photosError } = await db.from("media_objects").select("id,visibility,upload_status,processing_status,moderation_status").in("id", ids).eq("owner_id", auth.actor.profileId);
+    if (photosError) return NextResponse.json({ error: "Album photos could not be checked" }, { status: 502 });
+    const required = visibility === "FRIENDS_ONLY" ? null : visibility;
+    if (!required || photos?.length !== ids.length || photos.some(photo => photo.visibility !== required || photo.upload_status !== "AVAILABLE" || photo.processing_status !== "READY" || photo.moderation_status !== "APPROVED")) {
+      return NextResponse.json({ error: "The included photos need the same audience and approval before this album can change audience." }, { status: 409 });
+    }
+  }
+  const { data, error } = await db.from("media_albums").update({ title, description: description || null, category: category || null, tags, visibility, comment_policy: commentPolicy, reactions_enabled: reactionsEnabled, moderation_status: keepApproved ? "APPROVED" : "PENDING_REVIEW", published_at: keepApproved ? before.published_at : null, updated_at: new Date().toISOString() }).eq("id", params.id).eq("owner_id", auth.actor.profileId).eq("moderation_status", before.moderation_status).select("id,title,description,category,tags,visibility,comment_policy,reactions_enabled,moderation_status,cover_media_id,updated_at").maybeSingle();
   if (error) return NextResponse.json({ error: "Album update failed" }, { status: 502 }); if (!data) return NextResponse.json({ error: "Album not found" }, { status: 404 });
   const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorUserId: auth.actor.userId, action: "ALBUM_UPDATE", resourceType: "ALBUM", resourceId: data.id, outcome: "SUCCESS", metadata: { visibility } });
   if (!audited) return NextResponse.json({ error: "Album was updated but audit evidence failed", albumId: data.id }, { status: 502 });

@@ -87,7 +87,7 @@ export function AlbumManager() {
     const response = await fetch(`/api/albums/${album.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...album, commentPolicy: album.comment_policy, reactionsEnabled: album.reactions_enabled }) });
     const payload = await response.json().catch(() => ({})); setBusy(false);
     if (!response.ok) { setError(payload.error || "Album update failed"); return; }
-    await load(); setNotice("Album saved. Review pending.");
+    await load(); setNotice(payload.album?.moderation_status === "APPROVED" ? "Album saved. Still published." : "Album saved. Review pending.");
   }
 
   async function removeAlbum(album: Album) {
