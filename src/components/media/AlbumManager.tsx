@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 import React from "react";
-import { ArrowDown, ArrowUp, Check, Images, Plus, ShieldCheck, Star, Trash2, Upload } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Images, Plus, Star, Trash2, Upload } from "lucide-react";
 import { requestParticipantDeclaration, uploadFileToR2 } from "@/lib/storage/clientUpload";
 
 const CATEGORIES = ["Woman", "Man", "Couple: woman & man", "Couple: two women", "Couple: two men", "Group", "Art and details"];
@@ -79,7 +79,7 @@ export function AlbumManager() {
     const payload = await response.json().catch(() => ({}));
     setBusy(false);
     if (!response.ok) { setError(payload.error || "Album creation failed"); return; }
-    formElement.reset(); await load(); setSelected(payload.album.id); setNotice("Album created. Add photos when you are ready.");
+    formElement.reset(); await load(); setSelected(payload.album.id); setNotice("Album created. Add photos below.");
   }
 
   async function updateAlbum(album: Album) {
@@ -87,7 +87,7 @@ export function AlbumManager() {
     const response = await fetch(`/api/albums/${album.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...album, commentPolicy: album.comment_policy, reactionsEnabled: album.reactions_enabled }) });
     const payload = await response.json().catch(() => ({})); setBusy(false);
     if (!response.ok) { setError(payload.error || "Album update failed"); return; }
-    await load(); setNotice("Album settings saved and sent for review.");
+    await load(); setNotice(payload.album?.moderation_status === "APPROVED" ? "Album saved. Still published." : "Album saved. Review pending.");
   }
 
   async function removeAlbum(album: Album) {
@@ -103,7 +103,7 @@ export function AlbumManager() {
     const response = await fetch(`/api/albums/${album.id}/media`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mediaIds: album.mediaIds, coverMediaId }) });
     const payload = await response.json().catch(() => ({})); setBusy(false);
     if (!response.ok) { setError(payload.error || "Album photos could not be saved"); return; }
-    await load(); setNotice("Photo order and cover saved.");
+    await load(); setNotice("Photos saved. Review pending.");
   }
 
   async function upload(file?: File) {
@@ -130,7 +130,7 @@ export function AlbumManager() {
     <header className="border-b border-ink/10 pb-6">
       <p className="text-xs font-semibold uppercase tracking-[.2em] text-velora-accent">Your photos</p>
       <h1 className="mt-2 font-display font-semibold text-ink text-5xl leading-[1.02] sm:text-6xl">Photo albums</h1>
-      <p className="mt-2 text-velora-textSecondary">Create collections and choose who gets to see them.</p>
+
     </header>
     {error && <p role="alert" className="mt-5 rounded-xl border border-red-400/40 bg-red-500/10 p-4 text-red-100">{error}</p>}
     {notice && <p role="status" className="mt-5 flex items-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-500/10 p-4 text-emerald-100"><Check className="h-5 w-5" />{notice}</p>}
@@ -140,17 +140,17 @@ export function AlbumManager() {
         <form onSubmit={create} className="space-y-3 rounded-2xl border border-ink/10 bg-velora-surface p-5">
           <h2 className="text-xl font-semibold text-ink">New album</h2>
           <input name="title" required maxLength={160} placeholder="Album title" className={field} />
-          <textarea name="description" maxLength={4000} placeholder="Describe the album" className={`${field} min-h-24 py-3`} />
-          <select name="category" defaultValue="" className={field}><option value="">Choose a category</option>{CATEGORIES.map((item) => <option key={item}>{item}</option>)}</select>
-          <select name="visibility" defaultValue="PRIVATE" className={field}>{VISIBILITY.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+          <label className="block text-sm font-semibold text-ink">Who can see it?<select name="visibility" defaultValue="PRIVATE" className={field}>{VISIBILITY.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          <details className="space-y-3"><summary className="cursor-pointer text-sm text-velora-textSecondary">More options</summary><textarea name="description" maxLength={4000} placeholder="Description" className={`${field} mt-3 min-h-20 py-3`} /><select name="category" defaultValue="" className={`${field} mt-3`}><option value="">Choose a category</option>{CATEGORIES.map((item) => <option key={item}>{item}</option>)}</select>
           <select name="commentPolicy" defaultValue="MEMBERS" className={field}>{COMMENT_POLICIES.map(([value, label]) => <option key={value} value={value}>Comments: {label}</option>)}</select>
-          <label className="flex min-h-11 items-center gap-3 text-sm text-ink"><input type="checkbox" name="reactionsEnabled" defaultChecked /> Allow likes</label>
+          <label className="flex min-h-11 items-center gap-3 text-sm text-ink"><input type="checkbox" name="reactionsEnabled" defaultChecked /> Allow likes</label></details>
           <button disabled={busy} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-velora-accent font-bold text-velora-paper"><Plus className="h-4 w-4" />Create album</button>
         </form>
         <div className="space-y-2">{albums.map((album) => <button key={album.id} onClick={() => setSelected(album.id)} className={`w-full rounded-xl border p-4 text-left ${selected === album.id ? "border-velora-accent bg-velora-accent/10" : "border-ink/10 bg-velora-surface"}`}><strong className="block text-ink">{album.title}</strong><span className="mt-1 block text-xs text-velora-textSecondary">{album.mediaIds.length} photos · {VISIBILITY.find(([value]) => value === album.visibility)?.[1] || album.visibility}</span></button>)}</div>
       </aside>
 
       <section>{active ? <div className="space-y-6">
+        <p role="status" className="rounded-xl border border-ink/10 p-4 text-sm text-ink">{active.mediaIds.length} photos · {active.visibility === "PRIVATE" ? "Private · only you can see it" : active.moderation_status === "APPROVED" ? "Published" : "Waiting for review"}</p>
         {active.reviewFeedback && active.moderation_status === "REJECTED" && <p role="status" className="rounded-xl border border-velora-warning/40 bg-velora-warning/10 p-4 text-sm text-ink">Review feedback: {active.reviewFeedback} Edit your album and save it to submit it for another review.</p>}
         <div className="rounded-2xl border border-ink/10 bg-velora-surface p-5">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -164,17 +164,17 @@ export function AlbumManager() {
           </div>
           <fieldset className="mt-5"><legend className="text-sm font-semibold text-ink">What appears in this album?</legend><div className="mt-3 flex flex-wrap gap-2">{TOPICS.map((topic) => { const selectedTopic = active.tags.includes(topic); return <button type="button" key={topic} onClick={() => patchActive({ tags: selectedTopic ? active.tags.filter((item) => item !== topic) : [...active.tags, topic].slice(0, 20) })} className={`rounded-full border px-3 py-2 text-sm ${selectedTopic ? "border-velora-accent bg-velora-accent text-velora-paper" : "border-ink/15 text-ink"}`}>{topic}</button>; })}</div></fieldset>
           <label className="mt-5 flex min-h-11 items-center gap-3 text-sm text-ink"><input type="checkbox" checked={active.reactions_enabled !== false} onChange={(event) => patchActive({ reactions_enabled: event.target.checked })} /> Allow likes</label>
-          <div className="mt-4 flex flex-wrap gap-3"><button disabled={busy} onClick={() => updateAlbum(active)} className="min-h-11 rounded-xl bg-velora-accent px-5 font-bold text-velora-paper">Save album settings</button><button disabled={busy} onClick={() => removeAlbum(active)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-red-400/50 px-5 text-velora-danger"><Trash2 className="h-4 w-4" />Remove album</button></div>
+          <div className="mt-4 flex flex-wrap gap-3"><button disabled={busy} onClick={() => updateAlbum(active)} className="min-h-11 rounded-xl bg-velora-accent px-5 font-bold text-velora-paper">Save album</button><button disabled={busy} onClick={() => removeAlbum(active)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-red-400/50 px-5 text-velora-danger"><Trash2 className="h-4 w-4" />Remove album</button></div>
         </div>
 
-        <div className="grid gap-5 xl:grid-cols-[1fr_300px]">
+        <div className="space-y-5">
           <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-semibold text-ink">Photos</h2><p className="text-sm text-velora-textSecondary">Up to 30 photos. Choose a cover and arrange the order.</p></div><label className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 font-semibold ${rightsConfirmed ? "cursor-pointer border-velora-accent text-ink" : "cursor-not-allowed border-ink/10 text-velora-textMuted"}`}><Upload className="h-4 w-4" />{busy && progress ? `${progress}%` : "Upload photos"}<input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/heic" className="sr-only" disabled={busy || !rightsConfirmed || active.mediaIds.length >= 30} onChange={(event) => upload(event.target.files?.[0])} /></label></div>
+            <label className="flex items-start gap-3 rounded-xl border border-velora-accent/25 bg-velora-accent/5 p-4 text-sm text-ink"><input type="checkbox" className="mt-1" checked={rightsConfirmed} onChange={(event) => setRightsConfirmed(event.target.checked)} />I own these photos and everyone shown is an adult who agreed to be photographed and shared.</label>
+            <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-semibold text-ink">Photos</h2><p className="text-sm text-velora-textSecondary">Select photos, then choose a cover.</p></div><label className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 font-semibold ${rightsConfirmed ? "cursor-pointer border-velora-accent text-ink" : "cursor-not-allowed border-ink/10 text-velora-textMuted"}`}><Upload className="h-4 w-4" />{busy && progress ? `${progress}%` : "Upload photos"}<input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/heic" className="sr-only" disabled={busy || !rightsConfirmed || active.mediaIds.length >= 30} onChange={(event) => upload(event.target.files?.[0])} /></label></div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{media.map((item) => { const included = active.mediaIds.includes(item.id); const cover = active.cover_media_id === item.id; return <article key={item.id} className={`rounded-xl border p-3 ${included ? "border-velora-accent" : "border-ink/10"}`}><img src={item.url} alt="" className="aspect-square w-full rounded-lg object-cover" />{item.reviewFeedback && <p className="mt-3 text-xs text-velora-warning">Review feedback: {item.reviewFeedback} Replace this photo or exclude it from the album, then save the photos for another review.</p>}<label className="mt-3 flex min-h-11 items-center gap-2 text-sm text-ink"><input type="checkbox" checked={included} onChange={(event) => patchActive({ mediaIds: event.target.checked ? [...active.mediaIds, item.id].slice(0, 30) : active.mediaIds.filter((id) => id !== item.id), cover_media_id: !event.target.checked && cover ? null : active.cover_media_id })} />Include</label>{included && <><button type="button" onClick={() => patchActive({ cover_media_id: item.id })} className={`mb-2 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border ${cover ? "border-velora-accent bg-velora-accent/10 text-velora-accent" : "border-ink/15 text-ink"}`}><Star className={`h-4 w-4 ${cover ? "fill-current" : ""}`} />{cover ? "Album cover" : "Make cover"}</button><div className="flex gap-2"><button aria-label="Move photo earlier" onClick={() => move(item.id, -1)} className="min-h-10 flex-1 rounded-lg border border-ink/15"><ArrowUp className="mx-auto h-4 w-4" /></button><button aria-label="Move photo later" onClick={() => move(item.id, 1)} className="min-h-10 flex-1 rounded-lg border border-ink/15"><ArrowDown className="mx-auto h-4 w-4" /></button></div></>}</article>; })}</div>
             {!media.length && <div className="rounded-xl border border-dashed border-ink/15 p-10 text-center"><Images className="mx-auto h-8 w-8 text-velora-textMuted" /><p className="mt-3 text-ink">Your photo library is empty.</p></div>}
-            <button disabled={busy} onClick={() => savePhotos(active)} className="min-h-11 rounded-xl bg-velora-accent px-5 font-bold text-velora-paper">Save photos and order</button>
+            <button disabled={busy} onClick={() => savePhotos(active)} className="min-h-11 rounded-xl bg-velora-accent px-5 font-bold text-velora-paper">Save photos</button>
           </div>
-          <aside className="h-fit rounded-2xl border border-velora-accent/25 bg-velora-accent/5 p-5"><ShieldCheck className="h-7 w-7 text-velora-accent" /><h3 className="mt-3 text-lg font-semibold text-ink">Before uploading</h3><ul className="mt-3 space-y-2 text-sm leading-6 text-ink"><li>Only upload content you own or may lawfully publish.</li><li>Everyone shown must be an adult and must consent.</li><li>No minors, exploitation, hidden recordings, extreme violence, animals, or illegal content.</li><li>No third-party watermarks or personal contact details.</li><li>Public content is reviewed before it appears.</li></ul><label className="mt-5 flex items-start gap-3 rounded-xl border border-ink/10 p-3 text-sm text-ink"><input type="checkbox" className="mt-1" checked={rightsConfirmed} onChange={(event) => setRightsConfirmed(event.target.checked)} />I understand these rules and confirm I have the necessary rights and consent.</label></aside>
         </div>
       </div> : <div className="rounded-xl border border-dashed border-ink/15 p-12 text-center"><Images className="mx-auto h-8 w-8 text-velora-textMuted" /><p className="mt-3 text-ink">Choose an album or create a new one.</p></div>}</section>
     </section>
