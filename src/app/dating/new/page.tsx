@@ -21,11 +21,11 @@ export default function NewDatingAdPage() {
     try {
       const response = await fetch("/api/personal-ads", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ category, title, body, boundaries, areaId, allowedReplyGenders: types, minAge, maxAge, days, requireVerified }) });
       const payload = await response.json(); if (!response.ok) throw Error(payload.error || "Could not post your ad");
-      router.push("/dating?mine=1");
+      router.push("/personal-ads?mine=1");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not post your ad"); }
     finally { setBusy(false); }
   }
-  return <main className="mx-auto max-w-2xl px-5 pb-28 pt-8"><Link href="/dating" className="text-sm underline">← Dating Ads</Link><h1 className="mt-7 font-display text-5xl">Say what you want.</h1><p className="mt-3 text-lg text-velora-ink2">Sex can be the point. Be clear about the people you want to meet and what is off-limits.</p>
+  return <main className="mx-auto max-w-2xl px-5 pb-28 pt-8"><Link href="/personal-ads" className="text-sm underline">← Dating Ads</Link><h1 className="mt-7 font-display text-5xl">Say what you want.</h1><p className="mt-3 text-lg text-velora-ink2">Sex can be the point. Be clear about the people you want to meet and what is off-limits.</p>
     {!user ? <p className="mt-8"><Link href="/login" className="underline">Sign in</Link> to post.</p> : <form onSubmit={submit} className="mt-8 space-y-6">
       <label className="block font-semibold">What are you looking for?<select required value={category} onChange={event => setCategory(event.target.value)} className="mt-2 w-full rounded-lg border border-velora-control bg-velora-surface p-3"><option value="">Choose one</option>{PERSONAL_CATEGORIES.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
       <label className="block font-semibold">Headline<input required minLength={3} maxLength={100} value={title} onChange={event => setTitle(event.target.value)} placeholder="A regular fuck buddy in Prague 3" className="mt-2 w-full rounded-lg border border-velora-control bg-velora-surface p-3" /></label>

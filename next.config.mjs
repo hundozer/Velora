@@ -6,11 +6,10 @@ const nextConfig = {
       "/api/media/[id]/complete": ["./node_modules/ffmpeg-static/ffmpeg"],
     },
   },
-  // Dating became Tonight (P1-07); keep old links working.
+  // Keep legacy links working without redirecting the new Dating Ads section.
   async redirects() {
     return [
-      { source: "/dating", destination: "/tonight", permanent: true },
-      { source: "/dating/create", destination: "/tonight/new", permanent: true },
+      { source: "/dating/create", destination: "/personal-ads/new", permanent: false },
       // People v3 (P1-05) replaced the separate Discovery screen.
       { source: "/discovery", destination: "/people", permanent: true },
     ];

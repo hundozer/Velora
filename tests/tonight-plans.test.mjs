@@ -69,6 +69,6 @@ test("plans are members-only, block-aware, capped, and first plans are queued fo
   assert.match(await read("src/app/api/public/community/route.ts"), /const datingAds: Array<Record<string, unknown>> = \[\];/);
   const search = await read("src/app/api/public/search/route.ts");
   assert.doesNotMatch(search, /from\("dating_ads"\)/);
-  assert.match(await read("next.config.mjs"), /source: "\/dating", destination: "\/tonight"/);
+  assert.doesNotMatch(await read("next.config.mjs"), /source: "\/dating", destination: "\/tonight"/);
   assert.match(await read("src/components/layout/MobileNavigation.tsx"), /href: "\/tonight", label: t\("nav\.tonight"\)/);
 });
