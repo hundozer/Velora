@@ -66,8 +66,21 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
   if (!allowed && media.visibility === "PRIVATE" && !isChatImage) {
     // Private Album Handshake (P1-06): checked on every read, so revoking is immediate.
-    const { data: grant } = await supabase.from("album_access_grants").select("status,grant_type,expires_at").eq("owner_id", media.owner_id).eq("viewer_id", actor.actor.profileId).maybeSingle();
+    const { data: grant, error: grantError } = await supabase.from("album_access_grants").select("status,grant_type,expires_at").eq("owner_id", media.owner_id).eq("viewer_id", actor.actor.profileId).maybeSingle();
+    if (grantError) return NextResponse.json({ error: "Media not found" }, { status: 404 });
     allowed = grantIsActive(grant);
+    if (!allowed) {
+      // An approved member album can contain photos uploaded while it was private.
+      // The album, link and owner are checked on every read; private standalone photos stay private.
+      const { data: links, error: linkError } = await supabase.from("media_album_items").select("album_id").eq("media_id", media.id).limit(30);
+      if (linkError) return NextResponse.json({ error: "Media not found" }, { status: 404 });
+      const ids = (links || []).map(link => link.album_id);
+      if (ids.length) {
+        const { data: albums, error: albumError } = await supabase.from("media_albums").select("id").in("id", ids).eq("owner_id", media.owner_id).eq("visibility", "MEMBERS_ONLY").eq("moderation_status", "APPROVED").limit(1);
+        if (albumError) return NextResponse.json({ error: "Media not found" }, { status: 404 });
+        allowed = Boolean(albums?.length);
+      }
+    }
   }
   if (!allowed) return NextResponse.json({ error: "Media not found" }, { status: 404 });
   // Authorisation is complete. Pick a resized variant when one exists (variants are read
