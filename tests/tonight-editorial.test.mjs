@@ -55,7 +55,7 @@ test("Tonight shows every plan's times, place and reply eligibility from the ser
   const create = await read("src/app/tonight/new/page.tsx");
   assert.match(create, /What would you like to do\?/);
   assert.match(create, /Who may reply\?/);
-  assert.match(create, /Only the neighbourhood is shown/);
+  assert.match(create, /Neighbourhood only/);
   assert.match(create, /startsAt: slot\.startsAt, endsAt: slot\.endsAt/);
   assert.match(create, /Invitations last up to 12 hours/);
   const messages = await read("src/app/api/messages/route.ts");

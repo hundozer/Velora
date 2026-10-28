@@ -31,11 +31,11 @@ test("plan input is validated with explicit start and end times", () => {
   // Start and end are required; a duration alone is no longer accepted.
   assert.match(validatePlanInput({ category: base.category, title: base.title, text: base.text, validityDays: 1 }, now).error, /starts and ends/);
   assert.match(validatePlanInput({ ...base, startsAt: "not a date" }, now).error, /starts and ends/);
-  // Starts within the next 36 hours (a few minutes of grace for slow forms).
+  // Starts today or tomorrow in Prague (a few minutes of grace for slow forms).
   assert.ok(validatePlanInput({ ...base, startsAt: "2026-10-17T17:55:00Z", endsAt: "2026-10-17T20:00:00Z" }, now).plan);
-  assert.match(validatePlanInput({ ...base, startsAt: "2026-10-17T17:30:00Z", endsAt: "2026-10-17T20:00:00Z" }, now).error, /36 hours/);
-  assert.ok(validatePlanInput({ ...base, startsAt: "2026-10-19T06:00:00Z", endsAt: "2026-10-19T08:00:00Z" }, now).plan);
-  assert.match(validatePlanInput({ ...base, startsAt: "2026-10-19T06:01:00Z", endsAt: "2026-10-19T08:00:00Z" }, now).error, /36 hours/);
+  assert.match(validatePlanInput({ ...base, startsAt: "2026-10-17T17:30:00Z", endsAt: "2026-10-17T20:00:00Z" }, now).error, /today or tomorrow/);
+  assert.ok(validatePlanInput({ ...base, startsAt: "2026-10-18T21:30:00Z", endsAt: "2026-10-18T22:30:00Z" }, now).plan, "late tomorrow is valid even when beyond 36 hours");
+  assert.match(validatePlanInput({ ...base, startsAt: "2026-10-18T22:30:00Z", endsAt: "2026-10-19T00:30:00Z" }, now).error, /today or tomorrow/, "after midnight is the next calendar day in Prague");
   // Lasts between 30 minutes and 12 hours, and ends after it starts.
   assert.ok(validatePlanInput({ ...base, endsAt: "2026-10-18T07:00:00Z" }, now).plan);
   assert.match(validatePlanInput({ ...base, endsAt: "2026-10-18T07:01:00Z" }, now).error, /12 hours/);
@@ -43,6 +43,12 @@ test("plan input is validated with explicit start and end times", () => {
   assert.match(validatePlanInput({ ...base, endsAt: "2026-10-17T18:30:00Z" }, now).error, /30 minutes/);
   assert.match(validatePlanInput({ ...base, minAge: 17 }, now).error, /18\+/);
   assert.match(validatePlanInput({ ...base, text: "short" }, now).error, /10–1000/);
+});
+
+test("Prague calendar days remain valid across the autumn clock change", () => {
+  const before = new Date("2026-10-24T22:30:00Z"); // Sunday 00:30 in Prague
+  assert.ok(validatePlanInput({ ...base, startsAt: "2026-10-26T22:30:00Z", endsAt: "2026-10-26T23:30:00Z" }, before).plan, "Monday 23:30 is tomorrow even 48 hours later");
+  assert.match(validatePlanInput({ ...base, startsAt: "2026-10-26T23:30:00Z", endsAt: "2026-10-27T00:30:00Z" }, before).error, /today or tomorrow/);
 });
 
 test("expired, ended or rejected plans are not live", () => {

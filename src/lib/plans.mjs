@@ -17,9 +17,7 @@ export const PLAN_DURATIONS = [
   { days: 7, label: "This week · 7 days" },
 ];
 
-/** A plan must start within this window from now… */
-export const PLAN_START_HORIZON_MS = 36 * 3_600_000;
-/** …may have started a few minutes ago (clock skew, slow forms)… */
+/** A plan may have started a few minutes ago (clock skew, slow forms)… */
 export const PLAN_START_GRACE_MS = 10 * 60_000;
 /** …and lasts between 30 minutes and 12 hours. */
 export const PLAN_MIN_DURATION_MS = 30 * 60_000;
@@ -37,6 +35,16 @@ export const MAX_LIVE_PLANS = 3;
 
 const CATEGORY_VALUES = new Set(PLAN_CATEGORIES.map((item) => item.value));
 const REPLY_VALUES = new Set(PLAN_REPLY_TYPES.map((item) => item.value));
+
+function pragueDateKey(date) {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Prague", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date).map((part) => [part.type, part.value]));
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function tomorrowKey(today) {
+  const [year, month, day] = today.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + 1)).toISOString().slice(0, 10);
+}
 
 export function planCategoryLabel(value) {
   return PLAN_CATEGORIES.find((item) => item.value === value)?.label ?? "Plan";
@@ -61,7 +69,7 @@ export function validatePlanInput(input, now = new Date(), trustedEventWindow = 
   if (!startsAt || Number.isNaN(startsAt.getTime()) || !endsAt || Number.isNaN(endsAt.getTime())) return { error: "Choose when your plan starts and ends." };
   if (trustedEventWindow) {
     if (startsAt.toISOString() !== trustedEventWindow.startsAt || endsAt.toISOString() !== trustedEventWindow.endsAt) return { error: "The event time changed. Refresh the event and review your invitation." };
-  } else if (startsAt.getTime() < now.getTime() - PLAN_START_GRACE_MS || startsAt.getTime() > now.getTime() + PLAN_START_HORIZON_MS) return { error: "Plans start within the next 36 hours." };
+  } else if (startsAt.getTime() < now.getTime() - PLAN_START_GRACE_MS || ![pragueDateKey(now), tomorrowKey(pragueDateKey(now))].includes(pragueDateKey(startsAt))) return { error: "Choose a start time today or tomorrow." };
   const duration = endsAt.getTime() - startsAt.getTime();
   if (duration < PLAN_MIN_DURATION_MS || duration > PLAN_MAX_DURATION_MS) return { error: "Plans last between 30 minutes and 12 hours." };
   if (!Number.isInteger(minAge) || !Number.isInteger(maxAge) || minAge < 18 || maxAge > 99 || minAge > maxAge) return { error: "Choose a valid age range (18+)." };

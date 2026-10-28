@@ -3,7 +3,6 @@ export declare const PLAN_CATEGORIES: { value: string; label: string }[];
 export declare const PLAN_DURATIONS: { days: number; label: string }[];
 export declare const PLAN_REPLY_TYPES: { value: string; label: string }[];
 export declare const MAX_LIVE_PLANS: number;
-export declare const PLAN_START_HORIZON_MS: number;
 export declare const PLAN_START_GRACE_MS: number;
 export declare const PLAN_MIN_DURATION_MS: number;
 export declare const PLAN_MAX_DURATION_MS: number;
