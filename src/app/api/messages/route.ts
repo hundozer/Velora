@@ -98,10 +98,12 @@ export async function POST(req: NextRequest) {
   const receiverId = typeof body.receiverId === "string" ? body.receiverId : "";
   const content = typeof body.content === "string" ? body.content.trim() : "";
   const datingAdId = typeof body.datingAdId === "string" ? body.datingAdId : null;
+  const personalAdId = typeof body.personalAdId === "string" ? body.personalAdId : null;
   const mediaId = typeof body.mediaId === "string" && UUID.test(body.mediaId) ? body.mediaId : null;
   // A message needs text, a photo, or both (P1-10).
   if (!UUID.test(receiverId) || receiverId === actor.actor.profileId || (content.length < 1 && !mediaId) || content.length > 4_000) return NextResponse.json({ error: "Invalid message" }, { status: 400 });
   if (datingAdId && !UUID.test(datingAdId)) return NextResponse.json({ error: "Invalid dating ad context" }, { status: 400 });
+  if (personalAdId && (!UUID.test(personalAdId) || datingAdId)) return NextResponse.json({ error: "Invalid personal ad context" }, { status: 400 });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Messaging unavailable" }, { status: 503 });
   if (await blocked(supabase, actor.actor.profileId, receiverId)) return NextResponse.json({ error: "Messaging is not allowed between these profiles" }, { status: 403 });
@@ -141,13 +143,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: message }, { status });
     }
   }
+  if (personalAdId) {
+    const { data: ad, error: adError } = await supabase.from("personal_ads").select("id,author_id,status,moderation_status,expires_at,allowed_reply_genders,min_age,max_age,require_verified").eq("id", personalAdId).maybeSingle();
+    if (adError) return NextResponse.json({ error: "Ad eligibility could not be checked" }, { status: 502 });
+    if (!ad || ad.author_id !== receiverId || ad.status !== "ACTIVE" || ad.moderation_status !== "APPROVED") return NextResponse.json({ error: "Ad unavailable" }, { status: 404 });
+    const eligibility = planReplyEligibility({ plan: { ...ad, status: "active" }, viewer: { ...sender, id: actor.actor.profileId } });
+    if (!eligibility.canReply) return NextResponse.json({ error: eligibility.reason === "NOT_LIVE" || eligibility.reason === "OWN_PLAN" ? "Ad unavailable" : "You do not match this ad's reply rules" }, { status: eligibility.reason === "NOT_LIVE" || eligibility.reason === "OWN_PLAN" ? 404 : 403 });
+  }
 
   // Once the recipient has written to the sender, the conversation is established
   // and first-message rules no longer apply. A valid reply to the recipient's own
   // ad is invited too (the ad's eligibility rules were checked above).
   const { data: repliedBefore, error: repliedError } = await supabase.from("direct_messages").select("id").eq("sender_id", receiverId).eq("receiver_id", actor.actor.profileId).limit(1).maybeSingle();
   if (repliedError) return NextResponse.json({ error: "Messaging eligibility could not be checked" }, { status: 502 });
-  const invited = Boolean(repliedBefore) || Boolean(datingAdId);
+  const invited = Boolean(repliedBefore) || Boolean(datingAdId) || Boolean(personalAdId);
   if (!invited) {
     if (recipient.message_permission === "PRIVATE") return NextResponse.json({ error: "This member only accepts messages from people they've written to" }, { status: 403 });
     if (recipient.message_permission === "FRIENDS_ONLY" && !(await areFriends(actor.actor.profileId, receiverId))) {
@@ -177,12 +186,12 @@ export async function POST(req: NextRequest) {
     }
   }
   // Suppress an identical retry while the first request is still completing.
-  const duplicateKey = createHash("sha256").update(JSON.stringify([actor.actor.profileId, receiverId, content, datingAdId, mediaId])).digest("hex");
+  const duplicateKey = createHash("sha256").update(JSON.stringify([actor.actor.profileId, receiverId, content, datingAdId, personalAdId, mediaId])).digest("hex");
   if (!(await checkRateLimit(`message-repeat:${duplicateKey}`, 1, 10)).allowed) return NextResponse.json({ error: "This message was just sent. Wait a moment before sending it again." }, { status: 429 });
-  const row = { conversation_id: conversationId(actor.actor.profileId, receiverId), sender_id: actor.actor.profileId, receiver_id: receiverId, sender_name: sender.display_name, sender_avatar: sender.avatar_url, content, media_url: mediaId ? `/api/media/${mediaId}` : null, attachment_type: mediaId ? "IMAGE" : null, plan_id: datingAdId, is_disappearing: false, is_opened: false, status: "SENT", is_locked: false, unlock_price: null, is_unlocked: true };
+  const row = { conversation_id: conversationId(actor.actor.profileId, receiverId), sender_id: actor.actor.profileId, receiver_id: receiverId, sender_name: sender.display_name, sender_avatar: sender.avatar_url, content, media_url: mediaId ? `/api/media/${mediaId}` : null, attachment_type: mediaId ? "IMAGE" : null, plan_id: datingAdId, ...(personalAdId ? { personal_ad_id: personalAdId } : {}), is_disappearing: false, is_opened: false, status: "SENT", is_locked: false, unlock_price: null, is_unlocked: true };
   const { data, error } = await supabase.from("direct_messages").insert(row).select("id,conversation_id,sender_id,receiver_id,content,media_url,attachment_type,status,created_at").single();
   if (error || !data) return NextResponse.json({ error: "Message could not be sent" }, { status: 502 });
-  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MESSAGE_SEND", resourceType: "MESSAGE", resourceId: data.id, outcome: "SUCCESS", metadata: { receiverId, datingAdId } });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MESSAGE_SEND", resourceType: "MESSAGE", resourceId: data.id, outcome: "SUCCESS", metadata: { receiverId, datingAdId, personalAdId } });
   if (!audited) return NextResponse.json({ error: "Message sent but audit recording failed; contact support" }, { status: 503 });
   await supabase.from("notifications").insert({ user_id: receiverId, type: "NEW_MESSAGE", title: "New message", message: `${sender.display_name} sent you a message.`, actor_name: sender.display_name, actor_avatar: sender.avatar_url, target_link: `/messages?peerId=${actor.actor.profileId}`, is_read: false });
   // The INSERT trigger queues unread email atomically with the message.

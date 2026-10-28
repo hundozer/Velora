@@ -6,7 +6,7 @@ type Result = { profileId: string; status: "COMPLETED" | "SKIPPED" | "FAILED"; r
 const DELETE_TABLES: Array<[string, string]> = [
   ["story_views", "viewer_id"], ["member_stories", "owner_id"],
   ["content_reactions", "profile_id"], ["saved_items", "profile_id"], ["content_comments", "author_id"],
-  ["content_posts", "author_id"], ["dating_ads", "author_id"], ["notifications", "user_id"],
+  ["content_posts", "author_id"], ["dating_ads", "author_id"], ["personal_ads", "author_id"], ["notifications", "user_id"],
   ["connections", "follower_id"], ["connections", "followed_id"], ["user_blocks", "blocker_id"],
   ["user_blocks", "blocked_profile_id"], ["photo_albums", "owner_id"], ["videos", "owner_id"],
   ["unread_email_outbox", "profile_id"], ["member_desires", "profile_id"], ["member_boundaries", "profile_id"],
