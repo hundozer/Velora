@@ -40,7 +40,8 @@ export async function GET(req: NextRequest) {
       .or(`requester_id.eq.${auth.actor.profileId},addressee_id.eq.${auth.actor.profileId}`),
   ]);
   if (blockError || followError || friendshipError) return NextResponse.json({ error: "Feed audience unavailable" }, { status: 503 });
-  const excluded = new Set<string>([auth.actor.profileId]);
+  // Show members their own published work in Newest; exclude only blocked profiles.
+  const excluded = new Set<string>();
   for (const block of blocks || []) {
     excluded.add(block.blocker_id === auth.actor.profileId ? block.blocked_profile_id : block.blocker_id);
   }
