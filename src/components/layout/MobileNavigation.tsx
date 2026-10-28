@@ -21,7 +21,7 @@ export const MobileNavigation: React.FC = () => {
   const items = user
     ? [
         { href: "/people", label: t("nav.people") },
-        { href: "/dating", label: "Dating" },
+        { href: "/personal-ads", label: "Dating" },
         { href: "/tonight", label: t("nav.tonight") },
         { href: "/messages", label: t("nav.messages") },
         { href: "/me", label: t("nav.me") },

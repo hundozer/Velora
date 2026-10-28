@@ -52,7 +52,7 @@ export const Navbar: React.FC = () => {
           {[
             { href: "/", label: "Home", active: pathname === "/" },
             { href: "/people", label: "People", active: pathname.startsWith("/people") },
-            { href: "/dating", label: "Dating Ads", active: pathname.startsWith("/dating") },
+            { href: "/personal-ads", label: "Dating Ads", active: pathname.startsWith("/personal-ads") },
             { href: "/tonight", label: "Tonight", active: pathname.startsWith("/tonight") },
             ...(user ? [{ href: "/rooms", label: "Rooms", active: pathname.startsWith("/rooms") }] : []),
             ...(user ? [{ href: "/messages", label: t("nav.messages"), active: pathname.startsWith("/messages") }] : []),
