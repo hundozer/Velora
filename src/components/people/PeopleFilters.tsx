@@ -1,5 +1,7 @@
 "use client";
 
+import { tr } from "@/lib/i18n/translate";
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import { Check as CheckIcon, Search } from "lucide-react";
 import { Sheet } from "@/components/editorial/Sheet";
@@ -11,7 +13,7 @@ export const DEFAULT_FILTERS: Filters = { who: [], minAge: 18, maxAge: 99, withi
 
 const WHO_WORDS: Record<string, string> = { WOMEN: "women", MEN: "men", COUPLES: "couples", OTHER: "non-binary & trans people" };
 const DESIRE_GROUPS = DESIRE_CATEGORIES.map((category) => ({ ...category, desires: DESIRES.filter((desire) => desire.category === category.id) }));
-const listWords = (words: string[]) => words.length <= 1 ? words.join("") : `${words.slice(0, -1).join(", ")} and ${words[words.length - 1]}`;
+const listWords = (words: string[]) => words.length <= 1 ? words.join("") : `${words.slice(0, -1).join(", ")} ${tr("and")} ${words[words.length - 1]}`;
 
 /** A word in the filter sentence: looks like text, opens the sheet at its section. */
 function Word({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
@@ -27,6 +29,7 @@ function Word({ children, onClick }: { children: React.ReactNode; onClick: () =>
  * Tapping a word opens a typographic sheet. Search sits underneath as a quiet underline.
  */
 export function FilterSentence({ filters, onOpen, onSearch }: { filters: Filters; onOpen: (section: string) => void; onSearch: (q: string) => void }) {
+  const { t } = useTranslation();
   const [q, setQ] = React.useState(filters.q);
   React.useEffect(() => setQ(filters.q), [filters.q]);
   React.useEffect(() => {
@@ -40,31 +43,30 @@ export function FilterSentence({ filters, onOpen, onSearch }: { filters: Filters
   if (filters.minAge !== 18 || filters.maxAge !== 99) extras.push({ key: "age", text: `aged ${filters.minAge} to ${filters.maxAge}` });
   if (filters.verified) extras.push({ key: "only", text: "with a verified photo" });
   if (filters.hasPhoto) extras.push({ key: "only", text: "with a photograph" });
-  if (filters.desires.length) extras.push({ key: "into", text: `into ${listWords(filters.desires.map((id) => desireById(id)?.label?.toLowerCase() || id))}` });
+  if (filters.desires.length) extras.push({ key: "into", text: t("into {value}", { value: listWords(filters.desires.map((id) => { const found = desireById(id)?.label; return found ? t(found).toLowerCase() : id; })) }) });
 
   return (
     <div>
-      <p className="text-[19px] leading-[1.75] text-velora-ink sm:text-[20px]">
-        Showing <Word onClick={() => onOpen("who")}>{who}</Word>{" "}
-        {filters.withinKm ? <>within <Word onClick={() => onOpen("within")}>{filters.withinKm} km</Word></> : <>across <Word onClick={() => onOpen("within")}>all Prague</Word></>}
-        {extras.map((extra) => <React.Fragment key={extra.text}>, <Word onClick={() => onOpen(extra.key)}>{extra.text}</Word></React.Fragment>)}
-        , here now first.{" "}
-        {extras.length === 0 && <button type="button" onClick={() => onOpen("only")} className="text-[15px] text-velora-muted underline underline-offset-4 hover:text-velora-ink">More</button>}
+      <p className="text-[19px] leading-[1.75] text-velora-ink sm:text-[20px]">{t("Showing")}{" "}<Word onClick={() => onOpen("who")}>{t(who)}</Word>{" "}
+        {filters.withinKm ? <>{t("within")}{" "}<Word onClick={() => onOpen("within")}>{t("{withinKm} km", { withinKm: filters.withinKm })}</Word></> : <>{t("across")}{" "}<Word onClick={() => onOpen("within")}>{t("all Prague")}</Word></>}
+        {extras.map((extra) => <React.Fragment key={extra.text}>, <Word onClick={() => onOpen(extra.key)}>{t(extra.text)}</Word></React.Fragment>)}{t(", here now first.{value}", { value: " " })}
+        {extras.length === 0 && <button type="button" onClick={() => onOpen("only")} className="text-[15px] text-velora-muted underline underline-offset-4 hover:text-velora-ink">{t("More")}</button>}
       </p>
       <label className="mt-4 flex items-center gap-3 border-b border-velora-ink/70 pb-2 focus-within:border-velora-copperInk">
         <Search className="h-4 w-4 shrink-0 text-velora-ink" aria-hidden />
-        <span className="sr-only">Search by name or neighbourhood</span>
-        <input type="search" value={q} onChange={(event) => setQ(event.target.value)} maxLength={40} placeholder="Name or neighbourhood" className="w-full bg-transparent text-[17px] text-velora-ink placeholder:text-velora-muted focus:outline-none" />
+        <span className="sr-only">{t("Search by name or neighbourhood")}</span>
+        <input type="search" value={q} onChange={(event) => setQ(event.target.value)} maxLength={40} placeholder={t("Name or neighbourhood")} className="w-full bg-transparent text-[17px] text-velora-ink placeholder:text-velora-muted focus:outline-none" />
       </label>
     </div>
   );
 }
 
 function Choice({ selected, onClick, children, type = "radio" }: { selected: boolean; onClick: () => void; children: React.ReactNode; type?: "radio" | "checkbox" }) {
+  const { t } = useTranslation();
   return (
     <button type="button" role={type} aria-checked={selected} onClick={onClick} className={`flex w-full items-baseline justify-between py-1.5 text-left font-display text-[28px] leading-tight transition-colors ${selected ? "text-velora-ink" : "text-velora-muted hover:text-velora-ink2"}`}>
       <span>{children}</span>
-      {selected && <span className="font-sans text-[14px] text-velora-copperInk">Selected</span>}
+      {selected && <span className="font-sans text-[14px] text-velora-copperInk">{t("Selected")}</span>}
     </button>
   );
 }
@@ -84,6 +86,7 @@ const Label = ({ id, children }: { id: string; children: React.ReactNode }) => <
 export function FilterSheet({ open, section, initial, sharedDesires, onClose, onApply }: {
   open: boolean; section: string; initial: Filters; sharedDesires: string[]; onClose: () => void; onApply: (filters: Filters) => void;
 }) {
+  const { t } = useTranslation();
   const [draft, setDraft] = React.useState(initial);
   React.useEffect(() => { if (open) setDraft(initial); }, [open, initial]);
   React.useEffect(() => {
@@ -96,62 +99,61 @@ export function FilterSheet({ open, section, initial, sharedDesires, onClose, on
   const toggleDesire = (id: string) => setDraft((current) => ({ ...current, desires: current.desires.includes(id) ? current.desires.filter((value) => value !== id) : current.desires.length >= MAX_DESIRE_FILTERS ? current.desires : [...current.desires, id] }));
 
   return (
-    <Sheet open={open} onClose={onClose} label="Who to show" footer={
+    <Sheet open={open} onClose={onClose} label={t("Who to show")} footer={
       <div className="flex items-center gap-6">
-        <button type="button" onClick={() => setDraft({ ...DEFAULT_FILTERS, q: draft.q })} className="min-h-11 text-[16px] text-velora-ink underline underline-offset-4">Reset</button>
-        <button type="button" onClick={() => onApply({ ...draft, maxAge: Math.max(draft.minAge, draft.maxAge) })} className="min-h-14 flex-1 rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper hover:bg-velora-accentHover">Show people</button>
+        <button type="button" onClick={() => setDraft({ ...DEFAULT_FILTERS, q: draft.q })} className="min-h-11 text-[16px] text-velora-ink underline underline-offset-4">{t("Reset")}</button>
+        <button type="button" onClick={() => onApply({ ...draft, maxAge: Math.max(draft.minAge, draft.maxAge) })} className="min-h-14 flex-1 rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper hover:bg-velora-accentHover">{t("Show people")}</button>
       </div>
     }>
-      <h2 id="filter-who" className="font-display text-[40px] leading-none text-velora-ink">Show me</h2>
-      <div role="radiogroup" aria-label="Show me" className="mt-4">
-        <Choice selected={single === ""} onClick={() => setDraft({ ...draft, who: [] })}>Everyone</Choice>
-        {WHO_OPTIONS.map((option) => <Choice key={option.value} selected={single === option.value} onClick={() => setDraft({ ...draft, who: [option.value] })}>{option.value === "OTHER" ? "Non-binary & trans people" : option.label}</Choice>)}
-        {single === null && <p className="mt-1 text-[14px] text-velora-muted">Currently: {draft.who.map((value) => WHO_WORDS[value]).join(", ")}.</p>}
+      <h2 id="filter-who" className="font-display text-[40px] leading-none text-velora-ink">{t("Show me")}</h2>
+      <div role="radiogroup" aria-label={t("Show me")} className="mt-4">
+        <Choice selected={single === ""} onClick={() => setDraft({ ...draft, who: [] })}>{t("Everyone")}</Choice>
+        {WHO_OPTIONS.map((option) => <Choice key={option.value} selected={single === option.value} onClick={() => setDraft({ ...draft, who: [option.value] })}>{option.value === "OTHER" ? t("Non-binary & trans people") : t(option.label)}</Choice>)}
+        {single === null && <p className="mt-1 text-[14px] text-velora-muted">{t("Currently:")}{" "}{draft.who.map((value) => WHO_WORDS[value]).join(", ")}.</p>}
       </div>
 
-      <Label id="within">Within</Label>
-      <div role="radiogroup" aria-label="Within" className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
+      <Label id="within">{t("Within")}</Label>
+      <div role="radiogroup" aria-label={t("Within")} className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
         {DISTANCE_OPTIONS.map((option) => (
-          <button key={option.km} type="button" role="radio" aria-checked={draft.withinKm === option.km} onClick={() => setDraft({ ...draft, withinKm: option.km })} className={`min-h-11 border-b-2 font-display text-[30px] leading-tight ${draft.withinKm === option.km ? "border-velora-copper text-velora-ink" : "border-transparent text-velora-muted hover:text-velora-ink2"}`}>{option.km} km</button>
+          <button key={option.km} type="button" role="radio" aria-checked={draft.withinKm === option.km} onClick={() => setDraft({ ...draft, withinKm: option.km })} className={`min-h-11 border-b-2 font-display text-[30px] leading-tight ${draft.withinKm === option.km ? "border-velora-copper text-velora-ink" : "border-transparent text-velora-muted hover:text-velora-ink2"}`}>{t("{km} km", { km: option.km })}</button>
         ))}
-        <button type="button" role="radio" aria-checked={draft.withinKm === null} onClick={() => setDraft({ ...draft, withinKm: null })} className={`min-h-11 border-b-2 font-display text-[30px] leading-tight ${draft.withinKm === null ? "border-velora-copper text-velora-ink" : "border-transparent text-velora-muted hover:text-velora-ink2"}`}>All Prague</button>
+        <button type="button" role="radio" aria-checked={draft.withinKm === null} onClick={() => setDraft({ ...draft, withinKm: null })} className={`min-h-11 border-b-2 font-display text-[30px] leading-tight ${draft.withinKm === null ? "border-velora-copper text-velora-ink" : "border-transparent text-velora-muted hover:text-velora-ink2"}`}>{t("All Prague")}</button>
       </div>
-      <p className="mt-2 text-[14px] text-velora-muted">Measured between Prague areas, never exact positions.</p>
+      <p className="mt-2 text-[14px] text-velora-muted">{t("Measured between Prague areas, never exact positions.")}</p>
 
-      <Label id="age">Aged</Label>
+      <Label id="age">{t("Aged")}</Label>
       <div className="flex items-baseline gap-3 font-display text-[28px] text-velora-ink">
-        <input type="number" inputMode="numeric" min={18} max={99} value={draft.minAge} aria-label="Youngest age" onChange={(event) => setDraft({ ...draft, minAge: Math.min(99, Math.max(18, Number(event.target.value) || 18)) })} className="w-16 border-b border-velora-ink/40 bg-transparent text-center focus:border-velora-copperInk focus:outline-none" />
-        <span className="text-velora-muted">to</span>
-        <input type="number" inputMode="numeric" min={18} max={99} value={draft.maxAge} aria-label="Oldest age" onChange={(event) => setDraft({ ...draft, maxAge: Math.min(99, Math.max(18, Number(event.target.value) || 99)) })} className="w-16 border-b border-velora-ink/40 bg-transparent text-center focus:border-velora-copperInk focus:outline-none" />
+        <input type="number" inputMode="numeric" min={18} max={99} value={draft.minAge} aria-label={t("Youngest age")} onChange={(event) => setDraft({ ...draft, minAge: Math.min(99, Math.max(18, Number(event.target.value) || 18)) })} className="w-16 border-b border-velora-ink/40 bg-transparent text-center focus:border-velora-copperInk focus:outline-none" />
+        <span className="text-velora-muted">{t("to")}</span>
+        <input type="number" inputMode="numeric" min={18} max={99} value={draft.maxAge} aria-label={t("Oldest age")} onChange={(event) => setDraft({ ...draft, maxAge: Math.min(99, Math.max(18, Number(event.target.value) || 99)) })} className="w-16 border-b border-velora-ink/40 bg-transparent text-center focus:border-velora-copperInk focus:outline-none" />
       </div>
 
-      <Label id="only">Only</Label>
-      <Check checked={draft.verified} onChange={(verified) => setDraft({ ...draft, verified })}>People with a verified photo</Check>
-      <Check checked={draft.hasPhoto} onChange={(hasPhoto) => setDraft({ ...draft, hasPhoto })}>People with a photograph</Check>
-      <Check checked={sharesMine} disabled={sharedDesires.length === 0} onChange={(on) => setDraft({ ...draft, desires: on ? sharedDesires : [] })}>
-        People who share your interests{sharedDesires.length === 0 && <span className="block text-[14px] text-velora-muted">Add what you&apos;re into on your profile first.</span>}
+      <Label id="only">{t("Only")}</Label>
+      <Check checked={draft.verified} onChange={(verified) => setDraft({ ...draft, verified })}>{t("People with a verified photo")}</Check>
+      <Check checked={draft.hasPhoto} onChange={(hasPhoto) => setDraft({ ...draft, hasPhoto })}>{t("People with a photograph")}</Check>
+      <Check checked={sharesMine} disabled={sharedDesires.length === 0} onChange={(on) => setDraft({ ...draft, desires: on ? sharedDesires : [] })}>{t("People who share your interests")}{sharedDesires.length === 0 && <span className="block text-[14px] text-velora-muted">{t("Add what you're into on your profile first.")}</span>}
       </Check>
 
       <section aria-labelledby="filter-into" className="mt-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 id="filter-into" className="scroll-mt-4 text-[13px] font-semibold uppercase tracking-[0.18em] text-velora-ink2">Into</h3>
-          <p role="status" aria-live="polite" aria-atomic="true" className="text-sm font-semibold text-velora-accent">{selectedInterestCount} of {MAX_DESIRE_FILTERS} selected</p>
+          <h3 id="filter-into" className="scroll-mt-4 text-[13px] font-semibold uppercase tracking-[0.18em] text-velora-ink2">{t("Into")}</h3>
+          <p role="status" aria-live="polite" aria-atomic="true" className="text-sm font-semibold text-velora-accent">{t("{selectedInterestCount} of {MAX_DESIRE_FILTERS} selected", { selectedInterestCount, MAX_DESIRE_FILTERS })}</p>
         </div>
         <p id="interest-filter-hint" className="mt-2 text-sm leading-relaxed text-velora-muted">
-          {selectedInterestCount >= MAX_DESIRE_FILTERS ? "Remove a selection to choose another." : "Choose up to five interests. You can mix categories."}
+          {selectedInterestCount >= MAX_DESIRE_FILTERS ? t("Remove a selection to choose another.") : t("Choose up to five interests. You can mix categories.")}
         </p>
-        {selectedInterestCount > 0 && <button type="button" onClick={() => setDraft((current) => ({ ...current, desires: [] }))} className="mt-1 min-h-11 text-sm font-semibold text-velora-accent underline underline-offset-4">Clear interests</button>}
+        {selectedInterestCount > 0 && <button type="button" onClick={() => setDraft((current) => ({ ...current, desires: [] }))} className="mt-1 min-h-11 text-sm font-semibold text-velora-accent underline underline-offset-4">{t("Clear interests")}</button>}
         <div className="mt-5 space-y-6">
           {DESIRE_GROUPS.map((category) => (
             <fieldset key={category.id} className="min-w-0 border-t border-velora-line pt-4">
-              <legend className="pr-3 text-sm font-semibold text-velora-ink">{category.label}</legend>
+              <legend className="pr-3 text-sm font-semibold text-velora-ink">{t(category.label)}</legend>
               <div className="flex flex-wrap gap-2">
                 {category.desires.map((desire) => {
                   const selected = draft.desires.includes(desire.id);
                   return (
                     <button key={desire.id} type="button" aria-pressed={selected} aria-describedby="interest-filter-hint" disabled={!selected && selectedInterestCount >= MAX_DESIRE_FILTERS} onClick={() => toggleDesire(desire.id)} className={`inline-flex min-h-11 max-w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-[15px] leading-snug transition-colors disabled:cursor-not-allowed disabled:border-velora-line disabled:text-velora-muted ${selected ? "border-velora-accent bg-velora-accent font-semibold text-velora-paper" : "border-velora-control bg-velora-paper/40 text-velora-ink2 hover:border-velora-accent hover:bg-velora-blush hover:text-velora-ink"}`}>
                       {selected && <CheckIcon className="h-4 w-4 shrink-0" aria-hidden />}
-                      <span>{desire.label}</span>
+                      <span>{t(desire.label)}</span>
                     </button>
                   );
                 })}

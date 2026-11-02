@@ -38,7 +38,7 @@ test("People never shows member counts and keeps the editorial patterns", async 
   assert.match(people, /Introductions/);
   assert.match(people, /Everyone nearby/);
   const filters = await read("src/components/people/PeopleFilters.tsx");
-  assert.match(filters, /Showing <Word/);
+  assert.match(filters, /\{t\("Showing"\)\}\{" "\}<Word/);
   assert.match(filters, /Name or neighbourhood/);
   assert.match(filters, /Show people/);
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React, { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -11,6 +12,7 @@ import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding"
 import { useMessageRealtime } from "@/lib/messaging/useMessageRealtime";
 
 function MessagesContent() {
+  const { t } = useTranslation();
   const { user, profile } = useAuth();
   const searchParams = useSearchParams();
   const targetUserId = searchParams.get("user") || searchParams.get("peerId");
@@ -105,9 +107,9 @@ function MessagesContent() {
   if (!activeConv) {
     return (
       <div className="mx-auto max-w-2xl px-5 py-12">
-        <h1 className="font-display text-[44px] leading-none text-velora-ink">Messages</h1>
-        <p className="mt-4 text-[17px] text-velora-ink2">Curious about someone? Open their profile in People and say hello.</p>
-        <Link href="/people" className="mt-6 inline-flex min-h-11 items-center text-[16px] font-semibold text-velora-ink underline underline-offset-4">Go to People</Link>
+        <h1 className="font-display text-[44px] leading-none text-velora-ink">{t("Messages")}</h1>
+        <p className="mt-4 text-[17px] text-velora-ink2">{t("Curious about someone? Open their profile in People and say hello.")}</p>
+        <Link href="/people" className="mt-6 inline-flex min-h-11 items-center text-[16px] font-semibold text-velora-ink underline underline-offset-4">{t("Go to People")}</Link>
       </div>
     );
   }
@@ -130,8 +132,9 @@ function MessagesContent() {
 }
 
 export default function MessagesPage() {
+  const { t } = useTranslation();
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-[60vh] text-velora-textMuted text-sm">Loading messages...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center h-[60vh] text-velora-textMuted text-sm">{t("Loading messages...")}</div>}>
       <MessagesContent />
     </Suspense>
   );

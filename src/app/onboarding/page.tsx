@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React, { useState } from "react";
 import { Camera, Heart, User, Users } from "lucide-react";
 import { BigButton, BigInput, ChoiceCard, FlowScreen } from "@/components/flow/Flow";
@@ -33,6 +34,7 @@ function birthdayError(value: string, who: "you" | "partner") {
 }
 
 export default function OnboardingPage() {
+  const { t } = useTranslation();
   const [step, setStep] = useState<StepId>("kind");
   const [profileType, setProfileType] = useState<ProfileKind>("");
   const [gender, setGender] = useState("");
@@ -122,95 +124,95 @@ export default function OnboardingPage() {
     }
   }
 
-  const errorLine = error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-5 py-4 text-base text-velora-danger">{error}</p> : null;
+  const errorLine = error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-5 py-4 text-base text-velora-danger">{t(error)}</p> : null;
 
   if (step === "kind") return (
-    <FlowScreen {...screen} title="Who's coming in?">
-      <ChoiceCard icon={<User className="h-7 w-7" />} label="Just me" selected={profileType === "SINGLE"} onClick={() => { if (profileType !== "SINGLE") { setGender(""); setRelationshipStatus(""); } setProfileType("SINGLE"); setStep("identity"); }} />
-      <ChoiceCard icon={<Users className="h-7 w-7" />} label="We're a couple" selected={profileType === "COUPLE"} onClick={() => { if (profileType !== "COUPLE") { setGender(""); setRelationshipStatus(""); } setProfileType("COUPLE"); setStep("identity"); }} />
+    <FlowScreen {...screen} title={t("Who's coming in?")}>
+      <ChoiceCard icon={<User className="h-7 w-7" />} label={t("Just me")} selected={profileType === "SINGLE"} onClick={() => { if (profileType !== "SINGLE") { setGender(""); setRelationshipStatus(""); } setProfileType("SINGLE"); setStep("identity"); }} />
+      <ChoiceCard icon={<Users className="h-7 w-7" />} label={t("We're a couple")} selected={profileType === "COUPLE"} onClick={() => { if (profileType !== "COUPLE") { setGender(""); setRelationshipStatus(""); } setProfileType("COUPLE"); setStep("identity"); }} />
     </FlowScreen>
   );
 
   if (step === "identity") return (
-    <FlowScreen {...screen} title={profileType === "COUPLE" ? "You are…" : "I am a…"}>
+    <FlowScreen {...screen} title={profileType === "COUPLE" ? t("You are…") : t("I am a…")}>
       {(profileType === "COUPLE" ? COUPLE_COMPOSITIONS : INDIVIDUAL_IDENTITIES).map((item) => (
-        <ChoiceCard key={item.value} label={item.label} selected={gender === item.value} onClick={() => { setGender(item.value); next(); }} />
+        <ChoiceCard key={item.value} label={t(item.label)} selected={gender === item.value} onClick={() => { setGender(item.value); next(); }} />
       ))}
     </FlowScreen>
   );
 
   if (step === "relationship") return (
-    <FlowScreen {...screen} title={profileType === "COUPLE" ? "Your relationship" : "Your situation"}>
+    <FlowScreen {...screen} title={profileType === "COUPLE" ? t("Your relationship") : t("Your situation")}>
       {relationshipOptionsFor(profileType).map((item) => (
-        <ChoiceCard key={item.value} label={item.label} selected={relationshipStatus === item.value} onClick={() => { setRelationshipStatus(item.value); next(); }} />
+        <ChoiceCard key={item.value} label={t(item.label)} selected={relationshipStatus === item.value} onClick={() => { setRelationshipStatus(item.value); next(); }} />
       ))}
     </FlowScreen>
   );
 
   if (step === "name") return (
-    <FlowScreen {...screen} title={profileType === "COUPLE" ? "Your nickname" : "What should we call you?"} action={<BigButton disabled={!nameValid} onClick={next}>Continue</BigButton>}>
+    <FlowScreen {...screen} title={profileType === "COUPLE" ? t("Your nickname") : t("What should we call you?")} action={<BigButton disabled={!nameValid} onClick={next}>{t("Continue")}</BigButton>}>
       <form onSubmit={(event) => { event.preventDefault(); if (nameValid) next(); }}>
-        <BigInput label="Nickname" autoFocus value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={80} autoComplete="nickname" placeholder="e.g. Nina" />
+        <BigInput label={t("Nickname")} autoFocus value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={80} autoComplete="nickname" placeholder={t("e.g. Nina")} />
       </form>
     </FlowScreen>
   );
 
   if (step === "birthday") return (
-    <FlowScreen {...screen} title="Your birthday" action={<BigButton disabled={!basicsValid} onClick={next}>Continue</BigButton>}>
-      <BigInput label="Date of birth" type="date" value={dateOfBirth} onChange={(event) => setDateOfBirth(event.target.value)} autoComplete="bday" error={birthdayError(dateOfBirth, "you")} />
-      <p className="text-base text-velora-textMuted">Members see your age, never the date.</p>
+    <FlowScreen {...screen} title={t("Your birthday")} action={<BigButton disabled={!basicsValid} onClick={next}>{t("Continue")}</BigButton>}>
+      <BigInput label={t("Date of birth")} type="date" value={dateOfBirth} onChange={(event) => setDateOfBirth(event.target.value)} autoComplete="bday" error={birthdayError(dateOfBirth, "you")} />
+      <p className="text-base text-velora-textMuted">{t("Members see your age, never the date.")}</p>
     </FlowScreen>
   );
 
   if (step === "partner") return (
-    <FlowScreen {...screen} title="Your partner" action={<BigButton disabled={!partnerValid} onClick={next}>Continue</BigButton>}>
+    <FlowScreen {...screen} title={t("Your partner")} action={<BigButton disabled={!partnerValid} onClick={next}>{t("Continue")}</BigButton>}>
       <div className="space-y-5">
-        <BigInput label="Their nickname" value={partnerDisplayName} onChange={(event) => setPartnerDisplayName(event.target.value)} maxLength={80} placeholder="e.g. Tom" />
-        <BigInput label="Their date of birth" type="date" value={partnerDateOfBirth} onChange={(event) => setPartnerDateOfBirth(event.target.value)} error={birthdayError(partnerDateOfBirth, "partner")} />
+        <BigInput label={t("Their nickname")} value={partnerDisplayName} onChange={(event) => setPartnerDisplayName(event.target.value)} maxLength={80} placeholder={t("e.g. Tom")} />
+        <BigInput label={t("Their date of birth")} type="date" value={partnerDateOfBirth} onChange={(event) => setPartnerDateOfBirth(event.target.value)} error={birthdayError(partnerDateOfBirth, "partner")} />
       </div>
     </FlowScreen>
   );
 
   if (step === "looking") return (
-    <FlowScreen {...screen} title="What brings you here?" action={<BigButton disabled={lookingFor.length === 0} onClick={next}>Continue</BigButton>}>
-      <p className="-mt-4 text-base text-velora-textMuted">Pick as many as you like.</p>
+    <FlowScreen {...screen} title={t("What brings you here?")} action={<BigButton disabled={lookingFor.length === 0} onClick={next}>{t("Continue")}</BigButton>}>
+      <p className="-mt-4 text-base text-velora-textMuted">{t("Pick as many as you like.")}</p>
       {LOOKING_FOR.map((item) => (
-        <ChoiceCard key={item.value} compact label={item.label} selected={lookingFor.includes(item.value)} onClick={() => setLookingFor((current) => current.includes(item.value) ? current.filter((value) => value !== item.value) : [...current, item.value])} />
+        <ChoiceCard key={item.value} compact label={t(item.label)} selected={lookingFor.includes(item.value)} onClick={() => setLookingFor((current) => current.includes(item.value) ? current.filter((value) => value !== item.value) : [...current, item.value])} />
       ))}
     </FlowScreen>
   );
 
   if (step === "area") return (
-    <FlowScreen {...screen} title="Where are you?">
-      {errorLine}
-      {submitting && <p role="status" className="text-lg text-velora-textSecondary">Creating your profile…</p>}
+    <FlowScreen {...screen} title={t("Where are you?")}>
+      {t(errorLine)}
+      {submitting && <p role="status" className="text-lg text-velora-textSecondary">{t("Creating your profile…")}</p>}
       <div className={`grid grid-cols-2 gap-3 ${submitting ? "pointer-events-none opacity-50" : ""}`}>
         {AREAS.filter((area) => area.kind === "PRAGUE_DISTRICT").map((area) => (
           <button key={area.id} type="button" aria-pressed={areaId === area.id} onClick={() => createProfile(area.id)} className={`min-h-20 rounded-3xl border-2 px-4 py-3 text-left transition active:scale-[0.98] ${areaId === area.id ? "border-velora-accent bg-velora-accent/[0.06]" : "border-velora-line bg-velora-surface hover:border-velora-ink/30"}`}>
-            <span className="block text-lg font-semibold text-velora-textPrimary">{area.name}</span>
-            <span className="block truncate text-sm text-velora-textMuted">{area.label}</span>
+            <span className="block text-lg font-semibold text-velora-textPrimary">{t(area.name)}</span>
+            <span className="block truncate text-sm text-velora-textMuted">{t(area.label)}</span>
           </button>
         ))}
       </div>
       <div className={`space-y-3 pt-3 ${submitting ? "pointer-events-none opacity-50" : ""}`}>
         {AREAS.filter((area) => area.kind !== "PRAGUE_DISTRICT").map((area) => (
-          <ChoiceCard key={area.id} compact label={area.name} selected={areaId === area.id} onClick={() => createProfile(area.id)} />
+          <ChoiceCard key={area.id} compact label={t(area.name)} selected={areaId === area.id} onClick={() => createProfile(area.id)} />
         ))}
       </div>
     </FlowScreen>
   );
 
   return (
-    <FlowScreen step={steps.length} total={steps.length} title="Add a photo">
+    <FlowScreen step={steps.length} total={steps.length} title={t("Add a photo")}>
       <label className={`flex aspect-[4/5] w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-[2rem] border-2 border-dashed border-velora-gold/50 bg-velora-gold/5 transition hover:border-velora-gold ${photoProgress !== null ? "pointer-events-none" : ""}`}>
         {photoProgress !== null
           ? <span className="text-3xl font-bold text-velora-textPrimary">{photoProgress}%</span>
-          : <><Camera className="h-14 w-14 text-velora-gold" /><span className="text-2xl font-semibold text-velora-textPrimary">Choose a photo</span></>}
+          : <><Camera className="h-14 w-14 text-velora-gold" /><span className="text-2xl font-semibold text-velora-textPrimary">{t("Choose a photo")}</span></>}
         <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={photoProgress !== null} onChange={uploadPhoto} />
       </label>
-      <p className="flex items-center gap-2 text-base text-velora-textMuted"><Heart className="h-4 w-4 text-velora-gold" aria-hidden />Members only. Keep it non-explicit.</p>
-      {errorLine}
-      <button type="button" disabled={photoProgress !== null} onClick={() => window.location.replace("/")} className="w-full py-4 text-lg font-semibold text-velora-textSecondary hover:text-velora-textPrimary">Skip for now</button>
+      <p className="flex items-center gap-2 text-base text-velora-textMuted"><Heart className="h-4 w-4 text-velora-gold" aria-hidden />{t("Members only. Keep it non-explicit.")}</p>
+      {t(errorLine)}
+      <button type="button" disabled={photoProgress !== null} onClick={() => window.location.replace("/")} className="w-full py-4 text-lg font-semibold text-velora-textSecondary hover:text-velora-textPrimary">{t("Skip for now")}</button>
     </FlowScreen>
   );
 }

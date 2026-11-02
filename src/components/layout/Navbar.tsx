@@ -6,14 +6,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { isFlowPath } from "@/lib/flowRoutes";
 import { useAuth } from "@/context/AuthContext";
-import { useTranslation, AVAILABLE_LANGUAGES } from "@/context/LanguageContext";
+import { useTranslation } from "@/context/LanguageContext";
+import { LanguageSwitch } from "@/components/i18n/LanguageSwitch";
 import { NotificationDrawer } from "@/components/notifications/NotificationDrawer";
 import { Badge } from "@/components/ui/Badge";
 import {
   Compass,
   MessageSquare,
   Bell,
-  ChevronDown,
   User,
   Settings,
   LogOut,
@@ -27,8 +27,7 @@ import {
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
   const { user, profile, role, signOut } = useAuth();
-  const { language, setLanguage, t } = useTranslation();
-  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
+  const { t } = useTranslation();
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -46,10 +45,10 @@ export const Navbar: React.FC = () => {
   return (
     <header className={`${phoneHidden ? "hidden md:block" : ""} sticky top-0 z-40 w-full border-b border-velora-line/70 bg-velora-paper/85 backdrop-blur-xl`}>
       <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 lg:h-20 flex items-center justify-between gap-4">
-        <Link href="/" aria-label="Intimo" className="shrink-0 text-velora-ink"><Logo className="h-8 w-auto lg:h-9" /></Link>
+        <Link href="/" aria-label={t("Intimo")} className="shrink-0 text-velora-ink"><Logo className="h-8 w-auto lg:h-9" /></Link>
 
         {/* Me lives in the account menu. */}
-        <nav className="hidden lg:flex items-center gap-1" aria-label="Primary navigation">
+        <nav className="hidden lg:flex items-center gap-1" aria-label={t("Primary navigation")}>
           {[
             { href: "/", label: "Home", active: pathname === "/" },
             { href: "/people", label: "People", active: pathname.startsWith("/people") },
@@ -59,7 +58,7 @@ export const Navbar: React.FC = () => {
             ...(user ? [{ href: "/messages", label: t("nav.messages"), active: pathname.startsWith("/messages") }] : []),
           ].map((item) => (
             <Link key={item.href} href={item.href} aria-current={item.active ? "page" : undefined} className={`rounded-full px-4 py-2 text-[15px] font-medium transition ${item.active ? "bg-velora-accent text-velora-paper" : "text-velora-ink2 hover:bg-velora-ink/5 hover:text-velora-ink"}`}>
-              {item.label}
+              {t(item.label)}
             </Link>
           ))}
         </nav>
@@ -72,7 +71,7 @@ export const Navbar: React.FC = () => {
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
                 className="p-2.5 rounded-full bg-ink/5 border border-ink/10 text-velora-textSecondary hover:text-velora-gold hover:bg-ink/10 transition-colors relative"
-                title="Notifications"
+                title={t("Notifications")}
               >
                 <Bell className="w-4 h-4" />
                 {unreadCount > 0 && (
@@ -90,46 +89,8 @@ export const Navbar: React.FC = () => {
             </div>
           )}
 
-          {/* Language selector (on phones it lives on the Me page); shown only when a second language is complete. */}
-          {AVAILABLE_LANGUAGES.length > 1 && <div className="relative hidden sm:block">
-            <button
-              onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-ink/5 border border-ink/10 text-xs font-semibold text-velora-textPrimary hover:bg-ink/10 transition-colors"
-              title="Change platform language"
-            >
-              <span>{AVAILABLE_LANGUAGES.find((l) => l.code === language)?.flag || "🇬🇧"}</span>
-              <span className="uppercase text-[11px] font-bold">{language}</span>
-              <ChevronDown className="w-3 h-3 text-velora-textMuted" />
-            </button>
-
-            {isLangDropdownOpen && (
-              <div
-                className="absolute right-0 mt-2 w-44 glass-panel-gold rounded-2xl p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2"
-                onClick={() => setIsLangDropdownOpen(false)}
-              >
-                <div className="px-3 py-1 text-[10px] uppercase font-bold text-velora-textMuted border-b border-ink/10 mb-1">
-                  Language / Jazyk
-                </div>
-                {AVAILABLE_LANGUAGES.map((lang) => (
-                  <button
-                    key={lang.code}
-                    onClick={() => setLanguage(lang.code)}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-xl transition-all ${
-                      language === lang.code
-                        ? "bg-gold-gradient text-velora-bg font-bold"
-                        : "text-velora-textPrimary hover:bg-ink/10"
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span>{lang.flag}</span>
-                      <span>{lang.nativeName}</span>
-                    </span>
-                    <span className="text-[10px] font-mono uppercase opacity-60">{lang.code}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>}
+          {/* Czech / English: always visible so visitors can switch in one tap. */}
+          <LanguageSwitch />
 
           {/* USER ACCOUNT DROPDOWN VS PUBLIC GUEST SIGN-IN / REGISTER CTAS */}
           {user ? (
@@ -141,9 +102,9 @@ export const Navbar: React.FC = () => {
                 <div className="w-10 h-10 rounded-full border-2 border-velora-gold/50 overflow-hidden bg-velora-card">
                   {profile?.avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={profile.avatarUrl} alt="User avatar" className="w-full h-full object-cover" />
+                    <img src={profile.avatarUrl} alt={t("User avatar")} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="w-full h-full flex items-center justify-center text-sm font-bold text-velora-gold" aria-label="Profile without an avatar">
+                    <span className="w-full h-full flex items-center justify-center text-sm font-bold text-velora-gold" aria-label={t("Profile without an avatar")}>
                       {(profile?.displayName || user.username || "I").slice(0, 1).toUpperCase()}
                     </span>
                   )}
@@ -167,57 +128,43 @@ export const Navbar: React.FC = () => {
                     href={`/profile/${profile?.id || "me"}`}
                     className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
                   >
-                    <User className="w-4 h-4 text-velora-gold" />
-                    My Profile
-                  </Link>
+                    <User className="w-4 h-4 text-velora-gold" />{t("My Profile")}</Link>
 
                   <Link
                     href="/albums/manage"
                     className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
                   >
-                    <ImageIcon className="w-4 h-4 text-velora-accent" />
-                    My Photos
-                  </Link>
+                    <ImageIcon className="w-4 h-4 text-velora-accent" />{t("My Photos")}</Link>
 
                   <Link
                     href={`/profile/${profile?.id || "me"}?tab=VIDEOS`}
                     className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
                   >
-                    <Video className="w-4 h-4 text-velora-success" />
-                    My Videos
-                  </Link>
+                    <Video className="w-4 h-4 text-velora-success" />{t("My Videos")}</Link>
 
                   <Link
                     href={`/profile/${profile?.id || "me"}?tab=ADS`}
                     className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
                   >
-                    <Megaphone className="w-4 h-4 text-velora-danger" />
-                    My Dating Ads
-                  </Link>
+                    <Megaphone className="w-4 h-4 text-velora-danger" />{t("My Dating Ads")}</Link>
 
                   <Link
                     href="/favorites"
                     className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
                   >
-                    <Bookmark className="w-4 h-4 text-velora-accent" />
-                    Saved items
-                  </Link>
+                    <Bookmark className="w-4 h-4 text-velora-accent" />{t("Saved items")}</Link>
 
                   <Link
                     href="/settings"
                     className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl"
                   >
-                    <Settings className="w-4 h-4 text-velora-textMuted" />
-                    Account Settings
-                  </Link>
+                    <Settings className="w-4 h-4 text-velora-textMuted" />{t("Account Settings")}</Link>
 
                   <button
                     onClick={() => signOut("/")}
                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-danger hover:bg-red-500/10 rounded-xl mt-1 border-t border-ink/5"
                   >
-                    <LogOut className="w-4 h-4" />
-                    Sign Out
-                  </button>
+                    <LogOut className="w-4 h-4" />{t("Sign Out")}</button>
                 </div>
               )}
             </div>
@@ -226,16 +173,14 @@ export const Navbar: React.FC = () => {
             <div className="flex items-center gap-2 sm:gap-3">
               <a
                 href="/auth/login"
-                className="whitespace-nowrap rounded-full px-4 py-2.5 text-[15px] font-medium text-velora-ink hover:bg-velora-ink/5"
+                className="whitespace-nowrap rounded-full px-3 py-2.5 text-[15px] font-medium text-velora-ink hover:bg-velora-ink/5 sm:px-4"
               >
                 {t("auth.login")}
               </a>
               <a
                 href="/auth/login?screen_hint=signup"
-                className="whitespace-nowrap rounded-full bg-velora-accent px-5 py-2.5 text-[15px] font-semibold text-velora-paper transition hover:bg-velora-accentHover"
-              >
-                Join free
-              </a>
+                className="hidden whitespace-nowrap rounded-full bg-velora-accent px-5 py-2.5 text-[15px] font-semibold text-velora-paper transition hover:bg-velora-accentHover min-[440px]:inline-block"
+              >{t("Join free")}</a>
             </div>
           )}
         </div>

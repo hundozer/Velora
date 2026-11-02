@@ -26,7 +26,7 @@ test("the chat keeps every server-side rule and only frames them", async () => {
   // Explicit is off until the boundary allows it; the server re-checks on send.
   assert.match(chat, /checked=\{photoExplicit && explicitAllowed\} disabled=\{!explicitAllowed\}/);
   assert.match(chat, /emptyThread && !openersHidden/);
-  assert.match(chat, /If you&apos;d like a start/);
+  assert.match(chat, /If you'd like a start/);
   assert.match(chat, /border-l-2 border-velora-copper/, "plan quote with a copper rule");
   assert.doesNotMatch(chat, /bg-gold-gradient|shadow-gold-glow|Amateri/);
   const page = await read("src/app/messages/page.tsx");

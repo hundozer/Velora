@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import Link from "next/link";
 import { StoryAvatar } from "@/components/stories/StoryAvatar";
@@ -9,15 +10,16 @@ import type { Person } from "@/components/people/PersonTile";
 
 /** One line of the Everyone index: small portrait (or monogram), name, age · area. */
 export function IndexRow({ person }: { person: Person }) {
+  const { t } = useTranslation();
   return (
     <li className="[content-visibility:auto] [contain-intrinsic-size:auto_84px]">
       <div className="group flex min-h-[84px] items-center gap-4 py-3 outline-offset-4">
         <StoryAvatar ownerId={person.id} src={person.avatarUrl} name={person.displayName} size={60}/>
         <Link href={`/profile/${person.id}`} className="min-w-0 flex-1 py-3">
           <span className="block truncate font-display text-[24px] leading-tight text-velora-ink group-hover:text-velora-copperInk">{person.displayName}</span>
-          <span className="block truncate text-[14px] text-velora-muted">{metaLine(person) || " "}</span>
+          <span className="block truncate text-[14px] text-velora-muted">{metaLine(person, t) || " "}</span>
         </Link>
-        {person.presence === "ONLINE" && <span className="h-2 w-2 shrink-0 rounded-full bg-velora-copper" aria-label="Here now" role="img" />}
+        {person.presence === "ONLINE" && <span className="h-2 w-2 shrink-0 rounded-full bg-velora-copper" aria-label={t("Here now")} role="img" />}
       </div>
     </li>
   );
@@ -44,6 +46,7 @@ function SkeletonRows({ count = 3 }: { count?: number }) {
 export function PeopleIndex({ people, loading, hasMore, loadingMore, onLoadMore, endNote }: {
   people: Person[] | null; loading: boolean; hasMore: boolean; loadingMore: boolean; onLoadMore: () => void; endNote?: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   const sentinel = React.useRef<HTMLDivElement>(null);
   const [farDown, setFarDown] = React.useState(false);
 
@@ -69,10 +72,10 @@ export function PeopleIndex({ people, loading, hasMore, loadingMore, onLoadMore,
   return (
     <div>
       {groups.map((group) => (
-        <section key={group.label} aria-label={group.label}>
+        <section key={group.label} aria-label={t(group.label)}>
           <h3 className="sticky top-0 z-10 -mx-5 flex items-baseline justify-between bg-velora-surface/95 px-5 py-3 backdrop-blur-sm sm:-mx-8 sm:px-8 md:top-16 lg:top-20">
-            <span className="font-display text-[22px] italic text-velora-copperInk">{group.label}</span>
-            {farDown && <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-[14px] text-velora-ink2 underline underline-offset-4">Back to top</button>}
+            <span className="font-display text-[22px] italic text-velora-copperInk">{t(group.label)}</span>
+            {farDown && <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-[14px] text-velora-ink2 underline underline-offset-4">{t("Back to top")}</button>}
           </h3>
           <ul>{group.people.map((person) => <IndexRow key={person.id} person={person} />)}</ul>
         </section>
@@ -80,9 +83,9 @@ export function PeopleIndex({ people, loading, hasMore, loadingMore, onLoadMore,
       {loadingMore && <SkeletonRows />}
       <div ref={sentinel} aria-hidden className="h-px" />
       {hasMore && !loadingMore && (
-        <button type="button" onClick={onLoadMore} className="mt-2 min-h-11 text-[15px] text-velora-ink2 underline underline-offset-4">Show more</button>
+        <button type="button" onClick={onLoadMore} className="mt-2 min-h-11 text-[15px] text-velora-ink2 underline underline-offset-4">{t("Show more")}</button>
       )}
-      {!hasMore && endNote && <p className="mt-6 text-[15px] text-velora-ink2">{endNote}</p>}
+      {!hasMore && endNote && <p className="mt-6 text-[15px] text-velora-ink2">{t(endNote)}</p>}
     </div>
   );
 }

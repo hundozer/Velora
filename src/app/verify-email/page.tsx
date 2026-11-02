@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -10,6 +11,7 @@ import { AuthMessage, AuthShell, requestAuthEmail, submitClass } from "@/compone
 const RESEND_COOLDOWN_SECONDS = 60;
 
 function VerifyEmail() {
+  const { t } = useTranslation();
   const params = useSearchParams();
   const { authIdentity } = useAuth();
   const email = params.get("email") || authIdentity?.email || "";
@@ -33,16 +35,16 @@ function VerifyEmail() {
   };
 
   return (
-    <AuthShell title="Check your email" footer={<Link href="/login" className="text-velora-gold hover:underline">Back to sign in</Link>}>
+    <AuthShell title={t("Check your email")} footer={<Link href="/login" className="text-velora-gold hover:underline">{t("Back to sign in")}</Link>}>
       <div className="flex items-start gap-3 text-sm text-velora-textSecondary">
         <Mail className="mt-0.5 h-5 w-5 shrink-0 text-velora-gold" aria-hidden />
-        <p>We sent a confirmation link{email ? <> to <strong className="text-velora-textPrimary">{email}</strong></> : null}. Open it on any device to activate your account and set up your profile.</p>
+        <p>{email ? <>{t("We sent a confirmation link to")}{" "}<strong className="text-velora-textPrimary">{email}</strong></> : t("We sent a confirmation link")}. {t("Open it on any device to activate your account and set up your profile.")}</p>
       </div>
-      {message && <AuthMessage tone={message.tone}>{message.text}</AuthMessage>}
+      {message && <AuthMessage tone={message.tone}>{t(message.text)}</AuthMessage>}
       <button type="button" onClick={resend} disabled={!email || cooldown > 0} className={submitClass}>
-        {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend the link"}
+        {cooldown > 0 ? t("Resend in {cooldown}s", { cooldown: cooldown }) : t("Resend the link")}
       </button>
-      <p className="text-xs text-velora-textMuted">Nothing arriving? Check spam, or sign up again with the correct address.</p>
+      <p className="text-xs text-velora-textMuted">{t("Nothing arriving? Check spam, or sign up again with the correct address.")}</p>
     </AuthShell>
   );
 }

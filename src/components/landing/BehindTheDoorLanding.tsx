@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import { usePathname } from "next/navigation";
 import { Lock } from "lucide-react";
 import { CompletionState, PrimaryAction, SecondaryAction } from "@/components/editorial/Editorial";
@@ -14,6 +15,7 @@ const COPY: Record<string, string> = {
 
 /** Shared sign-in boundary for member-only screens. */
 export function BehindTheDoorLanding() {
+  const { t } = useTranslation();
   const pathname = usePathname() || "";
   const title = Object.entries(COPY).find(([prefix]) => pathname.startsWith(prefix))?.[1] || "Members only.";
   const returnTo = encodeURIComponent(pathname || "/");
@@ -21,9 +23,9 @@ export function BehindTheDoorLanding() {
     <main className="flex min-h-[70vh] items-center">
       <CompletionState
         icon={<Lock className="h-7 w-7" aria-hidden />}
-        title={title}
-        body="Members only. Sign in or create an account to take a look."
-        action={<div className="flex flex-col justify-center gap-3 sm:flex-row"><PrimaryAction href="/auth/login?screen_hint=signup">Join Intimo</PrimaryAction><SecondaryAction href={`/auth/login?returnTo=${returnTo}`}>Sign in</SecondaryAction></div>}
+        title={t(title)}
+        body={t("Members only. Sign in or create an account to take a look.")}
+        action={<div className="flex flex-col justify-center gap-3 sm:flex-row"><PrimaryAction href="/auth/login?screen_hint=signup">{t("Join Intimo")}</PrimaryAction><SecondaryAction href={`/auth/login?returnTo=${returnTo}`}>{t("Sign in")}</SecondaryAction></div>}
       />
     </main>
   );

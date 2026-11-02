@@ -1,13 +1,15 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import Link from "next/link";
 import { Compass, Heart, ImagePlus, MessageSquare, Settings, UserRound } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
   const { user, profile, isAuthLoading } = useAuth();
-  if (isAuthLoading) return <main className="flex min-h-[55vh] items-center justify-center" aria-live="polite"><span className="h-8 w-8 animate-spin rounded-full border-2 border-ink/15 border-t-amber-300" aria-hidden="true" /><span className="sr-only">Loading</span></main>;
+  if (isAuthLoading) return <main className="flex min-h-[55vh] items-center justify-center" aria-live="polite"><span className="h-8 w-8 animate-spin rounded-full border-2 border-ink/15 border-t-amber-300" aria-hidden="true" /><span className="sr-only">{t("Loading")}</span></main>;
   if (!user) return <BehindTheDoorLanding />;
 
   const required = [profile?.displayName, profile?.avatarUrl, profile?.bio, profile?.city, profile?.country, profile?.lookingFor?.length];
@@ -17,18 +19,16 @@ export default function DashboardPage() {
   return (
     <main className="mx-auto max-w-6xl space-y-8 px-4 py-10 sm:px-6">
       <section className="rounded-3xl border border-velora-gold/30 bg-velora-card p-6 shadow-gold-glow sm:p-9">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-velora-gold">Your Intimo home</p>
-        <h1 className="mt-3 font-display font-bold text-ink text-5xl leading-[1.02] sm:text-6xl">Welcome, {firstName}</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-velora-textSecondary">
-          Your home starts empty and grows only from real profiles, conversations and connections you choose.
-        </p>
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-velora-gold">{t("Your Intimo home")}</p>
+        <h1 className="mt-3 font-display font-bold text-ink text-5xl leading-[1.02] sm:text-6xl">{t("Welcome, {firstName}", { firstName })}</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-velora-textSecondary">{t("Your home starts empty and grows only from real profiles, conversations and connections you choose.")}</p>
       </section>
 
       <section aria-labelledby="profile-progress" className="rounded-3xl border border-ink/10 bg-ink/[0.035] p-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h2 id="profile-progress" className="text-lg font-bold text-ink">Profile completion</h2>
-            <p className="mt-1 text-sm text-velora-textMuted">Calculated from your real profile fields.</p>
+            <h2 id="profile-progress" className="text-lg font-bold text-ink">{t("Profile completion")}</h2>
+            <p className="mt-1 text-sm text-velora-textMuted">{t("Calculated from your real profile fields.")}</p>
           </div>
           <span className="text-2xl font-bold text-velora-gold">{completion}%</span>
         </div>
@@ -37,13 +37,12 @@ export default function DashboardPage() {
         </div>
         {completion < 100 && (
           <Link href={`/profile/${profile?.id || "me"}`} className="mt-5 inline-flex items-center gap-2 rounded-full bg-gold-gradient px-5 py-3 text-sm font-bold text-velora-bg">
-            <UserRound className="h-4 w-4" /> Complete my profile
-          </Link>
+            <UserRound className="h-4 w-4" />{" "}{t("Complete my profile")}</Link>
         )}
       </section>
 
       <section aria-labelledby="start-heading">
-        <h2 id="start-heading" className="mb-4 text-lg font-bold text-ink">What would you like to do?</h2>
+        <h2 id="start-heading" className="mb-4 text-lg font-bold text-ink">{t("What would you like to do?")}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
             ["Find people", "Who's around, online now and new in Prague.", "/people", Compass],
@@ -55,8 +54,8 @@ export default function DashboardPage() {
           ].map(([title, copy, href, Icon]) => (
             <Link key={String(href)} href={String(href)} className="group rounded-2xl border border-ink/10 bg-velora-card p-5 transition hover:border-velora-gold/50 hover:bg-ink/[0.06]">
               <Icon className="h-6 w-6 text-velora-gold" />
-              <h3 className="mt-4 font-bold text-ink group-hover:text-velora-gold">{String(title)}</h3>
-              <p className="mt-2 text-sm leading-5 text-velora-textMuted">{String(copy)}</p>
+              <h3 className="mt-4 font-bold text-ink group-hover:text-velora-gold">{t(String(title))}</h3>
+              <p className="mt-2 text-sm leading-5 text-velora-textMuted">{t(String(copy))}</p>
             </Link>
           ))}
         </div>

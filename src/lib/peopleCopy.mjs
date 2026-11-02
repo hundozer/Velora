@@ -18,14 +18,16 @@ export function subject(person) {
 
 export const PRESENCE_WORDS = { ONLINE: "Here now", TODAY: "Earlier today", WEEK: "This week" };
 
-/** "Here now · Holešovice · 29" — only what the member chose to show. */
-export function statusLine(person) {
-  return [person?.presence ? PRESENCE_WORDS[person.presence] : null, person?.areaName, person?.isCoupleProfile ? "couple" : person?.age].filter(Boolean).join(" · ");
+const same = (text) => text;
+
+/** "Here now · Holešovice · 29" — only what the member chose to show. Pass `t` to translate the words. */
+export function statusLine(person, t = same) {
+  return [person?.presence ? t(PRESENCE_WORDS[person.presence]) : null, person?.areaName, person?.isCoupleProfile ? t("couple") : person?.age].filter(Boolean).join(" · ");
 }
 
-/** Index meta: "29 · Holešovice" or "Couple · Vinohrady". */
-export function metaLine(person) {
-  return [person?.isCoupleProfile ? "Couple" : person?.age, person?.areaName].filter(Boolean).join(" · ");
+/** Index meta: "29 · Holešovice" or "Couple · Vinohrady". Pass `t` to translate the words. */
+export function metaLine(person, t = same) {
+  return [person?.isCoupleProfile ? t("Couple") : person?.age, person?.areaName].filter(Boolean).join(" · ");
 }
 
 /** The member's own words, if they wrote any (never a placeholder). */

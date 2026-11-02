@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import Link from "next/link";
 import { Portrait } from "@/components/media/Portrait";
@@ -8,12 +9,13 @@ import { ReportModal } from "@/components/safety/ReportModal";
 
 /** A private deep link. Opening it never sends a reply or publishes a Story. */
 export default function InvitationPage({ params }: { params: { id: string } }) {
+  const { t } = useTranslation();
   const [plan, setPlan] = React.useState<Plan | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
   const [report, setReport] = React.useState(false);
   async function endInvitation() {
-    if (!plan || !window.confirm("End this invitation now?")) return;
+    if (!plan || !window.confirm(t("End this invitation now?"))) return;
     try {
       const response = await fetch(`/api/dating-ads/${plan.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "END" }) });
       if (!response.ok) throw new Error();
@@ -44,18 +46,18 @@ export default function InvitationPage({ params }: { params: { id: string } }) {
     return () => clearTimeout(timer);
   }, [plan]);
   return <main className="mx-auto max-w-2xl px-5 pb-28 pt-6">
-    <Link href="/tonight" className="inline-flex min-h-11 items-center underline">Back to Tonight</Link>
-    {loading ? <p role="status" className="py-12">Opening invitation…</p> : !plan ? <div className="py-12"><h1 className="font-display text-4xl">This invitation is unavailable.</h1><p role="status" className="mt-4">{error || "It may have ended, or may no longer be visible to you."}</p></div> : <>
-      <p className="mt-6 text-sm uppercase tracking-widest text-velora-accent">Take us out</p>
-      <h1 className="mt-3 break-words font-display text-5xl leading-tight">{plan.title}</h1>
+    <Link href="/tonight" className="inline-flex min-h-11 items-center underline">{t("Back to Tonight")}</Link>
+    {loading ? <p role="status" className="py-12">{t("Opening invitation…")}</p> : !plan ? <div className="py-12"><h1 className="font-display text-4xl">{t("This invitation is unavailable.")}</h1><p role="status" className="mt-4">{t(error) || t("It may have ended, or may no longer be visible to you.")}</p></div> : <>
+      <p className="mt-6 text-sm uppercase tracking-widest text-velora-accent">{t("Take us out")}</p>
+      <h1 className="mt-3 break-words font-display text-5xl leading-tight">{t(plan.title)}</h1>
       <Link href={`/profile/${plan.authorId}`} className="mt-6 flex items-center gap-4 rounded-2xl border border-velora-line p-3">
         <Portrait src={plan.authorAvatar} name={plan.authorName} sizes="80px" className="h-20 w-20 shrink-0 overflow-hidden rounded-xl" />
-        <span><span className="block text-lg font-semibold">{plan.authorName}</span><span className="text-sm text-velora-muted">Open profile & boundaries</span></span>
+        <span><span className="block text-lg font-semibold">{plan.authorName}</span><span className="text-sm text-velora-muted">{t("Open profile & boundaries")}</span></span>
       </Link>
       <PlanCard showTitle={false} plan={plan} onEnd={endInvitation} onReport={() => setReport(true)}/>
-      {error && <p role="alert">{error}</p>}
-      <p className="mt-4 text-sm leading-relaxed text-velora-ink2">Send a private pitch: suggest a place, say what caught your eye, and give them something to say yes to. Replies go only to the host’s Messages. A couple profile speaks for that account; everyone involved still agrees for themselves.</p>
-      <p className="mt-4 text-sm text-velora-muted">Chatting is a first step. Agree on the details together. Nobody owes a meeting, a reply or sex.</p>
+      {error && <p role="alert">{t(error)}</p>}
+      <p className="mt-4 text-sm leading-relaxed text-velora-ink2">{t("Send a private pitch: suggest a place, say what caught your eye, and give them something to say yes to. Replies go only to the host’s Messages. A couple profile speaks for that account; everyone involved still agrees for themselves.")}</p>
+      <p className="mt-4 text-sm text-velora-muted">{t("Chatting is a first step. Agree on the details together. Nobody owes a meeting, a reply or sex.")}</p>
       {report && <ReportModal isOpen onClose={() => setReport(false)} contentType="POST" contentId={plan.id} targetProfileId={plan.authorId} targetUsername={plan.authorName}/>}
     </>}
   </main>;

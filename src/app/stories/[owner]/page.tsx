@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -6,6 +7,7 @@ import { ReportModal } from "@/components/safety/ReportModal";
 import { useAuth } from "@/context/AuthContext";
 type Story={planId?:string|null;id:string;ownerId:string;mediaId:string;caption:string;expiresAt:string;audience:string;url:string;owner?:{display_name:string};viewed:boolean};
 export default function StoryViewer({params}:{params:{owner:string}}){
+  const { t } = useTranslation();
  const {profile}=useAuth();const isOwner=profile?.id===params.owner;
  const router=useRouter();const [stories,setStories]=React.useState<Story[]>([]);const [index,setIndex]=React.useState(0);
  const [error,setError]=React.useState("");const [loaded,setLoaded]=React.useState(false);const [report,setReport]=React.useState(false);
@@ -34,26 +36,26 @@ export default function StoryViewer({params}:{params:{owner:string}}){
  }
  return <main className="mx-auto min-h-[85svh] max-w-lg bg-velora-night px-5 py-5 text-velora-onPhoto">
   <header className="flex min-h-12 items-center justify-between">
-   <Link href={`/profile/${params.owner}`} className="font-semibold underline">{story?.owner?.display_name||"Stories"}</Link>
-   <button type="button" onClick={()=>router.back()} className="min-h-11 px-3" aria-label="Close stories">Close ✕</button>
+   <Link href={`/profile/${params.owner}`} className="font-semibold underline">{story?.owner?.display_name||t("Stories")}</Link>
+   <button type="button" onClick={()=>router.back()} className="min-h-11 px-3" aria-label={t("Close stories")}>{t("Close ✕")}</button>
   </header>
-  {loading?<p role="status">Loading stories…</p>:!story?<p role="status" className="py-20">{error||"No stories available to you right now."}</p>:<>
-   <p aria-live="polite" className="mb-3 text-sm">{Math.min(index+1,stories.length)} of {stories.length} · {story.audience==="MEMBERS"?"Members":story.audience==="FRIENDS"?"Friends":"Selected people"}</p>
+  {loading?<p role="status">{t("Loading stories…")}</p>:!story?<p role="status" className="py-20">{t(error)||t("No stories available to you right now.")}</p>:<>
+   <p aria-live="polite" className="mb-3 text-sm">{Math.min(index+1,stories.length)}{" "}{t("of {length} ·", { length: stories.length })}{" "}{story.audience==="MEMBERS"?t("Members"):story.audience==="FRIENDS"?t("Friends"):t("Selected people")}</p>
    <div className="flex min-h-[45svh] items-center justify-center rounded-2xl bg-black">
     {/* Authenticated no-store image; an optimiser must never cache these bytes. */}
     {/* eslint-disable-next-line @next/next/no-img-element */}
-    {visible&&<img key={story.id} src={story.url} alt={story.caption||"Member story photo"} className="max-h-[65svh] w-full rounded-2xl object-contain" onLoad={viewed} onError={()=>{setLoaded(false);setError("This photo is no longer available.");}}/>}
+    {visible&&<img key={story.id} src={story.url} alt={t(story.caption)||t("Member story photo")} className="max-h-[65svh] w-full rounded-2xl object-contain" onLoad={viewed} onError={()=>{setLoaded(false);setError("This photo is no longer available.");}}/>}
    </div>
-   {error&&<p role="alert" className="mt-3">{error}</p>}
-   <p className="mt-4 whitespace-pre-wrap break-words text-lg">{story.caption}</p>
-   {story.planId&&<Link href={`/tonight/invitation/${story.planId}`} className="mt-4 inline-flex min-h-12 items-center rounded-full bg-velora-accent px-6 font-semibold text-velora-paper">Open invitation</Link>}
-   <nav aria-label="Story navigation" className="mt-4 flex justify-between">
-    <button type="button" disabled={index===0} onClick={()=>setIndex(i=>i-1)} className="min-h-12 px-4 disabled:opacity-40">Previous</button>
-    <button type="button" disabled={index>=stories.length-1} onClick={()=>setIndex(i=>i+1)} className="min-h-12 px-4 disabled:opacity-40">Next</button>
+   {error&&<p role="alert" className="mt-3">{t(error)}</p>}
+   <p className="mt-4 whitespace-pre-wrap break-words text-lg">{t(story.caption)}</p>
+   {story.planId&&<Link href={`/tonight/invitation/${story.planId}`} className="mt-4 inline-flex min-h-12 items-center rounded-full bg-velora-accent px-6 font-semibold text-velora-paper">{t("Open invitation")}</Link>}
+   <nav aria-label={t("Story navigation")} className="mt-4 flex justify-between">
+    <button type="button" disabled={index===0} onClick={()=>setIndex(i=>i-1)} className="min-h-12 px-4 disabled:opacity-40">{t("Previous")}</button>
+    <button type="button" disabled={index>=stories.length-1} onClick={()=>setIndex(i=>i+1)} className="min-h-12 px-4 disabled:opacity-40">{t("Next")}</button>
    </nav>
    <div className="mt-3 flex items-center justify-between">
-    {isOwner?<Link href="/stories" className="min-h-11 py-3 underline">Manage your stories</Link>:<Link href={`/messages?user=${story.ownerId}`} className="min-h-11 py-3 underline">Reply privately</Link>}
-    {!isOwner&&<button type="button" disabled={!loaded} onClick={()=>setReport(true)} className="min-h-11 px-3 underline disabled:opacity-40">Report photo</button>}
+    {isOwner?<Link href="/stories" className="min-h-11 py-3 underline">{t("Manage your stories")}</Link>:<Link href={`/messages?user=${story.ownerId}`} className="min-h-11 py-3 underline">{t("Reply privately")}</Link>}
+    {!isOwner&&<button type="button" disabled={!loaded} onClick={()=>setReport(true)} className="min-h-11 px-3 underline disabled:opacity-40">{t("Report photo")}</button>}
    </div>
    {report&&<ReportModal isOpen={report} onClose={()=>setReport(false)} contentType="PHOTO" contentId={story.mediaId} targetProfileId={story.ownerId} targetUsername={story.owner?.display_name||"this member"}/>}
   </>}

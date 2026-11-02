@@ -80,7 +80,7 @@ test("shared modal provides dialog semantics, escape handling, and keyboard focu
   assert.match(modal, /event\.key === "Escape"/);
   assert.match(modal, /event\.key !== "Tab"/);
   assert.match(modal, /previouslyFocused\?\.focus/);
-  assert.match(modal, /aria-label="Close dialog"/);
+  assert.match(modal, /aria-label=\{t\("Close dialog"\)\}/);
   assert.match(modal, /showCloseButton/);
 });
 
@@ -95,7 +95,7 @@ test("mandatory age gate is a full screen with no way around it", async () => {
 test("public home is content-first rather than implementation-focused", async () => {
   const home = await read("src/components/community/PublicCommunityHome.tsx");
   assert.match(home, /Kinky\./);
-  assert.match(home, /Say what&apos;s off limits/);
+  assert.match(home, /Say what's off limits/);
   assert.match(home, /Join the founding members/);
   for (const destination of ["people", "tonight", "photos", "videos"]) assert.match(home, new RegExp(`\\"/${destination}\\"`));
   assert.doesNotMatch(home, /Real empty states|server-authorized workflows|Sensitive preference fields|Local design preview|Newest first/);
@@ -104,7 +104,7 @@ test("public home is content-first rather than implementation-focused", async ()
 test("public media pages use member-focused copy rather than internal moderation language", async () => {
   const gallery = await read("src/components/community/PublicMediaGallery.tsx");
   assert.match(gallery, /From the community/);
-  assert.match(gallery, /Discover \{noun\.toLowerCase\(\)\} shared by Intimo members/);
+  assert.match(gallery, /Discover photos shared by Intimo members/);
   assert.doesNotMatch(gallery, /Popularity is never fabricated|fully uploaded, processed|moderator-approved|Approved public media/);
 });
 
@@ -119,18 +119,18 @@ test("people discovery prioritizes age, location, profile type, verification, an
   assert.match(route, /show_online_status/);
 });
 
-test("six-language mobile navigation uses Intimo keys and migrates the legacy locale preference", async () => {
+test("mobile navigation uses Intimo keys in both languages and drops the device-only locale keys", async () => {
   const context = await read("src/context/LanguageContext.tsx");
   const mobile = await read("src/components/layout/MobileNavigation.tsx");
-  for (const locale of ["en", "cs", "hu", "ro", "sk", "de"]) {
+  for (const locale of ["en", "cs"]) {
     const dictionary = await read(`src/locales/${locale}/common.json`);
     assert.doesNotMatch(dictionary, /Velora/);
     for (const key of ["home", "people", "dating", "search"]) assert.match(dictionary, new RegExp(`"${key}"`));
   }
-  assert.match(context, /localStorage\.setItem\("intimo_lang"/);
-  assert.match(context, /localStorage\.removeItem\("velora_lang"/);
+  assert.match(context, /localStorage\.removeItem\("intimo_lang"\)/);
+  assert.match(context, /localStorage\.removeItem\("velora_lang"\)/);
   assert.match(mobile, /t\("nav\.home"\)/);
-  assert.match(mobile, /aria-label="Mobile navigation"/);
+  assert.match(mobile, /aria-label=\{t\("Mobile navigation"\)\}/);
 });
 
 test("affected users can see eligible decisions and appeal while plans expose reporting", async () => {
@@ -245,7 +245,7 @@ test("onboarding creates a verified-session-owned adult profile without self-gra
   assert.match(route, /profileType === "COUPLE" \? "COUPLE" : "MEMBER"/);
   assert.match(route, /verification_level: "LEVEL_1_EMAIL"/);
   assert.match(onboarding, /method: "POST"/);
-  assert.match(onboarding, /label="Date of birth"/);
+  assert.match(onboarding, /label=\{t\("Date of birth"\)\}/);
   assert.match(onboarding, /const basicsValid =/);
   assert.match(onboarding, /const basicsValid = onboardingBasicsAreValid\(displayName, dateOfBirth\);/);
   assert.match(onboarding, /disabled=\{!basicsValid\}/);

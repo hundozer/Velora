@@ -56,10 +56,11 @@ export function groupTonight(plans, now = new Date()) {
 }
 
 /** The time column of the at-a-glance list: "Now", "22:30", or "Sun 19:00" for another night. */
-export function glanceTime(plan, now = new Date()) {
-  if (new Date(plan.startsAt).getTime() <= now.getTime()) return "Now";
+export function glanceTime(plan, now = new Date(), t = (text) => text, locale = "en-GB") {
+  if (new Date(plan.startsAt).getTime() <= now.getTime()) return t("Now");
   if (nightKey(plan.startsAt) === nightKey(now)) return clock(plan.startsAt);
-  if (new Date(plan.startsAt).getTime() - now.getTime() > 36 * 3600000) return `${new Intl.DateTimeFormat('en-GB', { timeZone: ZONE, day: 'numeric', month: 'short' }).format(new Date(plan.startsAt))} ${clock(plan.startsAt)}`;
+  if (new Date(plan.startsAt).getTime() - now.getTime() > 36 * 3600000) return `${new Intl.DateTimeFormat(locale, { timeZone: ZONE, day: 'numeric', month: 'short' }).format(new Date(plan.startsAt))} ${clock(plan.startsAt)}`;
+  if (locale !== "en-GB") return `${new Intl.DateTimeFormat(locale, { timeZone: ZONE, weekday: "short" }).format(new Date(plan.startsAt))} ${clock(plan.startsAt)}`;
   return `${weekday(plan.startsAt).slice(0, 3)} ${clock(plan.startsAt)}`;
 }
 

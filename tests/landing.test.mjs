@@ -14,12 +14,13 @@ test("landing explains Intimo as Prague's sex-positive community without counts"
   for (const destination of ["/people", "/tonight", "/stories", "/scene", "/guest-list"]) assert.ok(home.includes(`href="${destination}"`), destination);
   assert.match(home, /fictional examples, not members/);
   assert.doesNotMatch(home, /Example profile<\/span>/);
-  assert.doesNotMatch(home, /useAuth|isAuthLoading|use client/);
+  // A client component only so it can translate; it still never depends on who is signed in.
+  assert.doesNotMatch(home, /useAuth|isAuthLoading/);
   const experience = await read("src/components/community/HomeExperience.tsx");
   assert.match(experience, /if \(user\) return <MemberActivityFeed \/>/);
   assert.doesNotMatch(home, /fetch\(|\/profile\/|recentlyActive|BadgeCheck/);
   assert.doesNotMatch(home, /members online|total members|\{data\.pagination\.total\}/i);
   const layout = await read("src/app/layout.tsx");
-  assert.match(layout, /title: "Intimo \| Prague's sex-positive community"/);
+  assert.match(layout, /title: t\("Intimo \| Prague's sex-positive community"\)/);
   assert.doesNotMatch(layout, /creator profiles|After Dark/);
 });

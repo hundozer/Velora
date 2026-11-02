@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -42,9 +43,10 @@ export function useStorySummary(ownerId:string){
  return summary&&Date.parse(summary.expiresAt)>Date.now()?summary:null;
 }
 export function StoryAvatar({ownerId,name,src,size=52,fallbackHref}:{ownerId:string;name:string;src?:string|null;size?:number;fallbackHref?:string}){
+  const { t } = useTranslation();
  const summary=useStorySummary(ownerId);const router=useRouter();
  return <button type="button" onClick={()=>router.push(summary?`/stories/${ownerId}`:(fallbackHref||`/profile/${ownerId}`))}
-  aria-label={summary?`${name}: ${summary.unread?"new":"viewed"} stories`:`Open ${name}'s profile`}
+  aria-label={summary?t("{name}: {value} stories", { name: name, value: summary.unread?"new":"viewed" }):t("Open {name}'s profile", { name: name })}
   className={`shrink-0 rounded-full p-[3px] outline-offset-4 ${summary?(summary.unread?"bg-velora-accent shadow-[0_0_12px_rgb(var(--accent)/0.35)]":"bg-velora-muted"):"bg-transparent"}`}
   style={{width:size,height:size}} data-story-state={summary?(summary.unread?"unread":"viewed"):"none"}>
   <Portrait src={src} name={name} sizes={`${size}px`} className="h-full w-full rounded-full border-2 border-velora-surface" monogramClassName="text-xl"/>

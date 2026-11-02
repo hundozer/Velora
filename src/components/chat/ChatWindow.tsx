@@ -1,5 +1,7 @@
 "use client";
 
+import { currentLang, LOCALE } from "@/lib/i18n/translate";
+import { useTranslation } from "@/context/LanguageContext";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Message, Conversation } from "@/types";
@@ -56,6 +58,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   phonePane = "thread",
   onBackToList,
 }) => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [folder, setFolder] = useState<Folder>("INBOX");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -177,7 +180,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       content,
       mediaUrl: payload.message?.media_url || undefined,
       status: "SENT",
-      createdAt: new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
+      createdAt: new Date().toLocaleTimeString(LOCALE[currentLang()], { hour: "2-digit", minute: "2-digit" }),
     };
     setMessages((current) => current.some((message) => message.id === newMsg.id) ? current : [...current, newMsg]);
     setInputMessage((current) => current.trim() === content ? "" : current);
@@ -202,8 +205,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const threadLoaded = loadedThread === participantId;
   const emptyThread = threadLoaded && messages.length === 0;
   const established = Boolean(context.approach?.established) || messages.some((m) => m.senderId !== "user-current");
-  const sharedWords = context.shared.map((id) => desireById(id)?.label?.toLowerCase()).filter(Boolean) as string[];
-  const explicitRule = explicitPhotoRule(context.approach?.explicitMediaInChat, established, name);
+  const sharedWords = context.shared.map((id) => { const found = desireById(id)?.label; return found ? t(found).toLowerCase() : null; }).filter(Boolean) as string[];
+  const explicitRule = t(explicitPhotoRule(context.approach?.explicitMediaInChat, established, name));
   const explicitAllowed = context.approach?.explicitMediaInChat === "COMFORTABLE" || (context.approach?.explicitMediaInChat === "ASK_FIRST" && established);
   const openers = emptyThread && !openersHidden ? openersFor({ plan: context.plan, shared: sharedWords }) : [];
   const status = participant.isOnline ? "Here now" : null;
@@ -211,20 +214,20 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   return (
     <div className="grid h-[calc(100svh-4rem)] grid-cols-1 text-left md:h-[calc(100vh-7rem)] md:grid-cols-[340px_minmax(0,1fr)] md:gap-0 md:overflow-hidden md:rounded-[28px] md:border md:border-velora-line md:bg-velora-surface">
       {/* Conversations */}
-      <section aria-label="Conversations" className={`${phonePane === "list" ? "flex" : "hidden"} min-h-0 flex-col bg-velora-surface md:flex md:border-r md:border-velora-line`}>
+      <section aria-label={t("Conversations")} className={`${phonePane === "list" ? "flex" : "hidden"} min-h-0 flex-col bg-velora-surface md:flex md:border-r md:border-velora-line`}>
         <div className="px-5 pb-3 pt-5">
-          <h1 className="font-display text-[40px] leading-none text-velora-ink">Messages</h1>
-          <div className="mt-4 flex gap-5" role="tablist" aria-label="Message folders">
+          <h1 className="font-display text-[40px] leading-none text-velora-ink">{t("Messages")}</h1>
+          <div className="mt-4 flex gap-5" role="tablist" aria-label={t("Message folders")}>
             {([["INBOX", "Inbox", 0], ["UNREAD", "Unread", unreadCount], ["REQUESTS", "Requests", requestCount]] as const).map(([value, label, count]) => (
               <button key={value} type="button" role="tab" aria-selected={folder === value} onClick={() => setFolder(value)} className={`min-h-11 border-b-2 text-[15px] transition-colors ${folder === value ? "border-velora-copper font-semibold text-velora-ink" : "border-transparent text-velora-muted hover:text-velora-ink"}`}>
-                {label}{count > 0 ? ` · ${count}` : ""}
+                {t(label)}{count > 0 ? ` · ${count}` : ""}
               </button>
             ))}
           </div>
           <label className="mt-3 flex items-center gap-3 border-b border-velora-ink/40 pb-2">
             <Search className="h-4 w-4 text-velora-ink2" aria-hidden />
-            <span className="sr-only">Search conversations</span>
-            <input type="search" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by name" className="w-full bg-transparent text-[16px] text-velora-ink placeholder:text-velora-muted focus:outline-none" />
+            <span className="sr-only">{t("Search conversations")}</span>
+            <input type="search" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={t("Search by name")} className="w-full bg-transparent text-[16px] text-velora-ink placeholder:text-velora-muted focus:outline-none" />
           </label>
         </div>
         <ul className="min-h-0 flex-1 overflow-y-auto px-5 pb-6">
@@ -237,39 +240,39 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   <button type="button" onClick={() => onSelectConversation(c)} aria-current={isActive?"true":undefined} className="min-w-0 flex-1 py-2 text-left">
                     <span className="flex items-baseline justify-between gap-2">
                       <span className={`truncate font-display text-[22px] leading-tight ${c.unreadCount > 0 ? "text-velora-ink" : "text-velora-ink"}`}>{c.participant.displayName}</span>
-                      {c.participant.isOnline && <span className="h-2 w-2 shrink-0 rounded-full bg-velora-copper" role="img" aria-label="Here now" />}
+                      {c.participant.isOnline && <span className="h-2 w-2 shrink-0 rounded-full bg-velora-copper" role="img" aria-label={t("Here now")} />}
                     </span>
-                    <span className={`block truncate text-[14px] ${c.unreadCount > 0 ? "font-semibold text-velora-ink" : "text-velora-muted"}`}>{c.lastMessage?.content || "Conversation started"}</span>
+                    <span className={`block truncate text-[14px] ${c.unreadCount > 0 ? "font-semibold text-velora-ink" : "text-velora-muted"}`}>{c.lastMessage?.content || t("Conversation started")}</span>
                   </button>
                 </div>
               </li>
             );
           })}
-          {filteredConversations.length === 0 && <li className="py-8 text-[15px] text-velora-ink2">{folder === "REQUESTS" ? "No message requests." : folder === "UNREAD" ? "You're all caught up." : "No conversations here yet."}</li>}
+          {filteredConversations.length === 0 && <li className="py-8 text-[15px] text-velora-ink2">{folder === "REQUESTS" ? t("No message requests.") : folder === "UNREAD" ? t("You're all caught up.") : t("No conversations here yet.")}</li>}
           {onLoadOlderConversations && !searchQuery && (
-            <li><button type="button" onClick={onLoadOlderConversations} disabled={loadingOlderConversations} className="mt-3 min-h-11 text-[15px] text-velora-ink2 underline underline-offset-4 disabled:opacity-50">{loadingOlderConversations ? "Loading older conversations…" : "Load older conversations"}</button></li>
+            <li><button type="button" onClick={onLoadOlderConversations} disabled={loadingOlderConversations} className="mt-3 min-h-11 text-[15px] text-velora-ink2 underline underline-offset-4 disabled:opacity-50">{loadingOlderConversations ? t("Loading older conversations…") : t("Load older conversations")}</button></li>
           )}
         </ul>
       </section>
 
       {/* Thread */}
-      <section aria-label={`Conversation with ${name}`} className={`${phonePane === "thread" ? "flex" : "hidden"} min-h-0 flex-col bg-velora-surface md:flex`}>
+      <section aria-label={t("Conversation with {name}", { name: name })} className={`${phonePane === "thread" ? "flex" : "hidden"} min-h-0 flex-col bg-velora-surface md:flex`}>
         <header className="flex items-center gap-3 border-b border-velora-line px-3 py-2 md:px-6">
-          <button type="button" onClick={onBackToList} aria-label="Back to conversations" className="flex h-11 w-11 items-center justify-center text-velora-ink md:hidden"><ArrowLeft className="h-5 w-5" aria-hidden /></button>
+          <button type="button" onClick={onBackToList} aria-label={t("Back to conversations")} className="flex h-11 w-11 items-center justify-center text-velora-ink md:hidden"><ArrowLeft className="h-5 w-5" aria-hidden /></button>
           <StoryAvatar ownerId={participantId} src={participant.avatarUrl} name={name} size={46}/>
           <Link href={`/profile/${participantId}`} className="flex min-w-0 flex-1 items-center gap-3">
             <span className="min-w-0">
               <span className="block truncate font-display text-[24px] leading-tight text-velora-ink">{name}</span>
-              {status && <span className="block text-[13px] text-velora-muted">{status}</span>}
+              {status && <span className="block text-[13px] text-velora-muted">{t(status)}</span>}
             </span>
           </Link>
           <div className="relative">
-            <button type="button" aria-label="More" aria-haspopup="menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)} className="flex h-11 w-11 items-center justify-center text-velora-ink"><MoreHorizontal className="h-5 w-5" aria-hidden /></button>
+            <button type="button" aria-label={t("More")} aria-haspopup="menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)} className="flex h-11 w-11 items-center justify-center text-velora-ink"><MoreHorizontal className="h-5 w-5" aria-hidden /></button>
             {menuOpen && (
               <div role="menu" className="absolute right-0 top-11 z-20 w-52 border border-velora-line bg-velora-surface py-2 shadow-card">
-                <Link role="menuitem" href={`/profile/${participantId}`} className="flex min-h-11 items-center px-4 text-[15px] text-velora-ink hover:bg-velora-sunken">{her === "their" ? "Their" : her === "her" ? "Her" : "His"} portrait</Link>
-                <button role="menuitem" type="button" onClick={() => { setMenuOpen(false); setReportModalOpen(true); }} className="block min-h-11 w-full px-4 text-left text-[15px] text-velora-ink hover:bg-velora-sunken">Report</button>
-                <button role="menuitem" type="button" onClick={() => { setMenuOpen(false); setBlockModalOpen(true); }} className="block min-h-11 w-full px-4 text-left text-[15px] text-velora-crimson hover:bg-velora-sunken">Block</button>
+                <Link role="menuitem" href={`/profile/${participantId}`} className="flex min-h-11 items-center px-4 text-[15px] text-velora-ink hover:bg-velora-sunken">{her === "their" ? t("Their") : her === "her" ? t("Her") : t("His")} portrait</Link>
+                <button role="menuitem" type="button" onClick={() => { setMenuOpen(false); setReportModalOpen(true); }} className="block min-h-11 w-full px-4 text-left text-[15px] text-velora-ink hover:bg-velora-sunken">{t("Report")}</button>
+                <button role="menuitem" type="button" onClick={() => { setMenuOpen(false); setBlockModalOpen(true); }} className="block min-h-11 w-full px-4 text-left text-[15px] text-velora-crimson hover:bg-velora-sunken">{t("Block")}</button>
               </div>
             )}
           </div>
@@ -278,23 +281,21 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-8">
           {context.plan && (
             <blockquote className="mb-5 border-l-2 border-velora-copper pl-4">
-              <p className="text-[14px] text-velora-ink2">Replying to {her} invitation{planWindow(context.plan) ? ` · ${planWindow(context.plan)}` : ""}</p>
-              <p className="mt-1 font-display text-[26px] leading-[1.15] text-velora-ink">{context.plan.title}</p>
+              <p className="text-[14px] text-velora-ink2">{t("Replying to {her} invitation", { her })}{planWindow(context.plan) ? ` · ${planWindow(context.plan).replace(" until ", ` ${t("until")} `)}` : ""}</p>
+              <p className="mt-1 font-display text-[26px] leading-[1.15] text-velora-ink">{t(context.plan.title)}</p>
             </blockquote>
           )}
           {(sharedWords.length > 0 || explicitRule || (!established && context.approach?.line)) && (
             <p className="mb-6 text-[15px] leading-relaxed text-velora-ink2">
-              {sharedWords.length > 0 && <>You both list {sharedWords.length === 1 ? sharedWords[0] : `${sharedWords.slice(0, -1).join(", ")} and ${sharedWords[sharedWords.length - 1]}`}. </>}
-              {!established && context.approach?.line && <>{context.approach.line} </>}
+              {sharedWords.length > 0 && <>{t("You both list")}{" "}{sharedWords.length === 1 ? t(sharedWords[0]) : t("{join} and {value}", { join: sharedWords.slice(0, -1).join(", "), value: sharedWords[sharedWords.length - 1] })}. </>}
+              {!established && context.approach?.line && <>{t(context.approach.line)} </>}
               {explicitRule}
             </p>
           )}
           {activeConversation.isRequest && (
-            <p className="mb-5 text-[14px] text-velora-ink2" role="note">
-              Message request: you haven&apos;t replied yet. Reply to move it to your inbox, or block or report from the menu.
-            </p>
+            <p className="mb-5 text-[14px] text-velora-ink2" role="note">{t("Message request: you haven't replied yet. Reply to move it to your inbox, or block or report from the menu.")}</p>
           )}
-          {nextCursor && <div className="mb-4 text-center"><button type="button" onClick={() => void loadOlder()} disabled={loadingOlder} className="min-h-11 text-[14px] text-velora-ink2 underline underline-offset-4">{loadingOlder ? "Loading…" : "Load older messages"}</button></div>}
+          {nextCursor && <div className="mb-4 text-center"><button type="button" onClick={() => void loadOlder()} disabled={loadingOlder} className="min-h-11 text-[14px] text-velora-ink2 underline underline-offset-4">{loadingOlder ? t("Loading…") : t("Load older messages")}</button></div>}
           <ol className="space-y-3">
             {messages.map((m) => {
               const isMe = m.senderId === "user-current";
@@ -304,7 +305,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     {m.mediaUrl && <div className={m.content ? "mb-2" : ""}><ChatPhoto src={m.mediaUrl} mine={isMe} /></div>}
                     {m.content && <p className="whitespace-pre-line">{m.content}</p>}
                   </div>
-                  <span className="mt-1 px-1 text-[13px] text-velora-muted">{m.createdAt}{isMe && m.status === "READ" ? " · Read" : ""}</span>
+                  <span className="mt-1 px-1 text-[13px] text-velora-muted">{m.createdAt}{isMe && m.status === "READ" ? t(" · Read") : ""}</span>
                 </li>
               );
             })}
@@ -317,8 +318,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           {openers.length > 0 && (
             <div className="mb-3">
               <div className="flex items-baseline justify-between">
-                <p className="text-[14px] text-velora-muted">If you&apos;d like a start</p>
-                <button type="button" onClick={hideOpeners} className="min-h-11 text-[14px] text-velora-ink underline underline-offset-4">Hide</button>
+                <p className="text-[14px] text-velora-muted">{t("If you'd like a start")}</p>
+                <button type="button" onClick={hideOpeners} className="min-h-11 text-[14px] text-velora-ink underline underline-offset-4">{t("Hide")}</button>
               </div>
               <ul>
                 {openers.map((opener) => (
@@ -327,35 +328,35 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               </ul>
             </div>
           )}
-          {datingAdId && !context.plan && <p className="mb-2 text-[14px] text-velora-ink2">Replying to an invitation. Who can reply is checked when you send.</p>}
+          {datingAdId && !context.plan && <p className="mb-2 text-[14px] text-velora-ink2">{t("Replying to an invitation. Who can reply is checked when you send.")}</p>}
           {sendError && <p role="alert" className="mb-2 text-[14px] text-velora-crimson">{sendError}</p>}
           {attachOpen && (
             <div className="mb-3 border border-velora-line bg-velora-paper p-4">
-              <button type="button" onClick={() => photoInputRef.current?.click()} className="min-h-11 text-[16px] font-semibold text-velora-ink underline underline-offset-4">Choose a photo</button>
+              <button type="button" onClick={() => photoInputRef.current?.click()} className="min-h-11 text-[16px] font-semibold text-velora-ink underline underline-offset-4">{t("Choose a photo")}</button>
               <label className={`mt-2 flex items-start gap-3 text-[15px] ${explicitAllowed ? "text-velora-ink" : "text-velora-muted"}`}>
                 <input type="checkbox" className="mt-1 h-5 w-5 accent-velora-ink" checked={photoExplicit && explicitAllowed} disabled={!explicitAllowed} onChange={(event) => setPhotoExplicit(event.target.checked)} />
-                <span>This photo is explicit{!explicitAllowed && <span className="block text-[14px]">{explicitRule || "Not available in this conversation."}</span>}</span>
+                <span>{t("This photo is explicit")}{!explicitAllowed && <span className="block text-[14px]">{explicitRule || t("Not available in this conversation.")}</span>}</span>
               </label>
             </div>
           )}
           <div className="flex items-end gap-2">
-            <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" aria-label="Choose a photo to send" tabIndex={-1} className="sr-only" onChange={(event) => void sendPhoto(event.target.files?.[0])} />
-            <button type="button" onClick={() => setAttachOpen(!attachOpen)} disabled={uploadingPhoto !== null} aria-expanded={attachOpen} aria-label="Send a photo" className="flex h-12 w-11 shrink-0 items-center justify-center text-velora-ink disabled:opacity-50">
+            <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" aria-label={t("Choose a photo to send")} tabIndex={-1} className="sr-only" onChange={(event) => void sendPhoto(event.target.files?.[0])} />
+            <button type="button" onClick={() => setAttachOpen(!attachOpen)} disabled={uploadingPhoto !== null} aria-expanded={attachOpen} aria-label={t("Send a photo")} className="flex h-12 w-11 shrink-0 items-center justify-center text-velora-ink disabled:opacity-50">
               {uploadingPhoto !== null ? <span className="text-[13px]">{uploadingPhoto}%</span> : <Plus className="h-5 w-5" aria-hidden />}
             </button>
             <label className="flex min-h-12 flex-1 items-center rounded-[24px] border border-velora-ink/60 bg-velora-surface px-4 focus-within:border-velora-ink">
-              <span className="sr-only">Message {name}</span>
+              <span className="sr-only">{t("Message {name}", { name })}</span>
               <textarea
                 ref={inputRef}
                 rows={1}
-                placeholder={datingAdId ? "Your pitch: a place, a little chemistry…" : emptyThread ? "Introduce yourself…" : "Write a message…"}
+                placeholder={datingAdId ? t("Your pitch: a place, a little chemistry…") : emptyThread ? t("Introduce yourself…") : t("Write a message…")}
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!sendingRef.current) void handleSendMessage(); } }}
                 className="max-h-32 w-full resize-none bg-transparent py-3 text-[16px] text-velora-ink placeholder:text-velora-muted focus:outline-none"
               />
             </label>
-            <button type="button" onClick={() => void handleSendMessage()} disabled={sending || !inputMessage.trim()} aria-label="Send" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-velora-accent text-velora-paper disabled:opacity-40">
+            <button type="button" onClick={() => void handleSendMessage()} disabled={sending || !inputMessage.trim()} aria-label={t("Send")} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-velora-accent text-velora-paper disabled:opacity-40">
               <ArrowRight className="h-5 w-5" aria-hidden />
             </button>
           </div>
@@ -370,15 +371,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         contentType="MESSAGE"
       />
 
-      <Modal isOpen={blockModalOpen} onClose={() => setBlockModalOpen(false)} title={`Block ${name}?`}>
+      <Modal isOpen={blockModalOpen} onClose={() => setBlockModalOpen(false)} title={t("Block {name}?", { name: name })}>
         <div className="space-y-5 text-left">
-          <p className="text-[16px] leading-relaxed text-velora-ink2">You will no longer see or contact each other. Blocked members cannot view your profile or send messages.</p>
+          <p className="text-[16px] leading-relaxed text-velora-ink2">{t("You will no longer see or contact each other. Blocked members cannot view your profile or send messages.")}</p>
           <div className="flex items-center gap-5">
-            <button type="button" className="min-h-11 text-[16px] text-velora-ink underline underline-offset-4" onClick={() => setBlockModalOpen(false)}>Cancel</button>
+            <button type="button" className="min-h-11 text-[16px] text-velora-ink underline underline-offset-4" onClick={() => setBlockModalOpen(false)}>{t("Cancel")}</button>
             <button type="button" className="min-h-12 flex-1 rounded-full bg-velora-crimson text-[16px] font-semibold text-velora-paper" onClick={async () => {
               const response = await fetch("/api/blocks", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ targetProfileId: participantId }) });
               if (response.ok) { setBlockModalOpen(false); window.location.assign("/messages"); }
-            }}>Block</button>
+            }}>{t("Block")}</button>
           </div>
         </div>
       </Modal>
@@ -398,6 +399,6 @@ function toMessage(item: any, conversation: Conversation): Message {
     content: item.content,
     mediaUrl: item.attachment_type === "IMAGE" ? item.media_url || undefined : undefined,
     status: item.status,
-    createdAt: new Date(item.created_at).toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit" }),
+    createdAt: new Date(item.created_at).toLocaleString(LOCALE[currentLang()], { weekday: "short", hour: "2-digit", minute: "2-digit" }),
   };
 }

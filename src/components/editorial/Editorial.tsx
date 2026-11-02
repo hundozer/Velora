@@ -1,3 +1,5 @@
+"use client";
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
@@ -18,14 +20,15 @@ export function EditorialHero({ eyebrow, title, lead, actions, media, note }: {
   media?: React.ReactNode;
   note?: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   return (
     <section className="mx-auto grid max-w-7xl items-center gap-10 px-5 pb-16 pt-10 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pb-24 lg:pt-16">
       <div>
-        {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
-        <h1 className="mt-5 font-display text-[3.4rem] leading-[0.95] text-velora-ink sm:text-7xl lg:text-[5.5rem]">{title}</h1>
+        {eyebrow && <Eyebrow>{t(eyebrow)}</Eyebrow>}
+        <h1 className="mt-5 font-display text-[3.4rem] leading-[0.95] text-velora-ink sm:text-7xl lg:text-[5.5rem]">{t(title)}</h1>
         {lead && <p className="mt-6 max-w-xl text-lg leading-relaxed text-velora-ink2 sm:text-xl">{lead}</p>}
         {actions && <div className="mt-9 flex flex-col gap-3 sm:flex-row">{actions}</div>}
-        {note && <p className="mt-5 text-sm text-velora-muted">{note}</p>}
+        {note && <p className="mt-5 text-sm text-velora-muted">{t(note)}</p>}
       </div>
       {media && <div>{media}</div>}
     </section>
@@ -43,10 +46,11 @@ export function StorySection({ id, tone = "paper", children, className = "" }: {
 }
 
 export function SectionTitle({ eyebrow, title, lead }: { eyebrow?: React.ReactNode; title: React.ReactNode; lead?: React.ReactNode }) {
+  const { t } = useTranslation();
   return (
     <div className="max-w-3xl">
-      {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
-      <h2 className="mt-4 font-display text-5xl leading-[1.02] text-velora-ink sm:text-6xl">{title}</h2>
+      {eyebrow && <Eyebrow>{t(eyebrow)}</Eyebrow>}
+      <h2 className="mt-4 font-display text-5xl leading-[1.02] text-velora-ink sm:text-6xl">{t(title)}</h2>
       {lead && <p className="mt-5 text-lg leading-relaxed text-velora-ink2">{lead}</p>}
     </div>
   );
@@ -62,13 +66,14 @@ export function NumberedChapter({ index, total, title, body, visual, action, rev
   action?: React.ReactNode;
   reverse?: boolean;
 }) {
+  const { t } = useTranslation();
   const pad = (value: number) => String(value).padStart(2, "0");
   return (
     <div className="grid items-center gap-10 py-12 lg:grid-cols-2 lg:gap-20 lg:py-20">
       <div className={reverse ? "lg:order-2" : ""}>
-        <p className="font-display text-2xl text-velora-muted" aria-label={`Chapter ${index} of ${total}`}><span className="text-velora-accent">{pad(index)}</span> / {pad(total)}</p>
-        <h3 className="mt-4 font-display text-5xl leading-[1.02] text-velora-ink sm:text-6xl">{title}</h3>
-        <p className="mt-5 max-w-md text-lg leading-relaxed text-velora-ink2">{body}</p>
+        <p className="font-display text-2xl text-velora-muted" aria-label={t("Chapter {index} of {total}", { index: index, total: total })}><span className="text-velora-accent">{pad(index)}</span> / {pad(total)}</p>
+        <h3 className="mt-4 font-display text-5xl leading-[1.02] text-velora-ink sm:text-6xl">{t(title)}</h3>
+        <p className="mt-5 max-w-md text-lg leading-relaxed text-velora-ink2">{t(body)}</p>
         {action && <div className="mt-7">{action}</div>}
       </div>
       <div className={reverse ? "lg:order-1" : ""}>{visual}</div>
@@ -90,14 +95,15 @@ export function OversizedChoiceCard({ href, eyebrow, title, body, visual, cta }:
   visual?: React.ReactNode;
   cta: string;
 }) {
+  const { t } = useTranslation();
   return (
     <Link href={href} className="group flex flex-col overflow-hidden rounded-card border border-velora-line bg-velora-surface shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-velora-accent/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent">
       {visual && <div className="border-b border-velora-line bg-velora-sunken/50 p-6 sm:p-8">{visual}</div>}
       <div className="flex flex-1 flex-col p-7 sm:p-10">
-        {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
-        <h3 className="mt-3 font-display text-4xl leading-tight text-velora-ink sm:text-5xl">{title}</h3>
-        <p className="mt-3 flex-1 text-lg leading-relaxed text-velora-ink2">{body}</p>
-        <span className="mt-7 inline-flex items-center gap-2 text-base font-semibold text-velora-accent">{cta}<ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" aria-hidden /></span>
+        {eyebrow && <Eyebrow>{t(eyebrow)}</Eyebrow>}
+        <h3 className="mt-3 font-display text-4xl leading-tight text-velora-ink sm:text-5xl">{t(title)}</h3>
+        <p className="mt-3 flex-1 text-lg leading-relaxed text-velora-ink2">{t(body)}</p>
+        <span className="mt-7 inline-flex items-center gap-2 text-base font-semibold text-velora-accent">{t(cta)}<ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" aria-hidden /></span>
       </div>
     </Link>
   );
@@ -113,10 +119,11 @@ export function SecondaryAction({ href, children }: { href: string; children: Re
 
 /** Closing invitation at the end of a story. */
 export function ContextualCTA({ title, body, action }: { title: React.ReactNode; body?: React.ReactNode; action: React.ReactNode }) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-card bg-velora-accent px-7 py-14 text-center text-velora-paper sm:px-16 sm:py-20">
-      <h2 className="mx-auto max-w-2xl font-display text-5xl leading-[1.02] sm:text-6xl">{title}</h2>
-      {body && <p className="mx-auto mt-5 max-w-lg text-lg text-velora-paper/75">{body}</p>}
+      <h2 className="mx-auto max-w-2xl font-display text-5xl leading-[1.02] sm:text-6xl">{t(title)}</h2>
+      {body && <p className="mx-auto mt-5 max-w-lg text-lg text-velora-paper/75">{t(body)}</p>}
       <div className="mt-9 flex justify-center">{action}</div>
     </div>
   );
@@ -124,11 +131,12 @@ export function ContextualCTA({ title, body, action }: { title: React.ReactNode;
 
 /** What a finished step looks like: calm, confirmed, one next action. */
 export function CompletionState({ icon, title, body, action }: { icon?: React.ReactNode; title: React.ReactNode; body?: React.ReactNode; action?: React.ReactNode }) {
+  const { t } = useTranslation();
   return (
     <div className="mx-auto max-w-xl px-5 py-16 text-center">
       {icon && <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-velora-accent/10 text-velora-accent">{icon}</div>}
-      <h1 className="mt-6 font-display text-5xl leading-tight text-velora-ink">{title}</h1>
-      {body && <p className="mt-4 text-lg text-velora-ink2">{body}</p>}
+      <h1 className="mt-6 font-display text-5xl leading-tight text-velora-ink">{t(title)}</h1>
+      {body && <p className="mt-4 text-lg text-velora-ink2">{t(body)}</p>}
       {action && <div className="mt-9">{action}</div>}
     </div>
   );

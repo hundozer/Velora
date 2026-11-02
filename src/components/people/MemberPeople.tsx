@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "@/context/LanguageContext";
 import { Logo } from "@/components/brand/Logo";
 
 import React from "react";
@@ -60,10 +61,11 @@ async function fetchIntroductions(): Promise<Person[]> {
 }
 
 function ModeSwitch({ view, onChange, dark }: { view: View; onChange: (view: View) => void; dark: boolean }) {
+  const { t } = useTranslation();
   const item = (value: View, label: string) => (
-    <button type="button" aria-pressed={view === value} onClick={() => onChange(value)} className={`min-h-11 border-b-2 pb-0.5 text-[15px] transition-colors ${view === value ? `border-velora-copper font-semibold ${dark ? "text-velora-onPhoto md:text-velora-ink" : "text-velora-ink"}` : `border-transparent ${dark ? "text-velora-onPhoto/75 hover:text-velora-onPhoto md:text-velora-muted md:hover:text-velora-ink" : "text-velora-muted hover:text-velora-ink"}`}`}>{label}</button>
+    <button type="button" aria-pressed={view === value} onClick={() => onChange(value)} className={`min-h-11 border-b-2 pb-0.5 text-[15px] transition-colors ${view === value ? `border-velora-copper font-semibold ${dark ? "text-velora-onPhoto md:text-velora-ink" : "text-velora-ink"}` : `border-transparent ${dark ? "text-velora-onPhoto/75 hover:text-velora-onPhoto md:text-velora-muted md:hover:text-velora-ink" : "text-velora-muted hover:text-velora-ink"}`}`}>{t(label)}</button>
   );
-  return <nav aria-label="People view" className="flex items-center gap-5">{item("introductions", "Introductions")}{item("everyone", "Everyone")}</nav>;
+  return <nav aria-label={t("People view")} className="flex items-center gap-5">{item("introductions", "Introductions")}{item("everyone", "Everyone")}</nav>;
 }
 
 /**
@@ -72,6 +74,7 @@ function ModeSwitch({ view, onChange, dark }: { view: View; onChange: (view: Vie
  * Filters and the view live in the URL; coming back from a profile restores the place.
  */
 export function MemberPeople() {
+  const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialParams = React.useMemo(() => new URLSearchParams(searchParams?.toString() ?? ""), []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -192,10 +195,10 @@ export function MemberPeople() {
   return (
     <div className="min-h-screen bg-velora-surface pb-24 md:pb-16">
       <header className={`z-20 mx-auto flex ${showIntroductions ? "max-w-5xl" : "max-w-2xl"} items-center justify-between px-5 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-8 ${darkHeader ? "absolute inset-x-0 top-0 md:static md:pt-6" : "pt-4 md:pt-8"}`}>
-        <Link href="/" className={`md:invisible ${darkHeader ? "text-velora-onPhoto md:text-velora-ink" : "text-velora-ink"}`} aria-label="Intimo"><Logo className="h-7 w-auto" /></Link>
+        <Link href="/" className={`md:invisible ${darkHeader ? "text-velora-onPhoto md:text-velora-ink" : "text-velora-ink"}`} aria-label={t("Intimo")}><Logo className="h-7 w-auto" /></Link>
         <ModeSwitch view={view} onChange={switchView} dark={darkHeader} />
       </header>
-      <div className={`mx-auto max-w-2xl px-5 py-3 text-sm sm:px-8 ${showIntroductions?"relative z-20 mt-16 text-velora-onPhoto md:mt-0 md:text-velora-ink":"text-velora-ink"}`}><Link href="/stories" className="inline-flex min-h-11 items-center underline underline-offset-4">Stories · see what people are sharing</Link></div>
+      <div className={`mx-auto max-w-2xl px-5 py-3 text-sm sm:px-8 ${showIntroductions?"relative z-20 mt-16 text-velora-onPhoto md:mt-0 md:text-velora-ink":"text-velora-ink"}`}><Link href="/stories" className="inline-flex min-h-11 items-center underline underline-offset-4">{t("Stories · see what people are sharing")}</Link></div>
 
       {showIntroductions && introductions && (
         <div ref={spreads} className="mx-auto max-w-5xl md:space-y-6 md:px-8 md:pt-4">
@@ -207,20 +210,20 @@ export function MemberPeople() {
         </div>
       )}
 
-      <section id="everyone-nearby" aria-label="Everyone nearby" className="mx-auto max-w-2xl scroll-mt-4 px-5 pt-8 sm:px-8 md:pt-12">
-        {showIntroductions && <h1 className="mb-4 font-display text-[44px] leading-[1.02] text-velora-ink">Everyone nearby</h1>}
-        {!showIntroductions && <h1 className="sr-only">People</h1>}
+      <section id="everyone-nearby" aria-label={t("Everyone nearby")} className="mx-auto max-w-2xl scroll-mt-4 px-5 pt-8 sm:px-8 md:pt-12">
+        {showIntroductions && <h1 className="mb-4 font-display text-[44px] leading-[1.02] text-velora-ink">{t("Everyone nearby")}</h1>}
+        {!showIntroductions && <h1 className="sr-only">{t("People")}</h1>}
         <FilterSentence filters={filters} onOpen={(section) => setSheet({ open: true, section })} onSearch={onSearch} />
 
         <div className="mt-6">
-          {error && <p role="alert" className="mb-4 border-l-2 border-velora-crimson pl-4 text-[15px] text-velora-crimson">{error}</p>}
+          {error && <p role="alert" className="mb-4 border-l-2 border-velora-crimson pl-4 text-[15px] text-velora-crimson">{t(error)}</p>}
           {people !== null && people.length === 0 ? (
             <div className="py-10">
-              <h2 className="font-display text-[32px] leading-tight text-velora-ink">{filtersActive ? "Nobody here with these filters yet" : "Members are on their way"}</h2>
-              <p className="mt-3 text-[16px] text-velora-ink2">{filtersActive ? "Try a wider distance or fewer filters." : "Post a plan for tonight so new members find you first."}</p>
+              <h2 className="font-display text-[32px] leading-tight text-velora-ink">{filtersActive ? t("Nobody here with these filters yet") : t("Members are on their way")}</h2>
+              <p className="mt-3 text-[16px] text-velora-ink2">{filtersActive ? t("Try a wider distance or fewer filters.") : t("Post a plan for tonight so new members find you first.")}</p>
               {filtersActive
-                ? <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)} className="mt-5 min-h-11 text-[16px] font-semibold text-velora-ink underline underline-offset-4">Show everyone</button>
-                : <Link href="/tonight/new" className="mt-5 inline-flex min-h-11 items-center text-[16px] font-semibold text-velora-ink underline underline-offset-4">Post a plan</Link>}
+                ? <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)} className="mt-5 min-h-11 text-[16px] font-semibold text-velora-ink underline underline-offset-4">{t("Show everyone")}</button>
+                : <Link href="/tonight/new" className="mt-5 inline-flex min-h-11 items-center text-[16px] font-semibold text-velora-ink underline underline-offset-4">{t("Post a plan")}</Link>}
             </div>
           ) : (
             <PeopleIndex people={people} loading={people === null} hasMore={Boolean(cursor)} loadingMore={loadingMore} onLoadMore={loadMore} endNote={filters.withinKm ? "Widen the distance to see more of Prague." : null} />

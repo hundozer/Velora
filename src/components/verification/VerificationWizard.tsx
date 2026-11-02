@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React, { useState } from "react";
 import { VerificationLevel } from "@/types";
 import { Modal } from "@/components/ui/Modal";
@@ -28,6 +29,7 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
   onClose,
   currentLevel = "LEVEL_1_EMAIL",
 }) => {
+  const { t } = useTranslation();
   const [selectedLevel, setSelectedLevel] = useState<VerificationLevel>("LEVEL_3_PROFILE_BIOMETRIC");
   const [step, setStep] = useState<number>(1);
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -49,19 +51,13 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleReset} title="Intimo Trust & Verification Levels" maxWidth="lg">
+    <Modal isOpen={isOpen} onClose={handleReset} title={t("Intimo Trust & Verification Levels")} maxWidth="lg">
       {submitted ? (
         <div className="text-center space-y-4 py-6 text-left">
           <CheckCircle2 className="w-12 h-12 text-velora-success mx-auto" />
-          <h3 className="text-xl font-display font-bold text-velora-textPrimary text-center">
-            Verification Submitted
-          </h3>
-          <p className="text-xs text-velora-textMuted leading-relaxed glass-panel p-4 rounded-2xl">
-            Your photo verification selfie has been submitted for manual review. No government identity document is required for this badge.
-          </p>
-          <Button variant="gold" size="sm" className="w-full font-bold uppercase" onClick={handleReset}>
-            Close Window
-          </Button>
+          <h3 className="text-xl font-display font-bold text-velora-textPrimary text-center">{t("Verification Submitted")}</h3>
+          <p className="text-xs text-velora-textMuted leading-relaxed glass-panel p-4 rounded-2xl">{t("Your photo verification selfie has been submitted for manual review. No government identity document is required for this badge.")}</p>
+          <Button variant="gold" size="sm" className="w-full font-bold uppercase" onClick={handleReset}>{t("Close Window")}</Button>
         </div>
       ) : (
         <div className="space-y-6 text-left">
@@ -74,10 +70,10 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
               </div>
               <div className="text-xs">
                 <div className="flex items-center gap-1">
-                  <span className="font-bold text-velora-textPrimary">Level 1: Email Verified</span>
+                  <span className="font-bold text-velora-textPrimary">{t("Level 1: Email Verified")}</span>
                   <CheckCircle2 className="w-3.5 h-3.5 text-velora-success" />
                 </div>
-                <p className="text-velora-textMuted text-[11px] mt-0.5">Basic account creation completed</p>
+                <p className="text-velora-textMuted text-[11px] mt-0.5">{t("Basic account creation completed")}</p>
               </div>
             </div>
 
@@ -88,10 +84,10 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
               </div>
               <div className="text-xs">
                 <div className="flex items-center gap-1">
-                  <span className="font-bold text-velora-textPrimary">Level 2: Phone SMS</span>
+                  <span className="font-bold text-velora-textPrimary">{t("Level 2: Phone SMS")}</span>
                   <CheckCircle2 className="w-3.5 h-3.5 text-velora-success" />
                 </div>
-                <p className="text-velora-textMuted text-[11px] mt-0.5">SMS multi-factor authentication</p>
+                <p className="text-velora-textMuted text-[11px] mt-0.5">{t("SMS multi-factor authentication")}</p>
               </div>
             </div>
 
@@ -108,8 +104,8 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
                 <UserCheck className="w-4 h-4" />
               </div>
               <div className="text-xs">
-                <span className="font-bold text-velora-textPrimary block">Level 3: Photo Verified</span>
-                <p className="text-velora-textMuted text-[11px] mt-0.5">Selfie with Intimo, username and current date</p>
+                <span className="font-bold text-velora-textPrimary block">{t("Level 3: Photo Verified")}</span>
+                <p className="text-velora-textMuted text-[11px] mt-0.5">{t("Selfie with Intimo, username and current date")}</p>
               </div>
             </div>
 
@@ -126,8 +122,8 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
                 <Crown className="w-4 h-4" />
               </div>
               <div className="text-xs">
-                <span className="font-bold text-velora-textPrimary block">Level 4: Creator Verified</span>
-                <p className="text-velora-textMuted text-[11px] mt-0.5">Enhanced identity review for trusted creator publishing</p>
+                <span className="font-bold text-velora-textPrimary block">{t("Level 4: Creator Verified")}</span>
+                <p className="text-velora-textMuted text-[11px] mt-0.5">{t("Enhanced identity review for trusted creator publishing")}</p>
               </div>
             </div>
           </div>
@@ -135,32 +131,22 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
           {/* Submission Form Steps */}
           {step === 1 && (
             <div className="space-y-4 pt-2 border-t border-ink/10">
-              <h4 className="text-sm font-display font-bold text-velora-textPrimary">
-                Photo verification submission
-              </h4>
-              <p className="text-xs text-velora-textMuted">
-                Upload one selfie while holding a handwritten note showing Intimo, your username, and today&apos;s date.
-              </p>
+              <h4 className="text-sm font-display font-bold text-velora-textPrimary">{t("Photo verification submission")}</h4>
+              <p className="text-xs text-velora-textMuted">{t("Upload one selfie while holding a handwritten note showing Intimo, your username, and today's date.")}</p>
 
               <div className="grid grid-cols-1 gap-4">
                 <div className="p-4 glass-panel rounded-2xl border border-dashed border-ink/20 text-center space-y-2">
                   <Upload className="w-5 h-5 text-velora-gold mx-auto" />
-                  <p className="text-xs font-bold text-velora-textPrimary">Upload verification selfie</p>
-                  <Button variant="glass" size="sm" className="text-[10px] border-ink/10">
-                    Select Selfie Image
-                  </Button>
+                  <p className="text-xs font-bold text-velora-textPrimary">{t("Upload verification selfie")}</p>
+                  <Button variant="glass" size="sm" className="text-[10px] border-ink/10">{t("Select Selfie Image")}</Button>
                 </div>
               </div>
             </div>
           )}
 
           <div className="flex gap-3 pt-2">
-            <Button variant="ghost" className="w-1/3 text-xs" onClick={handleReset}>
-              Cancel
-            </Button>
-            <Button variant="gold" className="w-2/3 text-xs font-bold uppercase tracking-wider" onClick={handleNext}>
-              Submit Verification Request
-            </Button>
+            <Button variant="ghost" className="w-1/3 text-xs" onClick={handleReset}>{t("Cancel")}</Button>
+            <Button variant="gold" className="w-2/3 text-xs font-bold uppercase tracking-wider" onClick={handleNext}>{t("Submit Verification Request")}</Button>
           </div>
         </div>
       )}

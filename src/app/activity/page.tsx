@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -11,6 +12,7 @@ type Tab = "MUTUAL" | "INTERESTED" | "VISITORS";
 
 /** Activity (P1-08): mutual interest, who's interested in you, and who visited. */
 export default function ActivityPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [data, setData] = React.useState<{ visitors: Entry[]; interestedInYou: Entry[]; mutual: Entry[]; browseInvisibly: boolean } | null>(null);
   const [tab, setTab] = React.useState<Tab>("MUTUAL");
@@ -41,18 +43,18 @@ export default function ActivityPage() {
   return (
     <main className="mx-auto max-w-4xl space-y-6 px-4 pb-24 pt-6">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">Activity</p>
-        <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">Who&apos;s noticed you</h1>
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">{t("Activity")}</p>
+        <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">{t("Who's noticed you")}</h1>
       </header>
-      {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-velora-danger">{error}</p>}
+      {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-velora-danger">{t(error)}</p>}
       {!data ? (
-        <p className="text-sm text-velora-textMuted">Loading…</p>
+        <p className="text-sm text-velora-textMuted">{t("Loading…")}</p>
       ) : (
         <>
-          <div className="flex gap-2 overflow-x-auto" role="tablist" aria-label="Activity">
+          <div className="flex gap-2 overflow-x-auto" role="tablist" aria-label={t("Activity")}>
             {tabs.map((item) => (
               <button key={item.id} type="button" role="tab" aria-selected={tab === item.id} onClick={() => setTab(item.id)} className={`min-h-9 shrink-0 rounded-full border px-4 text-xs font-semibold transition ${tab === item.id ? "border-velora-gold bg-velora-gold/15 text-velora-textPrimary" : "border-ink/10 text-velora-textSecondary hover:border-ink/25"}`}>
-                {item.label}{item.items.length > 0 ? ` · ${item.items.length}` : ""}
+                {t(item.label)}{item.items.length > 0 ? ` · ${item.items.length}` : ""}
               </button>
             ))}
           </div>
@@ -68,12 +70,12 @@ export default function ActivityPage() {
           ) : (
             <div className="rounded-3xl border border-dashed border-ink/15 p-8 text-center">
               {tab === "VISITORS" && data.browseInvisibly ? (
-                <p className="text-sm text-velora-textSecondary">You browse invisibly, so visitors are hidden for you too. Change it in <Link href="/settings" className="text-velora-gold underline">Settings → Privacy</Link>.</p>
+                <p className="text-sm text-velora-textSecondary">{t("You browse invisibly, so visitors are hidden for you too. Change it in")}{" "}<Link href="/settings" className="text-velora-gold underline">{t("Settings → Privacy")}</Link>.</p>
               ) : (
                 <>
-                  <h2 className="font-display text-3xl font-bold text-velora-textPrimary">{tab === "MUTUAL" ? "No matches yet" : tab === "INTERESTED" ? "Nobody yet" : "No visitors yet"}</h2>
-                  <p className="mt-2 text-sm text-velora-textSecondary">A photo, your desires and a plan for tonight get you noticed faster.</p>
-                  <div className="mt-4 flex justify-center gap-4 text-sm font-semibold"><Link href="/people" className="text-velora-gold underline">Find people</Link><Link href="/tonight/new" className="text-velora-gold underline">Post a plan</Link></div>
+                  <h2 className="font-display text-3xl font-bold text-velora-textPrimary">{tab === "MUTUAL" ? t("No matches yet") : tab === "INTERESTED" ? t("Nobody yet") : t("No visitors yet")}</h2>
+                  <p className="mt-2 text-sm text-velora-textSecondary">{t("A photo, your desires and a plan for tonight get you noticed faster.")}</p>
+                  <div className="mt-4 flex justify-center gap-4 text-sm font-semibold"><Link href="/people" className="text-velora-gold underline">{t("Find people")}</Link><Link href="/tonight/new" className="text-velora-gold underline">{t("Post a plan")}</Link></div>
                 </>
               )}
             </div>

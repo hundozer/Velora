@@ -1,10 +1,12 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React, { useState } from "react";
 import Link from "next/link";
 import { AuthField, AuthMessage, AuthShell, requestAuthEmail, submitClass } from "@/components/auth/AuthShell";
 
 export default function ResetPasswordPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
@@ -19,12 +21,12 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <AuthShell title="Reset password" subtitle="We'll email you a link to choose a new one" footer={<Link href="/login" className="text-velora-gold hover:underline">Back to sign in</Link>}>
-      {sent ? <AuthMessage tone="info">If an account exists for {email.trim()}, a reset link is on its way. It expires in one hour.</AuthMessage> : (
+    <AuthShell title={t("Reset password")} subtitle={t("We'll email you a link to choose a new one")} footer={<Link href="/login" className="text-velora-gold hover:underline">{t("Back to sign in")}</Link>}>
+      {sent ? <AuthMessage tone="info">{t("If an account exists for {trim}, a reset link is on its way. It expires in one hour.", { trim: email.trim() })}</AuthMessage> : (
         <form onSubmit={submit} className="space-y-4" noValidate>
-          <AuthField id="email" label="Email" type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-          {error && <AuthMessage tone="error">{error}</AuthMessage>}
-          <button type="submit" disabled={busy || !email.trim()} className={submitClass}>{busy ? "Sending…" : "Send reset link"}</button>
+          <AuthField id="email" label={t("Email")} type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          {error && <AuthMessage tone="error">{t(error)}</AuthMessage>}
+          <button type="submit" disabled={busy || !email.trim()} className={submitClass}>{busy ? t("Sending…") : t("Send reset link")}</button>
         </form>
       )}
     </AuthShell>

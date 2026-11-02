@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -12,11 +13,12 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, icon, className, ...props }, ref) => {
+  const { t } = useTranslation();
     return (
       <div className="w-full">
         {label && (
           <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
-            {label}
+            {t(label)}
           </label>
         )}
         <div className="relative flex items-center">
@@ -34,7 +36,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {...props}
           />
         </div>
-        {error && <p className="mt-1.5 text-xs text-velora-danger font-medium">{error}</p>}
+        {error && <p className="mt-1.5 text-xs text-velora-danger font-medium">{t(error)}</p>}
       </div>
     );
   }

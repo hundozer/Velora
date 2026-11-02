@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "@/context/LanguageContext";
 /* eslint-disable @next/next/no-img-element -- user media URLs are signed/dynamic and cannot use a static remote loader */
 
 import React, { useState } from "react";
@@ -35,6 +36,7 @@ import {
 } from "lucide-react";
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
   const { user, profile, updateUserProfile, logout, signOut } = useAuth();
   const [nickname, setNickname] = useState(profile?.displayName || user?.username || "");
   const [areaId, setAreaId] = useState(profile?.areaId || "");
@@ -262,12 +264,8 @@ export default function SettingsPage() {
         <div className="flex items-center gap-3">
           <Settings className="w-8 h-8 text-velora-gold" />
           <div>
-            <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">
-              Privacy, Safety & Regional Settings
-            </h1>
-            <p className="text-xs text-velora-textSecondary mt-1">
-              Manage messaging permissions, privacy rights, consent and safety controls.
-            </p>
+            <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">{t("Privacy, Safety & Regional Settings")}</h1>
+            <p className="text-xs text-velora-textSecondary mt-1">{t("Manage messaging permissions, privacy rights, consent and safety controls.")}</p>
           </div>
         </div>
 
@@ -277,14 +275,12 @@ export default function SettingsPage() {
           className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow shrink-0"
           onClick={handleSave}
         >
-          <CheckCircle2 className="w-4 h-4" /> Save Settings
-        </Button>
+          <CheckCircle2 className="w-4 h-4" />{" "}{t("Save Settings")}</Button>
       </div>
 
       {saveSuccess && (
         <div className="p-4 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl text-xs text-velora-success font-semibold flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4" /> Settings updated successfully!
-        </div>
+          <CheckCircle2 className="w-4 h-4" />{" "}{t("Settings updated successfully!")}</div>
       )}
       {settingsError && <div role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-xs text-velora-danger">{settingsError}</div>}
 
@@ -294,9 +290,7 @@ export default function SettingsPage() {
         <input type="file" ref={coverInputRef} accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleCoverUpload} />
 
         <h2 className="text-sm font-display font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-ink/10 pb-3">
-          <UserCheck className="w-4 h-4 text-velora-gold" />
-          Private Identity, Avatar & Cover Banner
-        </h2>
+          <UserCheck className="w-4 h-4 text-velora-gold" />{t("Private Identity, Avatar & Cover Banner")}</h2>
 
         <div className="space-y-6">
           {/* Avatar & Cover Upload Buttons */}
@@ -304,21 +298,21 @@ export default function SettingsPage() {
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-2xl border-2 border-velora-gold/60 overflow-hidden bg-velora-card relative group shrink-0">
                 <span className="absolute inset-0 flex items-center justify-center bg-velora-accent/5"><UserCheck className="h-7 w-7 text-velora-accent" /></span>
-                {avatarUrl && !avatarImageFailed && <img src={avatarUrl} alt="Your profile avatar" onError={() => setAvatarImageFailed(true)} className="relative h-full w-full object-cover" />}
+                {avatarUrl && !avatarImageFailed && <img src={avatarUrl} alt={t("Your profile avatar")} onError={() => setAvatarImageFailed(true)} className="relative h-full w-full object-cover" />}
                 <button
                   type="button"
                   onClick={() => !mediaUpload && avatarInputRef.current?.click()}
                   className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
-                  title="Upload New Avatar"
+                  title={t("Upload New Avatar")}
                 >
                   <Camera className="w-5 h-5 text-velora-gold" />
                 </button>
               </div>
               <div>
-                <p className="text-xs font-bold text-ink">Profile Picture / Avatar</p>
-                <p className="text-[10px] text-velora-textMuted mb-2">JPEG, PNG or WebP · non-explicit · max 15 MB</p>
+                <p className="text-xs font-bold text-ink">{t("Profile Picture / Avatar")}</p>
+                <p className="text-[10px] text-velora-textMuted mb-2">{t("JPEG, PNG or WebP · non-explicit · max 15 MB")}</p>
                 <Button variant="glass" size="sm" disabled={Boolean(mediaUpload)} onClick={() => avatarInputRef.current?.click()} className="text-[11px] gap-1.5">
-                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUpload?.kind === "avatar" ? `Uploading ${mediaUpload.progress}%` : "Upload New Avatar"}
+                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUpload?.kind === "avatar" ? t("Uploading {progress}%", { progress: mediaUpload.progress }) : t("Upload New Avatar")}
                 </Button>
               </div>
             </div>
@@ -326,94 +320,85 @@ export default function SettingsPage() {
             <div className="flex items-center gap-4 border-l border-ink/10 pl-6">
               <div className="w-24 h-16 rounded-2xl border border-ink/20 overflow-hidden bg-velora-card relative group shrink-0">
                 <span className="absolute inset-0 flex items-center justify-center bg-ink/[0.03]"><ImageIcon className="h-7 w-7 text-velora-textMuted" /></span>
-                {coverUrl && !coverImageFailed && <img src={coverUrl} alt="Your profile cover" onError={() => setCoverImageFailed(true)} className="relative h-full w-full object-cover" />}
+                {coverUrl && !coverImageFailed && <img src={coverUrl} alt={t("Your profile cover")} onError={() => setCoverImageFailed(true)} className="relative h-full w-full object-cover" />}
                 <button
                   type="button"
                   onClick={() => !mediaUpload && coverInputRef.current?.click()}
                   className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
-                  title="Upload New Cover Banner"
+                  title={t("Upload New Cover Banner")}
                 >
                   <Camera className="w-5 h-5 text-velora-gold" />
                 </button>
               </div>
               <div>
-                <p className="text-xs font-bold text-ink">Cover Banner Image</p>
-                <p className="text-[10px] text-velora-textMuted mb-2">JPEG, PNG or WebP · non-explicit · max 15 MB</p>
+                <p className="text-xs font-bold text-ink">{t("Cover Banner Image")}</p>
+                <p className="text-[10px] text-velora-textMuted mb-2">{t("JPEG, PNG or WebP · non-explicit · max 15 MB")}</p>
                 <Button variant="glass" size="sm" disabled={Boolean(mediaUpload)} onClick={() => coverInputRef.current?.click()} className="text-[11px] gap-1.5">
-                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUpload?.kind === "cover" ? `Uploading ${mediaUpload.progress}%` : "Upload New Banner"}
+                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUpload?.kind === "cover" ? t("Uploading {progress}%", { progress: mediaUpload.progress }) : t("Upload New Banner")}
                 </Button>
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
-              Club Nickname / Display Name
-            </label>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">{t("Club Nickname / Display Name")}</label>
             <Input
               type="text"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              placeholder="Enter your nickname (e.g. Lucas, Prince Charming, Valerie)"
+              placeholder={t("Enter your nickname (e.g. Lucas, Prince Charming, Valerie)")}
               className="w-full text-xs"
             />
-            <p className="text-[10px] text-velora-textMuted mt-1.5">
-              This nickname will represent your verified identity across Intimo feeds, messaging, and community salons.
-            </p>
+            <p className="text-[10px] text-velora-textMuted mt-1.5">{t("This nickname will represent your verified identity across Intimo feeds, messaging, and community salons.")}</p>
           </div>
 
           <div>
-            <label htmlFor="settings-area" className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">
-              Your area
-            </label>
+            <label htmlFor="settings-area" className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">{t("Your area")}</label>
             <AreaSelect
               id="settings-area"
               value={areaId}
               onChange={setAreaId}
               className="w-full rounded-xl border border-ink/10 bg-ink/5 px-3 py-2.5 text-xs text-velora-textPrimary outline-none focus:border-velora-gold/60"
             />
-            <p className="text-[10px] text-velora-textMuted mt-1.5">
-              Members see your district and a rough distance, never your position.
-            </p>
+            <p className="text-[10px] text-velora-textMuted mt-1.5">{t("Members see your district and a rough distance, never your position.")}</p>
           </div>
         </div>
       </Card>
 
       <Card variant="glass" className="p-6 space-y-5 scroll-mt-24" id="privacy">
         <h2 className="text-sm font-display font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-ink/10 pb-3">
-          <EyeOff className="w-4 h-4 text-velora-success" /> Privacy Center
-        </h2>
-        <p className="text-xs text-velora-textSecondary">Choose an audience for your profile and each kind of information. New intimate details and media stay private until you change them.</p>
+          <EyeOff className="w-4 h-4 text-velora-success" />{" "}{t("Privacy Center")}</h2>
+        <p className="text-xs text-velora-textSecondary">{t("Choose an audience for your profile and each kind of information. New intimate details and media stay private until you change them.")}</p>
 
         <div className="space-y-3">
           <VisibilityChoice
             icon={<Globe className="h-5 w-5" />}
-            title="Your profile"
-            description="Controls whether your profile appears in People and discovery. Choose Hidden to disappear without deleting your account."
+            title={t("Your profile")}
+            description={t("Controls whether your profile appears in People and discovery. Choose Hidden to disappear without deleting your account.")}
             value={privacy.profileVisibility}
             options={[["EVERYONE", "Public"], ["MEMBERS_ONLY", "Members"], ["FRIENDS_ONLY", "Friends"], ["PRIVATE", "Hidden"]]}
             onChange={(value) => setPrivacy({ ...privacy, profileVisibility: value })}
           />
           <VisibilityChoice
             icon={<Lock className="h-5 w-5" />}
-            title="Intimate preferences"
-            description="Sexual orientation, practices, desires, and other sensitive profile details."
+            title={t("Intimate preferences")}
+            description={t("Sexual orientation, practices, desires, and other sensitive profile details.")}
             value={privacy.sensitiveFieldsVisibility}
             options={[["MEMBERS_ONLY", "Members"], ["FRIENDS_ONLY", "Friends"], ["PRIVATE", "Only me"]]}
             onChange={(value) => setPrivacy({ ...privacy, sensitiveFieldsVisibility: value })}
           />
           <VisibilityChoice
             icon={<MapPin className="h-5 w-5" />}
-            title="Your location"
-            description="Show a city, an approximate distance, or nothing. Your exact coordinates are never displayed."
+            title={t("Your location")}
+            description={t("Show a city, an approximate distance, or nothing. Your exact coordinates are never displayed.")}
             value={privacy.locationPrecision}
             options={[["CITY", "City"], ["APPROXIMATE_DISTANCE", "Approx. distance"], ["HIDDEN", "Hidden"]]}
             onChange={(value) => setPrivacy({ ...privacy, locationPrecision: value, showDistance: value === "APPROXIMATE_DISTANCE" })}
           />
           <VisibilityChoice
             icon={<MessageSquare className="h-5 w-5" />}
-            title="Who can message you"
-            description="Limit new conversations without hiding your profile. Friends means people whose request you accepted."
+            title={t("Who can message you")}
+            description={t("Limit new conversations without hiding your profile. Friends means people whose request you accepted.")}
             value={privacy.messagePermission}
             options={[["EVERYONE", "Everyone"], ["MEMBERS_ONLY", "Members"], ["FRIENDS_ONLY", "Friends"], ["PRIVATE", "Nobody"]]}
             onChange={(value) => setPrivacy({ ...privacy, messagePermission: value })}
@@ -421,44 +406,40 @@ export default function SettingsPage() {
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <PrivacyToggle title="Show activity" description="Members see a rough status (Online now, Active today, Active this week), never an exact time." checked={privacy.showOnlineStatus} onChange={(checked) => setPrivacy({ ...privacy, showOnlineStatus: checked })} />
-          <PrivacyToggle title="Appear in Introductions" description="Up to five members a day are introduced at the top of People. Turn this off and you stay findable in Everyone." checked={privacy.showInIntroductions} onChange={(checked) => setPrivacy({ ...privacy, showInIntroductions: checked })} />
-          <PrivacyToggle title="Browse invisibly" description="Your visits don't appear in other members' Visitors. You also won't see who visited you." checked={privacy.browseInvisibly} onChange={(checked) => setPrivacy({ ...privacy, browseInvisibly: checked })} />
-          <PrivacyToggle title="Discreet mode on this device" description="Neutral tab title and photos blurred until you tap them. Applies right away, only in this browser." checked={discreet} onChange={(checked) => { setDiscreet(checked); writeDiscreet(checked); }} />
-          <PrivacyToggle title="Approximate distance" description="Never reveals your precise position." checked={privacy.showDistance} disabled={privacy.locationPrecision === "HIDDEN"} onChange={(checked) => setPrivacy({ ...privacy, showDistance: checked })} />
+          <PrivacyToggle title={t("Show activity")} description={t("Members see a rough status (Online now, Active today, Active this week), never an exact time.")} checked={privacy.showOnlineStatus} onChange={(checked) => setPrivacy({ ...privacy, showOnlineStatus: checked })} />
+          <PrivacyToggle title={t("Appear in Introductions")} description={t("Up to five members a day are introduced at the top of People. Turn this off and you stay findable in Everyone.")} checked={privacy.showInIntroductions} onChange={(checked) => setPrivacy({ ...privacy, showInIntroductions: checked })} />
+          <PrivacyToggle title={t("Browse invisibly")} description={t("Your visits don't appear in other members' Visitors. You also won't see who visited you.")} checked={privacy.browseInvisibly} onChange={(checked) => setPrivacy({ ...privacy, browseInvisibly: checked })} />
+          <PrivacyToggle title={t("Discreet mode on this device")} description={t("Neutral tab title and photos blurred until you tap them. Applies right away, only in this browser.")} checked={discreet} onChange={(checked) => { setDiscreet(checked); writeDiscreet(checked); }} />
+          <PrivacyToggle title={t("Approximate distance")} description={t("Never reveals your precise position.")} checked={privacy.showDistance} disabled={privacy.locationPrecision === "HIDDEN"} onChange={(checked) => setPrivacy({ ...privacy, showDistance: checked })} />
         </div>
 
         <div className="flex flex-col gap-3 rounded-2xl border border-velora-accent/20 bg-velora-accent/[0.04] p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div><p className="text-xs font-bold text-ink">Photos, videos, and albums</p><p className="mt-1 text-[11px] leading-5 text-velora-textMuted">Choose Public, Members, Followers, or Private separately for every album. Switch an album to Private to hide it without deleting it.</p></div>
-          <Link href="/albums/manage" className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-velora-accent/40 px-4 text-xs font-bold text-velora-accent transition hover:bg-velora-accent/10">Manage media visibility</Link>
+          <div><p className="text-xs font-bold text-ink">{t("Photos, videos, and albums")}</p><p className="mt-1 text-[11px] leading-5 text-velora-textMuted">{t("Choose Public, Members, Followers, or Private separately for every album. Switch an album to Private to hide it without deleting it.")}</p></div>
+          <Link href="/albums/manage" className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-velora-accent/40 px-4 text-xs font-bold text-velora-accent transition hover:bg-velora-accent/10">{t("Manage media visibility")}</Link>
         </div>
         <div className="p-4 border border-emerald-500/30 rounded-xl space-y-3">
-          <p className="text-xs font-bold">Explicit sensitive-data consent</p>
-          <p className="text-[11px] text-velora-textMuted">Controls processing of sexual orientation and intimate preferences for your profile and discovery. Withdrawal may make these features unavailable; it does not replace a deletion request.</p>
-          <Button variant="glass" size="sm" onClick={() => updateSensitiveConsent(!sensitiveConsentGranted)}>{sensitiveConsentGranted ? "Withdraw consent" : "Grant consent"}</Button>
+          <p className="text-xs font-bold">{t("Explicit sensitive-data consent")}</p>
+          <p className="text-[11px] text-velora-textMuted">{t("Controls processing of sexual orientation and intimate preferences for your profile and discovery. Withdrawal may make these features unavailable; it does not replace a deletion request.")}</p>
+          <Button variant="glass" size="sm" onClick={() => updateSensitiveConsent(!sensitiveConsentGranted)}>{sensitiveConsentGranted ? t("Withdraw consent") : t("Grant consent")}</Button>
         </div>
       </Card>
 
       {/* Emails (P1-11) */}
       <Card variant="glass" className="p-6 space-y-4">
-        <h2 className="text-sm font-display font-bold text-velora-textPrimary uppercase tracking-wider border-b border-ink/10 pb-3">Emails</h2>
+        <h2 className="text-sm font-display font-bold text-velora-textPrimary uppercase tracking-wider border-b border-ink/10 pb-3">{t("Emails")}</h2>
         <EmailPreferences />
       </Card>
 
       {/* SECTION 3: GDPR DATA PRIVACY & ACCOUNT ERASURE */}
       <Card variant="glass" className="p-6 space-y-6">
         <h2 className="text-sm font-display font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-ink/10 pb-3">
-          <Shield className="w-4 h-4 text-velora-success" />
-          GDPR Data Rights & Account Management
-        </h2>
+          <Shield className="w-4 h-4 text-velora-success" />{t("GDPR Data Rights & Account Management")}</h2>
 
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl">
             <div>
-              <h4 className="text-xs font-bold text-velora-textPrimary">Export Personal Data Archive (GDPR Art. 20)</h4>
-              <p className="text-[11px] text-velora-textMuted mt-0.5">
-                Download a server-generated JSON export of your profile, messages, connections, consent history, and dating ads.
-              </p>
+              <h4 className="text-xs font-bold text-velora-textPrimary">{t("Export Personal Data Archive (GDPR Art. 20)")}</h4>
+              <p className="text-[11px] text-velora-textMuted mt-0.5">{t("Download a server-generated JSON export of your profile, messages, connections, consent history, and dating ads.")}</p>
             </div>
             <Button
               variant="glass"
@@ -466,31 +447,28 @@ export default function SettingsPage() {
               className="text-xs font-bold border-emerald-500/40 text-velora-success shrink-0 gap-2"
               onClick={handleExportGdprData}
             >
-              <Download className="w-4 h-4" /> Download Data Archive
-            </Button>
+              <Download className="w-4 h-4" />{" "}{t("Download Data Archive")}</Button>
           </div>
 
           <div className="space-y-3 rounded-2xl border border-ink/10 p-4">
-            <div><h4 className="text-xs font-bold text-velora-textPrimary">Exercise another privacy right</h4><p className="mt-1 text-[11px] text-velora-textMuted">Request access, correction, restriction of processing, or object to specific processing. Each request receives a durable reference and reviewed response.</p></div>
-            <label className="block text-xs text-velora-textSecondary"><span className="mb-2 block font-semibold">Right requested</span><select value={rightsType} onChange={(event) => setRightsType(event.target.value)} className="w-full rounded-xl border border-ink/10 bg-ink/5 p-3 text-ink"><option className="bg-velora-card" value="CORRECTION">Correct my data</option><option className="bg-velora-card" value="RESTRICTION">Restrict processing</option><option className="bg-velora-card" value="OBJECTION">Object to processing</option><option className="bg-velora-card" value="ACCESS">Reviewed access request</option></select></label>
-            <label className="block text-xs text-velora-textSecondary"><span className="mb-2 block font-semibold">What should Intimo review?</span><textarea value={rightsDetails} onChange={(event) => setRightsDetails(event.target.value)} rows={4} maxLength={4000} className="w-full rounded-xl border border-ink/10 bg-ink/5 p-3 text-ink" placeholder="Describe the data or processing involved (minimum 20 characters)." /></label>
-            {rightsMessage && <p role="status" className="text-xs text-velora-success">{rightsMessage}</p>}
-            <Button variant="glass" size="sm" disabled={rightsPending || rightsDetails.trim().length < 20} onClick={submitRightsRequest}>{rightsPending ? "Submitting…" : "Submit privacy request"}</Button>
+            <div><h4 className="text-xs font-bold text-velora-textPrimary">{t("Exercise another privacy right")}</h4><p className="mt-1 text-[11px] text-velora-textMuted">{t("Request access, correction, restriction of processing, or object to specific processing. Each request receives a durable reference and reviewed response.")}</p></div>
+            <label className="block text-xs text-velora-textSecondary"><span className="mb-2 block font-semibold">{t("Right requested")}</span><select value={rightsType} onChange={(event) => setRightsType(event.target.value)} className="w-full rounded-xl border border-ink/10 bg-ink/5 p-3 text-ink"><option className="bg-velora-card" value="CORRECTION">{t("Correct my data")}</option><option className="bg-velora-card" value="RESTRICTION">{t("Restrict processing")}</option><option className="bg-velora-card" value="OBJECTION">{t("Object to processing")}</option><option className="bg-velora-card" value="ACCESS">{t("Reviewed access request")}</option></select></label>
+            <label className="block text-xs text-velora-textSecondary"><span className="mb-2 block font-semibold">{t("What should Intimo review?")}</span><textarea value={rightsDetails} onChange={(event) => setRightsDetails(event.target.value)} rows={4} maxLength={4000} className="w-full rounded-xl border border-ink/10 bg-ink/5 p-3 text-ink" placeholder={t("Describe the data or processing involved (minimum 20 characters).")} /></label>
+            {rightsMessage && <p role="status" className="text-xs text-velora-success">{t(rightsMessage)}</p>}
+            <Button variant="glass" size="sm" disabled={rightsPending || rightsDetails.trim().length < 20} onClick={submitRightsRequest}>{rightsPending ? t("Submitting…") : t("Submit privacy request")}</Button>
           </div>
 
           {reportHistory.some((item) => item.relationship === "AFFECTED_USER") && <div className="space-y-3 rounded-2xl border border-ink/10 p-4">
-            <div><h4 className="text-xs font-bold text-velora-textPrimary">Moderation decisions and appeals</h4><p className="mt-1 text-[11px] text-velora-textMuted">Eligible resolved decisions can be appealed once. Give a specific reason for independent review.</p></div>
-            {reportHistory.filter((item) => item.relationship === "AFFECTED_USER").map((item) => <div key={item.id} className="rounded-xl bg-ink/5 p-3 text-xs"><div className="flex flex-wrap justify-between gap-2"><span>{item.content_type} · {item.reason.replaceAll("_", " ")}</span><strong>{item.status}</strong></div>{item.decision_reason && <p className="mt-2 text-velora-textMuted">Decision reason: {item.decision_reason}</p>}{["RESOLVED", "REJECTED"].includes(item.status) && item.appeal_status === "NONE" && <Button variant="glass" size="sm" className="mt-3" onClick={() => setAppealCaseId(item.id)}>Appeal this decision</Button>}</div>)}
-            {appealCaseId && <div className="space-y-2"><label className="block text-xs"><span className="mb-2 block font-semibold">Why should this decision be reviewed?</span><textarea value={appealReason} onChange={(event) => setAppealReason(event.target.value)} rows={4} maxLength={4000} className="w-full rounded-xl border border-ink/10 bg-ink/5 p-3 text-ink" /></label><div className="flex gap-2"><Button variant="ghost" size="sm" onClick={() => { setAppealCaseId(""); setAppealReason(""); }}>Cancel appeal</Button><Button variant="glass" size="sm" disabled={appealReason.trim().length < 20} onClick={submitAppeal}>Submit appeal</Button></div></div>}
-            {appealMessage && <p role="status" className="text-xs text-velora-success">{appealMessage}</p>}
+            <div><h4 className="text-xs font-bold text-velora-textPrimary">{t("Moderation decisions and appeals")}</h4><p className="mt-1 text-[11px] text-velora-textMuted">{t("Eligible resolved decisions can be appealed once. Give a specific reason for independent review.")}</p></div>
+            {reportHistory.filter((item) => item.relationship === "AFFECTED_USER").map((item) => <div key={item.id} className="rounded-xl bg-ink/5 p-3 text-xs"><div className="flex flex-wrap justify-between gap-2"><span>{item.content_type} · {item.reason.replaceAll("_", " ")}</span><strong>{t(item.status)}</strong></div>{item.decision_reason && <p className="mt-2 text-velora-textMuted">{t("Decision reason: {decision_reason}", { decision_reason: item.decision_reason })}</p>}{["RESOLVED", "REJECTED"].includes(item.status) && item.appeal_status === "NONE" && <Button variant="glass" size="sm" className="mt-3" onClick={() => setAppealCaseId(item.id)}>{t("Appeal this decision")}</Button>}</div>)}
+            {appealCaseId && <div className="space-y-2"><label className="block text-xs"><span className="mb-2 block font-semibold">{t("Why should this decision be reviewed?")}</span><textarea value={appealReason} onChange={(event) => setAppealReason(event.target.value)} rows={4} maxLength={4000} className="w-full rounded-xl border border-ink/10 bg-ink/5 p-3 text-ink" /></label><div className="flex gap-2"><Button variant="ghost" size="sm" onClick={() => { setAppealCaseId(""); setAppealReason(""); }}>{t("Cancel appeal")}</Button><Button variant="glass" size="sm" disabled={appealReason.trim().length < 20} onClick={submitAppeal}>{t("Submit appeal")}</Button></div></div>}
+            {appealMessage && <p role="status" className="text-xs text-velora-success">{t(appealMessage)}</p>}
           </div>}
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl border border-velora-gold/30">
             <div>
-              <h4 className="text-xs font-bold text-velora-gold">Log Out of Intimo Account</h4>
-              <p className="text-[11px] text-velora-textMuted mt-0.5">
-                Sign out of your active session on this device.
-              </p>
+              <h4 className="text-xs font-bold text-velora-gold">{t("Log Out of Intimo Account")}</h4>
+              <p className="text-[11px] text-velora-textMuted mt-0.5">{t("Sign out of your active session on this device.")}</p>
             </div>
             <Button
               variant="gold"
@@ -498,16 +476,13 @@ export default function SettingsPage() {
               className="text-xs font-bold shrink-0 gap-2 shadow-gold-glow"
               onClick={() => logout()}
             >
-              <LogOut className="w-4 h-4" /> Log Out
-            </Button>
+              <LogOut className="w-4 h-4" />{" "}{t("Log Out")}</Button>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl border border-red-500/30">
             <div>
-              <h4 className="text-xs font-bold text-velora-danger">Permanently Delete Intimo Account (GDPR Right to be Forgotten)</h4>
-              <p className="text-[11px] text-velora-textMuted mt-0.5">
-                Start permanent deletion of your profile data, messages, and media, subject to documented safety/legal retention exceptions.
-              </p>
+              <h4 className="text-xs font-bold text-velora-danger">{t("Permanently Delete Intimo Account (GDPR Right to be Forgotten)")}</h4>
+              <p className="text-[11px] text-velora-textMuted mt-0.5">{t("Start permanent deletion of your profile data, messages, and media, subject to documented safety/legal retention exceptions.")}</p>
             </div>
             <Button
               variant="danger"
@@ -515,29 +490,24 @@ export default function SettingsPage() {
               className="text-xs font-bold shrink-0 gap-2"
               onClick={() => { setDeleteError(""); setDeleteModalOpen(true); }}
             >
-              <Trash2 className="w-4 h-4" /> Delete Account
-            </Button>
+              <Trash2 className="w-4 h-4" />{" "}{t("Delete Account")}</Button>
           </div>
         </div>
       </Card>
 
       {/* Account Deletion Confirmation Modal */}
-      <Modal isOpen={deleteModalOpen} onClose={() => { if (!deletePending) setDeleteModalOpen(false); }} showCloseButton={!deletePending} title="Confirm Account Deletion">
+      <Modal isOpen={deleteModalOpen} onClose={() => { if (!deletePending) setDeleteModalOpen(false); }} showCloseButton={!deletePending} title={t("Confirm Account Deletion")}>
         <div className="space-y-4 text-left">
           <div className="p-4 bg-red-500/10 border border-red-500/40 rounded-2xl flex items-center gap-3">
             <AlertTriangle className="w-6 h-6 text-velora-danger shrink-0" />
-            <p className="text-xs text-velora-danger leading-relaxed">
-              Your login will be removed and your profile deactivated. Deletion or anonymization of profile data, messages, and media follows the documented retention workflow, subject to legitimate safety or legal retention duties.
-            </p>
+            <p className="text-xs text-velora-danger leading-relaxed">{t("Your login will be removed and your profile deactivated. Deletion or anonymization of profile data, messages, and media follows the documented retention workflow, subject to legitimate safety or legal retention duties.")}</p>
           </div>
 
           {deleteError && <p role="alert" className="text-xs text-velora-danger">{deleteError}</p>}
           <div className="flex gap-3 pt-2">
-            <Button variant="ghost" className="w-1/2 text-xs" disabled={deletePending} onClick={() => setDeleteModalOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="ghost" className="w-1/2 text-xs" disabled={deletePending} onClick={() => setDeleteModalOpen(false)}>{t("Cancel")}</Button>
             <Button variant="danger" className="w-1/2 text-xs font-bold uppercase tracking-wider" disabled={deletePending} onClick={handleDeleteAccount}>
-              {deletePending ? "Submitting…" : "Confirm Deletion Request"}
+              {deletePending ? t("Submitting…") : t("Confirm Deletion Request")}
             </Button>
           </div>
         </div>
@@ -560,13 +530,14 @@ function VisibilityChoice({ icon, title, description, value, options, onChange }
   options: Array<[string, string]>;
   onChange: (value: string) => void;
 }) {
+  const { t } = useTranslation();
   return <section className="rounded-2xl border border-ink/10 bg-ink/5 p-4">
     <div className="flex gap-3">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ink/5 text-velora-accent">{icon}</div>
-      <div><h3 className="text-sm font-bold text-ink">{title}</h3><p className="mt-1 text-[11px] leading-5 text-velora-textMuted">{description}</p></div>
+      <div><h3 className="text-sm font-bold text-ink">{t(title)}</h3><p className="mt-1 text-[11px] leading-5 text-velora-textMuted">{t(description)}</p></div>
     </div>
     <div className="mt-4 flex flex-wrap gap-2">
-      {options.map(([optionValue, label]) => <button key={optionValue} type="button" aria-pressed={value === optionValue} onClick={() => onChange(optionValue)} className={`min-h-9 rounded-full border px-3.5 text-xs font-semibold transition ${value === optionValue ? "border-velora-accent bg-velora-accent text-velora-paper" : "border-ink/10 bg-ink/[0.02] text-ink hover:border-ink/25 hover:text-ink"}`}>{label}</button>)}
+      {options.map(([optionValue, label]) => <button key={optionValue} type="button" aria-pressed={value === optionValue} onClick={() => onChange(optionValue)} className={`min-h-9 rounded-full border px-3.5 text-xs font-semibold transition ${value === optionValue ? "border-velora-accent bg-velora-accent text-velora-paper" : "border-ink/10 bg-ink/[0.02] text-ink hover:border-ink/25 hover:text-ink"}`}>{t(label)}</button>)}
     </div>
   </section>;
 }
@@ -578,8 +549,9 @@ function PrivacyToggle({ title, description, checked, disabled = false, onChange
   disabled?: boolean;
   onChange: (checked: boolean) => void;
 }) {
+  const { t } = useTranslation();
   return <label className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-ink/10 bg-ink/5 p-4 ${disabled ? "cursor-not-allowed opacity-50" : ""}`}>
-    <span><strong className="block text-xs text-ink">{title}</strong><span className="mt-1 block text-[11px] leading-4 text-velora-textMuted">{description}</span></span>
+    <span><strong className="block text-xs text-ink">{t(title)}</strong><span className="mt-1 block text-[11px] leading-4 text-velora-textMuted">{t(description)}</span></span>
     <span className={`relative h-6 w-11 shrink-0 rounded-full transition focus-within:outline focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-velora-accent ${checked ? "bg-velora-accent" : "bg-ink/10"}`}><input className="sr-only" type="checkbox" checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} /><span className={`absolute top-1 h-4 w-4 rounded-full shadow transition ${checked ? "left-6 bg-velora-paper" : "left-1 bg-velora-ink"}`} /></span>
   </label>;
 }

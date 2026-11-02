@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "@/context/LanguageContext";
 import { Logo } from "@/components/brand/Logo";
 
 import React from "react";
@@ -16,18 +17,21 @@ const portraitOf = (plan: Plan) => `${plan.authorIsCouple ? "Their" : "The"} por
 
 /** "✓ You can reply — open to everyone." or why not, from the server's reply rule. */
 function Eligibility({ plan, dark = false }: { plan: Plan; dark?: boolean }) {
+  const { t } = useTranslation();
   if (!plan.eligibilityText) return null;
-  return <p className={`text-[14px] leading-snug ${dark ? "text-velora-onPhoto/85" : "text-velora-ink2"}`}>{plan.canReply ? "✓ " : ""}{plan.eligibilityText}</p>;
+  return <p className={`text-[14px] leading-snug ${dark ? "text-velora-onPhoto/85" : "text-velora-ink2"}`}>{plan.canReply ? "✓ " : ""}{t(plan.eligibilityText)}</p>;
 }
 
 function ReportLink({ plan, onReport, dark = false }: { plan: Plan; onReport: (plan: Plan) => void; dark?: boolean }) {
-  return <button type="button" onClick={() => onReport(plan)} aria-label={`Report this plan by ${plan.authorName}`} className={`min-h-11 text-[13px] underline underline-offset-4 ${dark ? "text-velora-onPhoto/60 hover:text-velora-onPhoto" : "text-velora-muted hover:text-velora-ink"}`}>Report</button>;
+  const { t } = useTranslation();
+  return <button type="button" onClick={() => onReport(plan)} aria-label={t("Report this plan by {authorName}", { authorName: plan.authorName })} className={`min-h-11 text-[13px] underline underline-offset-4 ${dark ? "text-velora-onPhoto/60 hover:text-velora-onPhoto" : "text-velora-muted hover:text-velora-ink"}`}>{t("Report")}</button>;
 }
 
 /** Happening now: the first live plan as a full spread — photograph or the time itself. */
 function Featured({ plan, onReport }: { plan: Plan; onReport: (plan: Plan) => void }) {
+  const { t } = useTranslation();
   return (
-    <article data-dark aria-label={`Happening now: ${plan.title}`} className="relative isolate flex min-h-[calc(100svh-4rem)] flex-col justify-end overflow-hidden bg-velora-night text-velora-onPhoto md:min-h-[640px] md:rounded-[28px]">
+    <article data-dark aria-label={t("Happening now: {title}", { title: plan.title })} className="relative isolate flex min-h-[calc(100svh-4rem)] flex-col justify-end overflow-hidden bg-velora-night text-velora-onPhoto md:min-h-[640px] md:rounded-[28px]">
       {plan.authorAvatar ? (
         <>
           <Portrait src={plan.authorAvatar} name={plan.authorName} sizes="(min-width: 768px) 960px, 100vw" dominantColor="#191c20" className="absolute inset-0 -z-10 h-full w-full" />
@@ -40,14 +44,14 @@ function Featured({ plan, onReport }: { plan: Plan; onReport: (plan: Plan) => vo
         </div>
       )}
       <div className="px-6 pb-10 pt-40 sm:px-10 md:max-w-2xl md:pb-14">
-        <p className="flex items-center gap-2 text-[14px] text-velora-onPhoto/85"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-velora-copperLight" />Happening now · since {clock(plan.startsAt)}</p>
-        <h2 className="mt-3 font-display text-[clamp(2rem,8.5vw,3rem)] leading-[1.08]"><Link href={`/tonight/invitation/${plan.id}`} className="hover:underline">{plan.title}</Link></h2><PlanEventLink plan={plan}/>
-        <p className="mt-4 text-[15px] text-velora-onPhoto/85">{plan.authorName}{plan.authorAge && !plan.authorIsCouple ? `, ${plan.authorAge}` : ""} · until {clock(plan.expiresAt)}{plan.areaName ? ` · ${plan.areaName}` : ""}</p>
-        {plan.text && <p className="mt-2 max-w-lg text-[15px] leading-relaxed text-velora-onPhoto/80">{plan.text}</p>}
+        <p className="flex items-center gap-2 text-[14px] text-velora-onPhoto/85"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-velora-copperLight" />{t("Happening now · since {clock}", { clock: clock(plan.startsAt) })}</p>
+        <h2 className="mt-3 font-display text-[clamp(2rem,8.5vw,3rem)] leading-[1.08]"><Link href={`/tonight/invitation/${plan.id}`} className="hover:underline">{t(plan.title)}</Link></h2><PlanEventLink plan={plan}/>
+        <p className="mt-4 text-[15px] text-velora-onPhoto/85">{plan.authorName}{plan.authorAge && !plan.authorIsCouple ? `, ${plan.authorAge}` : ""}{" "}{t("· until {clock}", { clock: clock(plan.expiresAt) })}{plan.areaName ? ` · ${plan.areaName}` : ""}</p>
+        {plan.text && <p className="mt-2 max-w-lg text-[15px] leading-relaxed text-velora-onPhoto/80">{t(plan.text)}</p>}
         <div className="mt-3"><Eligibility plan={plan} dark /></div>
         <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
-          {plan.canReply && <Link href={replyHref(plan)} className="inline-flex min-h-12 items-center rounded-full bg-velora-accent px-6 text-[15px] font-semibold text-velora-paper">Reply to {plan.authorIsCouple ? "their" : "the"} invitation</Link>}
-          <Link href={`/profile/${plan.authorId}`} className="min-h-11 py-3 text-[15px] text-velora-onPhoto underline decoration-velora-onPhoto/50 underline-offset-4">{portraitOf(plan)}</Link>
+          {plan.canReply && <Link href={replyHref(plan)} className="inline-flex min-h-12 items-center rounded-full bg-velora-accent px-6 text-[15px] font-semibold text-velora-paper">{plan.authorIsCouple ? t("Reply to their invitation") : t("Reply to the invitation")}</Link>}
+          <Link href={`/profile/${plan.authorId}`} className="min-h-11 py-3 text-[15px] text-velora-onPhoto underline decoration-velora-onPhoto/50 underline-offset-4">{t(portraitOf(plan))}</Link>
           <ReportLink plan={plan} onReport={onReport} dark />
         </div>
       </div>
@@ -57,9 +61,10 @@ function Featured({ plan, onReport }: { plan: Plan; onReport: (plan: Plan) => vo
 
 /** Later tonight: a timeline with the hour as a marker and a copper rule. */
 function Later({ title, plans, onReport }: { title: string; plans: Plan[]; onReport: (plan: Plan) => void }) {
+  const { t } = useTranslation();
   return (
-    <section data-dark aria-label={title} className="bg-velora-night px-6 py-12 text-velora-onPhoto sm:px-10 md:rounded-[28px]">
-      <h2 className="text-[13px] font-semibold uppercase tracking-[0.2em] text-velora-onPhoto/80">{title}</h2>
+    <section data-dark aria-label={t(title)} className="bg-velora-night px-6 py-12 text-velora-onPhoto sm:px-10 md:rounded-[28px]">
+      <h2 className="text-[13px] font-semibold uppercase tracking-[0.2em] text-velora-onPhoto/80">{t(title)}</h2>
       <ol className="mt-6 space-y-8">
         {byHour(plans).map((bucket) => (
           <li key={bucket.hour} className="grid grid-cols-[3.25rem_1fr] gap-x-3">
@@ -68,14 +73,14 @@ function Later({ title, plans, onReport }: { title: string; plans: Plan[]; onRep
               {bucket.plans.map((plan) => (
                 <li key={plan.id} className="relative">
                   <span aria-hidden className="absolute -left-[1.84rem] top-3 h-2.5 w-2.5 rounded-full bg-velora-copper" />
-                  <p className="font-display text-[34px] leading-none text-velora-copperLight">{clock(plan.startsAt)}<span className="ml-2 font-sans text-[14px] text-velora-onPhoto/75">until {clock(plan.expiresAt)}</span></p>
-                  <h3 className="mt-2 font-display text-[25px] leading-[1.15]"><Link href={`/tonight/invitation/${plan.id}`} className="hover:underline">{plan.title}</Link></h3><PlanEventLink plan={plan}/>
+                  <p className="font-display text-[34px] leading-none text-velora-copperLight">{clock(plan.startsAt)}<span className="ml-2 font-sans text-[14px] text-velora-onPhoto/75">{t("until {clock}", { clock: clock(plan.expiresAt) })}</span></p>
+                  <h3 className="mt-2 font-display text-[25px] leading-[1.15]"><Link href={`/tonight/invitation/${plan.id}`} className="hover:underline">{t(plan.title)}</Link></h3><PlanEventLink plan={plan}/>
                   <p className="mt-1 text-[14px] text-velora-onPhoto/75">{plan.authorName}{plan.areaName ? ` · ${plan.areaName}` : ""}</p>
                   <div className="mt-2"><Eligibility plan={plan} dark /></div>
                   <div className="mt-3 flex flex-wrap items-center gap-x-5">
                     {plan.canReply
-                      ? <Link href={replyHref(plan)} className="inline-flex min-h-11 items-center rounded-full bg-velora-accent px-5 text-[15px] font-semibold text-velora-paper">Reply to {plan.authorName}</Link>
-                      : <Link href={`/profile/${plan.authorId}`} className="min-h-11 py-3 text-[15px] text-velora-onPhoto underline decoration-velora-onPhoto/50 underline-offset-4">See {plan.authorName}&apos;s portrait</Link>}
+                      ? <Link href={replyHref(plan)} className="inline-flex min-h-11 items-center rounded-full bg-velora-accent px-5 text-[15px] font-semibold text-velora-paper">{t("Reply to {authorName}", { authorName: plan.authorName })}</Link>
+                      : <Link href={`/profile/${plan.authorId}`} className="min-h-11 py-3 text-[15px] text-velora-onPhoto underline decoration-velora-onPhoto/50 underline-offset-4">{t("See {authorName}'s portrait", { authorName: plan.authorName })}</Link>}
                     <ReportLink plan={plan} onReport={onReport} dark />
                   </div>
                 </li>
@@ -90,20 +95,21 @@ function Later({ title, plans, onReport }: { title: string; plans: Plan[]; onRep
 
 /** Tomorrow (or the night after): quieter, on paper. */
 function Tomorrow({ plans, onReport }: { plans: Plan[]; onReport: (plan: Plan) => void }) {
+  const { t, locale } = useTranslation();
   return (
-    <section aria-label="Upcoming" className="px-6 py-12 sm:px-10">
-      <h2 className="font-display text-[40px] leading-none text-velora-ink">Upcoming</h2>
+    <section aria-label={t("Upcoming")} className="px-6 py-12 sm:px-10">
+      <h2 className="font-display text-[40px] leading-none text-velora-ink">{t("Upcoming")}</h2>
       <ol className="mt-6 divide-y divide-velora-line">
         {plans.map((plan) => (
           <li key={plan.id} className="py-6 first:pt-0">
-            <p className="font-display text-[30px] leading-none text-velora-copperInk">{glanceTime(plan)}<span className="ml-2 font-sans text-[14px] text-velora-muted">until {clock(plan.expiresAt)}</span></p>
-            <h3 className="mt-2 font-display text-[24px] leading-[1.15] text-velora-ink"><Link href={`/tonight/invitation/${plan.id}`} className="hover:underline">{plan.title}</Link></h3><PlanEventLink plan={plan}/>
+            <p className="font-display text-[30px] leading-none text-velora-copperInk">{glanceTime(plan, undefined, t, locale)}<span className="ml-2 font-sans text-[14px] text-velora-muted">{t("until {clock}", { clock: clock(plan.expiresAt) })}</span></p>
+            <h3 className="mt-2 font-display text-[24px] leading-[1.15] text-velora-ink"><Link href={`/tonight/invitation/${plan.id}`} className="hover:underline">{t(plan.title)}</Link></h3><PlanEventLink plan={plan}/>
             <p className="mt-1 text-[14px] text-velora-muted">{plan.authorName}{plan.areaName ? ` · ${plan.areaName}` : ""}</p>
             <div className="mt-2"><Eligibility plan={plan} /></div>
             <div className="mt-3 flex flex-wrap items-center gap-x-5">
               {plan.canReply
-                ? <Link href={replyHref(plan)} className="inline-flex min-h-11 items-center rounded-full bg-velora-accent px-5 text-[15px] font-semibold text-velora-paper">Reply to {plan.authorName}</Link>
-                : <Link href={`/profile/${plan.authorId}`} className="min-h-11 py-3 text-[15px] text-velora-ink underline underline-offset-4">See {plan.authorName}&apos;s portrait</Link>}
+                ? <Link href={replyHref(plan)} className="inline-flex min-h-11 items-center rounded-full bg-velora-accent px-5 text-[15px] font-semibold text-velora-paper">{t("Reply to {authorName}", { authorName: plan.authorName })}</Link>
+                : <Link href={`/profile/${plan.authorId}`} className="min-h-11 py-3 text-[15px] text-velora-ink underline underline-offset-4">{t("See {authorName}'s portrait", { authorName: plan.authorName })}</Link>}
               <ReportLink plan={plan} onReport={onReport} />
             </div>
           </li>
@@ -120,6 +126,7 @@ function Tomorrow({ plans, onReport }: { plans: Plan[]; onReport: (plan: Plan) =
  * rule POST /api/messages enforces.
  */
 export default function TonightPage() {
+  const { t, locale } = useTranslation();
   const { user } = useAuth();
   const [plans, setPlans] = React.useState<Plan[] | null>(null);
   const [eventFilter, setEventFilter] = React.useState<string | null>(null);
@@ -165,7 +172,7 @@ export default function TonightPage() {
   }, [plans]);
 
   async function endPlan(id: string) {
-    if (!window.confirm("End this invitation now? It disappears for everyone.")) return;
+    if (!window.confirm(t("End this invitation now? It disappears for everyone."))) return;
     const response = await fetch(`/api/dating-ads/${encodeURIComponent(id)}`, { method: "PATCH", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "END" }) });
     if (response.ok) void load();
   }
@@ -181,34 +188,34 @@ export default function TonightPage() {
       <section className="relative isolate overflow-hidden bg-gradient-to-br from-velora-blush via-velora-surface to-velora-surface md:mx-auto md:mt-6 md:max-w-5xl md:rounded-[28px]">
         <div aria-hidden className="absolute -right-24 top-10 -z-10 h-80 w-80 rounded-full bg-velora-copperLight/30 blur-3xl" />
         <header className="flex items-center justify-between px-6 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-10 md:pt-6">
-          <Link href="/" aria-label="Intimo" className="text-velora-ink md:invisible"><Logo className="h-7 w-auto" /></Link>
-          <Link href={eventFilter ? `/tonight/new?event=${encodeURIComponent(eventFilter)}` : "/tonight/new"} className="inline-flex min-h-11 items-center gap-1.5 text-[15px] font-semibold text-velora-ink"><Plus className="h-4 w-4" aria-hidden />Invite</Link>
+          <Link href="/" aria-label={t("Intimo")} className="text-velora-ink md:invisible"><Logo className="h-7 w-auto" /></Link>
+          <Link href={eventFilter ? `/tonight/new?event=${encodeURIComponent(eventFilter)}` : "/tonight/new"} className="inline-flex min-h-11 items-center gap-1.5 text-[15px] font-semibold text-velora-ink"><Plus className="h-4 w-4" aria-hidden />{t("Invite")}</Link>
         </header>
         <div className="px-6 pb-10 pt-8 sm:px-10">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-velora-copperInk">{now ? openingLine(now) : "Prague, tonight"}</p>
-          {eventFilter && <p className="mt-3 text-sm text-velora-ink2">Company invitations for this event · <Link href={`/scene?event=${encodeURIComponent(eventFilter)}`} className="text-velora-accent underline">View event</Link> · <a href="/tonight" className="text-velora-accent underline">All Plans</a></p>}
-          <h1 className="mt-3 font-display text-[clamp(3rem,13vw,4.5rem)] leading-[0.98] text-velora-ink">Take us out.<br /><em className="text-velora-copperInk">Or make the first move.</em></h1>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-velora-copperInk">{now ? t("Prague, tonight · {value}", { value: clock(now) }) : t("Prague, tonight")}</p>
+          {eventFilter && <p className="mt-3 text-sm text-velora-ink2">{t("Company invitations for this event ·")}{" "}<Link href={`/scene?event=${encodeURIComponent(eventFilter)}`} className="text-velora-accent underline">{t("View event")}</Link> · <a href="/tonight" className="text-velora-accent underline">{t("All Plans")}</a></p>}
+          <h1 className="mt-3 font-display text-[clamp(3rem,13vw,4.5rem)] leading-[0.98] text-velora-ink">{t("Take us out.")}<br /><em className="text-velora-copperInk">{t("Or make the first move.")}</em></h1>
 
-          {error && <p role="alert" className="mt-6 border-l-2 border-velora-crimson pl-4 text-[15px] text-velora-crimson">{error}</p>}
+          {error && <p role="alert" className="mt-6 border-l-2 border-velora-crimson pl-4 text-[15px] text-velora-crimson">{t(error)}</p>}
           {plans === null || !now ? (
             <ul aria-hidden className="mt-8 space-y-5">{[0, 1, 2].map((i) => <li key={i} className="flex gap-5"><span className="h-7 w-14 bg-velora-sunken" /><span className="flex-1 space-y-2"><span className="block h-4 w-40 bg-velora-sunken" /><span className="block h-3 w-28 bg-velora-sunken/70" /></span></li>)}</ul>
           ) : glance.length === 0 ? (
             <div className="mt-8">
-              <p className="text-[17px] text-velora-ink2">A drink that turns into flirting. A table for three. A night worth getting dressed for. Tell Prague what you have in mind.</p>
-              <Link href={eventFilter ? `/tonight/new?event=${encodeURIComponent(eventFilter)}` : "/tonight/new"} className="mt-5 inline-flex min-h-12 items-center rounded-full bg-velora-accent px-6 text-[16px] font-semibold text-velora-paper">Extend an invitation</Link>
+              <p className="text-[17px] text-velora-ink2">{t("A drink that turns into flirting. A table for three. A night worth getting dressed for. Tell Prague what you have in mind.")}</p>
+              <Link href={eventFilter ? `/tonight/new?event=${encodeURIComponent(eventFilter)}` : "/tonight/new"} className="mt-5 inline-flex min-h-12 items-center rounded-full bg-velora-accent px-6 text-[16px] font-semibold text-velora-paper">{t("Extend an invitation")}</Link>
             </div>
           ) : (
-            <ol aria-label="At a glance" className="mt-8 divide-y divide-velora-line/80">
+            <ol aria-label={t("At a glance")} className="mt-8 divide-y divide-velora-line/80">
               {glance.map((plan) => (
                 <li key={plan.id} className="grid grid-cols-[5.5rem_1fr_auto] items-baseline gap-x-3 py-3.5">
-                  <span className="font-display text-[26px] leading-none text-velora-copperInk">{glanceTime(plan, now ?? undefined)}</span>
+                  <span className="font-display text-[26px] leading-none text-velora-copperInk">{glanceTime(plan, now ?? undefined, t, locale)}</span>
                   <span className="min-w-0">
-                    <span className="line-clamp-2 block text-[16px] font-semibold leading-snug text-velora-ink">{plan.title}</span>
-                    <span className="block truncate text-[14px] text-velora-muted">{plan.authorName} · until {clock(plan.expiresAt)}</span>
+                    <span className="line-clamp-2 block text-[16px] font-semibold leading-snug text-velora-ink">{t(plan.title)}</span>
+                    <span className="block truncate text-[14px] text-velora-muted">{t("{authorName} · until {clock}", { authorName: plan.authorName, clock: clock(plan.expiresAt) })}</span>
                   </span>
                   {plan.canReply
-                    ? <Link href={replyHref(plan)} className="min-h-11 py-2 text-[15px] font-semibold text-velora-ink underline underline-offset-4">Reply</Link>
-                    : <span className="max-w-[7.5rem] text-right text-[13px] leading-tight text-velora-muted">{shortAudience(plan.audience)}</span>}
+                    ? <Link href={replyHref(plan)} className="min-h-11 py-2 text-[15px] font-semibold text-velora-ink underline underline-offset-4">{t("Reply")}</Link>
+                    : <span className="max-w-[7.5rem] text-right text-[13px] leading-tight text-velora-muted">{t(shortAudience(plan.audience))}</span>}
                 </li>
               ))}
             </ol>
@@ -218,30 +225,30 @@ export default function TonightPage() {
 
       <div className="mx-auto max-w-5xl space-y-0 md:mt-6 md:space-y-6">
         {mine.length > 0 && (
-          <section aria-label="Your invitations" className="px-6 py-10 sm:px-10">
-            <h2 className="font-display text-[34px] leading-tight text-velora-ink">{mine.length === 1 ? "Your invitation" : "Your invitations"}</h2>
+          <section aria-label={t("Your invitations")} className="px-6 py-10 sm:px-10">
+            <h2 className="font-display text-[34px] leading-tight text-velora-ink">{mine.length === 1 ? t("Your invitation") : t("Your invitations")}</h2>
             <ol className="mt-4 divide-y divide-velora-line">
               {mine.map((plan) => (
                 <li key={plan.id} className="py-4">
-                  <p className="font-display text-[24px] leading-none text-velora-copperInk">{clock(plan.startsAt)}<span className="ml-2 font-sans text-[14px] text-velora-muted">until {clock(plan.expiresAt)}</span></p>
-                  <p className="mt-1.5 font-display text-[22px] leading-tight text-velora-ink"><Link href={`/tonight/invitation/${plan.id}`} className="hover:underline">{plan.title}</Link></p><PlanEventLink plan={plan}/>
-                  <p className="mt-1 text-[14px] text-velora-muted">Open to {plan.audience || "everyone"}. Replies arrive in Messages.</p>
-                  <Link href={sharePlanHref(plan)} className="mr-6 inline-flex min-h-11 items-center text-[15px] text-velora-accent underline">Share to your Story</Link>
-                  <button type="button" onClick={() => void endPlan(plan.id)} className="mt-1 min-h-11 text-[15px] text-velora-ink underline underline-offset-4">End it now</button>
+                  <p className="font-display text-[24px] leading-none text-velora-copperInk">{clock(plan.startsAt)}<span className="ml-2 font-sans text-[14px] text-velora-muted">{t("until {clock}", { clock: clock(plan.expiresAt) })}</span></p>
+                  <p className="mt-1.5 font-display text-[22px] leading-tight text-velora-ink"><Link href={`/tonight/invitation/${plan.id}`} className="hover:underline">{t(plan.title)}</Link></p><PlanEventLink plan={plan}/>
+                  <p className="mt-1 text-[14px] text-velora-muted">{t("Open to {value}. Replies arrive in Messages.", { value: plan.audience || "everyone" })}</p>
+                  <Link href={sharePlanHref(plan)} className="mr-6 inline-flex min-h-11 items-center text-[15px] text-velora-accent underline">{t("Share to your Story")}</Link>
+                  <button type="button" onClick={() => void endPlan(plan.id)} className="mt-1 min-h-11 text-[15px] text-velora-ink underline underline-offset-4">{t("End it now")}</button>
                 </li>
               ))}
             </ol>
           </section>
         )}
         {featured && <Featured plan={featured} onReport={setReporting} />}
-        {happening.length > 1 && <Later title="Also happening now" plans={happening.slice(1)} onReport={setReporting} />}
-        {later.length > 0 && <Later title="Later tonight" plans={later} onReport={setReporting} />}
+        {happening.length > 1 && <Later title={t("Also happening now")} plans={happening.slice(1)} onReport={setReporting} />}
+        {later.length > 0 && <Later title={t("Later tonight")} plans={later} onReport={setReporting} />}
         {tomorrow.length > 0 && <Tomorrow plans={tomorrow} onReport={setReporting} />}
         {plans && plans.length > 0 && (
-          <section aria-label="Extend an invitation" className="px-6 py-12 sm:px-10">
-            <h2 className="font-display text-[40px] leading-none text-velora-ink">Extend an invitation</h2>
-            <p className="mt-4 font-display text-[24px] leading-[1.5] text-velora-muted">Tonight I&apos;d like to … in … from … until … I&apos;d welcome …</p>
-            <Link href={eventFilter ? `/tonight/new?event=${encodeURIComponent(eventFilter)}` : "/tonight/new"} className="mt-5 inline-flex min-h-12 items-center rounded-full bg-velora-accent px-6 text-[16px] font-semibold text-velora-paper">Write yours</Link>
+          <section aria-label={t("Extend an invitation")} className="px-6 py-12 sm:px-10">
+            <h2 className="font-display text-[40px] leading-none text-velora-ink">{t("Extend an invitation")}</h2>
+            <p className="mt-4 font-display text-[24px] leading-[1.5] text-velora-muted">{t("Tonight I'd like to … in … from … until … I'd welcome …")}</p>
+            <Link href={eventFilter ? `/tonight/new?event=${encodeURIComponent(eventFilter)}` : "/tonight/new"} className="mt-5 inline-flex min-h-12 items-center rounded-full bg-velora-accent px-6 text-[16px] font-semibold text-velora-paper">{t("Write yours")}</Link>
           </section>
         )}
       </div>
