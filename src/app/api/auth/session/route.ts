@@ -3,14 +3,20 @@ import { resolveServerActor } from "@/lib/auth/serverActor";
 import { deriveAccountState } from "@/lib/auth/accountState.mjs";
 
 export const dynamic = "force-dynamic";
+const privateHeaders = { "Cache-Control": "private, no-store" };
+function json(body: unknown, init: ResponseInit = {}) {
+  return NextResponse.json(body, { ...init, headers: { ...init.headers, ...privateHeaders } });
+}
 
 export async function GET(req: NextRequest) {
-  const result = await resolveServerActor(req);
-  if (result.status === "unauthenticated") return NextResponse.json({ authenticated: false, accountState: deriveAccountState({ authenticated: false }) }, { status: 401 });
-  if (result.status === "unavailable") return NextResponse.json({ error: "Authorization service unavailable" }, { status: 503 });
+  // Reuse the already verified owner's row rather than a second browser request
+  // that repeats identity and profile lookups before the home feed can start.
+  const result = await resolveServerActor(req, { includeProfile: true });
+  if (result.status === "unauthenticated") return json({ authenticated: false, accountState: deriveAccountState({ authenticated: false }) }, { status: 401 });
+  if (result.status === "unavailable") return json({ error: "Authorization service unavailable" }, { status: 503 });
   if (result.status === "unprovisioned") {
     const emailVerified = result.identity.emailVerified;
-    return NextResponse.json({
+    return json({
       authenticated: true,
       provisioned: false,
       accountState: deriveAccountState({ authenticated: true, provisioned: false, emailVerified }),
@@ -23,12 +29,13 @@ export async function GET(req: NextRequest) {
   }
   const accountState = deriveAccountState({ authenticated: true, provisioned: true, accountStatus: result.actor.accountStatus });
   if (accountState === "RESTRICTED") {
-    return NextResponse.json({ authenticated: true, provisioned: true, accountState }, { status: 403 });
+    return json({ authenticated: true, provisioned: true, accountState }, { status: 403 });
   }
-  return NextResponse.json({
+  return json({
     authenticated: true,
     provisioned: true,
     accountState,
+    profile: result.profile,
     actor: {
       id: result.actor.userId,
       email: result.actor.email,
@@ -38,5 +45,5 @@ export async function GET(req: NextRequest) {
       adminAuthorized: result.actor.adminAuthorized,
       emailVerified: result.actor.emailVerified,
     },
-  });
+  }, { headers: privateHeaders });
 }

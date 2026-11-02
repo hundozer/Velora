@@ -27,13 +27,28 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  let response = NextResponse.next({ request });
+  const hasSessionHint = request.cookies.getAll().some(({ name, value }) => value && /^sb-.+-auth-token(?:\.\d+)?$/.test(name));
+  // There is nothing to refresh for a cookie-free visitor. Protected handlers
+  // still verify identity themselves; this shortcut never grants access.
+  if (!hasSessionHint) return NextResponse.next({ request });
+
+  const nextResponse = () => {
+    if (pathname === "/") {
+      const target = request.nextUrl.clone();
+      target.pathname = "/member-home";
+      const rewritten = NextResponse.rewrite(target, { request });
+      rewritten.headers.set("Cache-Control", "private, no-store");
+      return rewritten;
+    }
+    return NextResponse.next({ request });
+  };
+  let response = nextResponse();
   const supabase = createServerClient(url, anonKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (toSet) => {
         toSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
+        response = nextResponse();
         toSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
       },
     },

@@ -3,6 +3,7 @@ import { getVerifiedIdentity } from "@/lib/auth/serverSession";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { shouldTouchActivity } from "@/lib/presence.mjs";
 import { hasValidAdminMfaSession } from "./adminMfaSession";
+import type { ProfileRow } from "@/lib/supabase/profileService";
 
 export const ADMIN_ROLES = new Set(["ADMIN", "SUPER_ADMIN", "SYSTEM_ADMIN", "TRUST_AND_SAFETY_ADMIN", "CONTENT_MODERATOR", "PRIVACY_ADMIN", "SUPPORT_ADMIN", "COMMUNITY_ADMIN"]);
 
@@ -21,21 +22,22 @@ export interface ServerActor {
 }
 
 export type ServerActorResult =
-  | { status: "authenticated"; actor: ServerActor }
+  | { status: "authenticated"; actor: ServerActor; profile?: ProfileRow }
   | { status: "unauthenticated" }
   | { status: "unprovisioned"; identity: Awaited<ReturnType<typeof getVerifiedIdentity>> & {} }
   | { status: "unavailable" };
 
-export async function resolveServerActor(req?: NextRequest): Promise<ServerActorResult> {
+export async function resolveServerActor(req?: NextRequest, options: { includeProfile?: boolean } = {}): Promise<ServerActorResult> {
   const identity = await getVerifiedIdentity(req);
   if (!identity) return { status: "unauthenticated" };
 
   const supabase = getServerSupabase();
   if (!supabase) return { status: "unavailable" };
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id,auth_id,email,role,verification_status,age_verification_status,account_status,last_active_at")
+  const profileQuery = options.includeProfile
+    ? supabase.from("profiles").select("*")
+    : supabase.from("profiles").select("id,auth_id,email,role,verification_status,age_verification_status,account_status,last_active_at");
+  const { data, error } = await profileQuery
     .eq("auth_id", identity.sub)
     .maybeSingle();
 
@@ -81,6 +83,7 @@ export async function resolveServerActor(req?: NextRequest): Promise<ServerActor
   const internalMfa = adminAuthorized ? await hasValidAdminMfaSession(String(data.id), req) : false;
   return {
     status: "authenticated",
+    ...(options.includeProfile ? { profile: data as unknown as ProfileRow } : {}),
     actor: {
       userId: identity.sub,
       email: typeof data.email === "string" ? data.email : identity.email,

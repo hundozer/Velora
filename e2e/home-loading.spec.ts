@@ -82,3 +82,33 @@ for (const status of [401, 503]) {
     expect(feedRequests).toBe(0);
   });
 }
+
+test("combined session starts feed without a second profile request or per-card reaction reads", async ({ page, context, baseURL }) => {
+  await context.addCookies([{ name: "sb-home-fixture-auth-token.0", value: "presentation-hint-only", url: baseURL! }]);
+  await context.addInitScript(() => localStorage.setItem("intimo_age_verified", "true"));
+  let profileReads = 0;
+  let reactionReads = 0;
+  const media: string[] = [];
+  await page.route("**/api/auth/session", route => route.fulfill({ json: {
+    provisioned: true,
+    actor: { id: "fixture-user", email: "member@example.test", role: "MEMBER", emailVerified: true },
+    profile: { id: "fixture-profile", email: "member@example.test", display_name: "Fixture", verification_status: "VERIFIED", account_status: "ACTIVE" },
+  } }));
+  await page.route("**/api/profile/me", route => { profileReads++; return route.fulfill({ status: 500 }); });
+  await page.route("**/api/notifications**", route => route.fulfill({ json: { notifications: [], unreadCount: 0 } }));
+  await page.route("**/api/reactions**", route => { reactionReads++; return route.fulfill({ json: { count: 999, liked: false } }); });
+  await page.route("**/api/media/**", route => { media.push(route.request().url()); return route.fulfill({ status: 404 }); });
+  await page.route("**/api/feed**", route => route.fulfill({ json: { items: [{
+    id: "IMAGE:12345678-1234-4123-8123-123456789012", type: "IMAGE", title: "Sized photo",
+    actor: { id: "owner", displayName: "Photo owner", avatarUrl: "/api/media/22345678-1234-4123-8123-123456789012", verified: false },
+    mediaUrl: "/api/media/12345678-1234-4123-8123-123456789012", href: "/photos", occurredAt: new Date().toISOString(),
+    reactionSummary: { count: 4, liked: true },
+  }] } }));
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Sized photo" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Like · 4", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(() => media.some(url => url.endsWith("?w=160"))).toBe(true);
+  await expect.poll(() => media.some(url => url.endsWith("?w=1080"))).toBe(true);
+  expect(profileReads).toBe(0);
+  expect(reactionReads).toBe(0);
+});

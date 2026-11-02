@@ -25,10 +25,10 @@ for (const width of [375, 390, 1440]) {
     await expect(page.getByRole("heading", { level: 1, name: "Kinky. Curious. Looking for someone?" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Join the founding members" })).toHaveAttribute("href", "/register");
     await expect(page.getByRole("link", { name: "Create your profile", exact: true })).toHaveAttribute("href", "/register");
-    await page.getByRole("link", { name: "Take a look" }).click();
-    await expect(page).toHaveURL(/#connections$/);
-    await expect(page.getByRole("heading", { name: "What brings you here?" })).toBeInViewport();
-    for (const title of ["Just chemistry.", "Something kinky.", "Explore together."]) await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
+    await page.getByRole("link", { name: "See what happens inside ↓" }).click();
+    await expect(page).toHaveURL(/#inside$/);
+    await expect(page.getByRole("heading", { name: "Find the spark. Then do something about it." })).toBeInViewport();
+    for (const title of ["Meet people who mean what they say.", "A glimpse beyond the bio.", "Show more when you choose to."]) await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
     const examples = page.getByRole("article", { name: /^Example profile:/ });
     await expect(examples).toHaveCount(3);
     for (const card of await examples.all()) {
@@ -41,7 +41,7 @@ for (const width of [375, 390, 1440]) {
     await expect(page.locator("body")).not.toContainText("Online now");
     await expect(page.locator("body")).toContainText("Sex, dates, friends with benefits, or someone who shares your kink.");
     const illustrations = page.locator("main img");
-    await expect(illustrations).toHaveCount(7);
+    await expect(illustrations).toHaveCount(9);
     for (const photo of await illustrations.all()) {
       await photo.scrollIntoViewIfNeeded();
       await expect.poll(() => photo.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
