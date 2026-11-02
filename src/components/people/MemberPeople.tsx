@@ -1,4 +1,5 @@
 "use client";
+import { Logo } from "@/components/brand/Logo";
 
 import React from "react";
 import Link from "next/link";
@@ -191,7 +192,7 @@ export function MemberPeople() {
   return (
     <div className="min-h-screen bg-velora-surface pb-24 md:pb-16">
       <header className={`z-20 mx-auto flex ${showIntroductions ? "max-w-5xl" : "max-w-2xl"} items-center justify-between px-5 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-8 ${darkHeader ? "absolute inset-x-0 top-0 md:static md:pt-6" : "pt-4 md:pt-8"}`}>
-        <Link href="/" className={`font-display text-[28px] leading-none md:invisible ${darkHeader ? "text-velora-onPhoto md:text-velora-ink" : "text-velora-ink"}`}>Intimo</Link>
+        <Link href="/" className={`md:invisible ${darkHeader ? "text-velora-onPhoto md:text-velora-ink" : "text-velora-ink"}`} aria-label="Intimo"><Logo className="h-7 w-auto" /></Link>
         <ModeSwitch view={view} onChange={switchView} dark={darkHeader} />
       </header>
       <div className={`mx-auto max-w-2xl px-5 py-3 text-sm sm:px-8 ${showIntroductions?"relative z-20 mt-16 text-velora-onPhoto md:mt-0 md:text-velora-ink":"text-velora-ink"}`}><Link href="/stories" className="inline-flex min-h-11 items-center underline underline-offset-4">Stories · see what people are sharing</Link></div>

@@ -1,4 +1,5 @@
 "use client";
+import { Logo } from "@/components/brand/Logo";
 
 import React from "react";
 import Link from "next/link";
@@ -180,7 +181,7 @@ export default function TonightPage() {
       <section className="relative isolate overflow-hidden bg-gradient-to-br from-velora-blush via-velora-surface to-velora-surface md:mx-auto md:mt-6 md:max-w-5xl md:rounded-[28px]">
         <div aria-hidden className="absolute -right-24 top-10 -z-10 h-80 w-80 rounded-full bg-velora-copperLight/30 blur-3xl" />
         <header className="flex items-center justify-between px-6 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-10 md:pt-6">
-          <Link href="/" className="font-display text-[28px] leading-none text-velora-ink md:invisible">Intimo</Link>
+          <Link href="/" aria-label="Intimo" className="text-velora-ink md:invisible"><Logo className="h-7 w-auto" /></Link>
           <Link href={eventFilter ? `/tonight/new?event=${encodeURIComponent(eventFilter)}` : "/tonight/new"} className="inline-flex min-h-11 items-center gap-1.5 text-[15px] font-semibold text-velora-ink"><Plus className="h-4 w-4" aria-hidden />Invite</Link>
         </header>
         <div className="px-6 pb-10 pt-8 sm:px-10">

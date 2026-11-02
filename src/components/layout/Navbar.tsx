@@ -1,4 +1,5 @@
 "use client";
+import { Logo } from "@/components/brand/Logo";
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -45,7 +46,7 @@ export const Navbar: React.FC = () => {
   return (
     <header className={`${phoneHidden ? "hidden md:block" : ""} sticky top-0 z-40 w-full border-b border-velora-line/70 bg-velora-paper/85 backdrop-blur-xl`}>
       <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 lg:h-20 flex items-center justify-between gap-4">
-        <Link href="/" aria-label="Intimo" className="shrink-0 font-display text-3xl leading-none text-velora-ink">intimo<span className="text-velora-accent" aria-hidden>↗</span></Link>
+        <Link href="/" aria-label="Intimo" className="shrink-0 text-velora-ink"><Logo className="h-8 w-auto lg:h-9" /></Link>
 
         {/* Me lives in the account menu. */}
         <nav className="hidden lg:flex items-center gap-1" aria-label="Primary navigation">

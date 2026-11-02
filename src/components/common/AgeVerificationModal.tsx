@@ -1,4 +1,5 @@
 "use client";
+import { Logo } from "@/components/brand/Logo";
 
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -44,7 +45,7 @@ export const AgeVerificationModal: React.FC = () => {
   return (
     <div ref={dialog} role="dialog" aria-modal="true" aria-labelledby="age-gate-title" className="fixed inset-0 z-[200] flex flex-col bg-velora-bg">
       <div className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center px-6 py-10">
-        <p className="font-display text-3xl text-velora-ink">Intimo</p>
+        <p className="text-velora-ink"><Logo className="h-9 w-auto" /></p>
         <h1 id="age-gate-title" className="mt-6 font-display text-6xl leading-[1.02] text-velora-ink">Are you 18 or older?</h1>
         <p className="mt-4 text-lg text-velora-textSecondary">Intimo is for consenting adults. What you see here stays here.</p>
         <div className="mt-10 space-y-3">
