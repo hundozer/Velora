@@ -94,14 +94,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         if (!session?.actor?.email) return;
 
-        const profileResponse = await fetch("/api/profile/me", { cache: "no-store", credentials: "same-origin" });
-        if (!profileResponse.ok) {
-          setAuthError("Your profile could not be loaded. Please retry.");
-          setAuthState("ERROR");
-          return;
+        let data = session.profile as ProfileRow | undefined;
+        // Compatibility with an older session response during rolling deploys.
+        if (!data) {
+          const profileResponse = await fetch("/api/profile/me", { cache: "no-store", credentials: "same-origin" });
+          if (!profileResponse.ok) {
+            setAuthError("Your profile could not be loaded. Please retry.");
+            setAuthState("ERROR");
+            return;
+          }
+          data = (await profileResponse.json()).profile as ProfileRow;
         }
-        const payload = await profileResponse.json();
-        const data = payload.profile as ProfileRow;
         if (cancelled || !data) return;
         const freshUser = { ...dbRowToUser(data), id: session.actor.id, role: session.actor.role as UserRole };
         const freshProfile = { ...dbRowToProfile(data), userId: session.actor.id };

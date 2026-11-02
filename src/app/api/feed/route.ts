@@ -15,6 +15,7 @@ type FeedItem = {
   mediaUrl?: string;
   href: string;
   occurredAt: string;
+  reactionSummary?: { count: number; liked: boolean };
 };
 
 export async function GET(req: NextRequest) {
@@ -35,9 +36,9 @@ export async function GET(req: NextRequest) {
 
   const [{ data: blocks, error: blockError }, { data: follows, error: followError }, { data: friendships, error: friendshipError }] = await Promise.all([
     db.from("user_blocks").select("blocker_id,blocked_profile_id").or(`blocker_id.eq.${auth.actor.profileId},blocked_profile_id.eq.${auth.actor.profileId}`),
-    db.from("connections").select("followed_id").eq("follower_id", auth.actor.profileId).eq("connection_type", "follow"),
-    db.from("friendships").select("requester_id,addressee_id").eq("status", "ACCEPTED")
-      .or(`requester_id.eq.${auth.actor.profileId},addressee_id.eq.${auth.actor.profileId}`),
+    scope === "followed" ? db.from("connections").select("followed_id").eq("follower_id", auth.actor.profileId).eq("connection_type", "follow") : Promise.resolve({ data: [], error: null }),
+    scope === "friends" ? db.from("friendships").select("requester_id,addressee_id").eq("status", "ACCEPTED")
+      .or(`requester_id.eq.${auth.actor.profileId},addressee_id.eq.${auth.actor.profileId}`) : Promise.resolve({ data: [], error: null }),
   ]);
   if (blockError || followError || friendshipError) return NextResponse.json({ error: "Feed audience unavailable" }, { status: 503 });
   // Show members their own published work in Newest; exclude only blocked profiles.
@@ -88,7 +89,16 @@ export async function GET(req: NextRequest) {
     roomQuery = roomQuery.in("creator_id", audienceIds);
   }
 
-  const [{ data: profileRows, error: profileError }, { data: adRows, error: adError }, { data: postRows, error: postError }, { data: albumRows, error: albumError }, { data: mediaRows, error: mediaError }, { data: eventRows, error: eventError }, { data: roomRows, error: roomError }] = await Promise.all([profileQuery, adQuery, postQuery, albumQuery, mediaQuery, eventQuery, roomQuery]);
+  const [{ data: profileRows, error: profileError }, { data: adRows, error: adError }, { data: postRows, error: postError }, { data: albumRows, error: albumError }, { data: mediaRows, error: mediaError }, { data: eventRows, error: eventError }, { data: roomRows, error: roomError }] = await Promise.all([
+    contentType === "all" ? profileQuery : Promise.resolve({ data: [], error: null }),
+    contentType === "all" || contentType === "dating" ? adQuery : Promise.resolve({ data: [], error: null }),
+    contentType === "all" || contentType === "posts" ? postQuery : Promise.resolve({ data: [], error: null }),
+    contentType === "all" || contentType === "albums" ? albumQuery : Promise.resolve({ data: [], error: null }),
+    contentType === "all" ? mediaQuery : contentType === "photos" || contentType === "videos"
+      ? mediaQuery.eq("media_type", contentType === "photos" ? "IMAGE" : "VIDEO") : Promise.resolve({ data: [], error: null }),
+    contentType === "all" || contentType === "events" ? eventQuery : Promise.resolve({ data: [], error: null }),
+    contentType === "all" || contentType === "rooms" ? roomQuery : Promise.resolve({ data: [], error: null }),
+  ]);
   if (profileError || adError || postError || albumError || mediaError || eventError || roomError) return NextResponse.json({ error: "Feed unavailable" }, { status: 502 });
 
   const ownerIds = new Set<string>();
@@ -154,5 +164,27 @@ export async function GET(req: NextRequest) {
   const permittedTypes: Record<string, FeedItem["type"][]> = { albums: ["ALBUM"], photos: ["IMAGE"], videos: ["VIDEO"], posts: ["POST"], dating: ["DATING_AD"], events: ["EVENT"], rooms: ["ROOM"] };
   const filtered = contentType === "all" ? items : items.filter((item) => permittedTypes[contentType]?.includes(item.type));
   filtered.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || a.id.localeCompare(b.id));
-  return NextResponse.json({ items: filtered.slice(0, 60), scope, contentType, ranking: "occurred_at_desc_then_id_asc" }, { headers: { "Cache-Control": "private, no-store" } });
+  const page = filtered.slice(0, 60);
+  // Only summarize already-authorized feed targets. No client-supplied IDs and
+  // no additional identity/visibility requests for each rendered card.
+  const targets = page.filter(item => !["PROFILE", "EVENT", "ROOM"].includes(item.type));
+  if (targets.length) {
+    const { data: mine, error: mineError } = await db.from("content_reactions")
+      .select("target_type,target_id").eq("profile_id", auth.actor.profileId).eq("reaction", "LIKE")
+      .in("target_id", targets.map(item => item.id.split(":")[1]));
+    const liked = new Set((mine || []).map(row => `${row.target_type}:${row.target_id}`));
+    // Exact HEAD counts avoid downloading unbounded reaction rows. Keep database
+    // concurrency bounded even when the feed contains sixty reactive cards.
+    for (let offset = 0; offset < targets.length; offset += 8) {
+      await Promise.all(targets.slice(offset, offset + 8).map(async item => {
+        const targetType = item.type === "IMAGE" || item.type === "VIDEO" ? "MEDIA" : item.type;
+        const targetId = item.id.split(":")[1];
+        const { count, error } = await db.from("content_reactions").select("id", { count: "exact", head: true })
+          .eq("target_type", targetType).eq("target_id", targetId).eq("reaction", "LIKE");
+        // On a summary failure retain the existing per-target retry in the UI.
+        if (!error && !mineError) item.reactionSummary = { count: count || 0, liked: liked.has(`${targetType}:${targetId}`) };
+      }));
+    }
+  }
+  return NextResponse.json({ items: page, scope, contentType, ranking: "occurred_at_desc_then_id_asc" }, { headers: { "Cache-Control": "private, no-store" } });
 }

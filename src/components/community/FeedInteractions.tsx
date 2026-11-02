@@ -5,9 +5,9 @@ import { Heart, MessageCircle } from "lucide-react";
 
 type Kind = "MEDIA" | "POST" | "DATING_AD" | "ALBUM";
 type Comment = { id: string; authorId: string; body: string; createdAt: string; author: { displayName: string } ; canDelete: boolean };
-export function FeedInteractions({ targetType, targetId, feedId }: { targetType: Kind; targetId: string; feedId: string }) {
-  const [liked, setLiked] = React.useState(false);
-  const [count, setCount] = React.useState(0);
+export function FeedInteractions({ targetType, targetId, feedId, initialSummary }: { targetType: Kind; targetId: string; feedId: string; initialSummary?: { count: number; liked: boolean } }) {
+  const [liked, setLiked] = React.useState(initialSummary?.liked ?? false);
+  const [count, setCount] = React.useState(initialSummary?.count ?? 0);
   const [open, setOpen] = React.useState(false);
   const [comments, setComments] = React.useState<Comment[]>([]);
   const [body, setBody] = React.useState("");
@@ -15,12 +15,13 @@ export function FeedInteractions({ targetType, targetId, feedId }: { targetType:
   const [error, setError] = React.useState("");
   const query = new URLSearchParams({ targetType, targetId });
   React.useEffect(() => {
+    if (initialSummary) { setLiked(initialSummary.liked); setCount(initialSummary.count); return; }
     let active = true;
     fetch(`/api/reactions?${query}`, { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(p => { if (active && p) { setLiked(p.liked); setCount(p.count); } });
     return () => { active = false; };
   // IDs and type are the stable query inputs.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetType, targetId]);
+  }, [targetType, targetId, initialSummary]);
   React.useEffect(() => {
     if (new URLSearchParams(window.location.search).get("feedItem") !== `${targetType}:${targetId}`) return;
     setOpen(true);

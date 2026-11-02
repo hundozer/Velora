@@ -16,6 +16,7 @@ type FeedItem = {
   mediaUrl?: string;
   href: string;
   occurredAt: string;
+  reactionSummary?: { count: number; liked: boolean };
 };
 
 const typeDetails = {
@@ -29,6 +30,11 @@ const typeDetails = {
   ROOM: { label: "Open room", icon: UsersRound, color: "text-velora-accent" },
 };
 
+// Width parameters keep private delivery behind its existing authorization route.
+function mediaPreviewUrl(url: string, width: 160 | 1080) {
+  return /^\/api\/media\/[0-9a-f-]+$/i.test(url) ? `${url}?w=${width}` : url;
+}
+
 function relativeTime(value: string) {
   const seconds = Math.max(1, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
   if (seconds < 60) return "Just now";
@@ -40,7 +46,7 @@ function relativeTime(value: string) {
 
 function Avatar({ item }: { item: FeedItem }) {
   return item.actor.avatarUrl ? (
-    <Image unoptimized src={item.actor.avatarUrl} alt="" width={48} height={48} className="h-12 w-12 rounded-full border border-velora-accent/30 object-cover" />
+    <Image unoptimized src={mediaPreviewUrl(item.actor.avatarUrl, 160)} alt="" width={48} height={48} className="h-12 w-12 rounded-full border border-velora-accent/30 object-cover" />
   ) : (
     <div className="flex h-12 w-12 items-center justify-center rounded-full border border-velora-accent/30 bg-velora-accent/10 font-display text-lg font-bold text-velora-accent">{item.actor.displayName.slice(0, 1).toUpperCase()}</div>
   );
@@ -84,9 +90,9 @@ export function MemberActivityFeed() {
           : <div className="space-y-5">{items.map((item) => { const details = typeDetails[item.type]; const Icon = details.icon; return (
             <article id={`feed-${item.id}`} key={item.id} className="overflow-hidden rounded-2xl border border-ink/10 bg-velora-surface shadow-xl shadow-black/10">
               <div className="flex items-center gap-3 p-5">{item.actor.id ? <Link href={`/profile/${item.actor.id}`}><Avatar item={item} /></Link> : <Avatar item={item} />}<div className="min-w-0 flex-1"><div className="flex items-center gap-1.5">{item.actor.id ? <Link href={`/profile/${item.actor.id}`} className="truncate font-semibold text-ink hover:text-velora-accent">{item.actor.displayName}</Link> : <span className="font-semibold text-ink">{item.actor.displayName}</span>}{item.actor.verified && <BadgeCheck className="h-4 w-4 text-velora-success" aria-label="Verified member" />}</div><div className={`mt-1 flex items-center gap-1.5 text-xs ${details.color}`}><Icon className="h-3.5 w-3.5" />{details.label}<span className="text-velora-textMuted">·</span><time className="text-velora-textSecondary" dateTime={item.occurredAt}>{relativeTime(item.occurredAt)}</time></div></div></div>
-              {item.mediaUrl && <Link href={item.href} className="relative block aspect-[16/10] bg-black"><Image unoptimized src={item.mediaUrl} alt={item.title} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" />{item.type === "VIDEO" && <span className="absolute inset-0 flex items-center justify-center"><span className="flex h-16 w-16 items-center justify-center rounded-full bg-black/65 text-white backdrop-blur"><Play className="h-7 w-7 fill-current" /></span></span>}</Link>}
+              {item.mediaUrl && <Link href={item.href} className="relative block aspect-[16/10] bg-black"><Image unoptimized src={mediaPreviewUrl(item.mediaUrl, 1080)} alt={item.title} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" />{item.type === "VIDEO" && <span className="absolute inset-0 flex items-center justify-center"><span className="flex h-16 w-16 items-center justify-center rounded-full bg-black/65 text-white backdrop-blur"><Play className="h-7 w-7 fill-current" /></span></span>}</Link>}
               <Link href={item.href} className="block p-5 pt-4 hover:bg-ink/[0.02]"><div className="flex items-start justify-between gap-4"><h2 className="text-xl font-semibold text-ink">{item.title}</h2>{item.category && <span className="shrink-0 rounded-full border border-ink/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink">{item.category}</span>}</div>{item.body && <p className="mt-2 line-clamp-3 text-sm leading-6 text-ink">{item.body}</p>}</Link>
-              {item.type !== "PROFILE" && item.type !== "EVENT" && item.type !== "ROOM" && <FeedInteractions feedId={item.id} targetType={item.type === "IMAGE" || item.type === "VIDEO" ? "MEDIA" : item.type} targetId={item.id.split(":")[1]} />}
+              {item.type !== "PROFILE" && item.type !== "EVENT" && item.type !== "ROOM" && <FeedInteractions initialSummary={item.reactionSummary} feedId={item.id} targetType={item.type === "IMAGE" || item.type === "VIDEO" ? "MEDIA" : item.type} targetId={item.id.split(":")[1]} />}
             </article>
           ); })}</div>}
       </div>

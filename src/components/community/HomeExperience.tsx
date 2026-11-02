@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 
 function LoadingHome() {
@@ -9,13 +9,18 @@ function LoadingHome() {
 }
 
 // Anonymous visitors do not need the member feed in their initial JavaScript.
+const loadMemberFeed = () => import("@/components/community/MemberActivityFeed").then((module) => module.MemberActivityFeed);
 const MemberActivityFeed = dynamic(
-  () => import("@/components/community/MemberActivityFeed").then((module) => module.MemberActivityFeed),
+  loadMemberFeed,
   { loading: LoadingHome, ssr: false },
 );
 
 export function HomeExperience({ hasSessionHint, children }: { hasSessionHint: boolean; children: ReactNode }) {
   const { user, isAuthLoading } = useAuth();
+  useEffect(() => {
+    // Fetch code alongside session verification, without fetching member data.
+    if (hasSessionHint) void loadMemberFeed();
+  }, [hasSessionHint]);
   if (user) return <MemberActivityFeed />;
   // Cookie presence only prevents a marketing-page flash. AuthContext and the
   // feed API still verify the session; a forged/stale cookie grants no access.
