@@ -2,7 +2,12 @@
 import React from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { Plus } from "lucide-react";
 import { PERSONAL_CATEGORIES } from "@/lib/personalAds.mjs";
+
+const day = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+/** Short names for the category tabs; the full labels stay on the form. */
+const SHORT: Record<string, string> = { HOOKUP: "Hookups", FUCK_BUDDY: "Fuck buddy", COUPLES: "Couples & threesomes", GROUP: "Groups & swingers", KINK: "Kink", ONLINE: "Online" };
 
 type Ad = { id: string; authorId: string; authorName: string; authorAge: number | null; category: string; categoryLabel: string; title: string; body: string; boundaries: string; areaName: string | null; createdAt: string; expiresAt: string; status: string; moderationStatus: string; isMine: boolean; canReply: boolean; replyReason: string | null };
 export default function DatingPage() {
@@ -47,9 +52,47 @@ export default function DatingPage() {
     if (!response.ok) { const payload = await response.json().catch(() => ({})); setError(payload.error || "Could not close the ad"); return; }
     void load();
   }
-  return <main className="mx-auto max-w-5xl px-5 pb-28 pt-10"><header className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-sm font-semibold uppercase tracking-widest text-velora-accent">Prague · adults only</p><h1 className="mt-3 font-display text-5xl text-velora-ink">Dating Ads</h1><p className="mt-3 max-w-xl text-lg text-velora-ink2">Sex, kink, a fuck buddy, or someone to talk dirty with. Say what you want and where your limits are.</p></div><Link href="/personal-ads/new" className="rounded-full bg-velora-accent px-6 py-3 font-semibold text-velora-paper">Post an ad</Link></header>
-    <nav className="mt-8 flex flex-wrap gap-3 text-sm" aria-label="Find a connection"><Link href="/tonight" className="rounded-full border border-velora-line px-4 py-2">Sex tonight? See Tonight →</Link><button onClick={() => setMine(false)} aria-pressed={!mine} className="rounded-full border border-velora-line px-4 py-2">All ads</button><button onClick={() => setMine(true)} aria-pressed={mine} className="rounded-full border border-velora-line px-4 py-2">My ads</button></nav>
-    <label className="mt-6 block max-w-sm text-sm font-semibold">What are you into?<select value={category} onChange={event => setCategory(event.target.value)} className="mt-2 w-full rounded-lg border border-velora-control bg-velora-surface p-3"><option value="">Everything</option>{PERSONAL_CATEGORIES.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
-    {!user ? <p className="mt-8">Dating ads are for signed-in adults. <Link href="/login" className="underline">Sign in</Link>.</p> : <>{error && <p role="alert" className="mt-5 text-velora-danger">{error}</p>}{sent && <p role="status" className="mt-5">Reply sent in Messages.</p>}{loading ? <p role="status" className="mt-10">Loading ads…</p> : !ads.length ? <p className="mt-10 rounded-xl border border-velora-line p-6">No {mine ? "ads from you" : "current ads match"}. <Link className="underline" href="/personal-ads/new">Post yours</Link> or widen your search.</p> : <div className="mt-8 space-y-5">{ads.map(ad => <article key={ad.id} className="rounded-2xl border border-velora-line bg-velora-surface p-5 sm:p-7"><div className="flex flex-wrap justify-between gap-3 text-sm"><span className="font-semibold text-velora-accent">{ad.categoryLabel}</span><span className="text-velora-muted">{ad.areaName || "Area private"} · {new Date(ad.createdAt).toLocaleDateString()}</span></div><h2 className="mt-3 font-display text-3xl">{ad.title}</h2><Link className="mt-2 inline-block text-sm font-semibold underline" href={`/profile/${ad.authorId}`}>{ad.authorName}{ad.authorAge ? ` · ${ad.authorAge}` : ""} · View profile</Link><p className="mt-5 whitespace-pre-wrap text-base leading-7">{ad.body}</p><p className="mt-4 rounded-lg border-l-2 border-velora-accent bg-velora-sunken p-3 text-sm"><strong>Off-limits:</strong> {ad.boundaries}</p><div className="mt-5 flex flex-wrap items-center gap-3">{ad.isMine ? <><span className="text-sm">{ad.moderationStatus === "PENDING_REVIEW" ? "Awaiting review" : ad.status === "CLOSED" ? "Closed" : ad.moderationStatus === "REJECTED" ? "Not published" : "Live until " + new Date(ad.expiresAt).toLocaleDateString()}</span>{ad.status === "ACTIVE" && <button onClick={() => close(ad)} className="rounded-full border border-velora-control px-4 py-2">Close ad</button>}</> : ad.canReply ? <button onClick={() => { setReplyId(ad.id === replyId ? null : ad.id); setSent(false); }} className="rounded-full bg-velora-accent px-5 py-2 font-semibold text-velora-paper">Reply privately</button> : <span className="text-sm text-velora-ink2">{ad.replyReason === "VERIFIED" ? "Verified members can reply" : "You don't match this ad's reply rules"}</span>}</div>{replyId === ad.id && <div className="mt-5"><label className="block text-sm font-semibold">Your first message<textarea value={reply} onChange={event => setReply(event.target.value)} maxLength={4000} rows={4} placeholder="Be direct. Say why you're interested and respect what's off-limits." className="mt-2 w-full rounded-lg border border-velora-control bg-velora-paper p-3" /></label><p className="mt-2 text-xs text-velora-muted">A reply starts a private chat. No one owes a response or a meeting.</p><button disabled={busy || reply.trim().length < 10} onClick={() => send(ad)} className="mt-3 rounded-full bg-velora-accent px-5 py-2 font-semibold text-velora-paper disabled:opacity-50">{busy ? "Sending…" : "Send reply"}</button></div>}</article>)}</div>}</>}
+  const tabs = [{ value: "", label: "Everything" }, ...PERSONAL_CATEGORIES.map(item => ({ value: item.value, label: SHORT[item.value] || item.label }))];
+  const tab = (active: boolean) => `shrink-0 border-b-2 pb-3 pt-1 text-[15px] transition-colors ${active ? "border-velora-accent font-semibold text-velora-ink" : "border-transparent text-velora-muted hover:text-velora-ink"}`;
+  return <main className="mx-auto max-w-4xl px-4 pb-28 pt-10 sm:px-6 md:pt-14">
+    <header>
+      <p className="text-[13px] font-semibold uppercase tracking-[0.2em] text-velora-muted">Prague · adults only</p>
+      <div className="mt-3 flex items-end justify-between gap-4">
+        <h1 className="font-display text-[clamp(2.5rem,8vw,3.75rem)] font-extrabold leading-none tracking-tight text-velora-ink">Dating Ads</h1>
+        <Link href="/personal-ads/new" className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-velora-accent px-5 text-[15px] font-semibold text-velora-paper"><Plus aria-hidden className="h-4 w-4" />Post an ad</Link>
+      </div>
+      <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-velora-ink2">Sex, kink, a fuck buddy, or someone to talk dirty with. Say what you want and where your limits are.</p>
+    </header>
+    <nav aria-label="What are you into?" className="mt-8 border-b border-velora-line">
+      <div className="-mb-px flex gap-6 overflow-x-auto [scrollbar-width:none]">{tabs.map(item => <button key={item.value || "all"} type="button" onClick={() => setCategory(item.value)} aria-pressed={category === item.value} className={tab(category === item.value)}>{item.label}</button>)}</div>
+    </nav>
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-[14px]">
+      <div role="group" aria-label="Whose ads" className="inline-flex rounded-full border border-velora-line p-1">
+        <button type="button" onClick={() => setMine(false)} aria-pressed={!mine} className={`rounded-full px-4 py-1.5 ${!mine ? "bg-velora-surface font-semibold text-velora-ink" : "text-velora-muted"}`}>All ads</button>
+        <button type="button" onClick={() => setMine(true)} aria-pressed={mine} className={`rounded-full px-4 py-1.5 ${mine ? "bg-velora-surface font-semibold text-velora-ink" : "text-velora-muted"}`}>Yours</button>
+      </div>
+      <Link href="/tonight" className="text-velora-ink2 underline-offset-4 hover:underline">Want it tonight? See Tonight →</Link>
+    </div>
+    {!user ? <p className="mt-12 text-[17px] text-velora-ink2">Dating ads are for signed-in adults. <Link href="/login" className="text-velora-ink underline underline-offset-4">Sign in</Link>.</p> : <>
+      {error && <p role="alert" className="mt-6 text-velora-danger">{error}</p>}
+      {sent && <p role="status" className="mt-6 text-velora-ink2">Reply sent. It&apos;s in <Link href="/messages" className="text-velora-ink underline underline-offset-4">Messages</Link>.</p>}
+      {loading ? <p role="status" className="mt-12 text-velora-muted">Loading ads…</p> : !ads.length ? (
+        <section className="mt-14 max-w-md">
+          <h2 className="text-[24px] font-bold tracking-tight text-velora-ink">{mine ? "You haven't posted an ad yet." : category ? "Nothing in this one yet." : "No ads right now."}</h2>
+          <p className="mt-2 text-[16px] leading-relaxed text-velora-ink2">{mine ? "Say what you're after and what's off-limits. Ads run for 7 or 30 days." : "Be the first: post what you want, or try another category."}</p>
+          <Link href="/personal-ads/new" className="mt-5 inline-flex h-11 items-center rounded-full border border-velora-control px-5 text-[15px] font-semibold text-velora-ink hover:border-velora-ink">Post an ad</Link>
+        </section>
+      ) : <ol className="mt-6 divide-y divide-velora-line">{ads.map(ad => <li key={ad.id} className="py-8">
+        <article>
+          <p className="flex flex-wrap gap-x-2 text-[13px]"><span className="font-semibold uppercase tracking-[0.12em] text-velora-accent">{SHORT[ad.category] || ad.categoryLabel}</span><span className="text-velora-muted">{ad.areaName || "Area private"} · {day(ad.createdAt)}</span></p>
+          <h2 className="mt-2 text-[26px] font-bold leading-tight tracking-tight text-velora-ink">{ad.title}</h2>
+          <Link className="mt-1 inline-block text-[15px] text-velora-ink2 underline-offset-4 hover:underline" href={`/profile/${ad.authorId}`}>{ad.authorName}{ad.authorAge ? `, ${ad.authorAge}` : ""} · profile</Link>
+          <p className="mt-4 whitespace-pre-wrap text-[16px] leading-7 text-velora-ink">{ad.body}</p>
+          <p className="mt-4 border-l-2 border-velora-accent pl-3 text-[15px] text-velora-ink2"><span className="font-semibold text-velora-ink">Off-limits:</span> {ad.boundaries}</p>
+          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">{ad.isMine ? <><span className="text-[14px] text-velora-muted">{ad.moderationStatus === "PENDING_REVIEW" ? "Awaiting review" : ad.status === "CLOSED" ? "Closed" : ad.moderationStatus === "REJECTED" ? "Not published" : "Live until " + day(ad.expiresAt)}</span>{ad.status === "ACTIVE" && <button onClick={() => close(ad)} className="min-h-11 text-[15px] text-velora-ink underline underline-offset-4">Close ad</button>}</> : ad.canReply ? <button onClick={() => { setReplyId(ad.id === replyId ? null : ad.id); setSent(false); }} className="inline-flex min-h-11 items-center rounded-full bg-velora-accent px-5 text-[15px] font-semibold text-velora-paper">Reply privately</button> : <span className="text-[14px] text-velora-ink2">{ad.replyReason === "VERIFIED" ? "Verified members can reply" : "You don't match this ad's reply rules"}</span>}</div>
+          {replyId === ad.id && <div className="mt-5"><label className="block text-[14px] font-semibold text-velora-ink">Your first message<textarea value={reply} onChange={event => setReply(event.target.value)} maxLength={4000} rows={4} placeholder="Be direct. Say why you're interested and respect what's off-limits." className="mt-2 w-full rounded-xl border border-velora-control bg-velora-sunken p-3 font-normal" /></label><p className="mt-2 text-[13px] text-velora-muted">A reply starts a private chat. No one owes a response or a meeting.</p><button disabled={busy || reply.trim().length < 10} onClick={() => send(ad)} className="mt-3 inline-flex min-h-11 items-center rounded-full bg-velora-accent px-5 text-[15px] font-semibold text-velora-paper disabled:opacity-50">{busy ? "Sending…" : "Send reply"}</button></div>}
+        </article>
+      </li>)}</ol>}
+    </>}
   </main>;
 }
