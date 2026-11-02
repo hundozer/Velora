@@ -1,3 +1,4 @@
+import { notifyNewRegistration } from "@/lib/notifications/registrationAlert";
 import { NextRequest, NextResponse } from "next/server";
 import { getVerifiedIdentity } from "@/lib/auth/serverSession";
 import { getServerSupabase } from "@/lib/supabase/server";
@@ -191,6 +192,8 @@ export async function POST(req: NextRequest) {
   auditLogger.logEvent({ actorId: identity.sub, actorRole: "MEMBER", action: "PROFILE_CREATE", resourceId: String(data.id), resourceType: "PROFILE", status: "SUCCESS", details: { profileType } });
   const audited = await appendDurableAudit(supabase, { actorProfileId: data.id, actorUserId: identity.sub, action: "PROFILE_CREATE", resourceType: "PROFILE", resourceId: String(data.id), outcome: "SUCCESS", metadata: { profileType } });
   if (!audited) return NextResponse.json({ error: "Profile created but audit recording failed; contact support" }, { status: 503 });
+  // Email the team about the new member (registration@intimo.live). Best effort: never blocks or fails sign-up.
+  await notifyNewRegistration({ profileId: String(data.id), displayName, profileType, areaName: areaById(areaId)?.name ?? null, createdAt: String(data.created_at || new Date().toISOString()) });
   return noStore(NextResponse.json({ profile: data }, { status: 201 }));
 }
 
