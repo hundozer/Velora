@@ -1,10 +1,11 @@
+import { Logo } from "@/components/brand/Logo";
 import React from "react";
 import Link from "next/link";
 
 export function AuthShell({ title, subtitle, children, footer }: { title: string; subtitle?: string; children: React.ReactNode; footer?: React.ReactNode }) {
   return (
     <div className="mx-auto flex min-h-[100dvh] w-full max-w-xl flex-col justify-center px-5 py-10">
-      <Link href="/" aria-label="Intimo" className="mb-10 font-display text-2xl gold-gradient-text">intimo<span aria-hidden>↗</span></Link>
+      <Link href="/" aria-label="Intimo" className="mb-10 inline-block text-velora-ink"><Logo className="h-9 w-auto" /></Link>
       <h1 className="font-display text-5xl leading-[1.02] text-velora-ink sm:text-6xl">{title}</h1>
       {subtitle && <p className="mt-3 text-lg text-velora-textSecondary">{subtitle}</p>}
       <div className="mt-10 space-y-5">{children}</div>
