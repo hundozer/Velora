@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React, { useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,6 +22,7 @@ export const Modal: React.FC<ModalProps> = ({
   maxWidth = "md",
   showCloseButton = true,
 }) => {
+  const { t } = useTranslation();
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
@@ -84,11 +86,11 @@ export const Modal: React.FC<ModalProps> = ({
             className={`relative w-full ${maxWidthClasses[maxWidth]} glass-panel-gold rounded-3xl p-6 sm:p-8 shadow-2xl shadow-black z-10`}
           >
             <div className="flex items-center justify-between pb-4 border-b border-ink/10 mb-6">
-              {title && <h3 id={titleId} className="text-xl font-semibold tracking-wide text-velora-textPrimary font-display">{title}</h3>}
+              {title && <h3 id={titleId} className="text-xl font-semibold tracking-wide text-velora-textPrimary font-display">{t(title)}</h3>}
               {showCloseButton && (
                 <button
                   onClick={onClose}
-                  aria-label="Close dialog"
+                  aria-label={t("Close dialog")}
                   className="p-1 rounded-full text-velora-textSecondary hover:text-velora-gold hover:bg-ink/5 transition-colors ml-auto"
                 >
                   <X className="w-5 h-5" />

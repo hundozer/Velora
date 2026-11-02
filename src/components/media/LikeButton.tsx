@@ -1,10 +1,12 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import { Heart } from "lucide-react";
 
 /** Like toggle for an approved photo (P1-12). Shows a count only when above zero. */
 export function LikeButton({ mediaId, className = "" }: { mediaId: string; className?: string }) {
+  const { t } = useTranslation();
   const [state, setState] = React.useState<{ count: number; liked: boolean } | null>(null);
   const [busy, setBusy] = React.useState(false);
 
@@ -29,7 +31,7 @@ export function LikeButton({ mediaId, className = "" }: { mediaId: string; class
 
   if (!state) return null;
   return (
-    <button type="button" onClick={toggle} aria-pressed={state.liked} aria-label={state.liked ? "Unlike photo" : "Like photo"} className={`inline-flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur ${className}`}>
+    <button type="button" onClick={toggle} aria-pressed={state.liked} aria-label={state.liked ? t("Unlike photo") : t("Like photo")} className={`inline-flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur ${className}`}>
       <Heart className={`h-3.5 w-3.5 ${state.liked ? "fill-rose-400 text-velora-danger" : ""}`} aria-hidden />
       {state.count > 0 && <span>{state.count}</span>}
     </button>

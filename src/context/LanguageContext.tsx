@@ -1,124 +1,94 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import en from "@/locales/en/common.json";
 import cs from "@/locales/cs/common.json";
-import hu from "@/locales/hu/common.json";
-import ro from "@/locales/ro/common.json";
-import sk from "@/locales/sk/common.json";
-import de from "@/locales/de/common.json";
+import { isLang, LANG_COOKIE, LOCALE, setCurrentLang, translate, type Lang, type Translated, type Vars } from "@/lib/i18n/translate";
 
-export type SupportedLanguage = "en" | "cs" | "hu" | "ro" | "sk" | "de";
+export type SupportedLanguage = Lang;
 
 export interface LanguageInfo {
   code: SupportedLanguage;
   name: string;
   nativeName: string;
-  flag: string;
 }
 
+/** Intimo is fully available in these languages. Czech is the default for visitors in the Czech Republic. */
 export const LANGUAGES: LanguageInfo[] = [
-  { code: "en", name: "English", nativeName: "English", flag: "🇬🇧" },
-  { code: "cs", name: "Czech", nativeName: "Čeština", flag: "🇨🇿" },
-  { code: "hu", name: "Hungarian", nativeName: "Magyar", flag: "🇭🇺" },
-  { code: "ro", name: "Romanian", nativeName: "Română", flag: "🇷🇴" },
-  { code: "sk", name: "Slovak", nativeName: "Slovenčina", flag: "🇸🇰" },
-  { code: "de", name: "German", nativeName: "Deutsch", flag: "🇩🇪" },
+  { code: "cs", name: "Czech", nativeName: "Čeština" },
+  { code: "en", name: "English", nativeName: "English" },
 ];
+export const AVAILABLE_LANGUAGES = LANGUAGES;
 
-const DICTIONARIES: Record<SupportedLanguage, any> = { en, cs, hu, ro, sk, de };
-
-/**
- * Languages members can actually choose. Only the navigation labels are translated so far
- * and every page is English, so offering the others would promise translations that don't
- * exist. Add a code here once that language covers the whole app; the pickers reappear
- * automatically when there is more than one.
- */
-export const AVAILABLE_LANGUAGES: LanguageInfo[] = LANGUAGES.filter((lang) => lang.code === "en");
-const AVAILABLE = new Set(AVAILABLE_LANGUAGES.map((lang) => lang.code));
+const KEYED: Record<Lang, Record<string, unknown>> = { en, cs };
 
 interface LanguageContextType {
   language: SupportedLanguage;
   setLanguage: (lang: SupportedLanguage) => void;
-  t: (key: string) => string;
+  /** t("English text", { name }) → the text in the current language. Dotted keys ("nav.people") use common.json. */
+  t: <T>(text: T, vars?: Vars) => Translated<T>;
+  /** The current locale for Intl/toLocale* calls ("cs-CZ" / "en-GB"). */
+  locale: string;
   formatDate: (date: Date | string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<SupportedLanguage>("en");
+function keyed(lang: Lang, key: string): string | null {
+  let node: unknown = KEYED[lang];
+  for (const part of key.split(".")) {
+    if (node && typeof node === "object" && part in (node as Record<string, unknown>)) node = (node as Record<string, unknown>)[part];
+    else return null;
+  }
+  return typeof node === "string" ? node : null;
+}
+
+export const LanguageProvider: React.FC<{ children: React.ReactNode; initialLanguage?: Lang }> = ({ children, initialLanguage = "en" }) => {
+  const router = useRouter();
+  const [language, setLanguageState] = useState<Lang>(initialLanguage);
+  // Helpers outside components translate with tr(); keep it on the language being rendered.
+  setCurrentLang(language);
 
   useEffect(() => {
-    const saved = (localStorage.getItem("intimo_lang") || localStorage.getItem("velora_lang")) as SupportedLanguage;
-    if (saved && DICTIONARIES[saved] && AVAILABLE.has(saved)) {
-      setLanguageState(saved);
-      localStorage.setItem("intimo_lang", saved);
-    } else if (saved) {
-      // A language chosen before it was withdrawn: fall back to English everywhere.
-      localStorage.setItem("intimo_lang", "en");
-    }
-    localStorage.removeItem("velora_lang");
+    // The choice now lives in a cookie the server can read; drop the old device-only keys.
+    try { localStorage.removeItem("intimo_lang"); localStorage.removeItem("velora_lang"); } catch { /* storage unavailable */ }
   }, []);
 
-  const setLanguage = (lang: SupportedLanguage) => {
-    if (!AVAILABLE.has(lang)) return;
+  const setLanguage = useCallback((lang: Lang) => {
+    if (!isLang(lang)) return;
+    document.cookie = `${LANG_COOKIE}=${lang}; path=/; max-age=31536000; samesite=lax`;
+    document.documentElement.lang = lang;
+    setCurrentLang(lang);
     setLanguageState(lang);
-    localStorage.setItem("intimo_lang", lang);
-  };
+    router.refresh();
+  }, [router]);
 
-  const t = (key: string): string => {
-    const keys = key.split(".");
-    let current = DICTIONARIES[language] || DICTIONARIES.en;
-
-    for (const k of keys) {
-      if (current && current[k] !== undefined) {
-        current = current[k];
-      } else {
-        // Fallback to English
-        let fallback = DICTIONARIES.en;
-        for (const fk of keys) {
-          if (fallback && fallback[fk] !== undefined) fallback = fallback[fk];
-          else return key;
-        }
-        return typeof fallback === "string" ? fallback : key;
-      }
+  const t = useCallback(<T,>(text: T, vars?: Vars): Translated<T> => {
+    if (typeof text === "string" && /^[a-z]+(\.[a-z_]+)+$/.test(text)) {
+      const value = keyed(language, text) ?? keyed("en", text);
+      if (value) return value as Translated<T>;
     }
+    return translate(language, text, vars);
+  }, [language]);
 
-    return typeof current === "string" ? current : key;
-  };
+  const value = useMemo<LanguageContextType>(() => ({
+    language,
+    setLanguage,
+    t,
+    locale: LOCALE[language],
+    formatDate: (input: Date | string) => {
+      const date = typeof input === "string" ? new Date(input) : input;
+      if (isNaN(date.getTime())) return String(input);
+      return new Intl.DateTimeFormat(LOCALE[language], { year: "numeric", month: "long", day: "numeric" }).format(date);
+    },
+  }), [language, setLanguage, t]);
 
-  const formatDate = (dateInput: Date | string): string => {
-    const dateObj = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
-    if (isNaN(dateObj.getTime())) return String(dateInput);
-
-    const localeMap: Record<SupportedLanguage, string> = {
-      en: "en-US",
-      cs: "cs-CZ",
-      hu: "hu-HU",
-      ro: "ro-RO",
-      sk: "sk-SK",
-      de: "de-DE",
-    };
-
-    return new Intl.DateTimeFormat(localeMap[language], {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }).format(dateObj);
-  };
-
-  return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, formatDate }}>
-      {children}
-    </LanguageContext.Provider>
-  );
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 };
 
 export const useTranslation = () => {
   const context = useContext(LanguageContext);
-  if (!context) {
-    throw new Error("useTranslation must be used within a LanguageProvider");
-  }
+  if (!context) throw new Error("useTranslation must be used within a LanguageProvider");
   return context;
 };

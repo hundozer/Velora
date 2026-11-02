@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 
 const CATEGORIES = [
@@ -11,6 +12,7 @@ const CATEGORIES = [
 
 /** Settings → Emails (P1-11). Emails are discreet and sent only when you're away. */
 export function EmailPreferences() {
+  const { t } = useTranslation();
   const [optOut, setOptOut] = React.useState<string[] | null>(null);
   const [error, setError] = React.useState("");
 
@@ -29,25 +31,25 @@ export function EmailPreferences() {
     if (!response.ok) { setOptOut(previous); setError("Email settings could not be saved."); }
   }
 
-  if (!optOut) return error ? <p className="text-xs text-velora-danger">{error}</p> : null;
+  if (!optOut) return error ? <p className="text-xs text-velora-danger">{t(error)}</p> : null;
   const allOff = optOut.includes("ALL");
   return (
     <div className="space-y-3">
-      <p className="text-xs text-velora-textMuted">Sent only when you&apos;re away, at most every few hours, and never with names or message text.</p>
+      <p className="text-xs text-velora-textMuted">{t("Sent only when you're away, at most every few hours, and never with names or message text.")}</p>
       {CATEGORIES.map((category) => {
         const on = !allOff && !optOut.includes(category.value);
         return (
           <label key={category.value} className={`flex items-center justify-between gap-4 rounded-2xl border border-ink/10 bg-ink/5 p-4 ${allOff ? "opacity-50" : "cursor-pointer"}`}>
-            <span className="text-sm text-velora-textPrimary">{category.label}</span>
+            <span className="text-sm text-velora-textPrimary">{t(category.label)}</span>
             <input type="checkbox" className="h-4 w-4 accent-velora-gold" checked={on} disabled={allOff} onChange={() => save(on ? [...optOut, category.value] : optOut.filter((value) => value !== category.value))} />
           </label>
         );
       })}
       <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-ink/10 bg-ink/5 p-4">
-        <span className="text-sm text-velora-textPrimary">Pause all Intimo emails</span>
+        <span className="text-sm text-velora-textPrimary">{t("Pause all Intimo emails")}</span>
         <input type="checkbox" className="h-4 w-4 accent-velora-gold" checked={allOff} onChange={() => save(allOff ? optOut.filter((value) => value !== "ALL") : [...optOut, "ALL"])} />
       </label>
-      {error && <p className="text-xs text-velora-danger" role="alert">{error}</p>}
+      {error && <p className="text-xs text-velora-danger" role="alert">{t(error)}</p>}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import { AREAS, type AreaKind } from "@/lib/areas.mjs";
 
@@ -17,14 +18,15 @@ export function AreaSelect({ value, onChange, className, id }: {
   className?: string;
   id?: string;
 }) {
+  const { t } = useTranslation();
   return (
     <select id={id} className={className} value={value} onChange={(event) => onChange(event.target.value)}>
-      <option value="">Choose your area</option>
+      <option value="">{t("Choose your area")}</option>
       {GROUPS.map((group) => (
-        <optgroup key={group.kind} label={group.label}>
+        <optgroup key={group.kind} label={t(group.label)}>
           {AREAS.filter((area) => area.kind === group.kind).map((area) => (
             <option key={area.id} value={area.id}>
-              {area.kind === "PRAGUE_DISTRICT" ? `${area.name} · ${area.label}` : area.name}
+              {area.kind === "PRAGUE_DISTRICT" ? `${area.name} · ${area.label}` : t(area.name)}
             </option>
           ))}
         </optgroup>

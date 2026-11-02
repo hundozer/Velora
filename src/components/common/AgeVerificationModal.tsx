@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "@/context/LanguageContext";
 import { Logo } from "@/components/brand/Logo";
 
 import React from "react";
@@ -9,6 +10,7 @@ import { useAuth } from "@/context/AuthContext";
  * declaration is recorded server-side by confirmAge before anything shows.
  */
 export const AgeVerificationModal: React.FC = () => {
+  const { t } = useTranslation();
   const { isAgeVerified, confirmAge } = useAuth();
   const dialog = React.useRef<HTMLDivElement>(null);
   const [error, setError] = React.useState("");
@@ -46,17 +48,15 @@ export const AgeVerificationModal: React.FC = () => {
     <div ref={dialog} role="dialog" aria-modal="true" aria-labelledby="age-gate-title" className="fixed inset-0 z-[200] flex flex-col bg-velora-bg">
       <div className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center px-6 py-10">
         <p className="text-velora-ink"><Logo className="h-9 w-auto" /></p>
-        <h1 id="age-gate-title" className="mt-6 font-display text-6xl leading-[1.02] text-velora-ink">Are you 18 or older?</h1>
-        <p className="mt-4 text-lg text-velora-textSecondary">Intimo is for consenting adults. What you see here stays here.</p>
+        <h1 id="age-gate-title" className="mt-6 font-display text-6xl leading-[1.02] text-velora-ink">{t("Are you 18 or older?")}</h1>
+        <p className="mt-4 text-lg text-velora-textSecondary">{t("Intimo is for consenting adults. What you see here stays here.")}</p>
         <div className="mt-10 space-y-3">
           <button type="button" autoFocus disabled={submitting} onClick={confirm} className="flex min-h-20 w-full items-center justify-center rounded-3xl bg-velora-accent px-6 text-xl font-semibold text-velora-paper transition active:scale-[0.98] disabled:opacity-60">
-            {submitting ? "One moment…" : "Yes, I'm 18+"}
+            {submitting ? t("One moment…") : t("Yes, I'm 18+")}
           </button>
-          <a href="https://www.google.com" className="flex min-h-20 w-full items-center justify-center rounded-3xl border border-velora-line bg-velora-surface px-6 text-xl font-semibold text-velora-ink2 transition hover:border-velora-ink/30">
-            No, take me out
-          </a>
+          <a href="https://www.google.com" className="flex min-h-20 w-full items-center justify-center rounded-3xl border border-velora-line bg-velora-surface px-6 text-xl font-semibold text-velora-ink2 transition hover:border-velora-ink/30">{t("No, take me out")}</a>
         </div>
-        {error && <p role="alert" className="mt-4 text-base text-velora-danger">{error}</p>}
+        {error && <p role="alert" className="mt-4 text-base text-velora-danger">{t(error)}</p>}
       </div>
     </div>
   );

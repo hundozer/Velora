@@ -1,10 +1,12 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import { PlanCard, type Plan } from "@/components/plans/PlanCard";
 
 /** A member's live Plans on their profile (P1-07). Renders nothing when there are none. */
 export function ProfilePlans({ profileId }: { profileId: string }) {
+  const { t } = useTranslation();
   const [plans, setPlans] = React.useState<Plan[]>([]);
 
   React.useEffect(() => {
@@ -18,8 +20,8 @@ export function ProfilePlans({ profileId }: { profileId: string }) {
 
   if (plans.length === 0) return null;
   return (
-    <section aria-label="Invitations">
-      <h2 className="mb-2 font-display text-[34px] leading-tight text-velora-ink">{plans.length === 1 ? "An invitation" : "Invitations"}</h2>
+    <section aria-label={t("Invitations")}>
+      <h2 className="mb-2 font-display text-[34px] leading-tight text-velora-ink">{plans.length === 1 ? t("An invitation") : t("Invitations")}</h2>
       {plans.map((plan) => <PlanCard key={plan.id} plan={plan} />)}
     </section>
   );

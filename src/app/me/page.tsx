@@ -4,7 +4,8 @@ import React from "react";
 import Link from "next/link";
 import { Activity, Bell, Bookmark, ChevronRight, EyeOff, Flame, Hand, Lock, Image as ImageIcon, LogOut, MessageSquare, Settings, Shield, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { useTranslation, AVAILABLE_LANGUAGES } from "@/context/LanguageContext";
+import { useTranslation } from "@/context/LanguageContext";
+import { LanguageSwitch } from "@/components/i18n/LanguageSwitch";
 import { useDurableNotifications } from "@/lib/notifications/useDurableNotifications";
 import { AppOnThisDevice } from "@/components/pwa/AppOnThisDevice";
 import { StoryAvatar } from "@/components/stories/StoryAvatar";
@@ -12,11 +13,12 @@ import { StoryAvatar } from "@/components/stories/StoryAvatar";
 const ADMIN_ROLES = new Set(["SUPER_ADMIN", "SYSTEM_ADMIN", "TRUST_AND_SAFETY_ADMIN", "CONTENT_MODERATOR", "PRIVACY_ADMIN", "SUPPORT_ADMIN", "COMMUNITY_ADMIN"]);
 
 function Row({ href, icon: Icon, label, detail }: { href: string; icon: React.ElementType; label: string; detail?: React.ReactNode }) {
+  const { t } = useTranslation();
   return (
     <Link href={href} className="flex min-h-14 items-center gap-3 px-4 py-3 text-velora-textPrimary hover:bg-ink/5">
       <Icon className="h-5 w-5 shrink-0 text-velora-gold" aria-hidden />
-      <span className="flex-1 text-sm font-semibold">{label}</span>
-      {detail}
+      <span className="flex-1 text-sm font-semibold">{t(label)}</span>
+      {t(detail)}
       <ChevronRight className="h-4 w-4 text-velora-textMuted" aria-hidden />
     </Link>
   );
@@ -25,19 +27,19 @@ function Row({ href, icon: Icon, label, detail }: { href: string; icon: React.El
 /** Mobile account hub: everything that lives in the desktop avatar menu. */
 export default function MePage() {
   const { user, profile, role, isAuthLoading, signIn, signOut } = useAuth();
-  const { language, setLanguage } = useTranslation();
+  const { t } = useTranslation();
   const notifications = useDurableNotifications();
 
-  if (isAuthLoading) return <main className="mx-auto max-w-lg px-4 py-10 text-sm text-velora-textMuted">Loading…</main>;
+  if (isAuthLoading) return <main className="mx-auto max-w-lg px-4 py-10 text-sm text-velora-textMuted">{t("Loading…")}</main>;
 
   if (!user) {
     return (
       <main className="mx-auto max-w-lg space-y-4 px-4 py-10 text-center">
-        <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">Your account</h1>
-        <p className="text-sm text-velora-textSecondary">Sign in to see your profile, messages and settings.</p>
+        <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">{t("Your account")}</h1>
+        <p className="text-sm text-velora-textSecondary">{t("Sign in to see your profile, messages and settings.")}</p>
         <div className="flex justify-center gap-3">
-          <button onClick={() => signIn()} className="min-h-11 rounded-full border border-velora-gold/40 px-5 text-sm font-bold text-velora-gold">Sign in</button>
-          <button onClick={() => signIn("signup")} className="min-h-11 rounded-full bg-gold-gradient px-5 text-sm font-bold text-velora-bg">Join Intimo</button>
+          <button onClick={() => signIn()} className="min-h-11 rounded-full border border-velora-gold/40 px-5 text-sm font-bold text-velora-gold">{t("Sign in")}</button>
+          <button onClick={() => signIn("signup")} className="min-h-11 rounded-full bg-gold-gradient px-5 text-sm font-bold text-velora-bg">{t("Join Intimo")}</button>
         </div>
       </main>
     );
@@ -60,34 +62,31 @@ export default function MePage() {
         </div>
       </div>
 
-      <nav aria-label="Account" className="divide-y divide-ink/5 overflow-hidden rounded-2xl border border-ink/10 bg-ink/[0.02]">
-        <Row href="/activity" icon={Activity} label="Activity: interest & visitors" />
-        <Row href={`/profile/${profile?.id || "me"}`} icon={User} label="My profile" />
-        <Row href="/notifications" icon={Bell} label="Notifications" detail={notifications.unreadCount > 0 ? <span className="rounded-full bg-velora-gold px-2 py-0.5 text-[11px] font-bold text-velora-bg">{notifications.unreadCount}</span> : null} />
-        <Row href="/me/desires" icon={Flame} label="My desires" />
-        <Row href="/me/boundaries" icon={Hand} label="My boundaries" />
-        <Row href="/albums/manage" icon={ImageIcon} label="My photos & albums" />
-        <Row href="/stories" icon={ImageIcon} label="Stories · your next 24 hours" />
-        <Row href="/rooms" icon={MessageSquare} label="Rooms" />
-        <Row href="/me/private-photos" icon={Lock} label="Private photo access" />
-        <Row href="/favorites" icon={Bookmark} label="Saved" />
-        <Row href="/settings#privacy" icon={EyeOff} label="Privacy Center" />
-        <Row href="/settings" icon={Settings} label="Settings" />
-        {ADMIN_ROLES.has(String(role)) && <Row href="/admin" icon={Shield} label="Admin" />}
+      <nav aria-label={t("Account")} className="divide-y divide-ink/5 overflow-hidden rounded-2xl border border-ink/10 bg-ink/[0.02]">
+        <Row href="/activity" icon={Activity} label={t("Activity: interest & visitors")} />
+        <Row href={`/profile/${profile?.id || "me"}`} icon={User} label={t("My profile")} />
+        <Row href="/notifications" icon={Bell} label={t("Notifications")} detail={notifications.unreadCount > 0 ? <span className="rounded-full bg-velora-gold px-2 py-0.5 text-[11px] font-bold text-velora-bg">{notifications.unreadCount}</span> : null} />
+        <Row href="/me/desires" icon={Flame} label={t("My desires")} />
+        <Row href="/me/boundaries" icon={Hand} label={t("My boundaries")} />
+        <Row href="/albums/manage" icon={ImageIcon} label={t("My photos & albums")} />
+        <Row href="/stories" icon={ImageIcon} label={t("Stories · your next 24 hours")} />
+        <Row href="/rooms" icon={MessageSquare} label={t("Rooms")} />
+        <Row href="/me/private-photos" icon={Lock} label={t("Private photo access")} />
+        <Row href="/favorites" icon={Bookmark} label={t("Saved")} />
+        <Row href="/settings#privacy" icon={EyeOff} label={t("Privacy Center")} />
+        <Row href="/settings" icon={Settings} label={t("Settings")} />
+        {ADMIN_ROLES.has(String(role)) && <Row href="/admin" icon={Shield} label={t("Admin")} />}
       </nav>
 
       <AppOnThisDevice />
 
-      {AVAILABLE_LANGUAGES.length > 1 && <label className="block rounded-2xl border border-ink/10 bg-ink/[0.02] px-4 py-3">
-        <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">Language</span>
-        <select value={language} onChange={(event) => setLanguage(event.target.value as typeof language)} className="min-h-11 w-full rounded-xl border border-ink/10 bg-velora-bg px-3 text-sm text-velora-textPrimary">
-          {AVAILABLE_LANGUAGES.map((lang) => <option key={lang.code} value={lang.code}>{lang.flag} {lang.nativeName}</option>)}
-        </select>
-      </label>}
+      <section className="rounded-2xl border border-ink/10 bg-ink/[0.02] px-4 py-3">
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">{t("Language")}</h2>
+        <LanguageSwitch variant="list" />
+      </section>
 
       <button onClick={() => signOut("/")} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-red-400/30 text-sm font-semibold text-velora-danger hover:bg-red-500/10">
-        <LogOut className="h-4 w-4" aria-hidden /> Sign out
-      </button>
+        <LogOut className="h-4 w-4" aria-hidden />{" "}{t("Sign out")}</button>
     </main>
   );
 }

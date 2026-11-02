@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import { ArrowLeft, Check } from "lucide-react";
 
@@ -15,17 +16,18 @@ export function FlowScreen({ step, total, onBack, title, children, action }: {
   children: React.ReactNode;
   action?: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="mx-auto flex min-h-[100dvh] w-full max-w-xl flex-col px-5 pb-6 pt-4">
       <div className="flex h-12 items-center gap-4">
         {onBack
-          ? <button type="button" onClick={onBack} aria-label="Back" className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-velora-textPrimary hover:bg-ink/5"><ArrowLeft className="h-6 w-6" /></button>
+          ? <button type="button" onClick={onBack} aria-label={t("Back")} className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-velora-textPrimary hover:bg-ink/5"><ArrowLeft className="h-6 w-6" /></button>
           : <span className="h-11 w-9" />}
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink/10" role="progressbar" aria-valuemin={1} aria-valuemax={total} aria-valuenow={step}>
           <div className="h-full rounded-full bg-velora-accent transition-all duration-300" style={{ width: `${(step / total) * 100}%` }} />
         </div>
       </div>
-      <h1 className="mt-8 font-display text-5xl leading-[1.02] text-velora-ink sm:text-6xl">{title}</h1>
+      <h1 className="mt-8 font-display text-5xl leading-[1.02] text-velora-ink sm:text-6xl">{t(title)}</h1>
       <div className="mt-8 flex-1 space-y-3">{children}</div>
       {action && <div className="sticky bottom-0 -mx-5 mt-6 bg-gradient-to-t from-velora-bg via-velora-bg to-transparent px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-6">{action}</div>}
     </div>
@@ -40,6 +42,7 @@ export function ChoiceCard({ label, icon, selected, onClick, compact = false }: 
   onClick: () => void;
   compact?: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <button
       type="button"
@@ -48,7 +51,7 @@ export function ChoiceCard({ label, icon, selected, onClick, compact = false }: 
       className={`flex w-full items-center gap-4 rounded-3xl border-2 text-left font-semibold text-velora-textPrimary transition active:scale-[0.98] ${compact ? "min-h-16 px-5 text-lg" : "min-h-20 px-6 text-xl"} ${selected ? "border-velora-accent bg-velora-accent/[0.06]" : "border-velora-line bg-velora-surface hover:border-velora-ink/30"}`}
     >
       {icon && <span className="flex h-10 w-10 shrink-0 items-center justify-center text-velora-gold">{icon}</span>}
-      <span className="flex-1">{label}</span>
+      <span className="flex-1">{t(label)}</span>
       {selected && <Check className="h-6 w-6 shrink-0 text-velora-gold" aria-hidden />}
     </button>
   );
@@ -64,12 +67,13 @@ export function BigButton({ children, disabled, onClick, type = "button" }: { ch
 
 export const BigInput = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string }>(
   function BigInput({ label, error, id, ...props }, ref) {
+  const { t } = useTranslation();
     const inputId = id || label.toLowerCase().replace(/\W+/g, "-");
     return (
       <div className="space-y-2">
-        <label htmlFor={inputId} className="block text-base font-semibold text-velora-textSecondary">{label}</label>
+        <label htmlFor={inputId} className="block text-base font-semibold text-velora-textSecondary">{t(label)}</label>
         <input ref={ref} id={inputId} className={`min-h-16 w-full rounded-3xl border bg-velora-surface px-6 text-2xl [color-scheme:dark] text-velora-textPrimary placeholder:text-velora-textMuted focus:ring-2 focus:ring-velora-accent/30 ${error ? "border-velora-danger" : "border-velora-control focus:border-velora-accent"}`} {...props} />
-        {error && <p role="alert" className="text-base text-velora-danger">{error}</p>}
+        {error && <p role="alert" className="text-base text-velora-danger">{t(error)}</p>}
       </div>
     );
   },

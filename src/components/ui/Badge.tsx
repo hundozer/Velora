@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import { CheckCircle2, Crown, Users, ShieldAlert } from "lucide-react";
 import { clsx } from "clsx";
@@ -12,6 +13,7 @@ interface BadgeProps {
 }
 
 export const Badge: React.FC<BadgeProps> = ({ type, label, className }) => {
+  const { t } = useTranslation();
   switch (type) {
     case "verified":
       return (
@@ -24,7 +26,7 @@ export const Badge: React.FC<BadgeProps> = ({ type, label, className }) => {
           )}
         >
           <CheckCircle2 className="w-3.5 h-3.5 text-velora-gold fill-velora-gold/20" />
-          {label || "Verified Adult"}
+          {t(label) || t("Verified Adult")}
         </span>
       );
     case "creator":
@@ -38,7 +40,7 @@ export const Badge: React.FC<BadgeProps> = ({ type, label, className }) => {
           )}
         >
           <Crown className="w-3.5 h-3.5 text-velora-accent" />
-          {label || "Creator"}
+          {t(label) || t("Creator")}
         </span>
       );
     case "couple":
@@ -52,7 +54,7 @@ export const Badge: React.FC<BadgeProps> = ({ type, label, className }) => {
           )}
         >
           <Users className="w-3.5 h-3.5 text-velora-signal" />
-          {label || "Couple"}
+          {t(label) || t("Couple")}
         </span>
       );
     case "admin":
@@ -66,7 +68,7 @@ export const Badge: React.FC<BadgeProps> = ({ type, label, className }) => {
           )}
         >
           <ShieldAlert className="w-3.5 h-3.5 text-velora-danger" />
-          {label || "Admin"}
+          {t(label) || t("Admin")}
         </span>
       );
     case "online":
@@ -76,7 +78,7 @@ export const Badge: React.FC<BadgeProps> = ({ type, label, className }) => {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
-          {label || "Active Now"}
+          {t(label) || t("Active Now")}
         </span>
       );
     default:
@@ -89,7 +91,7 @@ export const Badge: React.FC<BadgeProps> = ({ type, label, className }) => {
             )
           )}
         >
-          {label}
+          {t(label)}
         </span>
       );
   }

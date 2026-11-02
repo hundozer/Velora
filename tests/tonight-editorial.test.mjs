@@ -47,7 +47,7 @@ test("Tonight shows every plan's times, place and reply eligibility from the ser
   assert.match(page, /groupTonight\(/);
   assert.match(page, /plan\.canReply/, "Reply only when the server says you can");
   assert.match(page, /plan\.eligibilityText/);
-  assert.match(page, /until \{clock\(plan\.expiresAt\)\}/);
+  assert.match(page, /t\("until \{clock\}", \{ clock: clock\(plan\.expiresAt\) \}\)/);
   assert.match(page, /Happening now · since/);
   assert.match(page, /Later tonight/);
   assert.match(page, /contentType="POST"/);

@@ -27,7 +27,8 @@ function settings(fetch) {
     exports, fetch, window: { location },
     require: (name) => {
       if (name === "react") return react;
-      if (name === "@/lib/i18n") return { SUPPORTED_LANGUAGES: [] };
+      if (name === "@/context/LanguageContext") return { useTranslation: () => ({ t: (text) => text, language: "en", locale: "en-GB" }) };
+      if (name === "@/lib/i18n/translate") return { tr: (text) => text };
       if (name === "@/context/AuthContext") return { useAuth: () => ({ user: { username: "Fixture" }, profile: {} }) };
       return new Proxy({}, { get: (_, key) => key === "__esModule" ? true : String(key) });
     },

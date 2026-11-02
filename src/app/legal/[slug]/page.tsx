@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { serverT } from "@/lib/i18n/server";
 
 const POLICIES: Record<string, { title: string; sections: Array<[string, string]> }> = {
   "terms": { title: "Terms of Service", sections: [["Service", "Intimo is a free adults-only social discovery service. It is not a marketplace for paid offline sexual services."], ["Eligibility", "Accounts are limited to adults aged 18 or older. Age declaration is not the same as stronger age verification."], ["User responsibility", "Users are responsible for lawful, consensual conduct and content and for respecting privacy, blocking and safety controls."]]},
@@ -18,9 +19,10 @@ export function generateStaticParams() { return Object.keys(POLICIES).map((slug)
 export default function LegalDraftPage({ params }: { params: { slug: string } }) {
   const policy = POLICIES[params.slug];
   if (!policy) notFound();
+  const t = serverT();
   return <main className="max-w-3xl mx-auto px-4 py-12 space-y-8">
-    <div><h1 className="font-display font-bold text-ink text-5xl leading-[1.02] sm:text-6xl">{policy.title}</h1><p className="mt-2 text-xs text-velora-textMuted">Intimo • contact@intimo.live • Last updated: 2026-08-07</p></div>
-    {policy.sections.map(([title, body]) => <section key={title} className="space-y-2"><h2 className="text-lg font-bold text-velora-gold">{title}</h2><p className="text-sm leading-7 text-velora-textSecondary">{body}</p></section>)}
-    <Link href="/settings" className="text-sm text-velora-gold underline">Open Privacy Center</Link>
+    <div><h1 className="font-display font-bold text-ink text-5xl leading-[1.02] sm:text-6xl">{t(policy.title)}</h1><p className="mt-2 text-xs text-velora-textMuted">{t("Intimo • contact@intimo.live • Last updated: 2026-08-07")}</p></div>
+    {policy.sections.map(([title, body]) => <section key={title} className="space-y-2"><h2 className="text-lg font-bold text-velora-gold">{t(title)}</h2><p className="text-sm leading-7 text-velora-textSecondary">{t(body)}</p></section>)}
+    <Link href="/settings" className="text-sm text-velora-gold underline">{t("Open Privacy Center")}</Link>
   </main>;
 }

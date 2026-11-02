@@ -1,5 +1,7 @@
 "use client";
 
+import { currentLang, LOCALE, tr } from "@/lib/i18n/translate";
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,12 +14,13 @@ import { PLAN_CATEGORIES, PLAN_REPLY_TYPES } from "@/lib/plans.mjs";
 import { untilWords, windowFromClock } from "@/lib/tonight.mjs";
 
 const WELCOME_WORDS: Record<string, string> = { "♀": "women", "♂": "men", "👫": "couples", "⚧": "trans and non-binary people" };
-const listWords = (words: string[]) => words.length <= 1 ? words.join("") : `${words.slice(0, -1).join(", ")} and ${words[words.length - 1]}`;
+const listWords = (words: string[]) => words.length <= 1 ? words.join("") : `${words.slice(0, -1).join(", ")} ${tr("and")} ${words[words.length - 1]}`;
 type SheetName = "day" | "area" | "welcome" | "kind" | null;
 
 function Blank({ children, onClick, label }: { children: React.ReactNode; onClick: () => void; label: string }) {
+  const { t } = useTranslation();
   return (
-    <button type="button" onClick={onClick} aria-label={label} className="inline-flex min-h-11 max-w-full items-center rounded-lg border border-velora-control bg-velora-sunken px-3 py-2 text-left text-base font-semibold text-velora-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent">
+    <button type="button" onClick={onClick} aria-label={t(label)} className="inline-flex min-h-11 max-w-full items-center rounded-lg border border-velora-control bg-velora-sunken px-3 py-2 text-left text-base font-semibold text-velora-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent">
       {children}
     </button>
   );
@@ -28,9 +31,10 @@ const SLOTS = Array.from({ length: 48 }, (_, i) => `${pad(Math.floor(i / 2))}:${
 
 /** A 24-hour time in half-hour steps that reads as part of the sentence. */
 function TimeSelect({ value, onChange, className, label }: { value: string; onChange: (value: string) => void; className: string; label: string }) {
+  const { t } = useTranslation();
   const options = value && !SLOTS.includes(value) ? [value, ...SLOTS] : SLOTS;
   return (
-    <select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} className={className} required>
+    <select aria-label={t(label)} value={value} onChange={(event) => onChange(event.target.value)} className={className} required>
       {!value && <option value="">--:--</option>}
       {options.map((slot) => <option key={slot} value={slot}>{slot}</option>)}
     </select>
@@ -54,6 +58,7 @@ function plusHours(time: string, hours: number) {
  * everything again (start today or tomorrow, 30 minutes to 12 hours, 18+ ages).
  */
 export default function NewInvitationPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { profile } = useAuth();
   const [day, setDay] = React.useState<"tonight" | "tomorrow">("tonight");
@@ -124,92 +129,89 @@ export default function NewInvitationPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-2xl bg-velora-surface px-6 pb-28 pt-4 sm:px-10 md:my-6 md:rounded-[28px] md:pt-8">
-      <Link href="/tonight" className="inline-flex min-h-11 items-center gap-1.5 text-[15px] font-semibold text-velora-ink"><ArrowLeft className="h-4 w-4" aria-hidden />Tonight</Link>
-      <h1 className="mt-4 font-display text-[44px] leading-none text-velora-ink">{eventId ? "Find company for this event" : "Make a plan"}</h1>
+      <Link href="/tonight" className="inline-flex min-h-11 items-center gap-1.5 text-[15px] font-semibold text-velora-ink"><ArrowLeft className="h-4 w-4" aria-hidden />{t("Tonight")}</Link>
+      <h1 className="mt-4 font-display text-[44px] leading-none text-velora-ink">{eventId ? t("Find company for this event") : t("Make a plan")}</h1>
 
-      {eventLoading && <p role="status" className="mt-4">Loading invitation…</p>}
-      {linkedEvent && <section aria-label="Linked event" className="mt-6 rounded-xl border border-velora-control p-4"><h2 className="font-semibold">{linkedEvent.title}</h2><p className="mt-2 text-sm text-velora-ink2">{new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Prague", dateStyle: "medium", timeStyle: "short" }).format(new Date(linkedEvent.startsAt))} · Prague time{linkedEvent.areaName ? ` · ${linkedEvent.areaName}` : ""}</p><p className="mt-2 text-sm text-velora-ink2">Find company, not a ticket or RSVP.</p><a className="mt-2 inline-block text-sm text-velora-accent underline" href={linkedEvent.url} target="_blank" rel="noopener noreferrer">Details & tickets</a></section>}
+      {eventLoading && <p role="status" className="mt-4">{t("Loading invitation…")}</p>}
+      {linkedEvent && <section aria-label={t("Linked event")} className="mt-6 rounded-xl border border-velora-control p-4"><h2 className="font-semibold">{t(linkedEvent.title)}</h2><p className="mt-2 text-sm text-velora-ink2">{new Intl.DateTimeFormat(LOCALE[currentLang()], { timeZone: "Europe/Prague", dateStyle: "medium", timeStyle: "short" }).format(new Date(linkedEvent.startsAt))}{" "}{t("· Prague time")}{linkedEvent.areaName ? ` · ${linkedEvent.areaName}` : ""}</p><p className="mt-2 text-sm text-velora-ink2">{t("Find company, not a ticket or RSVP.")}</p><a className="mt-2 inline-block text-sm text-velora-accent underline" href={linkedEvent.url} target="_blank" rel="noopener noreferrer">{t("Details & tickets")}</a></section>}
       <form onSubmit={submit} className="mt-8">
-        <label className="block text-sm font-semibold text-velora-ink">What would you like to do?
-          <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} placeholder="A table for three. Who’s our third?" required className="mt-2 min-h-12 w-full rounded-lg border border-velora-control bg-velora-sunken px-3 text-lg font-normal text-velora-ink placeholder:text-velora-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent"/>
+        <label className="block text-sm font-semibold text-velora-ink">{t("What would you like to do?")}<input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} placeholder={t("A table for three. Who’s our third?")} required className="mt-2 min-h-12 w-full rounded-lg border border-velora-control bg-velora-sunken px-3 text-lg font-normal text-velora-ink placeholder:text-velora-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent"/>
         </label>
-        {!eventId && <>        <fieldset className="mt-6"><legend className="text-sm font-semibold">When & where</legend><div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2"><div><p className="mb-2 text-xs text-velora-ink2">Day</p><Blank onClick={() => setSheet("day")} label={`Day: ${day}`}>{day === "tonight" ? "Tonight" : "Tomorrow"}</Blank></div><div><p className="mb-2 text-xs text-velora-ink2">Neighbourhood</p><Blank onClick={() => setSheet("area")} label={`Area: ${area?.name || "choose"}`}>{area?.kind === "PRAGUE_DISTRICT" ? area.label.split(" · ")[0] : area?.name || "Choose neighbourhood"}</Blank></div></div><div className="mt-4 grid grid-cols-2 gap-4"><label className="min-w-0 text-sm font-semibold">Starts at<TimeSelect label="Starts at" value={from} onChange={setFrom} className={timeInput}/></label><label className="min-w-0 text-sm font-semibold">Ends at<TimeSelect label="Ends at" value={until} onChange={setUntil} className={timeInput}/></label></div></fieldset></>}
-        <div className="mt-6"><p className="mb-2 text-sm font-semibold">Who may reply?</p><Blank onClick={() => setSheet("welcome")} label={`Who may reply: ${welcomeLine}`}>{welcomeLine}</Blank></div>
+        {!eventId && <>        <fieldset className="mt-6"><legend className="text-sm font-semibold">{t("When & where")}</legend><div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2"><div><p className="mb-2 text-xs text-velora-ink2">{t("Day")}</p><Blank onClick={() => setSheet("day")} label={t("Day: {day}", { day: day === "tonight" ? t("Tonight") : t("Tomorrow") })}>{day === "tonight" ? t("Tonight") : t("Tomorrow")}</Blank></div><div><p className="mb-2 text-xs text-velora-ink2">{t("Neighbourhood")}</p><Blank onClick={() => setSheet("area")} label={t("Area: {value}", { value: area ? t(area.name) : t("choose") })}>{area?.kind === "PRAGUE_DISTRICT" ? t(area.label.split(" · ")[0]) : (area ? t(area.name) : t("Choose neighbourhood"))}</Blank></div></div><div className="mt-4 grid grid-cols-2 gap-4"><label className="min-w-0 text-sm font-semibold">{t("Starts at")}<TimeSelect label={t("Starts at")} value={from} onChange={setFrom} className={timeInput}/></label><label className="min-w-0 text-sm font-semibold">{t("Ends at")}<TimeSelect label={t("Ends at")} value={until} onChange={setUntil} className={timeInput}/></label></div></fieldset></>}
+        <div className="mt-6"><p className="mb-2 text-sm font-semibold">{t("Who may reply?")}</p><Blank onClick={() => setSheet("welcome")} label={t("Who may reply: {welcomeLine}", { welcomeLine: welcomeLine })}>{t(welcomeLine)}</Blank></div>
 
         {!eventId && (timeProblem ? <p role="status" className="mt-3 text-[15px] text-velora-crimson">{timeProblem}</p> : (
-          <p className="mt-3 text-[15px] text-velora-muted">Ends at {untilWords(until)}{hours > 0 && new Date(slot!.endsAt).getDate() !== new Date(slot!.startsAt).getDate() ? " (after midnight)" : ""} · Neighbourhood only</p>
+          <p className="mt-3 text-[15px] text-velora-muted">{t("Ends at {untilWords}", { untilWords: untilWords(until) })}{hours > 0 && new Date(slot!.endsAt).getDate() !== new Date(slot!.startsAt).getDate() ? t(" (after midnight)") : ""}{" "}{t("· Neighbourhood only")}</p>
         ))}
 
-        <p className="mt-6 text-[16px] text-velora-ink2">Kind of plan: <Blank onClick={() => setSheet("kind")} label="Kind of plan">{PLAN_CATEGORIES.find((item) => item.value === category)?.label.toLowerCase()}</Blank></p>
+        <p className="mt-6 text-[16px] text-velora-ink2">{t("Kind of plan:")}{" "}<Blank onClick={() => setSheet("kind")} label={t("Kind of plan")}>{PLAN_CATEGORIES.find((item) => item.value === category)?.label.toLowerCase()}</Blank></p>
         <label className="mt-6 block">
-          <span className="text-sm font-semibold text-velora-ink">The details</span>
-          <textarea value={text} onChange={(event) => setText(event.target.value)} maxLength={1000} rows={3} required placeholder="What do you want? Who should reply?" className="mt-2 w-full resize-y rounded-lg border border-velora-control bg-velora-sunken p-3 text-[17px] leading-relaxed text-velora-ink placeholder:text-velora-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent" />
+          <span className="text-sm font-semibold text-velora-ink">{t("The details")}</span>
+          <textarea value={text} onChange={(event) => setText(event.target.value)} maxLength={1000} rows={3} required placeholder={t("What do you want? Who should reply?")} className="mt-2 w-full resize-y rounded-lg border border-velora-control bg-velora-sunken p-3 text-[17px] leading-relaxed text-velora-ink placeholder:text-velora-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent" />
         </label>
 
-        <p className="mt-5 text-sm text-velora-ink2">Replies are private. Agree on details in Messages. No paid services or public contact details.</p>
+        <p className="mt-5 text-sm text-velora-ink2">{t("Replies are private. Agree on details in Messages. No paid services or public contact details.")}</p>
 
-        {eventId && <label className="mt-6 flex items-start gap-3 rounded-lg border border-velora-control p-4 text-sm"><input type="checkbox" checked={publishEventInvitation} onChange={event => setPublishEventInvitation(event.target.checked)} className="mt-1"/><span>Post this invitation to adult members. It appears in Plans and on my profile.</span></label>}
-        {error && <p role="alert" className="mt-6 border-l-2 border-velora-crimson pl-4 text-[15px] text-velora-crimson">{error}</p>}
-        <button type="submit" disabled={!valid || submitting} className="mt-8 min-h-14 w-full rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper disabled:opacity-40">{submitting ? "Sending…" : "Publish invitation"}</button>
-        {!valid && !timeProblem && <p className="mt-2 text-center text-[14px] text-velora-muted">Say what you&apos;d like to do and add a few words.</p>}
+        {eventId && <label className="mt-6 flex items-start gap-3 rounded-lg border border-velora-control p-4 text-sm"><input type="checkbox" checked={publishEventInvitation} onChange={event => setPublishEventInvitation(event.target.checked)} className="mt-1"/><span>{t("Post this invitation to adult members. It appears in Plans and on my profile.")}</span></label>}
+        {error && <p role="alert" className="mt-6 border-l-2 border-velora-crimson pl-4 text-[15px] text-velora-crimson">{t(error)}</p>}
+        <button type="submit" disabled={!valid || submitting} className="mt-8 min-h-14 w-full rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper disabled:opacity-40">{submitting ? t("Sending…") : t("Publish invitation")}</button>
+        {!valid && !timeProblem && <p className="mt-2 text-center text-[14px] text-velora-muted">{t("Say what you'd like to do and add a few words.")}</p>}
       </form>
 
-      <Sheet open={sheet === "day"} onClose={() => setSheet(null)} label="When">
-        <h2 className="font-display text-[40px] leading-none text-velora-ink">When</h2>
-        <div role="radiogroup" aria-label="When" className="mt-4">
+      <Sheet open={sheet === "day"} onClose={() => setSheet(null)} label={t("When")}>
+        <h2 className="font-display text-[40px] leading-none text-velora-ink">{t("When")}</h2>
+        <div role="radiogroup" aria-label={t("When")} className="mt-4">
           {(["tonight", "tomorrow"] as const).map((value) => (
             <button key={value} type="button" role="radio" aria-checked={day === value} onClick={() => { setDay(value); setSheet(null); }} className={`flex w-full items-baseline justify-between py-1.5 text-left font-display text-[30px] ${day === value ? "text-velora-ink" : "text-velora-muted"}`}>
-              {value === "tonight" ? "Tonight" : "Tomorrow"}{day === value && <span className="font-sans text-[14px] text-velora-copperInk">Selected</span>}
+              {value === "tonight" ? t("Tonight") : t("Tomorrow")}{day === value && <span className="font-sans text-[14px] text-velora-copperInk">{t("Selected")}</span>}
             </button>
           ))}
         </div>
       </Sheet>
 
-      <Sheet open={sheet === "area"} onClose={() => setSheet(null)} label="Where">
-        <h2 className="font-display text-[40px] leading-none text-velora-ink">Where</h2>
-        <p className="mt-2 text-[14px] text-velora-muted">Only the neighbourhood is shown, never an address.</p>
-        <div role="radiogroup" aria-label="Where" className="mt-4">
+      <Sheet open={sheet === "area"} onClose={() => setSheet(null)} label={t("Where")}>
+        <h2 className="font-display text-[40px] leading-none text-velora-ink">{t("Where")}</h2>
+        <p className="mt-2 text-[14px] text-velora-muted">{t("Only the neighbourhood is shown, never an address.")}</p>
+        <div role="radiogroup" aria-label={t("Where")} className="mt-4">
           {AREAS.filter((item) => item.kind === "PRAGUE_DISTRICT" || item.kind === "NEAR_PRAGUE").map((item) => (
             <button key={item.id} type="button" role="radio" aria-checked={areaId === item.id} onClick={() => { setAreaId(item.id); setSheet(null); }} className={`flex w-full items-baseline justify-between gap-4 py-1.5 text-left ${areaId === item.id ? "text-velora-ink" : "text-velora-muted"}`}>
-              <span className="font-display text-[24px]">{item.kind === "PRAGUE_DISTRICT" ? item.label : item.name}</span>
-              <span className="shrink-0 text-[14px]">{item.kind === "PRAGUE_DISTRICT" ? item.name : "Near Prague"}</span>
+              <span className="font-display text-[24px]">{item.kind === "PRAGUE_DISTRICT" ? t(item.label) : item.name}</span>
+              <span className="shrink-0 text-[14px]">{item.kind === "PRAGUE_DISTRICT" ? item.name : t("Near Prague")}</span>
             </button>
           ))}
         </div>
       </Sheet>
 
-      <Sheet open={sheet === "welcome"} onClose={() => setSheet(null)} label="Who may reply" footer={<button type="button" onClick={() => setSheet(null)} className="min-h-14 w-full rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper">Done</button>}>
-        <h2 className="font-display text-[40px] leading-none text-velora-ink">I&apos;d welcome</h2>
-        <p className="mt-2 text-[14px] text-velora-muted">Choose none for everyone. Only people who fit can reply — it&apos;s checked when they send.</p>
+      <Sheet open={sheet === "welcome"} onClose={() => setSheet(null)} label={t("Who may reply")} footer={<button type="button" onClick={() => setSheet(null)} className="min-h-14 w-full rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper">{t("Done")}</button>}>
+        <h2 className="font-display text-[40px] leading-none text-velora-ink">{t("I'd welcome")}</h2>
+        <p className="mt-2 text-[14px] text-velora-muted">{t("Choose none for everyone. Only people who fit can reply — it's checked when they send.")}</p>
         <div className="mt-4">
           {PLAN_REPLY_TYPES.map((item) => {
             const on = replyTypes.includes(item.value);
             return (
               <label key={item.value} className="flex min-h-12 items-center justify-between font-display text-[28px] text-velora-ink">
-                {item.label}
+                {t(item.label)}
                 <input type="checkbox" checked={on} onChange={() => setReplyTypes((current) => on ? current.filter((value) => value !== item.value) : [...current, item.value])} className="h-6 w-6 accent-velora-ink" />
               </label>
             );
           })}
         </div>
-        <h3 className="mb-2 mt-8 text-[13px] font-semibold uppercase tracking-[0.18em] text-velora-ink2">Aged</h3>
+        <h3 className="mb-2 mt-8 text-[13px] font-semibold uppercase tracking-[0.18em] text-velora-ink2">{t("Aged")}</h3>
         <div className="flex items-baseline gap-3 font-display text-[28px] text-velora-ink">
-          <input type="number" inputMode="numeric" min={18} max={99} value={minAge} aria-label="Youngest age" onChange={(event) => setMinAge(Math.min(99, Math.max(18, Number(event.target.value) || 18)))} className="w-16 border-b border-velora-ink/40 bg-transparent text-center focus:outline-none" />
-          <span className="text-velora-muted">to</span>
-          <input type="number" inputMode="numeric" min={18} max={99} value={maxAge} aria-label="Oldest age" onChange={(event) => setMaxAge(Math.min(99, Math.max(18, Number(event.target.value) || 99)))} className="w-16 border-b border-velora-ink/40 bg-transparent text-center focus:outline-none" />
+          <input type="number" inputMode="numeric" min={18} max={99} value={minAge} aria-label={t("Youngest age")} onChange={(event) => setMinAge(Math.min(99, Math.max(18, Number(event.target.value) || 18)))} className="w-16 border-b border-velora-ink/40 bg-transparent text-center focus:outline-none" />
+          <span className="text-velora-muted">{t("to")}</span>
+          <input type="number" inputMode="numeric" min={18} max={99} value={maxAge} aria-label={t("Oldest age")} onChange={(event) => setMaxAge(Math.min(99, Math.max(18, Number(event.target.value) || 99)))} className="w-16 border-b border-velora-ink/40 bg-transparent text-center focus:outline-none" />
         </div>
-        <label className="mt-6 flex min-h-12 items-center justify-between gap-4 text-[16px] text-velora-ink">
-          Verified members only
-          <input type="checkbox" checked={requireVerified} onChange={(event) => setRequireVerified(event.target.checked)} className="h-6 w-6 accent-velora-ink" />
+        <label className="mt-6 flex min-h-12 items-center justify-between gap-4 text-[16px] text-velora-ink">{t("Verified members only")}<input type="checkbox" checked={requireVerified} onChange={(event) => setRequireVerified(event.target.checked)} className="h-6 w-6 accent-velora-ink" />
         </label>
       </Sheet>
 
-      <Sheet open={sheet === "kind"} onClose={() => setSheet(null)} label="Kind of plan">
-        <h2 className="font-display text-[40px] leading-none text-velora-ink">Kind of plan</h2>
-        <div role="radiogroup" aria-label="Kind of plan" className="mt-4">
+      <Sheet open={sheet === "kind"} onClose={() => setSheet(null)} label={t("Kind of plan")}>
+        <h2 className="font-display text-[40px] leading-none text-velora-ink">{t("Kind of plan")}</h2>
+        <div role="radiogroup" aria-label={t("Kind of plan")} className="mt-4">
           {PLAN_CATEGORIES.map((item) => (
             <button key={item.value} type="button" role="radio" aria-checked={category === item.value} onClick={() => { setCategory(item.value); setSheet(null); }} className={`flex w-full items-baseline justify-between py-1.5 text-left font-display text-[28px] ${category === item.value ? "text-velora-ink" : "text-velora-muted"}`}>
-              {item.label}{category === item.value && <span className="font-sans text-[14px] text-velora-copperInk">Selected</span>}
+              {t(item.label)}{category === item.value && <span className="font-sans text-[14px] text-velora-copperInk">{t("Selected")}</span>}
             </button>
           ))}
         </div>

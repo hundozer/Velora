@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { SceneEventCard, type SceneEvent } from "@/components/scene/SceneEventCard";
@@ -10,6 +11,7 @@ const field = "w-full rounded-2xl border border-ink/10 bg-ink/5 px-4 py-3 text-s
 
 /** Prague Scene (P1-21): real sex-positive events, curated by the Intimo team. */
 export default function ScenePage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [events, setEvents] = React.useState<SceneEvent[] | null>(null);
   const [suggesting, setSuggesting] = React.useState(false);
@@ -35,36 +37,36 @@ export default function ScenePage() {
     <main className="mx-auto max-w-3xl space-y-6 px-4 pb-24 pt-6">
       <header className="flex items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">Prague Scene</p>
-          <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">Out in the city</h1>
-          <p className="mt-1 text-sm text-velora-textSecondary">Munches, workshops and parties run by Prague&apos;s sex-positive community. Hand-picked by us; booking is with the organiser.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">{t("Prague Scene")}</p>
+          <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">{t("Out in the city")}</h1>
+          <p className="mt-1 text-sm text-velora-textSecondary">{t("Munches, workshops and parties run by Prague's sex-positive community. Hand-picked by us; booking is with the organiser.")}</p>
         </div>
-        {user && !suggesting && <button type="button" onClick={() => setSuggesting(true)} className="min-h-11 shrink-0 rounded-full border border-ink/15 px-4 text-sm font-semibold text-velora-textPrimary hover:border-velora-gold/50">Suggest</button>}
+        {user && !suggesting && <button type="button" onClick={() => setSuggesting(true)} className="min-h-11 shrink-0 rounded-full border border-ink/15 px-4 text-sm font-semibold text-velora-textPrimary hover:border-velora-gold/50">{t("Suggest")}</button>}
       </header>
-      <a href="/scene" className="inline-flex min-h-11 items-center text-sm text-velora-accent underline">All Prague events</a>
-      <a href="/guest-list" className="inline-flex min-h-11 items-center text-sm text-velora-accent underline">Small gatherings · Guest List</a>
+      <a href="/scene" className="inline-flex min-h-11 items-center text-sm text-velora-accent underline">{t("All Prague events")}</a>
+      <a href="/guest-list" className="inline-flex min-h-11 items-center text-sm text-velora-accent underline">{t("Small gatherings · Guest List")}</a>
 
-      {message && <p role="status" className={`rounded-2xl border p-4 text-sm ${message.ok ? "border-emerald-400/30 bg-emerald-400/10 text-velora-success" : "border-red-500/40 bg-red-500/10 text-velora-danger"}`}>{message.text}</p>}
+      {message && <p role="status" className={`rounded-2xl border p-4 text-sm ${message.ok ? "border-emerald-400/30 bg-emerald-400/10 text-velora-success" : "border-red-500/40 bg-red-500/10 text-velora-danger"}`}>{t(message.text)}</p>}
 
       {suggesting && (
         <form onSubmit={suggest} className="space-y-3 rounded-3xl border border-ink/10 bg-ink/[0.02] p-5">
-          <h2 className="font-semibold text-velora-textPrimary">Suggest a listing</h2>
-          <input className={field} placeholder="Event name" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} maxLength={120} />
-          <select className={field} value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })}><option value="">What kind of event</option>{SCENE_KINDS.map((kind) => <option key={kind.value} value={kind.value}>{kind.label}</option>)}</select>
-          <input className={field} type="datetime-local" value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} aria-label="Starts" />
-          <input className={field} placeholder="Organiser" value={form.organiser} onChange={(e) => setForm({ ...form, organiser: e.target.value })} maxLength={120} />
-          <input className={field} placeholder="Venue (optional)" value={form.venueName} onChange={(e) => setForm({ ...form, venueName: e.target.value })} maxLength={120} />
+          <h2 className="font-semibold text-velora-textPrimary">{t("Suggest a listing")}</h2>
+          <input className={field} placeholder={t("Event name")} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} maxLength={120} />
+          <select className={field} value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })}><option value="">{t("What kind of event")}</option>{SCENE_KINDS.map((kind) => <option key={kind.value} value={kind.value}>{t(kind.label)}</option>)}</select>
+          <input className={field} type="datetime-local" value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} aria-label={t("Starts")} />
+          <input className={field} placeholder={t("Organiser")} value={form.organiser} onChange={(e) => setForm({ ...form, organiser: e.target.value })} maxLength={120} />
+          <input className={field} placeholder={t("Venue (optional)")} value={form.venueName} onChange={(e) => setForm({ ...form, venueName: e.target.value })} maxLength={120} />
           <AreaSelect className={field} value={form.areaId} onChange={(areaId) => setForm({ ...form, areaId })} />
           <input className={field} placeholder="https:// link to the organiser's page" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} />
-          <textarea className={`${field} min-h-20`} placeholder="Short description (optional)" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={600} />
-          <div className="flex gap-3"><button type="button" onClick={() => setSuggesting(false)} className="min-h-11 flex-1 rounded-full border border-ink/15 text-sm text-velora-textSecondary">Cancel</button><button type="submit" className="min-h-11 flex-1 rounded-full bg-gold-gradient text-sm font-bold text-velora-bg">Send for review</button></div>
+          <textarea className={`${field} min-h-20`} placeholder={t("Short description (optional)")} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={600} />
+          <div className="flex gap-3"><button type="button" onClick={() => setSuggesting(false)} className="min-h-11 flex-1 rounded-full border border-ink/15 text-sm text-velora-textSecondary">{t("Cancel")}</button><button type="submit" className="min-h-11 flex-1 rounded-full bg-gold-gradient text-sm font-bold text-velora-bg">{t("Send for review")}</button></div>
         </form>
       )}
 
-      {events === null ? <p className="text-sm text-velora-textMuted">Loading…</p> : events.length === 0 ? (
+      {events === null ? <p className="text-sm text-velora-textMuted">{t("Loading…")}</p> : events.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-ink/15 p-8 text-center">
-          <h2 className="font-display text-3xl font-bold text-velora-textPrimary">New listings coming soon</h2>
-          <p className="mt-2 text-sm text-velora-textSecondary">Know a good munch, workshop or party in Prague? {user ? "Suggest it above." : "Sign in to suggest it."}</p>
+          <h2 className="font-display text-3xl font-bold text-velora-textPrimary">{t("New listings coming soon")}</h2>
+          <p className="mt-2 text-sm text-velora-textSecondary">{t("Know a good munch, workshop or party in Prague?")}{" "}{user ? t("Suggest it above.") : t("Sign in to suggest it.")}</p>
         </div>
       ) : <div className="space-y-4">{events.map((event) => <SceneEventCard key={event.id} event={event} />)}</div>}
     </main>

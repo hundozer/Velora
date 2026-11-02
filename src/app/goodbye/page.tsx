@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Heart, Compass, LogIn, ShieldAlert } from "lucide-react";
 
 export default function GoodbyePage() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-16 text-left relative overflow-hidden bg-intimo-bg">
       {/* Background Decorative Blobs */}
@@ -19,7 +21,7 @@ export default function GoodbyePage() {
         <div className="relative w-48 h-48 mx-auto rounded-full overflow-hidden border border-velora-gold/30 shadow-2xl bg-black flex items-center justify-center group">
           <Image
             src="/goodbye.jpg" 
-            alt="Goodbye" 
+            alt={t("Goodbye")} 
             width={192}
             height={192}
             className="w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 ease-out scale-105 group-hover:scale-100"
@@ -28,26 +30,20 @@ export default function GoodbyePage() {
         </div>
 
         <div className="space-y-3">
-          <span className="text-[10px] font-bold text-velora-danger uppercase tracking-widest bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20 inline-block animate-pulse">
-            Deletion Request Accepted
-          </span>
-          <h2 className="text-3xl font-display font-bold text-velora-textPrimary tracking-wide">
-            We're Sad to See You Go! 💔
-          </h2>
-          <p className="text-xs text-velora-textSecondary leading-relaxed max-w-sm mx-auto">
-            Was it something we said? Or did you finally find &quot;The One&quot;? Either way, we hope your journey was absolutely spectacular.
-          </p>
+          <span className="text-[10px] font-bold text-velora-danger uppercase tracking-widest bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20 inline-block animate-pulse">{t("Deletion Request Accepted")}</span>
+          <h2 className="text-3xl font-display font-bold text-velora-textPrimary tracking-wide">{t("We're Sad to See You Go! 💔")}</h2>
+          <p className="text-xs text-velora-textSecondary leading-relaxed max-w-sm mx-auto">{t("Was it something we said? Or did you finally find \"The One\"? Either way, we hope your journey was absolutely spectacular.")}</p>
         </div>
 
         {/* Informative details */}
         <div className="p-4 rounded-xl bg-ink/5 border border-ink/10 text-left text-xs text-velora-textMuted space-y-2 leading-relaxed font-mono">
           <div className="flex items-start gap-2 text-[11px]">
             <Heart className="w-4 h-4 text-velora-gold shrink-0 mt-0.5" />
-            <span>Your login has been removed and your profile deactivated. Profile data, messages, and media follow the documented deletion/anonymization workflow and any legitimate safety or legal retention duties.</span>
+            <span>{t("Your login has been removed and your profile deactivated. Profile data, messages, and media follow the documented deletion/anonymization workflow and any legitimate safety or legal retention duties.")}</span>
           </div>
           <div className="flex items-start gap-2 text-[11px]">
             <ShieldAlert className="w-4 h-4 text-velora-accent shrink-0 mt-0.5" />
-            <span>Permanent erasure is not immediate. Deactivated accounts become eligible for the deletion/anonymization workflow after 30 days, subject to applicable retention duties.</span>
+            <span>{t("Permanent erasure is not immediate. Deactivated accounts become eligible for the deletion/anonymization workflow after 30 days, subject to applicable retention duties.")}</span>
           </div>
         </div>
 
@@ -59,9 +55,7 @@ export default function GoodbyePage() {
               size="lg"
               className="w-full font-bold uppercase tracking-wider shadow-gold-glow flex items-center justify-center gap-2"
             >
-              <LogIn className="w-4 h-4 text-black" />
-              Start Fresh & Re-Register
-            </Button>
+              <LogIn className="w-4 h-4 text-black" />{t("Start Fresh & Re-Register")}</Button>
           </Link>
 
           <Link href="/" className="block">
@@ -70,9 +64,7 @@ export default function GoodbyePage() {
               size="md"
               className="w-full text-xs border-ink/10 hover:border-velora-gold/30 flex items-center justify-center gap-2"
             >
-              <Compass className="w-4 h-4 text-velora-gold" />
-              Return to Landing Page
-            </Button>
+              <Compass className="w-4 h-4 text-velora-gold" />{t("Return to Landing Page")}</Button>
           </Link>
         </div>
       </Card>

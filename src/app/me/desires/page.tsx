@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import Link from "next/link";
 import { ArrowLeft, Eye, EyeOff, ShieldCheck } from "lucide-react";
@@ -17,6 +18,7 @@ const STATE_STYLE: Record<DesireState, string> = {
 
 /** Desire Graph editor (P1-19): five states per desire, members-visible unless hidden. */
 export default function DesiresPage() {
+  const { t } = useTranslation();
   const [selections, setSelections] = React.useState<Record<string, Selection>>({});
   const [consented, setConsented] = React.useState(false);
   const [consentChecked, setConsentChecked] = React.useState(false);
@@ -75,49 +77,49 @@ export default function DesiresPage() {
     }
   }
 
-  if (status === "loading") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textMuted">Loading…</main>;
-  if (status === "signed-out") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textSecondary"><Link href="/auth/login?returnTo=%2Fme%2Fdesires" className="text-velora-gold underline">Sign in</Link> to set your desires.</main>;
-  if (status === "error") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-danger">Your desires could not be loaded. Please refresh.</main>;
+  if (status === "loading") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textMuted">{t("Loading…")}</main>;
+  if (status === "signed-out") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textSecondary"><Link href="/auth/login?returnTo=%2Fme%2Fdesires" className="text-velora-gold underline">{t("Sign in")}</Link>{" "}{t("to set your desires.")}</main>;
+  if (status === "error") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-danger">{t("Your desires could not be loaded. Please refresh.")}</main>;
 
   const count = Object.keys(selections).length;
   return (
     <main className="mx-auto max-w-2xl space-y-6 px-4 pb-32 pt-6">
-      <Link href="/me" className="inline-flex items-center gap-1 text-xs text-velora-textMuted hover:text-velora-textPrimary"><ArrowLeft className="h-3.5 w-3.5" aria-hidden />Me</Link>
+      <Link href="/me" className="inline-flex items-center gap-1 text-xs text-velora-textMuted hover:text-velora-textPrimary"><ArrowLeft className="h-3.5 w-3.5" aria-hidden />{t("Me")}</Link>
       <header className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">Desires</p>
-        <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">What you&apos;re into</h1>
-        <p className="text-sm leading-relaxed text-velora-textSecondary">Mark only what you want to. Members see shared desires first. Hard limits are shown so nobody has to guess; &ldquo;Not for me&rdquo; is always private.</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">{t("Desires")}</p>
+        <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">{t("What you're into")}</h1>
+        <p className="text-sm leading-relaxed text-velora-textSecondary">{t("Mark only what you want to. Members see shared desires first. Hard limits are shown so nobody has to guess; “Not for me” is always private.")}</p>
       </header>
 
       {!consented && (
         <label className="flex cursor-pointer gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 p-4 text-sm leading-relaxed text-velora-textSecondary">
           <input type="checkbox" className="mt-1 h-4 w-4 accent-velora-gold" checked={consentChecked} onChange={(event) => setConsentChecked(event.target.checked)} />
-          <span><ShieldCheck className="mr-1 inline h-4 w-4 text-velora-success" aria-hidden />I explicitly consent to Intimo storing my desires and showing the visible ones to signed-in members. I can withdraw this in Privacy settings, which erases them.</span>
+          <span><ShieldCheck className="mr-1 inline h-4 w-4 text-velora-success" aria-hidden />{t("I explicitly consent to Intimo storing my desires and showing the visible ones to signed-in members. I can withdraw this in Privacy settings, which erases them.")}</span>
         </label>
       )}
 
       {DESIRE_CATEGORIES.map((category) => (
         <section key={category.id} className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">{category.label}</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">{t(category.label)}</h2>
           <ul className="divide-y divide-ink/5 overflow-hidden rounded-2xl border border-ink/10 bg-ink/[0.02]">
             {DESIRES.filter((desire) => desire.category === category.id).map((desire) => {
               const selection = selections[desire.id];
               return (
                 <li key={desire.id} className="space-y-2 px-4 py-3">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm font-semibold text-velora-textPrimary">{desire.label}</span>
+                    <span className="text-sm font-semibold text-velora-textPrimary">{t(desire.label)}</span>
                     {selection && selection.state !== "NOT_FOR_ME" && (
-                      <button type="button" onClick={() => toggleVisibility(desire.id)} aria-label={selection.visibility === "PRIVATE" ? `Show ${desire.label} to members` : `Hide ${desire.label} from members`} className="inline-flex min-h-9 items-center gap-1 rounded-full px-2 text-[11px] text-velora-textMuted hover:text-velora-textPrimary">
-                        {selection.visibility === "PRIVATE" ? <><EyeOff className="h-3.5 w-3.5" aria-hidden />Private</> : <><Eye className="h-3.5 w-3.5" aria-hidden />Members</>}
+                      <button type="button" onClick={() => toggleVisibility(desire.id)} aria-label={selection.visibility === "PRIVATE" ? t("Show {label} to members", { label: desire.label }) : t("Hide {label} from members", { label: desire.label })} className="inline-flex min-h-9 items-center gap-1 rounded-full px-2 text-[11px] text-velora-textMuted hover:text-velora-textPrimary">
+                        {selection.visibility === "PRIVATE" ? <><EyeOff className="h-3.5 w-3.5" aria-hidden />{t("Private")}</> : <><Eye className="h-3.5 w-3.5" aria-hidden />{t("Members")}</>}
                       </button>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-1.5" role="group" aria-label={desire.label}>
+                  <div className="flex flex-wrap gap-1.5" role="group" aria-label={t(desire.label)}>
                     {DESIRE_STATES.map((state) => {
                       const active = selection?.state === state.value;
                       return (
                         <button key={state.value} type="button" aria-pressed={active} onClick={() => choose(desire.id, state.value)} className={`min-h-9 rounded-full border px-3 text-xs transition ${active ? STATE_STYLE[state.value] : "border-ink/10 text-velora-textMuted hover:border-ink/25"}`}>
-                          {state.label}
+                          {t(state.label)}
                         </button>
                       );
                     })}
@@ -132,10 +134,10 @@ export default function DesiresPage() {
       <div className="fixed inset-x-0 bottom-16 z-30 border-t border-ink/10 bg-velora-bg/95 px-4 py-3 backdrop-blur md:bottom-0">
         <div className="mx-auto flex max-w-2xl items-center gap-3">
           <p className={`flex-1 text-xs ${message?.kind === "error" ? "text-velora-danger" : "text-velora-textSecondary"}`} role={message ? "status" : undefined}>
-            {message ? message.text : `${count} selected`}
+            {message ? t(message.text) : t("{count} selected", { count: count })}
           </p>
           <button type="button" onClick={save} disabled={saving || (!consented && !consentChecked)} className="min-h-11 rounded-full bg-gold-gradient px-6 text-sm font-bold text-velora-bg disabled:opacity-50">
-            {saving ? "Saving…" : "Save"}
+            {saving ? t("Saving…") : t("Save")}
           </button>
         </div>
       </div>

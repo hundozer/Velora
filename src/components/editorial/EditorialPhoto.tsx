@@ -1,3 +1,5 @@
+"use client";
+import { useTranslation } from "@/context/LanguageContext";
 import Image from "next/image";
 import { editorialPhotos, type EditorialPhotoId } from "@/lib/editorialPhotos";
 
@@ -7,18 +9,19 @@ export function EditorialPhoto({ photo, caption, sizes = "(min-width: 1024px) 56
   caption: string;
   sizes?: string;
 }) {
+  const { t } = useTranslation();
   const image = editorialPhotos[photo];
   return (
     <figure className="min-w-0 overflow-hidden rounded-2xl border border-velora-line bg-velora-surface">
       <Image
         src={image.src}
-        alt={image.alt}
+        alt={t(image.alt)}
         width={image.width}
         height={image.height}
         sizes={sizes}
         className="aspect-[3/2] h-auto w-full object-cover"
       />
-      <figcaption className="px-4 py-3 text-sm font-semibold text-velora-ink">{caption}</figcaption>
+      <figcaption className="px-4 py-3 text-sm font-semibold text-velora-ink">{t(caption)}</figcaption>
     </figure>
   );
 }

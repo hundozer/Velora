@@ -29,5 +29,5 @@ test("inbox splits Inbox / Unread / Requests and refreshes the open thread on ev
   const chat = await read("src/components/chat/ChatWindow.tsx");
   assert.match(chat, /folder === "REQUESTS" \? c\.isRequest : !c\.isRequest/);
   assert.match(chat, /\}, \[activeConversation, threadVersion\]\);/);
-  assert.match(chat, /Message request: you haven&apos;t replied yet/);
+  assert.match(chat, /Message request: you haven't replied yet/);
 });

@@ -1,13 +1,16 @@
+"use client";
+import { useTranslation } from "@/context/LanguageContext";
 import { Logo } from "@/components/brand/Logo";
 import React from "react";
 import Link from "next/link";
 
 export function AuthShell({ title, subtitle, children, footer }: { title: string; subtitle?: string; children: React.ReactNode; footer?: React.ReactNode }) {
+  const { t } = useTranslation();
   return (
     <div className="mx-auto flex min-h-[100dvh] w-full max-w-xl flex-col justify-center px-5 py-10">
-      <Link href="/" aria-label="Intimo" className="mb-10 inline-block text-velora-ink"><Logo className="h-9 w-auto" /></Link>
-      <h1 className="font-display text-5xl leading-[1.02] text-velora-ink sm:text-6xl">{title}</h1>
-      {subtitle && <p className="mt-3 text-lg text-velora-textSecondary">{subtitle}</p>}
+      <Link href="/" aria-label={t("Intimo")} className="mb-10 inline-block text-velora-ink"><Logo className="h-9 w-auto" /></Link>
+      <h1 className="font-display text-5xl leading-[1.02] text-velora-ink sm:text-6xl">{t(title)}</h1>
+      {subtitle && <p className="mt-3 text-lg text-velora-textSecondary">{t(subtitle)}</p>}
       <div className="mt-10 space-y-5">{children}</div>
       {footer && <div className="mt-8 text-lg text-velora-textSecondary">{footer}</div>}
     </div>
@@ -15,9 +18,10 @@ export function AuthShell({ title, subtitle, children, footer }: { title: string
 }
 
 export function AuthField({ id, label, ...props }: { id: string; label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-2">
-      <label htmlFor={id} className="block text-base font-semibold text-velora-textSecondary">{label}</label>
+      <label htmlFor={id} className="block text-base font-semibold text-velora-textSecondary">{t(label)}</label>
       <input id={id} name={id} className="min-h-16 w-full rounded-3xl border border-velora-control bg-velora-surface px-6 text-xl text-velora-textPrimary placeholder:text-velora-textMuted focus:border-velora-gold focus:ring-2 focus:ring-velora-gold/30" {...props} />
     </div>
   );

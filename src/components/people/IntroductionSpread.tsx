@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import Link from "next/link";
 import { ArrowDown } from "lucide-react";
@@ -14,14 +15,15 @@ import type { Person } from "@/components/people/PersonTile";
  * spread is typographic — own words as the headline over a soft copper glow.
  */
 export function IntroductionSpread({ person, next, priority = false, onNext }: { person: Person; next?: Person | null; priority?: boolean; onNext?: () => void }) {
+  const { t } = useTranslation();
   const words = ownWords(person);
-  const status = statusLine(person);
+  const status = statusLine(person, t);
   const hasPhoto = Boolean(person.avatarUrl);
-  const portraitLabel = `${possessive(person)[0].toUpperCase()}${possessive(person).slice(1)} portrait`;
-  const hello = person.isCoupleProfile ? "Write to them" : "Say hello";
+  const portraitLabel = t(`${possessive(person)[0].toUpperCase()}${possessive(person).slice(1)} portrait`);
+  const hello = person.isCoupleProfile ? t("Write to them") : t("Say hello");
 
   return (
-    <article aria-label={`Introduction: ${person.displayName}`} className="relative isolate flex min-h-[calc(100svh-4rem-env(safe-area-inset-bottom))] flex-col justify-end overflow-hidden bg-velora-night text-velora-onPhoto md:min-h-[min(82vh,760px)] md:rounded-[28px]">
+    <article aria-label={t("Introduction: {displayName}", { displayName: person.displayName })} className="relative isolate flex min-h-[calc(100svh-4rem-env(safe-area-inset-bottom))] flex-col justify-end overflow-hidden bg-velora-night text-velora-onPhoto md:min-h-[min(82vh,760px)] md:rounded-[28px]">
       {hasPhoto ? (
         <>
           <Portrait src={person.avatarUrl} name={person.displayName} priority={priority} dominantColor="#191c20" sizes="(min-width: 768px) 50vw, 100vw" className="absolute inset-0 -z-10 h-full w-full md:left-auto md:w-1/2" monogramClassName="text-[10rem]" />
@@ -44,7 +46,7 @@ export function IntroductionSpread({ person, next, priority = false, onNext }: {
             {status && (
               <p className="flex items-center gap-2 text-[14px] text-velora-onPhoto/85">
                 {person.presence === "ONLINE" && <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-velora-copperLight motion-reduce:animate-none" />}
-                {status}
+                {t(status)}
               </p>
             )}
             <h2 className="mt-1 break-words font-display text-[clamp(4.5rem,24vw,7rem)] leading-[0.92] tracking-[-0.01em]">{person.displayName}</h2>
@@ -62,12 +64,12 @@ export function IntroductionSpread({ person, next, priority = false, onNext }: {
           <Link href={`/messages?user=${person.id}`} className="group inline-flex min-h-11 items-center gap-3 font-semibold text-velora-onPhoto">
             {hello}<span aria-hidden data-rule className="h-px w-8 bg-velora-onPhoto/70 transition-all group-hover:w-12" />
           </Link>
-          <Link href={`/profile/${person.id}`} className="inline-flex min-h-11 items-center text-velora-onPhoto/90 underline decoration-velora-onPhoto/50 underline-offset-4 hover:decoration-velora-onPhoto">{portraitLabel}</Link>
+          <Link href={`/profile/${person.id}`} className="inline-flex min-h-11 items-center text-velora-onPhoto/90 underline decoration-velora-onPhoto/50 underline-offset-4 hover:decoration-velora-onPhoto">{t(portraitLabel)}</Link>
         </div>
         {next !== undefined && (
           <div className="mt-6 flex items-center justify-between border-t border-velora-onPhoto/15 pt-4 text-[14px] text-velora-onPhoto/75">
-            {next ? <span>Next: {next.displayName}</span> : <span>That was the last introduction for now.</span>}
-            {onNext && <button type="button" onClick={onNext} aria-label={next ? `Next: ${next.displayName}` : "Everyone nearby"} className="-mr-2 flex h-11 w-11 items-center justify-center text-velora-onPhoto/85 hover:text-velora-onPhoto"><ArrowDown className="h-4 w-4" aria-hidden /></button>}
+            {next ? <span>{t("Next: {displayName}", { displayName: next.displayName })}</span> : <span>{t("That was the last introduction for now.")}</span>}
+            {onNext && <button type="button" onClick={onNext} aria-label={next ? t("Next: {displayName}", { displayName: next.displayName }) : t("Everyone nearby")} className="-mr-2 flex h-11 w-11 items-center justify-center text-velora-onPhoto/85 hover:text-velora-onPhoto"><ArrowDown className="h-4 w-4" aria-hidden /></button>}
           </div>
         )}
       </div>

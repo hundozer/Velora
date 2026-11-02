@@ -1,10 +1,12 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React, { useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import { AuthField, AuthMessage, AuthShell, friendlyAuthError, submitClass } from "@/components/auth/AuthShell";
 
 export default function UpdatePasswordPage() {
+  const { t } = useTranslation();
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -19,11 +21,11 @@ export default function UpdatePasswordPage() {
   };
 
   return (
-    <AuthShell title="Choose a new password">
+    <AuthShell title={t("Choose a new password")}>
       <form onSubmit={submit} className="space-y-4" noValidate>
-        <AuthField id="password" label="New password" type="password" autoComplete="new-password" required minLength={10} value={password} onChange={(e) => setPassword(e.target.value)} />
-        {error && <AuthMessage tone="error">{error}</AuthMessage>}
-        <button type="submit" disabled={busy || !password} className={submitClass}>{busy ? "Saving…" : "Save password"}</button>
+        <AuthField id="password" label={t("New password")} type="password" autoComplete="new-password" required minLength={10} value={password} onChange={(e) => setPassword(e.target.value)} />
+        {error && <AuthMessage tone="error">{t(error)}</AuthMessage>}
+        <button type="submit" disabled={busy || !password} className={submitClass}>{busy ? t("Saving…") : t("Save password")}</button>
       </form>
     </AuthShell>
   );

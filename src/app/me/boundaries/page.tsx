@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -13,6 +14,7 @@ const PREFERENCE_STYLE: Record<BoundaryPreference, string> = {
 
 /** Boundaries & approach preferences editor (P1-20). Enforced server-side where marked. */
 export default function BoundariesPage() {
+  const { t } = useTranslation();
   const [values, setValues] = React.useState<Record<string, BoundaryPreference>>({});
   const [status, setStatus] = React.useState<"loading" | "ready" | "signed-out" | "error">("loading");
   const [saving, setSaving] = React.useState(false);
@@ -57,35 +59,35 @@ export default function BoundariesPage() {
     }
   }
 
-  if (status === "loading") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textMuted">Loading…</main>;
-  if (status === "signed-out") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textSecondary"><Link href="/auth/login?returnTo=%2Fme%2Fboundaries" className="text-velora-gold underline">Sign in</Link> to set your boundaries.</main>;
-  if (status === "error") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-danger">Your boundaries could not be loaded. Please refresh.</main>;
+  if (status === "loading") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textMuted">{t("Loading…")}</main>;
+  if (status === "signed-out") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textSecondary"><Link href="/auth/login?returnTo=%2Fme%2Fboundaries" className="text-velora-gold underline">{t("Sign in")}</Link>{" "}{t("to set your boundaries.")}</main>;
+  if (status === "error") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-danger">{t("Your boundaries could not be loaded. Please refresh.")}</main>;
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 px-4 pb-32 pt-6">
-      <Link href="/me" className="inline-flex items-center gap-1 text-xs text-velora-textMuted hover:text-velora-textPrimary"><ArrowLeft className="h-3.5 w-3.5" aria-hidden />Me</Link>
+      <Link href="/me" className="inline-flex items-center gap-1 text-xs text-velora-textMuted hover:text-velora-textPrimary"><ArrowLeft className="h-3.5 w-3.5" aria-hidden />{t("Me")}</Link>
       <header className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">Boundaries</p>
-        <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">How to approach you</h1>
-        <p className="text-sm leading-relaxed text-velora-textSecondary">Members see these on your profile. &ldquo;Not interested&rdquo; on first messages and photos is enforced, so the message or request can&apos;t be sent.</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">{t("Boundaries")}</p>
+        <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">{t("How to approach you")}</h1>
+        <p className="text-sm leading-relaxed text-velora-textSecondary">{t("Members see these on your profile. “Not interested” on first messages and photos is enforced, so the message or request can't be sent.")}</p>
       </header>
 
       {BOUNDARY_GROUPS.map((group) => (
         <section key={group.id} className="space-y-3">
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">{group.label}</h2>
-            {group.hint && <p className="mt-1 text-[11px] text-velora-textMuted">{group.hint}</p>}
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">{t(group.label)}</h2>
+            {group.hint && <p className="mt-1 text-[11px] text-velora-textMuted">{t(group.hint)}</p>}
           </div>
           <ul className="divide-y divide-ink/5 overflow-hidden rounded-2xl border border-ink/10 bg-ink/[0.02]">
             {BOUNDARY_KINDS.filter((kind) => kind.group === group.id).map((kind) => (
               <li key={kind.id} className="space-y-2 px-4 py-3">
-                <span className="text-sm font-semibold text-velora-textPrimary">{kind.label}</span>
-                <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={kind.label}>
+                <span className="text-sm font-semibold text-velora-textPrimary">{t(kind.label)}</span>
+                <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t(kind.label)}>
                   {BOUNDARY_PREFERENCES.map((preference) => {
                     const active = values[kind.id] === preference.value;
                     return (
                       <button key={preference.value} type="button" role="radio" aria-checked={active} onClick={() => choose(kind.id, preference.value)} className={`min-h-9 rounded-full border px-3 text-xs transition ${active ? PREFERENCE_STYLE[preference.value] : "border-ink/10 text-velora-textMuted hover:border-ink/25"}`}>
-                        {preference.label}
+                        {t(preference.label)}
                       </button>
                     );
                   })}
@@ -96,15 +98,15 @@ export default function BoundariesPage() {
         </section>
       ))}
 
-      <p className="text-xs text-velora-textMuted">Who can message you at all is in <Link href="/settings" className="text-velora-gold underline">Settings → Privacy</Link>.</p>
+      <p className="text-xs text-velora-textMuted">{t("Who can message you at all is in")}{" "}<Link href="/settings" className="text-velora-gold underline">{t("Settings → Privacy")}</Link>.</p>
 
       <div className="fixed inset-x-0 bottom-16 z-30 border-t border-ink/10 bg-velora-bg/95 px-4 py-3 backdrop-blur md:bottom-0">
         <div className="mx-auto flex max-w-2xl items-center gap-3">
           <p className={`flex-1 text-xs ${message?.kind === "error" ? "text-velora-danger" : "text-velora-textSecondary"}`} role={message ? "status" : undefined}>
-            {message ? message.text : dirty ? "Unsaved changes" : "Up to date"}
+            {message ? t(message.text) : dirty ? t("Unsaved changes") : t("Up to date")}
           </p>
           <button type="button" onClick={save} disabled={saving || !dirty} className="min-h-11 rounded-full bg-gold-gradient px-6 text-sm font-bold text-velora-bg disabled:opacity-50">
-            {saving ? "Saving…" : "Save"}
+            {saving ? t("Saving…") : t("Save")}
           </button>
         </div>
       </div>

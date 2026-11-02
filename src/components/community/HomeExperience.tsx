@@ -1,11 +1,13 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import dynamic from "next/dynamic";
 import { useEffect, type ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 
 function LoadingHome() {
-  return <div className="min-h-[70vh] px-5 py-12 text-velora-muted" role="status">Loading your home…</div>;
+  const { t } = useTranslation();
+  return <div className="min-h-[70vh] px-5 py-12 text-velora-muted" role="status">{t("Loading your home…")}</div>;
 }
 
 // Anonymous visitors do not need the member feed in their initial JavaScript.
