@@ -41,6 +41,7 @@ test('photos filter executes only media, block, owner and reaction reads; summar
   const {api,executed}=feedFixture();
   const r=await api.GET({url:'https://example.test/api/feed?type=photos&scope=newest'});
   assert.equal(r.status,200);assert.equal(r.headers.get('cache-control'),'private, no-store');
+  assert.match(r.headers.get('server-timing'), /auth;dur=\d+(?:\.\d+)?, audience;dur=\d+(?:\.\d+)?, content;dur=\d+(?:\.\d+)?, reactions;dur=\d+(?:\.\d+)?/);
   const p=await r.json();assert.equal(p.items.length,1);assert.deepEqual(p.items[0].reactionSummary,{count:2,liked:true});
   assert.deepEqual([...new Set(executed.map(x=>x.table))].sort(),['content_reactions','media_objects','profiles','user_blocks']);
   const media=executed.find(x=>x.table==='media_objects');assert.ok(media.filters.some(x=>x[1]==='media_type'&&x[2]==='IMAGE'));
