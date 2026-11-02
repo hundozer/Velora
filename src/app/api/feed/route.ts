@@ -19,6 +19,7 @@ type FeedItem = {
 };
 
 export async function GET(req: NextRequest) {
+  const startedAt = performance.now();
   const auth = await resolveServerActor(req);
   if (auth.status !== "authenticated") {
     return NextResponse.json({ error: "Authentication required" }, { status: auth.status === "unauthenticated" ? 401 : 503 });
@@ -27,6 +28,7 @@ export async function GET(req: NextRequest) {
   if (!(await checkRateLimit(`member-feed:${auth.actor.userId}`, 120, 60)).allowed) {
     return NextResponse.json({ error: "Too many feed requests" }, { status: 429 });
   }
+  const authorizedAt = performance.now();
   const db = getServerSupabase();
   if (!db) return NextResponse.json({ error: "Feed unavailable" }, { status: 503 });
 
@@ -54,6 +56,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ items: [], scope, contentType, ranking: "occurred_at_desc_then_id_asc" }, { headers: { "Cache-Control": "private, no-store" } });
   }
 
+  const audienceAt = performance.now();
   let profileQuery = db.from("profiles")
     .select("id,display_name,username,avatar_url,verification_status,verification_level,headline,created_at")
     .eq("account_status", "ACTIVE").eq("discovery_disabled", false)
@@ -164,6 +167,7 @@ export async function GET(req: NextRequest) {
   const permittedTypes: Record<string, FeedItem["type"][]> = { albums: ["ALBUM"], photos: ["IMAGE"], videos: ["VIDEO"], posts: ["POST"], dating: ["DATING_AD"], events: ["EVENT"], rooms: ["ROOM"] };
   const filtered = contentType === "all" ? items : items.filter((item) => permittedTypes[contentType]?.includes(item.type));
   filtered.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || a.id.localeCompare(b.id));
+  const contentAt = performance.now();
   const page = filtered.slice(0, 60);
   // Only summarize already-authorized feed targets. No client-supplied IDs and
   // no additional identity/visibility requests for each rendered card.
@@ -186,5 +190,8 @@ export async function GET(req: NextRequest) {
       }));
     }
   }
-  return NextResponse.json({ items: page, scope, contentType, ranking: "occurred_at_desc_then_id_asc" }, { headers: { "Cache-Control": "private, no-store" } });
+  return NextResponse.json({ items: page, scope, contentType, ranking: "occurred_at_desc_then_id_asc" }, { headers: {
+    "Cache-Control": "private, no-store",
+    "Server-Timing": `auth;dur=${(authorizedAt - startedAt).toFixed(1)}, audience;dur=${(audienceAt - authorizedAt).toFixed(1)}, content;dur=${(contentAt - audienceAt).toFixed(1)}, reactions;dur=${(performance.now() - contentAt).toFixed(1)}`,
+  } });
 }
