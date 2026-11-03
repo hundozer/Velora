@@ -16,3 +16,20 @@ test("a new member triggers a minimal alert to registration@intimo.live without 
   const alerted = route.indexOf("await notifyNewRegistration(");
   assert.ok(created > 0 && alerted > created, "alert only after the profile and its audit record exist");
 });
+
+test("leaving: a pause option, an optional reason, and an alert that never blocks deletion", () => {
+  const settings = read("src/app/settings/page.tsx");
+  assert.match(settings, /Hide my profile instead/);
+  assert.match(settings, /profileVisibility: "PRIVATE"/, "hiding uses the existing Hidden visibility");
+  assert.match(settings, /Why are you leaving\? \(optional\)/);
+  assert.match(settings, /confirmation: "DELETE", reason: leaveReason \|\| undefined/);
+  const route = read("src/app/api/auth/delete-account/route.ts");
+  assert.match(route, /reason = cleanLeavingReason\(body\?\.reason\)/, "only known reasons are accepted");
+  assert.match(route, /body\.note\.trim\(\)\.slice\(0, 500\)/);
+  const audited = route.indexOf('action: "GDPR_DELETE_ACCOUNT", resourceType');
+  const alerted = route.indexOf("await notifyAccountDeleted(");
+  assert.ok(audited > 0 && alerted > audited, "alert only after the deletion is complete and audited");
+  assert.doesNotMatch(route.slice(route.indexOf("appendDurableAudit(supabase"), alerted), /note/, "the free-text note goes only to the team email, not the audit log");
+  const alert = read("src/lib/notifications/registrationAlert.ts");
+  assert.match(alert, /\[LEAVING ALERT FAILED\]/);
+});
