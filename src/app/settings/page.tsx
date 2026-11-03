@@ -57,6 +57,10 @@ export default function SettingsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletePending, setDeletePending] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [leaveReason, setLeaveReason] = useState("");
+  const [leaveNote, setLeaveNote] = useState("");
+  const [hidePending, setHidePending] = useState(false);
+  const [hiddenInstead, setHiddenInstead] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
   const [mediaUpload, setMediaUpload] = useState<{ kind: "avatar" | "cover"; progress: number } | null>(null);
@@ -228,7 +232,7 @@ export default function SettingsPage() {
       const response = await fetch("/api/auth/delete-account", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ confirmation: "DELETE" }),
+        body: JSON.stringify({ confirmation: "DELETE", reason: leaveReason || undefined, note: leaveNote.trim() || undefined }),
       });
       if (!response.ok) throw new Error("Deletion request failed");
       // Clear the session only after the server accepts the deletion request.
@@ -236,6 +240,24 @@ export default function SettingsPage() {
     } catch {
       setDeleteError("We could not confirm your deletion request. Please try again. If you cannot sign in, contact support to check its status.");
       setDeletePending(false);
+    }
+  };
+
+  // A pause instead of goodbye: hide the profile from People and discovery, keep the account.
+  const hideInstead = async () => {
+    if (hidePending) return;
+    setHidePending(true); setDeleteError("");
+    try {
+      const next = { ...privacy, profileVisibility: "PRIVATE" };
+      const response = await fetch("/api/privacy/settings", { method: "PUT", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) });
+      if (!response.ok) throw new Error("Settings could not be saved");
+      setPrivacy(next);
+      setHiddenInstead(true);
+      setDeleteModalOpen(false);
+    } catch {
+      setDeleteError(t("Your profile could not be hidden. Try again, or hide it under Privacy."));
+    } finally {
+      setHidePending(false);
     }
   };
 
@@ -481,6 +503,7 @@ export default function SettingsPage() {
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl border border-red-500/30">
             <div>
+              {hiddenInstead && <p role="status" className="mb-3 rounded-xl bg-velora-accent/10 p-3 text-xs text-velora-ink">{t("Your profile is hidden. Nobody can find you in People. Change it any time under Privacy.")}</p>}
               <h4 className="text-xs font-bold text-velora-danger">{t("Permanently Delete Intimo Account (GDPR Right to be Forgotten)")}</h4>
               <p className="text-[11px] text-velora-textMuted mt-0.5">{t("Start permanent deletion of your profile data, messages, and media, subject to documented safety/legal retention exceptions.")}</p>
             </div>
@@ -498,6 +521,20 @@ export default function SettingsPage() {
       {/* Account Deletion Confirmation Modal */}
       <Modal isOpen={deleteModalOpen} onClose={() => { if (!deletePending) setDeleteModalOpen(false); }} showCloseButton={!deletePending} title={t("Confirm Account Deletion")}>
         <div className="space-y-4 text-left">
+          <div className="rounded-2xl border border-velora-accent/40 bg-velora-accent/10 p-4">
+            <p className="text-sm font-semibold text-velora-ink">{t("Need a break instead?")}</p>
+            <p className="mt-1 text-xs leading-relaxed text-velora-ink2">{t("Hide your profile: nobody finds you in People, your messages and photos stay, and you can come back any time.")}</p>
+            <Button variant="gold" className="mt-3 w-full text-xs" disabled={hidePending || deletePending} onClick={hideInstead}>{hidePending ? t("Saving…") : t("Hide my profile instead")}</Button>
+          </div>
+          <fieldset className="space-y-2">
+            <legend className="text-xs font-semibold text-velora-ink">{t("Why are you leaving? (optional)")}</legend>
+            <div className="flex flex-wrap gap-2">
+              {[["TOO_FEW_PEOPLE", "Too few people here yet"], ["NOT_WHAT_I_EXPECTED", "Not what I expected"], ["PRIVACY", "Privacy worries"], ["FOUND_SOMEONE", "Found someone"], ["JUST_TRYING", "Just trying it out"], ["OTHER", "Other"]].map(([value, label]) => (
+                <button key={value} type="button" aria-pressed={leaveReason === value} onClick={() => setLeaveReason(leaveReason === value ? "" : value)} className={`min-h-9 rounded-full border px-3 text-xs ${leaveReason === value ? "border-velora-accent bg-velora-accent/15 text-velora-ink" : "border-velora-line text-velora-ink2"}`}>{t(label)}</button>
+              ))}
+            </div>
+            <textarea value={leaveNote} onChange={(event) => setLeaveNote(event.target.value)} maxLength={500} rows={2} placeholder={t("Anything we could do better? (optional)")} aria-label={t("Anything we could do better? (optional)")} className="w-full rounded-xl border border-velora-control bg-velora-sunken p-3 text-xs text-velora-ink" />
+          </fieldset>
           <div className="p-4 bg-red-500/10 border border-red-500/40 rounded-2xl flex items-center gap-3">
             <AlertTriangle className="w-6 h-6 text-velora-danger shrink-0" />
             <p className="text-xs text-velora-danger leading-relaxed">{t("Your login will be removed and your profile deactivated. Deletion or anonymization of profile data, messages, and media follows the documented retention workflow, subject to legitimate safety or legal retention duties.")}</p>
