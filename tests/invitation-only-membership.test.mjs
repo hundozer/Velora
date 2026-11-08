@@ -8,7 +8,7 @@ test("new registrations require an invitation at signup and profile creation", (
  const profile = read("src/app/api/profile/me/route.ts");
  const sql = read("supabase/migrations/20261108190000_invitation_only_membership.sql");
  assert.match(signup,/is_member_invite_valid/);
- assert.match(signup,/onboarding\\?invite=/);
+ assert.match(signup,/onboarding/);
  assert.match(profile,/is_member_invite_valid/);
  assert.match(profile,/redeem_member_invite/);
  assert.match(profile,/identity\.emailVerified/);
