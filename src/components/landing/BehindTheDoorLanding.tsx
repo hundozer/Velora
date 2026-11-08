@@ -24,8 +24,8 @@ export function BehindTheDoorLanding() {
       <CompletionState
         icon={<Lock className="h-7 w-7" aria-hidden />}
         title={t(title)}
-        body={t("Members only. Sign in or create an account to take a look.")}
-        action={<div className="flex flex-col justify-center gap-3 sm:flex-row"><PrimaryAction href="/auth/login?screen_hint=signup">{t("Join Intimo")}</PrimaryAction><SecondaryAction href={`/auth/login?returnTo=${returnTo}`}>{t("Sign in")}</SecondaryAction></div>}
+        body={t("Members only. Sign in or join with a personal invitation.")}
+        action={<div className="flex flex-col justify-center gap-3 sm:flex-row"><PrimaryAction href="/register">{t("Have an invitation?")}</PrimaryAction><SecondaryAction href={`/auth/login?returnTo=${returnTo}`}>{t("Sign in")}</SecondaryAction></div>}
       />
     </main>
   );
