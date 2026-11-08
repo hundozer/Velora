@@ -18,6 +18,7 @@ export function AdminMembershipEditor({ member, onClose, onSaved }: {
   const [confirmation, setConfirmation] = React.useState("");
   const [error, setError] = React.useState("");
   const [saving, setSaving] = React.useState(false);
+  const [welcomeConfirm, setWelcomeConfirm] = React.useState(false);
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setSaving(true); setError("");
@@ -32,6 +33,21 @@ export function AdminMembershipEditor({ member, onClose, onSaved }: {
       onSaved(result.unchanged ? "Membership already up to date." : "Membership level updated.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Membership update failed");
+    } finally { setSaving(false); }
+  }
+  async function sendWelcome() {
+    setSaving(true); setError("");
+    try {
+      const response = await fetch("/api/admin/users/membership/welcome", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileId: member.id, confirmation: "SEND FOUNDING WELCOME" }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Welcome email could not be sent");
+      onSaved("Founding Member welcome email accepted by Intimo's Resend service.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Welcome email could not be sent");
     } finally { setSaving(false); }
   }
   return <form onSubmit={submit} className="space-y-3 rounded-xl border border-velora-accent/40 bg-velora-surface p-4">
@@ -51,6 +67,27 @@ export function AdminMembershipEditor({ member, onClose, onSaved }: {
       <input autoComplete="off" value={confirmation} onChange={event => setConfirmation(event.target.value)}
         className="mt-1 block min-h-11 w-full rounded-lg border border-velora-control bg-velora-surface px-3" />
     </label>
+    {member.membership_level === "FOUNDING_MEMBER" && (
+      <section className="rounded-lg border border-velora-line bg-velora-sunken p-3">
+        <p className="text-sm font-semibold">Existing Founding Member welcome</p>
+        <p className="mt-1 text-xs text-velora-ink2">Sends the official Intimo welcome through Resend. This can only be sent once.</p>
+        {welcomeConfirm ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button type="button" disabled={saving} onClick={sendWelcome}
+              className="min-h-11 rounded-lg bg-velora-accent px-4 text-sm font-semibold text-velora-paper disabled:opacity-40">
+              {saving ? "Sending…" : "Confirm — send welcome email"}
+            </button>
+            <button type="button" disabled={saving} onClick={() => setWelcomeConfirm(false)}
+              className="min-h-11 rounded-lg border border-velora-control px-4 text-sm">Cancel</button>
+          </div>
+        ) : (
+          <button type="button" disabled={saving} onClick={() => setWelcomeConfirm(true)}
+            className="mt-3 min-h-11 rounded-lg border border-velora-control px-4 text-sm font-semibold">
+            Send Founding Member welcome
+          </button>
+        )}
+      </section>
+    )}
     {error && <p role="alert" className="text-sm text-velora-danger">{error}</p>}
     <div className="flex flex-wrap gap-2">
       <button type="submit" disabled={saving || reason.trim().length < 5 || confirmation !== `CONFIRM ${level}`}
