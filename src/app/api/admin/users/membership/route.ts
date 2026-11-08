@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminPermission, requestSecurityMetadata } from "@/lib/auth/adminApi";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { sendFoundingMemberPromotionEmail } from "@/lib/notifications/foundingMemberPromotion";
 
 const LEVELS = ["MEMBER", "FOUNDING_MEMBER", "VIP"] as const;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -53,5 +54,25 @@ export async function PATCH(req: NextRequest) {
     security_metadata: requestSecurityMetadata(req),
   });
   if (auditError) return NextResponse.json({ error: "Membership changed but audit failed; escalate to administrator" }, { status: 502 });
-  return NextResponse.json({ membershipLevel: updated.membership_level }, { headers: { "Cache-Control": "no-store" } });
+  // Notification is sent once on the actual transition, after successful audit.
+  // Email delivery errors do not undo the membership promotion.
+  let promotionEmail: "sent" | "failed" | "not_applicable" = "not_applicable";
+  if (updated.membership_level === "FOUNDING_MEMBER" && before.membership_level !== "FOUNDING_MEMBER") {
+    promotionEmail = "failed";
+    const { data: recipient, error: recipientError } = await db.from("profiles")
+      .select("email,display_name,username,languages,email_opt_out")
+      .eq("id", profileId).maybeSingle();
+    if (!recipientError && recipient?.email && !(Array.isArray(recipient.email_opt_out) && recipient.email_opt_out.length > 0)) {
+      const language = Array.isArray(recipient.languages) && recipient.languages.some((l: unknown) => String(l).toLowerCase().startsWith("czech") || String(l).toLowerCase() === "cs") ? "cs" : "en";
+      try {
+        const delivery = await sendFoundingMemberPromotionEmail(
+          recipient.email, recipient.display_name || recipient.username || "Member", language
+        );
+        if (delivery.delivered && delivery.provider === "RESEND_API") promotionEmail = "sent";
+      } catch (error) {
+        console.error("Founding Member promotion notification failed", { profileId, message: error instanceof Error ? error.message : "unknown" });
+      }
+    }
+  }
+  return NextResponse.json({ membershipLevel: updated.membership_level, promotionEmail }, { headers: { "Cache-Control": "no-store" } });
 }
