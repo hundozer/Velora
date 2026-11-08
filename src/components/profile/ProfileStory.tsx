@@ -20,7 +20,7 @@ const LOOKING_FOR_LABELS = new Map(LOOKING_FOR.map((item) => [item.value, item.l
 const NUMBER_WORDS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
 
 type Profile = {
-  id: string; displayName: string; age?: number; gender?: string; headline?: string; bio?: string; isCoupleProfile?: boolean; verified?: boolean;
+  id: string; displayName: string; age?: number; gender?: string; headline?: string; bio?: string; isCoupleProfile?: boolean; verified?: boolean; foundingMember?: boolean;
   presence?: "ONLINE" | "TODAY" | "WEEK" | null; areaName?: string | null; distance?: string | null; avatarUrl?: string;
   interests?: string[]; hobbies?: string[]; lifestyleTags?: string[]; lookingFor?: string[]; languages?: string[];
 };
