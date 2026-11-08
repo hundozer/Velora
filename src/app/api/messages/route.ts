@@ -5,6 +5,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
+import { sendPush } from "@/lib/notifications/webPush";
 import { establishedDecision, firstMessageDecision, resolveBoundaries } from "@/lib/boundaries.mjs";
 import { presenceBucket } from "@/lib/presence.mjs";
 import { areFriends } from "@/lib/social/friendship";
@@ -194,7 +195,8 @@ export async function POST(req: NextRequest) {
   const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MESSAGE_SEND", resourceType: "MESSAGE", resourceId: data.id, outcome: "SUCCESS", metadata: { receiverId, datingAdId, personalAdId } });
   if (!audited) return NextResponse.json({ error: "Message sent but audit recording failed; contact support" }, { status: 503 });
   await supabase.from("notifications").insert({ user_id: receiverId, type: "NEW_MESSAGE", title: "New message", message: `${sender.display_name} sent you a message.`, actor_name: sender.display_name, actor_avatar: sender.avatar_url, target_link: `/messages?peerId=${actor.actor.profileId}`, is_read: false });
-  // The INSERT trigger queues unread email atomically with the message.
+  // The INSERT trigger queues unread email atomically with the message; push is immediate.
+  await sendPush({ recipientId: receiverId, actorId: actor.actor.profileId, category: datingAdId ? "PLAN_REPLY" : "MESSAGE" });
   auditLogger.logEvent({ actorId: actor.actor.userId, actorRole: actor.actor.role as any, action: "MESSAGE_SEND", resourceId: data.id, resourceType: "MESSAGE", status: "SUCCESS" });
   return NextResponse.json({ message: data }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
 }

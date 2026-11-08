@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
+import { sendPush } from "@/lib/notifications/webPush";
 
 // Interest (P1-08): a one-tap signal. Mutual interest notifies both members.
 export const dynamic = "force-dynamic";
@@ -46,9 +47,11 @@ export async function POST(req: NextRequest) {
   ]);
   if (blockError || block || !target || target.account_status !== "ACTIVE" || !me) return NextResponse.json({ error: "Member not available" }, { status: 404 });
 
-  const { error } = await db.rpc("intimo_save_interest", { p_from: auth.profileId, p_to: targetId });
+  const { data: created, error } = await db.rpc("intimo_save_interest", { p_from: auth.profileId, p_to: targetId });
   if (error) return NextResponse.json({ error: "Interest could not be saved" }, { status: 502 });
   const result = await state(db, auth.profileId, targetId);
+  // Like email, only a new mutual interest notifies (never every one-sided like).
+  if (created === true && result.mutual) await sendPush({ recipientId: targetId, actorId: auth.profileId, category: "INTEREST" });
   return NextResponse.json(result, { status: 201, headers: noStore });
 }
 

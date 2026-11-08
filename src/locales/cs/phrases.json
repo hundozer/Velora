@@ -2070,5 +2070,19 @@
  "Your style. Your pace.": "Tvůj styl. Tvoje tempo.",
  "Your suggestion could not be sent.": "Tvůj návrh se nepodařilo odeslat.",
  "Your visits don't appear in other members' Visitors. You also won't see who visited you.": "Tvoje návštěvy se ostatním neukazují v Návštěvnících. Ani ty neuvidíš, kdo navštívil tebe.",
- "Yours": "Tvoje"
+ "Yours": "Tvoje",
+ "Someone wrote to you.": "Někdo ti napsal.",
+ "You have a new mutual connection.": "Máš nové vzájemné spojení.",
+ "There's an update about private photos.": "Máš novinku k soukromým fotkám.",
+ "Your plan got a reply.": "Na tvůj plán někdo odpověděl.",
+ "Device notifications": "Oznámení v zařízení",
+ "To get notifications on iPhone, add Intimo to your Home Screen first, then open it from there.": "Aby ti na iPhonu chodila oznámení, nejdřív si přidej Intimo na plochu a pak ho otevírej odtamtud.",
+ "Notifications are on for this device. They never show message text or names.": "Oznámení jsou v tomhle zařízení zapnutá. Nikdy neukazují text zpráv ani jména.",
+ "Turn off on this device": "Vypnout v tomhle zařízení",
+ "Notifications aren't available yet. Try again later.": "Oznámení zatím nejsou k dispozici. Zkus to později.",
+ "This device couldn't be set up for notifications. Try again.": "Tohle zařízení se nepodařilo nastavit pro oznámení. Zkus to znovu.",
+ "Shown on devices where you've turned notifications on. They say only “Intimo” and never show names, photos or message text.": "Zobrazují se v zařízeních, kde máš oznámení zapnutá. Píše se v nich jen „Intimo“ a nikdy neukazují jména, fotky ani text zpráv.",
+ "Pause all device notifications": "Pozastavit všechna oznámení v zařízeních",
+ "Notification settings could not be loaded.": "Nastavení oznámení se nepodařilo načíst.",
+ "Notification settings could not be saved.": "Nastavení oznámení se nepodařilo uložit."
 }
