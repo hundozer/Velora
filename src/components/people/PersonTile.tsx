@@ -5,6 +5,7 @@ import React from "react";
 import Link from "next/link";
 import { BadgeCheck, MapPin } from "lucide-react";
 import { Portrait } from "@/components/media/Portrait";
+import { FoundingMemberBadge } from "@/components/community/FoundingMemberBadge";
 
 export type Person = {
   id: string; displayName: string; age?: number; gender?: string; isCoupleProfile?: boolean; avatarUrl?: string; verified?: boolean; foundingMember?: boolean;
@@ -25,6 +26,7 @@ export function PersonTile({ person, compact = false }: { person: Person; compac
           <span className="truncate">{person.displayName}{person.age ? `, ${person.age}` : ""}</span>
           {person.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-velora-success" aria-label={t("Verified")} />}
         </p>
+        {person.foundingMember && <div className="pt-1"><FoundingMemberBadge compact={compact} /></div>}
         <p className="truncate text-[11px] text-velora-textMuted">{person.isCoupleProfile ? t("Couple") : t(person.presenceLabel) || " "}</p>
         {(person.areaName || person.distance) && (
           <p className="flex items-center gap-1 truncate text-[11px] text-velora-textMuted"><MapPin className="h-3 w-3 shrink-0" aria-hidden />{[person.areaName, person.distance].filter(Boolean).join(" · ")}</p>
