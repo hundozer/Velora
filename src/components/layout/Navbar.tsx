@@ -10,6 +10,7 @@ import { useTranslation } from "@/context/LanguageContext";
 import { LanguageSwitch } from "@/components/i18n/LanguageSwitch";
 import { NotificationDrawer } from "@/components/notifications/NotificationDrawer";
 import { Badge } from "@/components/ui/Badge";
+import { FoundingMemberMenuLink } from "@/components/community/FoundingMemberMenuLink";
 import {
   Compass,
   MessageSquare,
@@ -153,6 +154,8 @@ export const Navbar: React.FC = () => {
                     className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
                   >
                     <Bookmark className="w-4 h-4 text-velora-accent" />{t("Saved items")}</Link>
+
+                  <FoundingMemberMenuLink />
 
                   <Link
                     href="/settings"
