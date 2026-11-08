@@ -23,13 +23,7 @@ async function founder(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const auth = await founder(req);
   if (!auth) return NextResponse.json({ eligible: false }, { headers: noStore });
-  const { count, error } = await auth.db.from("member_email_invites")
-    .select("id", { head: true, count: "exact" })
-    .eq("inviter_profile_id", auth.actor.profileId)
-    .in("status", ["PENDING","SENT"])
-    .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
-  if (error) return NextResponse.json({ error: "Invitations unavailable" }, { status: 503, headers: noStore });
-  return NextResponse.json({ eligible: true, remaining: Math.max(0, 5 - (count || 0)) }, { headers: noStore });
+  return NextResponse.json({ eligible: true, unlimited: true }, { headers: noStore });
 }
 
 export async function POST(req: NextRequest) {
@@ -49,7 +43,7 @@ export async function POST(req: NextRequest) {
   // Do not email existing members or disclose whether an email has an Intimo account.
   const { data: existing, error: existingError } = await auth.db.from("profiles").select("id").eq("email", address).limit(1);
   if (existingError) return NextResponse.json({ error: "Invitations temporarily unavailable" }, { status: 503, headers: noStore });
-  if (existing?.length) return NextResponse.json({ sent: true, remaining: null }, { headers: noStore });
+  if (existing?.length) return NextResponse.json({ sent: true }, { headers: noStore });
   const hash = createHash("sha256").update(address).digest("hex");
   const { data: inviteId, error: claimError } = await auth.db.rpc("claim_founder_email_invite", {
     p_inviter: auth.actor.profileId, p_email_hash: hash
@@ -57,8 +51,8 @@ export async function POST(req: NextRequest) {
   if (claimError || !inviteId) {
     const reason = claimError?.message || "";
     const duplicate = reason.includes("recent invitation");
-    const limited = reason.includes("limit");
-    return NextResponse.json({ error: limited ? "Five invitations per 24 hours. Try again later." : duplicate ? "This address was invited recently." : "Invitation could not be created", },
+    const limited = reason.includes("pacing");
+    return NextResponse.json({ error: limited ? "You're sending invitations too quickly. Please try again shortly." : duplicate ? "This address was invited recently." : "Invitation could not be created", },
       { status: limited || duplicate ? 429 : 503, headers: noStore });
   }
   const html = `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#20242b;max-width:560px;margin:auto">
