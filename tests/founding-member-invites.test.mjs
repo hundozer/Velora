@@ -3,13 +3,13 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 const read = p => readFileSync(new URL(`../${p}`, import.meta.url),"utf8");
 
-test("Founding Member email invitation uses server-side membership authorization", () => {
+test("All-member email invitation uses server-side membership authorization", () => {
   const api = read("src/app/api/member/invitations/route.ts");
   assert.match(api,/resolveServerActor\(req\)/);
-  assert.match(api,/membership_level !== "FOUNDING_MEMBER"/);
+  assert.doesNotMatch(api,/membership_level !== "FOUNDING_MEMBER"/);
   assert.match(api,/accountStatus !== "ACTIVE"/);
   assert.match(api,/emailVerified/);
-  assert.match(api,/claim_founder_email_invite/);
+  assert.match(api,/claim_member_email_invite/);
   assert.match(api,/permissionConfirmed !== true/);
   assert.match(api,/ResendClient.sendEmail/);
   assert.doesNotMatch(api,/NEXT_PUBLIC_RESEND/);
@@ -26,6 +26,7 @@ test("Invitation database enforces rate limits without revealing recipient addre
   assert.match(migration,/revoke all on function public.claim_founder_email_invite/);
   assert.doesNotMatch(migration,/recipient_email/);
   assert.doesNotMatch(migration,/interval '24 hours'/);
+  assert.match(read("supabase/migrations/20261108190000_invitation_only_membership.sql"),/interval '3 months'/);
 });
 
 test("Dashboard includes the invitation widget and Czech translations", () => {
