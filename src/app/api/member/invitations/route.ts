@@ -16,7 +16,7 @@ async function activeMember(req: NextRequest) {
   const { data, error } = await db.from("profiles")
     .select("id,membership_level,account_status,account_lifecycle_status")
     .eq("id",result.actor.profileId).maybeSingle();
-  if (error || data.account_status !== "ACTIVE" || (data.account_lifecycle_status && data.account_lifecycle_status !== "ACTIVE")) return null;
+  if (error || data?.account_status !== "ACTIVE" || (data.account_lifecycle_status && data.account_lifecycle_status !== "ACTIVE")) return null;
   return { db, actor: result.actor };
 }
 
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await founder(req);
+  const auth = await activeMember(req);
   if (!auth) return NextResponse.json({ error: "Active membership required" }, { status: 403, headers: noStore });
   let input: unknown;
   try { input = await req.json(); } catch { return NextResponse.json({ error: "Invalid request" }, { status: 400, headers: noStore }); }
