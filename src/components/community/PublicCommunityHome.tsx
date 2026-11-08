@@ -6,6 +6,7 @@ import { ArrowUpRight, LockKeyhole } from "lucide-react";
 import { PrimaryAction } from "@/components/editorial/Editorial";
 import { LanguageSwitch } from "@/components/i18n/LanguageSwitch";
 import { editorialPhotos, type EditorialPhotoId } from "@/lib/editorialPhotos";
+import { GetOnMobileSection } from "@/components/pwa/GetOnMobile";
 
 // Presentation-only examples: no member IDs, profile links, activity or messaging.
 const EXAMPLE_PROFILES = [
@@ -46,7 +47,7 @@ export function PublicCommunityHome() {
       </section>
 
       <nav aria-label={t("Explore what Intimo does")} className="flex flex-wrap gap-2 border-y border-velora-line py-5 text-sm font-semibold">
-        {[["Meet people", "#people"], ["Make tonight happen", "#tonight"], ["Share a story", "#stories"], ["Keep photos private", "#private"], ["Find your scene", "#scene"]].map(([label, href]) => <a key={href} href={href} className="inline-flex min-h-11 items-center rounded-full border border-velora-control px-4 text-velora-ink hover:border-velora-accent hover:text-velora-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-velora-accent">{t(label)}</a>)}
+        {[["Meet people", "#people"], ["Make tonight happen", "#tonight"], ["Share a story", "#stories"], ["Keep photos private", "#private"], ["Find your scene", "#scene"], ["Get it on your phone", "#get-the-app"]].map(([label, href]) => <a key={href} href={href} className="inline-flex min-h-11 items-center rounded-full border border-velora-control px-4 text-velora-ink hover:border-velora-accent hover:text-velora-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-velora-accent">{t(label)}</a>)}
       </nav>
 
       <section id="inside" className="scroll-mt-24 border-t border-velora-line py-14 sm:py-20" aria-labelledby="inside-title">
@@ -77,6 +78,8 @@ export function PublicCommunityHome() {
       </div>
 
       <section id="scene" className="mt-8 scroll-mt-24 grid overflow-hidden rounded-2xl border border-velora-line bg-velora-surface lg:grid-cols-2" aria-labelledby="scene-title"><div className="p-7 sm:p-10 lg:p-14"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-velora-accent">{t("05 / Out in Prague")}</p><h2 id="scene-title" className="mt-4 font-display text-4xl leading-tight sm:text-5xl">{t("The city is part of the story.")}</h2><p className="mt-5 leading-relaxed text-velora-ink2">{t("Browse published events in the Prague Scene, or look for a small Guest List gathering when a host has confirmed one. For a Guest List, you send a private note; the host decides, and only accepted guests receive the address.")}</p><div className="flex flex-wrap gap-x-6"><ExploreLink href="/scene">{t("Explore Prague Scene")}</ExploreLink><ExploreLink href="/guest-list">{t("See the Guest List")}</ExploreLink></div><p className="mt-4 text-sm text-velora-muted">{t("Guest Lists appear only when a real gathering is confirmed.")}</p></div><div className="relative min-h-72 overflow-hidden"><LandingPhoto photo="balcony-connection" className="absolute inset-0 h-full" /></div></section>
+
+      <GetOnMobileSection />
 
       <section className="mt-14 border-t border-velora-line py-12" aria-labelledby="example-profiles-title">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-velora-accent">{t("A look inside")}</p>
