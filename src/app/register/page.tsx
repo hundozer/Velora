@@ -1,13 +1,16 @@
 "use client";
 
 import { useTranslation } from "@/context/LanguageContext";
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AuthField, AuthMessage, AuthShell, requestAuthEmail, submitClass } from "@/components/auth/AuthShell";
 
 const MIN_PASSWORD = 10;
 
-export default function RegisterPage() {
+function RegisterForm() {
+  const params = useSearchParams();
+  const inviteToken = params.get("invite") || "";
   const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,19 +19,20 @@ export default function RegisterPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const ready = email.trim() && password.length >= MIN_PASSWORD && agreed;
+  const ready = email.trim() && password.length >= MIN_PASSWORD && agreed && /^[a-zA-Z0-9_-]{43}$/.test(inviteToken);
 
   const register = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!ready) return;
     setBusy(true); setError("");
-    const failure = await requestAuthEmail({ action: "signup", email: email.trim(), password, adult: agreed, terms: agreed });
+    const failure = await requestAuthEmail({ action: "signup", email: email.trim(), password, adult: agreed, terms: agreed, inviteToken });
     if (failure) { setError(failure); setBusy(false); return; }
     window.location.assign(`/verify-email?email=${encodeURIComponent(email.trim())}`);
   };
 
   return (
-    <AuthShell title={t("Come as you are.")} subtitle={t("Kinky, curious or still figuring it out. Free to join. Adults only.")} footer={<>{t("Already a member?")}{" "}<Link href="/login" className="font-semibold text-velora-gold">{t("Sign in")}</Link></>}>
+    <AuthShell title={t("Your invitation to Intimo")} subtitle={t("Membership is by invitation. Free to join. Adults only.")} footer={<>{t("Already a member?")}{" "}<Link href="/login" className="font-semibold text-velora-gold">{t("Sign in")}</Link></>}>
+      {!inviteToken && <AuthMessage tone="info">{t("You need a personal invitation link to create an account.")}</AuthMessage>}
       <form onSubmit={register} className="space-y-5" noValidate>
         <AuthField id="email" label={t("Email")} type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <div className="space-y-2">
@@ -46,3 +50,5 @@ export default function RegisterPage() {
     </AuthShell>
   );
 }
+
+export default function RegisterPage() { return <Suspense fallback={null}><RegisterForm /></Suspense>; }
