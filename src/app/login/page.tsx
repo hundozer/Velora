@@ -41,7 +41,7 @@ function LoginForm() {
   };
 
   return (
-    <AuthShell title={t("Back for more?")} subtitle={t("Sign in to Intimo.")} footer={<>{t("New here?")}{" "}<Link href="/register" className="font-semibold text-velora-gold hover:underline">{t("Create an account")}</Link></>}>
+    <AuthShell title={t("Back for more?")} subtitle={t("Sign in to Intimo.")} footer={<>{t("Have an invitation?")}{" "}<Link href="/register" className="font-semibold text-velora-gold hover:underline">{t("Register with invitation")}</Link></>}>
       <form onSubmit={signIn} className="space-y-4" noValidate>
         <AuthField id="email" label={t("Email")} type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <AuthField id="password" label={t("Password")} type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />

@@ -10,6 +10,7 @@ import { Portrait, monogram } from "@/components/media/Portrait";
 import { StoryAvatar } from "@/components/stories/StoryAvatar";
 import { ReportModal } from "@/components/safety/ReportModal";
 import { ProfilePlans } from "@/components/plans/ProfilePlans";
+import { FoundingMemberBadge } from "@/components/community/FoundingMemberBadge";
 import { LikeButton } from "@/components/media/LikeButton";
 import { desireById } from "@/lib/desires.mjs";
 import { LOOKING_FOR } from "@/lib/onboardingPolicy.mjs";
@@ -20,7 +21,7 @@ const LOOKING_FOR_LABELS = new Map(LOOKING_FOR.map((item) => [item.value, item.l
 const NUMBER_WORDS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
 
 type Profile = {
-  id: string; displayName: string; age?: number; gender?: string; headline?: string; bio?: string; isCoupleProfile?: boolean; verified?: boolean;
+  id: string; displayName: string; age?: number; gender?: string; headline?: string; bio?: string; isCoupleProfile?: boolean; verified?: boolean; foundingMember?: boolean;
   presence?: "ONLINE" | "TODAY" | "WEEK" | null; areaName?: string | null; distance?: string | null; avatarUrl?: string;
   interests?: string[]; hobbies?: string[]; lifestyleTags?: string[]; lookingFor?: string[]; languages?: string[];
 };
@@ -214,6 +215,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
             </p>
           )}
           <h1 className="mt-1 font-display text-[clamp(3.25rem,15vw,4.75rem)] leading-[0.95] text-velora-ink">{name}{profile.age && !profile.isCoupleProfile ? `, ${profile.age}` : ""}</h1>
+          {profile.foundingMember && <div className="mt-3"><FoundingMemberBadge /></div>}
           {profile.headline && <p className="mt-4 font-display text-[clamp(1.5rem,6.5vw,1.9rem)] italic leading-[1.2] text-velora-ink">&ldquo;{profile.headline}&rdquo;</p>}
           {profile.bio && <p className="mt-4 whitespace-pre-line text-[17px] leading-[1.6] text-velora-ink2">{profile.bio}</p>}
           {memberView && (profile.lookingFor?.length || profile.languages?.length) ? (

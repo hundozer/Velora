@@ -1,4 +1,5 @@
 import { notifyNewRegistration } from "@/lib/notifications/registrationAlert";
+import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getVerifiedIdentity } from "@/lib/auth/serverSession";
 import { getServerSupabase } from "@/lib/supabase/server";
@@ -108,6 +109,20 @@ export async function POST(req: NextRequest) {
   const isCouple = body.profileType === "COUPLE";
   const partnerAge = isCouple ? ageFromDateOfBirth(body.partnerDateOfBirth) : null;
   if (isCouple && (partnerAge === null || partnerAge < 18)) return NextResponse.json({ error: "Everyone on a couple profile must be 18 or older." }, { status: 400 });
+  // Enforce invitation-only membership at the actual profile-creation boundary.
+  // This also blocks bypasses through alternate Supabase signup methods.
+  const inviteToken = typeof body.inviteToken === "string" ? body.inviteToken.trim() : "";
+  if (!/^[a-zA-Z0-9_-]{43}$/.test(inviteToken)) {
+    return NextResponse.json({ error: "An invitation is required to join Intimo" }, { status: 403 });
+  }
+  const tokenHash = createHash("sha256").update(inviteToken).digest("hex");
+  const emailHash = createHash("sha256").update(identity.email.trim().toLowerCase()).digest("hex");
+  const { data: validInvite, error: inviteError } = await supabase.rpc("is_member_invite_valid", {
+    p_token_hash: tokenHash, p_email_hash: emailHash,
+  });
+  if (inviteError || !validInvite) return NextResponse.json({
+    error: inviteError ? "Invitation checks are temporarily unavailable" : "Your invitation expired or has already been used",
+  }, { status: inviteError ? 503 : 403 });
   const sensitiveDataProvided = Boolean(sexualOrientation);
   if (sensitiveDataProvided && body.explicitSensitiveDataConsent !== true) return NextResponse.json({ error: "Explicit consent is required to process sexual orientation" }, { status: 400 });
 
@@ -188,6 +203,13 @@ export async function POST(req: NextRequest) {
       auditLogger.logEvent({ actorId: identity.sub, actorRole: "MEMBER", action: "PROFILE_CREATE", status: "ERROR", details: { reason: "consent_record_failed" } });
       return NextResponse.json({ error: "Consent record could not be created; no profile was retained" }, { status: 502 });
     }
+  }
+  const { data: redeemed, error: redeemError } = await supabase.rpc("redeem_member_invite", {
+    p_token_hash: tokenHash, p_email_hash: emailHash, p_auth_id: identity.sub,
+  });
+  if (redeemError || !redeemed) {
+    await supabase.from("profiles").delete().eq("id", data.id).eq("auth_id", identity.sub);
+    return NextResponse.json({ error: "Invitation redemption failed. Your profile was not created." }, { status: 409 });
   }
   auditLogger.logEvent({ actorId: identity.sub, actorRole: "MEMBER", action: "PROFILE_CREATE", resourceId: String(data.id), resourceType: "PROFILE", status: "SUCCESS", details: { profileType } });
   const audited = await appendDurableAudit(supabase, { actorProfileId: data.id, actorUserId: identity.sub, action: "PROFILE_CREATE", resourceType: "PROFILE", resourceId: String(data.id), outcome: "SUCCESS", metadata: { profileType } });

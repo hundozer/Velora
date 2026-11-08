@@ -19,7 +19,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!db) return NextResponse.json({ error: "Public profile is temporarily unavailable" }, { status: 503 });
   const { data, error } = await db
     .from("profiles")
-    .select("id,display_name,username,age,country,city,headline,bio,is_couple_profile,verification_status,verification_level,location_precision,show_online_status,last_active_at,created_at")
+    .select("id,display_name,username,age,country,city,headline,bio,is_couple_profile,verification_status,verification_level,membership_level,location_precision,show_online_status,last_active_at,created_at")
     .eq("id", id)
     .eq("profile_visibility", "EVERYONE")
     .eq("public_profile_visibility", true)

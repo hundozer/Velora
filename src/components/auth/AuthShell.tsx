@@ -49,7 +49,7 @@ export function friendlyAuthError(message: string | undefined): string {
 }
 
 /** Asks the server to email an auth link; it never reveals whether an account exists. */
-export async function requestAuthEmail(payload: { action: "signup" | "magiclink" | "recovery"; email: string; password?: string; adult?: boolean; terms?: boolean; next?: string }): Promise<string | null> {
+export async function requestAuthEmail(payload: { action: "signup" | "magiclink" | "recovery"; email: string; password?: string; adult?: boolean; terms?: boolean; next?: string; inviteToken?: string }): Promise<string | null> {
   try {
     const response = await fetch("/api/auth/email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     if (response.ok) return null;

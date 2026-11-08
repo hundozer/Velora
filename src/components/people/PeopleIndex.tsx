@@ -4,6 +4,7 @@ import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import Link from "next/link";
 import { StoryAvatar } from "@/components/stories/StoryAvatar";
+import { FoundingMemberBadge } from "@/components/community/FoundingMemberBadge";
 import { ACTIVITY_GROUPS } from "@/lib/people.mjs";
 import { metaLine } from "@/lib/peopleCopy.mjs";
 import type { Person } from "@/components/people/PersonTile";
@@ -17,6 +18,7 @@ export function IndexRow({ person }: { person: Person }) {
         <StoryAvatar ownerId={person.id} src={person.avatarUrl} name={person.displayName} size={60}/>
         <Link href={`/profile/${person.id}`} className="min-w-0 flex-1 py-3">
           <span className="block truncate font-display text-[24px] leading-tight text-velora-ink group-hover:text-velora-copperInk">{person.displayName}</span>
+          {person.foundingMember && <span className="mt-1 block"><FoundingMemberBadge /></span>}
           <span className="block truncate text-[14px] text-velora-muted">{metaLine(person, t) || " "}</span>
         </Link>
         {person.presence === "ONLINE" && <span className="h-2 w-2 shrink-0 rounded-full bg-velora-copper" aria-label={t("Here now")} role="img" />}

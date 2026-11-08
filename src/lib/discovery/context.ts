@@ -12,7 +12,7 @@ export const DISCOVERY_COLUMNS = [
   "id", "display_name", "age", "gender", "sexual_orientation", "country", "city", "location", "area_id",
   "languages", "headline", "bio", "interests", "lifestyle_tags", "hobbies", "relationship_status", "looking_for",
   "is_couple_profile", "avatar_url", "cover_photo_url", "gallery_images", "photo_visibility_default",
-  "verification_status", "account_status", "followers_count", "total_content_count", "show_distance",
+  "verification_status", "membership_level", "account_status", "followers_count", "total_content_count", "show_distance",
   "location_precision", "sensitive_fields_visibility", "profile_visibility", "show_online_status",
   "last_active_at", "created_at",
 ].join(",");

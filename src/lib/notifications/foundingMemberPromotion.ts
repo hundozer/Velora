@@ -14,7 +14,7 @@ export function foundingMemberPromotionEmail(name: string, language: "cs" | "en"
   const promoted = cs ? "Právě jsi získal(a) status zakládajícího člena Intimo." : "You've just been promoted to Founding Member of Intimo.";
   const meaning = cs ? "Budujeme místo pro skutečné lidi, skutečnou chemii a spojení bez placených překážek. A rádi bychom, abys nám pomohl(a) vytvořit komunitu od samého začátku." : "We're building something different. A place for real people, real chemistry, and connections without paywalls. We'd love you to help shape the community from the very beginning.";
   const heading2 = cs ? "Co ti členství přináší" : "Your Founding Member privileges";
-  const perks = cs ? ["Trvalé uznání zakládajícího člena", "Neomezené osobní pozvánky pro lidi, kteří o ně stojí", "Vlastní sekci zakládajícího člena v profilu"] : ["Permanent Founding Member recognition", "Unlimited personal invitations to people who want them", "Your own Founding Member area in your account"];
+  const perks = cs ? ["Trvalé uznání zakládajícího člena", "Tři osobní pozvánky každé tři měsíce", "Vlastní sekci zakládajícího člena v profilu"] : ["Permanent Founding Member recognition", "Three personal invitations every three months", "Your own Founding Member area in your account"];
   const invite = cs ? "Znáš někoho, kdo by sem patřil? Pozvi ho osobně. Žádné poplatky, žádný nátlak." : "Know someone who belongs here? Invite them personally. No fees, no awkward sales pitch.";
   const cta = cs ? "Otevřít sekci zakládajícího člena" : "Open your Founding Member area";
   const footer = cs ? "Najdeš ji také v menu účtu → Zakládající člen" : "You can also find it in your account menu → Founding Member";
