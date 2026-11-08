@@ -17,12 +17,15 @@ async function activeMember(req: NextRequest) {
     .select("id,membership_level,account_status,account_lifecycle_status")
     .eq("id",result.actor.profileId).maybeSingle();
   if (error || data?.account_status !== "ACTIVE" || (data.account_lifecycle_status && data.account_lifecycle_status !== "ACTIVE")) return null;
-  return { db, actor: result.actor };
+  return { db, actor: result.actor, foundingMember: data.membership_level === "FOUNDING_MEMBER" };
 }
 
 export async function GET(req: NextRequest) {
   const auth = await activeMember(req);
   if (!auth) return NextResponse.json({ eligible: false }, { headers: noStore });
+  if (auth.foundingMember) {
+    return NextResponse.json({ eligible: true, unlimited: true }, { headers: noStore });
+  }
   const { count, error } = await auth.db.from("member_email_invites")
     .select("id", { count: "exact", head: true })
     .eq("inviter_profile_id", auth.actor.profileId)
