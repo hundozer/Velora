@@ -187,13 +187,6 @@ export async function POST(req: NextRequest) {
     auditLogger.logEvent({ actorId: identity.sub, actorRole: "MEMBER", action: "PROFILE_CREATE", status: "ERROR" });
     return NextResponse.json({ error: "Profile creation failed" }, { status: 502 });
   }
-  const { data: redeemed, error: redeemError } = await supabase.rpc("redeem_member_invite", {
-    p_token_hash: tokenHash, p_email_hash: emailHash, p_auth_id: identity.sub,
-  });
-  if (redeemError || !redeemed) {
-    await supabase.from("profiles").delete().eq("id", data.id).eq("auth_id", identity.sub);
-    return NextResponse.json({ error: "Invitation redemption failed. Your profile was not created." }, { status: 409 });
-  }
   if (sensitiveDataProvided) {
     const consentTimestamp = new Date().toISOString();
     const { error: consentError } = await supabase.from("user_consents").insert({
@@ -210,6 +203,13 @@ export async function POST(req: NextRequest) {
       auditLogger.logEvent({ actorId: identity.sub, actorRole: "MEMBER", action: "PROFILE_CREATE", status: "ERROR", details: { reason: "consent_record_failed" } });
       return NextResponse.json({ error: "Consent record could not be created; no profile was retained" }, { status: 502 });
     }
+  }
+  const { data: redeemed, error: redeemError } = await supabase.rpc("redeem_member_invite", {
+    p_token_hash: tokenHash, p_email_hash: emailHash, p_auth_id: identity.sub,
+  });
+  if (redeemError || !redeemed) {
+    await supabase.from("profiles").delete().eq("id", data.id).eq("auth_id", identity.sub);
+    return NextResponse.json({ error: "Invitation redemption failed. Your profile was not created." }, { status: 409 });
   }
   auditLogger.logEvent({ actorId: identity.sub, actorRole: "MEMBER", action: "PROFILE_CREATE", resourceId: String(data.id), resourceType: "PROFILE", status: "SUCCESS", details: { profileType } });
   const audited = await appendDurableAudit(supabase, { actorProfileId: data.id, actorUserId: identity.sub, action: "PROFILE_CREATE", resourceType: "PROFILE", resourceId: String(data.id), outcome: "SUCCESS", metadata: { profileType } });
