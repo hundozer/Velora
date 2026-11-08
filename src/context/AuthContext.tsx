@@ -10,6 +10,7 @@ import {
 } from "@/lib/supabase/profileService";
 import { destinationForAccountState } from "@/lib/auth/accountState.mjs";
 import { clearPeopleSnapshots } from "@/lib/peopleSession.mjs";
+import { unsubscribeThisDevice } from "@/lib/notifications/pushClient";
 
 interface AuthContextType {
   user: User | null;
@@ -196,7 +197,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout();
     if (typeof window !== "undefined") {
       clearPeopleSnapshots(window.sessionStorage);
-      window.location.href = returnTo ? `/auth/logout?returnTo=${encodeURIComponent(returnTo)}` : "/auth/logout";
+      const destination = returnTo ? `/auth/logout?returnTo=${encodeURIComponent(returnTo)}` : "/auth/logout";
+      // Stop this device's notifications first, so the next person signing in here never gets them.
+      const timeout = new Promise((resolve) => setTimeout(resolve, 1500));
+      void Promise.race([unsubscribeThisDevice(), timeout]).finally(() => { window.location.href = destination; });
     }
   };
 

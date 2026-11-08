@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
+import { sendPush } from "@/lib/notifications/webPush";
 import { toMemberVisibleProfile } from "@/lib/supabase/publicProfile";
 import type { ProfileRow } from "@/lib/supabase/profileService";
 import { establishedDecision, resolveBoundaries } from "@/lib/boundaries.mjs";
@@ -99,6 +100,7 @@ export async function POST(req: NextRequest) {
   const { data: saved, error } = await db.rpc("intimo_request_private_access", { p_owner: ownerId, p_viewer: actor.profileId });
   if (error) return NextResponse.json({ error: "Request could not be sent" }, { status: 502 });
   if (!saved) return NextResponse.json({ error: "This request is already pending, active or recently declined." }, { status: 409 });
+  await sendPush({ recipientId: ownerId, actorId: actor.profileId, category: "PRIVATE_ACCESS" });
   return NextResponse.json({ status: "REQUESTED" }, { status: 201, headers: noStore });
 }
 
@@ -112,9 +114,12 @@ export async function PATCH(req: NextRequest) {
   const viewerId = typeof body.viewerId === "string" ? body.viewerId : "";
   const update = decisionUpdate(body.decision);
   if (!UUID.test(viewerId) || !update) return NextResponse.json({ error: "Invalid decision" }, { status: 400 });
+  const { data: before } = await db.from("album_access_grants").select("status,grant_type,expires_at").eq("owner_id", actor.profileId).eq("viewer_id", viewerId).maybeSingle();
+  const existingStatus = before && grantIsActive(before) ? "GRANTED" : before?.status;
   const { data, error } = await db.rpc("intimo_decide_private_access", { p_owner: actor.profileId, p_viewer: viewerId, p_decision: body.decision });
   if (error) return NextResponse.json({ error: "Decision could not be saved" }, { status: 502 });
   if (!data) return NextResponse.json({ error: "Request not found" }, { status: 404 });
   // Denials and revocations are silent: the requester simply sees no access.
+  if (data.status === "GRANTED" && existingStatus !== "GRANTED") await sendPush({ recipientId: viewerId, actorId: actor.profileId, category: "PRIVATE_ACCESS" });
   return NextResponse.json({ status: data.status, grantType: data.grant_type, expiresAt: data.expires_at }, { headers: noStore });
 }
