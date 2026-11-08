@@ -16,15 +16,16 @@ test("Founding Member email invitation uses server-side membership authorization
 });
 
 test("Invitation database enforces rate limits without revealing recipient addresses", () => {
-  const migration=read("supabase/migrations/20261108150000_founding_member_email_invites.sql");
+  const migration=read("supabase/migrations/20261108160000_unlimited_founder_invites.sql");
   assert.match(migration,/pg_advisory_xact_lock/);
-  assert.match(migration,/interval '24 hours'/);
-  assert.match(migration,/>= 5/);
+  assert.match(migration,/interval '1 minute'/);
+  assert.match(migration,/>= 3/);
   assert.match(migration,/interval '30 days'/);
   assert.match(migration,/recipient_sha256/);
   assert.match(migration,/revoke all on table public.member_email_invites from public, anon, authenticated/);
   assert.match(migration,/revoke all on function public.claim_founder_email_invite/);
   assert.doesNotMatch(migration,/recipient_email/);
+  assert.doesNotMatch(migration,/interval '24 hours'/);
 });
 
 test("Dashboard includes the invitation widget and Czech translations", () => {
