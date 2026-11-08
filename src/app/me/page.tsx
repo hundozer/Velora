@@ -41,7 +41,7 @@ export default function MePage() {
         <p className="text-sm text-velora-textSecondary">{t("Sign in to see your profile, messages and settings.")}</p>
         <div className="flex justify-center gap-3">
           <button onClick={() => signIn()} className="min-h-11 rounded-full border border-velora-gold/40 px-5 text-sm font-bold text-velora-gold">{t("Sign in")}</button>
-          <button onClick={() => signIn("signup")} className="min-h-11 rounded-full bg-gold-gradient px-5 text-sm font-bold text-velora-bg">{t("Join Intimo")}</button>
+          <button onClick={() => signIn("signup")} className="min-h-11 rounded-full bg-gold-gradient px-5 text-sm font-bold text-velora-bg">{t("Join with an invitation")}</button>
         </div>
       </main>
     );
