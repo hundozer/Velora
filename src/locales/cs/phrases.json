@@ -2084,5 +2084,6 @@
  "Shown on devices where you've turned notifications on. They say only “Intimo” and never show names, photos or message text.": "Zobrazují se v zařízeních, kde máš oznámení zapnutá. Píše se v nich jen „Intimo“ a nikdy neukazují jména, fotky ani text zpráv.",
  "Pause all device notifications": "Pozastavit všechna oznámení v zařízeních",
  "Notification settings could not be loaded.": "Nastavení oznámení se nepodařilo načíst.",
- "Notification settings could not be saved.": "Nastavení oznámení se nepodařilo uložit."
+ "Notification settings could not be saved.": "Nastavení oznámení se nepodařilo uložit.",
+ "New notifications": "Nová oznámení"
 }

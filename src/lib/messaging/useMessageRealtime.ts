@@ -12,7 +12,8 @@ export type MessageRealtimeEvent = { kind: "INSERT" | "UPDATE"; conversationId: 
  * re-read through the API, so server-side checks (blocks, read state) stay the
  * single source of truth.
  */
-export function useMessageRealtime(profileId: string | undefined, onEvent: (event: MessageRealtimeEvent) => void) {
+/** `channelName` keeps separate listeners (the inbox, the tab bar) on separate Realtime channels. */
+export function useMessageRealtime(profileId: string | undefined, onEvent: (event: MessageRealtimeEvent) => void, channelName = "direct-messages") {
   const handler = useRef(onEvent);
   handler.current = onEvent;
 
@@ -25,11 +26,13 @@ export function useMessageRealtime(profileId: string | undefined, onEvent: (even
       if (typeof conversationId === "string") handler.current({ kind, conversationId });
     };
     const channel = supabase
-      .channel(`direct-messages:${profileId}`)
+      .channel(`${channelName}:${profileId}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "direct_messages", filter: `receiver_id=eq.${profileId}` }, emit("INSERT"))
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "direct_messages", filter: `sender_id=eq.${profileId}` }, emit("INSERT"))
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "direct_messages", filter: `sender_id=eq.${profileId}` }, emit("UPDATE"))
+      // My own read receipts (opening a conversation here or on another device).
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "direct_messages", filter: `receiver_id=eq.${profileId}` }, emit("UPDATE"))
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
-  }, [profileId]);
+  }, [profileId, channelName]);
 }
