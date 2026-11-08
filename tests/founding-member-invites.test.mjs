@@ -22,7 +22,7 @@ test("Invitation database enforces rate limits without revealing recipient addre
   assert.match(migration,/>= 3/);
   assert.match(migration,/interval '30 days'/);
   assert.match(migration,/recipient_sha256/);
-  assert.match(migration,/revoke all on table public.member_email_invites from public, anon, authenticated/);
+  assert.match(read("supabase/migrations/20261108150000_founding_member_email_invites.sql"),/revoke all on table public.member_email_invites from public, anon, authenticated/);
   assert.match(migration,/revoke all on function public.claim_founder_email_invite/);
   assert.doesNotMatch(migration,/recipient_email/);
   assert.doesNotMatch(migration,/interval '24 hours'/);
