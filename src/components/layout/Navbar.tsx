@@ -11,6 +11,7 @@ import { LanguageSwitch } from "@/components/i18n/LanguageSwitch";
 import { NotificationDrawer } from "@/components/notifications/NotificationDrawer";
 import { Badge } from "@/components/ui/Badge";
 import { FoundingMemberMenuLink } from "@/components/community/FoundingMemberMenuLink";
+import { MailPlus } from "lucide-react";
 import {
   Compass,
   MessageSquare,
@@ -155,6 +156,7 @@ export const Navbar: React.FC = () => {
                   >
                     <Bookmark className="w-4 h-4 text-velora-accent" />{t("Saved items")}</Link>
 
+                  <Link href="/me/invite" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-velora-textPrimary hover:bg-ink/5"><MailPlus className="h-4 w-4 text-velora-gold" />{t("Invite friends")}</Link>
                   <FoundingMemberMenuLink />
 
                   <Link
