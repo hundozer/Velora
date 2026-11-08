@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     .select("id", { count: "exact", head: true })
     .eq("inviter_profile_id", auth.actor.profileId)
     .in("status", ["PENDING","SENT","REDEEMED"])
-    .gte("created_at", new Date(Date.now() - 93 * 86400000).toISOString());
+    .gte("created_at", (() => { const now = new Date(); const day = now.getUTCDate(); now.setUTCDate(1); now.setUTCMonth(now.getUTCMonth() - 3); const lastDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)).getUTCDate(); now.setUTCDate(Math.min(day, lastDay)); return now.toISOString(); })());
   if (error) return NextResponse.json({ error: "Invitations unavailable" }, { status: 503, headers: noStore });
   return NextResponse.json({ eligible: true, remaining: Math.max(0, 3 - (count ?? 0)), allowance: 3, period: "3 months" }, { headers: noStore });
 }
