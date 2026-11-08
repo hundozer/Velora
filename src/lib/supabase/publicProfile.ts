@@ -32,6 +32,7 @@ export function toMemberVisibleProfile(row: ProfileRow, audience: { friends?: bo
     coverPhotoUrl: profile.coverPhotoUrl,
     galleryImages: row.photo_visibility_default === "PUBLIC" ? profile.galleryImages : [],
     verified: profile.verified,
+    foundingMember: row.membership_level === "FOUNDING_MEMBER",
     trustSignals: trustSignals({ verificationStatus: row.verification_status, createdAt: row.created_at, hasAvatar: Boolean(row.avatar_url), accountStatus: row.account_status }),
     followersCount: profile.followersCount,
     totalContentCount: profile.totalContentCount,

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowDown } from "lucide-react";
 import { Portrait, monogram } from "@/components/media/Portrait";
 import { StoryAvatar } from "@/components/stories/StoryAvatar";
+import { FoundingMemberBadge } from "@/components/community/FoundingMemberBadge";
 import { possessive, statusLine, ownWords } from "@/lib/peopleCopy.mjs";
 import type { Person } from "@/components/people/PersonTile";
 
@@ -60,6 +61,7 @@ export function IntroductionSpread({ person, next, priority = false, onNext }: {
             </p>
           </>
         )}
+        {person.foundingMember && <div className="mt-4"><FoundingMemberBadge onPhoto /></div>}
         <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 text-[15px]">
           <Link href={`/messages?user=${person.id}`} className="group inline-flex min-h-11 items-center gap-3 font-semibold text-velora-onPhoto">
             {hello}<span aria-hidden data-rule className="h-px w-8 bg-velora-onPhoto/70 transition-all group-hover:w-12" />

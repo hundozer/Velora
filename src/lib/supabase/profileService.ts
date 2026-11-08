@@ -9,6 +9,7 @@ export interface ProfileRow {
   username: string | null;
   role: string;
   member_tier: string;
+  membership_level?: string;
   verification_status: string;
   verification_level: string | null;
   avatar_url: string | null;
