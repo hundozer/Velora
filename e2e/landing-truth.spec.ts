@@ -23,8 +23,8 @@ for (const width of [375, 390, 1440]) {
     await yes.click();
     await expect(dialog).toHaveCount(0);
     await expect(page.getByRole("heading", { level: 1, name: "Kinky. Curious. Looking for someone?" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Join the founding members" })).toHaveAttribute("href", "/register");
-    await expect(page.getByRole("link", { name: "Create your profile", exact: true })).toHaveAttribute("href", "/register");
+    await expect(page.getByRole("link", { name: "Have an invitation? Join Intimo" })).toHaveAttribute("href", "/register");
+    await expect(page.getByRole("link", { name: "How invitations work", exact: true })).toHaveAttribute("href", "/register");
     await page.getByRole("link", { name: "See what happens inside ↓" }).click();
     await expect(page).toHaveURL(/#inside$/);
     await expect(page.getByRole("heading", { name: "Find the spark. Then do something about it." })).toBeInViewport();
@@ -49,7 +49,7 @@ for (const width of [375, 390, 1440]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: `/tmp/intimo-landing-${width}.png`, fullPage: true });
-    await page.getByRole("link", { name: "Create your profile", exact: true }).click();
+    await page.getByRole("link", { name: "How invitations work", exact: true }).click();
     await expect(page).toHaveURL(/\/register$/);
   });
 }
