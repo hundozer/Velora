@@ -84,7 +84,17 @@ export async function POST(req: NextRequest) {
     const {data: activeMember, error: activeError} = await db.from("profiles")
       .select("id").eq("email",email).limit(1);
     if (activeError) return NextResponse.json({error:"Sign-in temporarily unavailable"},{status:503});
-    if (!activeMember?.length) return ACCEPTED;
+    if (!activeMember?.length) {
+      const invitedToken = typeof body.inviteToken === "string" ? body.inviteToken.trim() : "";
+      if (!/^[a-zA-Z0-9_-]{43}$/.test(invitedToken)) return ACCEPTED;
+      const { data: invited, error: inviteError } = await db.rpc("is_member_invite_valid", {
+        p_token_hash: createHash("sha256").update(invitedToken).digest("hex"),
+        p_email_hash: createHash("sha256").update(email).digest("hex"),
+      });
+      if (inviteError || !invited) return ACCEPTED;
+      // A pending invited member may need to resend confirmation before onboarding.
+      next = `/onboarding?invite=${encodeURIComponent(invitedToken)}`;
+    }
     const { data, error } = await db.auth.admin.generateLink({ type: "magiclink", email });
     if (error || !data?.properties?.hashed_token) throw error || new Error("No link generated");
     await ResendClient.sendEmail({ to: email, ...authEmail("signin", link(data.properties.hashed_token, "magiclink")) });
