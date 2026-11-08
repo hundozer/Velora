@@ -28,3 +28,12 @@ test("unread counts follow inbox rules and stay private", async () => {
 test("page content clears the tab bar and the iPhone home indicator", async () => {
   assert.match(await read("src/app/layout.tsx"), /pb-\[calc\(4rem\+env\(safe-area-inset-bottom\)\)\] md:pb-0/);
 });
+
+test("review fixes: reads refresh the dot, sign-out clears the badge", async () => {
+  const hook = await read("src/lib/messaging/useMessageRealtime.ts");
+  assert.match(hook, /event: "UPDATE", schema: "public", table: "direct_messages", filter: `receiver_id=eq\.\$\{profileId\}`/);
+  const counts = await read("src/lib/notifications/useUnreadCounts.ts");
+  assert.match(counts, /setCounts\(NONE\);\s*syncAppBadge\(0\);/);
+  assert.match(counts, /if \(!payload \|\| mine !== generation\.current\) return;/);
+  assert.match(counts, /if \(inFlight\.current\) \{ again\.current = true; return; \}/);
+});

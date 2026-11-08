@@ -30,6 +30,8 @@ export function useMessageRealtime(profileId: string | undefined, onEvent: (even
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "direct_messages", filter: `receiver_id=eq.${profileId}` }, emit("INSERT"))
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "direct_messages", filter: `sender_id=eq.${profileId}` }, emit("INSERT"))
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "direct_messages", filter: `sender_id=eq.${profileId}` }, emit("UPDATE"))
+      // My own read receipts (opening a conversation here or on another device).
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "direct_messages", filter: `receiver_id=eq.${profileId}` }, emit("UPDATE"))
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
   }, [profileId, channelName]);

@@ -26,25 +26,43 @@ function syncAppBadge(total: number) {
 export function useUnreadCounts(profileId: string | undefined, pathname: string): UnreadCounts {
   const [counts, setCounts] = React.useState<UnreadCounts>(NONE);
   const inFlight = React.useRef(false);
+  const again = React.useRef(false);
+  // Bumped on sign-out/account change, so a late response can't restore old counts.
+  const generation = React.useRef(0);
 
   const refresh = React.useCallback(() => {
-    if (!profileId || inFlight.current || document.visibilityState !== "visible") return;
+    if (!profileId || document.visibilityState !== "visible") return;
+    if (inFlight.current) { again.current = true; return; } // e.g. a read landed mid-request
     inFlight.current = true;
+    const mine = generation.current;
     fetch("/api/messages/unread", { cache: "no-store", credentials: "same-origin" })
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
-        if (!payload) return;
+        if (!payload || mine !== generation.current) return;
         const next = { messages: Number(payload.messages) || 0, notifications: Number(payload.notifications) || 0 };
         setCounts(next);
         syncAppBadge(next.messages + next.notifications);
       })
       .catch(() => undefined)
-      .finally(() => { inFlight.current = false; });
+      .finally(() => {
+        inFlight.current = false;
+        if (again.current && mine === generation.current) { again.current = false; refresh(); }
+      });
   }, [profileId]);
 
   React.useEffect(() => {
-    if (!profileId) { setCounts(NONE); return; }
-    refresh();
+    generation.current += 1;
+    again.current = false;
+    if (!profileId) {
+      // Signed out: never leave the previous member's count on the app icon.
+      setCounts(NONE);
+      syncAppBadge(0);
+      return;
+    }
+  }, [profileId]);
+
+  React.useEffect(() => {
+    if (profileId) refresh();
   }, [profileId, pathname, refresh]);
 
   React.useEffect(() => {
