@@ -62,7 +62,7 @@ export async function PATCH(req: NextRequest) {
     const { data: recipient, error: recipientError } = await db.from("profiles")
       .select("email,display_name,username,languages,email_opt_out")
       .eq("id", profileId).maybeSingle();
-    if (!recipientError && recipient?.email && !recipient.email_opt_out) {
+    if (!recipientError && recipient?.email && !(Array.isArray(recipient.email_opt_out) && recipient.email_opt_out.length > 0)) {
       const language = Array.isArray(recipient.languages) && recipient.languages.some((l: unknown) => String(l).toLowerCase().startsWith("czech") || String(l).toLowerCase() === "cs") ? "cs" : "en";
       try {
         const delivery = await sendFoundingMemberPromotionEmail(
