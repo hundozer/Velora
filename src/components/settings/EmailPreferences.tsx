@@ -10,32 +10,40 @@ const CATEGORIES = [
   { value: "PLAN_REPLY", label: "Replies to your plans" },
 ];
 
-/** Settings → Emails (P1-11). Emails are discreet and sent only when you're away. */
-export function EmailPreferences() {
+interface CategoryPreferencesProps {
+  endpoint: string;
+  intro: string;
+  pauseLabel: string;
+  loadError: string;
+  saveError: string;
+}
+
+/** Per-category opt-outs, shared by emails and device notifications. */
+function CategoryPreferences({ endpoint, intro, pauseLabel, loadError, saveError }: CategoryPreferencesProps) {
   const { t } = useTranslation();
   const [optOut, setOptOut] = React.useState<string[] | null>(null);
   const [error, setError] = React.useState("");
 
   React.useEffect(() => {
-    fetch("/api/notifications/preferences", { credentials: "same-origin", cache: "no-store" })
+    fetch(endpoint, { credentials: "same-origin", cache: "no-store" })
       .then((response) => (response.ok ? response.json() : Promise.reject()))
       .then((payload) => setOptOut(payload.optOut || []))
-      .catch(() => setError("Email settings could not be loaded."));
-  }, []);
+      .catch(() => setError(loadError));
+  }, [endpoint, loadError]);
 
   async function save(next: string[]) {
     const previous = optOut;
     setOptOut(next);
     setError("");
-    const response = await fetch("/api/notifications/preferences", { method: "PUT", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ optOut: next }) });
-    if (!response.ok) { setOptOut(previous); setError("Email settings could not be saved."); }
+    const response = await fetch(endpoint, { method: "PUT", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ optOut: next }) });
+    if (!response.ok) { setOptOut(previous); setError(saveError); }
   }
 
   if (!optOut) return error ? <p className="text-xs text-velora-danger">{t(error)}</p> : null;
   const allOff = optOut.includes("ALL");
   return (
     <div className="space-y-3">
-      <p className="text-xs text-velora-textMuted">{t("Sent only when you're away, at most every few hours, and never with names or message text.")}</p>
+      <p className="text-xs text-velora-textMuted">{t(intro)}</p>
       {CATEGORIES.map((category) => {
         const on = !allOff && !optOut.includes(category.value);
         return (
@@ -46,10 +54,36 @@ export function EmailPreferences() {
         );
       })}
       <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-ink/10 bg-ink/5 p-4">
-        <span className="text-sm text-velora-textPrimary">{t("Pause all Intimo emails")}</span>
+        <span className="text-sm text-velora-textPrimary">{t(pauseLabel)}</span>
         <input type="checkbox" className="h-4 w-4 accent-velora-gold" checked={allOff} onChange={() => save(allOff ? optOut.filter((value) => value !== "ALL") : [...optOut, "ALL"])} />
       </label>
       {error && <p className="text-xs text-velora-danger" role="alert">{t(error)}</p>}
     </div>
+  );
+}
+
+/** Settings → Emails (P1-11). Emails are discreet and sent only when you're away. */
+export function EmailPreferences() {
+  return (
+    <CategoryPreferences
+      endpoint="/api/notifications/preferences"
+      intro="Sent only when you're away, at most every few hours, and never with names or message text."
+      pauseLabel="Pause all Intimo emails"
+      loadError="Email settings could not be loaded."
+      saveError="Email settings could not be saved."
+    />
+  );
+}
+
+/** Settings → Device notifications (web push). Applies to every device you've turned them on for. */
+export function PushPreferences() {
+  return (
+    <CategoryPreferences
+      endpoint="/api/push/subscription"
+      intro="Shown on devices where you've turned notifications on. They say only “Intimo” and never show names, photos or message text."
+      pauseLabel="Pause all device notifications"
+      loadError="Notification settings could not be loaded."
+      saveError="Notification settings could not be saved."
+    />
   );
 }

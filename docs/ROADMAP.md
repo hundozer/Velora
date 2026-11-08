@@ -140,7 +140,7 @@ Generic feed, compatibility summaries, relationship links between profiles, chat
 
 Further Phase 2 work (tracked in the M2 epic):
 - **New photos / activity feed**, Prague-first, with reactions and comments (M)
-- **Web push** for messages, mutual interest, access request and Plan reply (M)
+- **Web push** for messages, mutual interest, access request and Plan reply (M) *(built, off until VAPID keys are set: `docs/WEB_PUSH.md`)*
 - Typing indicators + message reactions (S)
 - Personalised weekly **New in Prague / Tonight this week** digest (S)
 - Automated media safety scanning before broad public-feed distribution (M)

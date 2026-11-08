@@ -8,7 +8,8 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { AreaSelect } from "@/components/profile/AreaSelect";
-import { EmailPreferences } from "@/components/settings/EmailPreferences";
+import { EmailPreferences, PushPreferences } from "@/components/settings/EmailPreferences";
+import { AppOnThisDevice } from "@/components/pwa/AppOnThisDevice";
 import { readDiscreet, writeDiscreet } from "@/lib/discreet";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
@@ -428,6 +429,13 @@ export default function SettingsPage() {
       <Card variant="glass" className="p-6 space-y-4">
         <h2 className="text-sm font-display font-bold text-velora-textPrimary uppercase tracking-wider border-b border-ink/10 pb-3">{t("Emails")}</h2>
         <EmailPreferences />
+      </Card>
+
+      {/* Device notifications (web push) */}
+      <Card variant="glass" className="p-6 space-y-4">
+        <h2 className="text-sm font-display font-bold text-velora-textPrimary uppercase tracking-wider border-b border-ink/10 pb-3">{t("Device notifications")}</h2>
+        <AppOnThisDevice />
+        <PushPreferences />
       </Card>
 
       {/* SECTION 3: GDPR DATA PRIVACY & ACCOUNT ERASURE */}
