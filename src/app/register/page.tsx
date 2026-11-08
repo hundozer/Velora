@@ -27,7 +27,7 @@ function RegisterForm() {
     setBusy(true); setError("");
     const failure = await requestAuthEmail({ action: "signup", email: email.trim(), password, adult: agreed, terms: agreed, inviteToken });
     if (failure) { setError(failure); setBusy(false); return; }
-    window.location.assign(`/verify-email?email=${encodeURIComponent(email.trim())}`);
+    window.location.assign(`/verify-email?email=${encodeURIComponent(email.trim())}&invite=${encodeURIComponent(inviteToken)}`);
   };
 
   return (
