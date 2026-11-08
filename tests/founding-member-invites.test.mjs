@@ -37,3 +37,16 @@ test("Dashboard includes the invitation widget and Czech translations", () => {
     assert.ok(cs[key]);
   }
 });
+
+test("promotion notices are sent only for real audited Founding Member transitions", () => {
+  const route = read("src/app/api/admin/users/membership/route.ts");
+  const email = read("src/lib/notifications/foundingMemberPromotion.ts");
+  assert.match(route, /before\.membership_level === level/);
+  assert.ok(route.indexOf("if (auditError) return") < route.indexOf("sendFoundingMemberPromotionEmail("));
+  assert.match(route, /updated\.membership_level === "FOUNDING_MEMBER" && before\.membership_level !== "FOUNDING_MEMBER"/);
+  assert.match(route, /promotionEmail = "failed"/);
+  assert.match(email, /https:\/\/intimo\.live\/founding-member/);
+  assert.match(email, /ResendClient\.sendEmail/);
+  assert.match(email, /Your Founding Member privileges/);
+  assert.match(email, /Co ti členství přináší/);
+});
