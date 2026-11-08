@@ -183,9 +183,9 @@ export const Navbar: React.FC = () => {
                 {t("auth.login")}
               </a>
               <a
-                href="/auth/login?screen_hint=signup"
+                href="/register"
                 className="hidden whitespace-nowrap rounded-full bg-velora-accent px-5 py-2.5 text-[15px] font-semibold text-velora-paper transition hover:bg-velora-accentHover min-[440px]:inline-block"
-              >{t("Join free")}</a>
+              >{t("Invitation only")}</a>
             </div>
           )}
         </div>
