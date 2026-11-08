@@ -55,15 +55,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: limited ? "You're sending invitations too quickly. Please try again shortly." : duplicate ? "This address was invited recently." : "Invitation could not be created", },
       { status: limited || duplicate ? 429 : 503, headers: noStore });
   }
-  const html = `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#20242b;max-width:560px;margin:auto">
-    <h2>You're invited to Intimo</h2>
-    <p>Someone in the Intimo community thought you might like to join.</p>
-    <p>It's a free, adults-only community. Joining is entirely your choice.</p>
-    <p><a href="https://intimo.live/register" style="background:#20242b;color:white;padding:12px 20px;border-radius:8px;text-decoration:none">Explore Intimo</a></p>
-    <p style="color:#68717c;font-size:12px">This is a one-time personal invitation, not a mailing-list subscription. If you're not interested, ignore this email. You must be 18 or older to join.</p>
-  </div>`;
+  const html = `<div style="background:#101317;padding:36px 16px;font-family:Arial,Helvetica,sans-serif;color:#f1f3f5">
+  <div style="max-width:520px;margin:auto;border:1px solid #333d46;border-radius:18px;background:#1a2026;padding:36px 28px">
+    <p style="font-size:28px;font-weight:800;letter-spacing:-1px;margin:0;color:#ffffff">intimo<span style="color:#a9d8ee">●</span></p>
+    <p style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#a9d8ee;margin-top:36px">A personal invitation</p>
+    <h1 style="font-size:32px;line-height:1.15;letter-spacing:-1px;margin:10px 0 18px;color:white">Good people make<br/>good company.</h1>
+    <p style="font-size:16px;line-height:1.7;color:#d3d9dd">Someone already on Intimo thinks you'd feel at home here.</p>
+    <p style="font-size:16px;line-height:1.7;color:#d3d9dd">Intimo is a free, adults-only community for genuine connections, curiosity, and open-minded people.</p>
+    <p style="margin:32px 0"><a href="https://intimo.live/register" style="display:inline-block;border-radius:8px;background:#a9d8ee;color:#16232b;padding:15px 25px;font-size:15px;font-weight:bold;text-decoration:none">See what Intimo is about</a></p>
+    <p style="font-size:13px;color:#91a0ab">No membership fees. No obligation. Just an invitation.</p>
+  </div>
+  <p style="max-width:520px;margin:20px auto 0;font-size:11px;line-height:1.6;color:#a9b4bd">Intimo is for adults aged 18+. You received this one-time invitation because someone who knows you said you'd be interested. If not, simply ignore this email. You are not subscribed to a mailing list.</p>
+</div>`;
   try {
-    const sent = await ResendClient.sendEmail({to: address,subject:"A personal invitation to Intimo",html});
+    const sent = await ResendClient.sendEmail({to: address,subject:"You have a personal invitation to Intimo",html});
     if (!sent.delivered) throw new Error("Delivery unavailable");
     await auth.db.from("member_email_invites").update({status:"SENT",sent_at:new Date().toISOString()}).eq("id",inviteId).eq("inviter_profile_id",auth.actor.profileId);
     return NextResponse.json({sent:true},{headers:noStore});
