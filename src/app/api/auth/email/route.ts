@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "node:crypto";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { safeReturnTo } from "@/lib/auth/accountState.mjs";
@@ -39,7 +40,21 @@ export async function POST(req: NextRequest) {
   if (!db) return NextResponse.json({ error: "Sign-in is temporarily unavailable" }, { status: 503 });
 
   const origin = appOrigin(req);
-  const next = safeReturnTo(body.next) || (action === "recovery" ? "/update-password" : "/onboarding");
+  let next = safeReturnTo(body.next) || (action === "recovery" ? "/update-password" : "/onboarding");
+  if (action === "signup") {
+    const inviteToken = typeof body.inviteToken === "string" ? body.inviteToken.trim() : "";
+    if (!/^[a-zA-Z0-9_-]{43}$/.test(inviteToken)) {
+      return NextResponse.json({ error: "A valid personal invitation is required to register" }, { status: 403 });
+    }
+    const hash = createHash("sha256").update(inviteToken).digest("hex");
+    const emailHash = createHash("sha256").update(email).digest("hex");
+    const {data: valid, error: checkError} = await db.rpc("is_member_invite_valid", {
+      p_token_hash:hash,p_email_hash:emailHash
+    });
+    if (checkError) return NextResponse.json({error:"Invitation checks are unavailable"},{status:503});
+    if (!valid) return NextResponse.json({error:"This invitation is invalid, expired, or was issued to another email"},{status:403});
+    next = `/onboarding?invite=${encodeURIComponent(inviteToken)}`;
+  }
   const link = (hash: string, type: "signup" | "magiclink" | "recovery") =>
     `${origin}/auth/confirm?token_hash=${encodeURIComponent(hash)}&type=${type}&next=${encodeURIComponent(next)}`;
 
@@ -65,8 +80,21 @@ export async function POST(req: NextRequest) {
       return ACCEPTED;
     }
 
-    // magiclink (also used for "resend confirmation" and the already-registered case).
-    // Verifying a magic link confirms the address; for a new address it creates a passwordless account.
+    // Do not allow magic links to create uninvited accounts; they are sign-in only.
+    const {data: activeMember, error: activeError} = await db.from("profiles")
+      .select("id").eq("email",email).limit(1);
+    if (activeError) return NextResponse.json({error:"Sign-in temporarily unavailable"},{status:503});
+    if (!activeMember?.length) {
+      const invitedToken = typeof body.inviteToken === "string" ? body.inviteToken.trim() : "";
+      if (!/^[a-zA-Z0-9_-]{43}$/.test(invitedToken)) return ACCEPTED;
+      const { data: invited, error: inviteError } = await db.rpc("is_member_invite_valid", {
+        p_token_hash: createHash("sha256").update(invitedToken).digest("hex"),
+        p_email_hash: createHash("sha256").update(email).digest("hex"),
+      });
+      if (inviteError || !invited) return ACCEPTED;
+      // A pending invited member may need to resend confirmation before onboarding.
+      next = `/onboarding?invite=${encodeURIComponent(invitedToken)}`;
+    }
     const { data, error } = await db.auth.admin.generateLink({ type: "magiclink", email });
     if (error || !data?.properties?.hashed_token) throw error || new Error("No link generated");
     await ResendClient.sendEmail({ to: email, ...authEmail("signin", link(data.properties.hashed_token, "magiclink")) });

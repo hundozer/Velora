@@ -15,6 +15,7 @@ function VerifyEmail() {
   const params = useSearchParams();
   const { authIdentity } = useAuth();
   const email = params.get("email") || authIdentity?.email || "";
+  const inviteToken = params.get("invite") || "";
   const [cooldown, setCooldown] = useState(0);
   const [message, setMessage] = useState<{ tone: "error" | "info"; text: string } | null>(null);
 
@@ -28,7 +29,7 @@ function VerifyEmail() {
     if (!email) return;
     setMessage(null);
     // A sign-in link also confirms the address, so it doubles as "resend confirmation".
-    const failure = await requestAuthEmail({ action: "magiclink", email, next: "/onboarding" });
+    const failure = await requestAuthEmail({ action: "magiclink", email, next: "/onboarding", inviteToken });
     if (failure) { setMessage({ tone: "error", text: failure }); return; }
     setCooldown(RESEND_COOLDOWN_SECONDS);
     setMessage({ tone: "info", text: "Sent. The newest link is the one that works." });
