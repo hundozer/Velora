@@ -62,8 +62,11 @@ function InstallGuide({ open, onClose, device, installPrompt, onInstalled }: { o
   const { t } = useTranslation();
   const [phone, setPhone] = React.useState<Phone | null>(null);
   const [index, setIndex] = React.useState(0);
-  const close = React.useCallback(() => { onClose(); setPhone(null); setIndex(0); }, [onClose]);
-  const steps = phone ? installSteps(phone, device, { canPrompt: Boolean(installPrompt) }) : [];
+  // Fixed when the phone is chosen: a successful install clears the install prompt,
+  // and the guide must not switch to the manual "install it" steps halfway through.
+  const [steps, setSteps] = React.useState<InstallStep[]>([]);
+  const close = React.useCallback(() => { onClose(); setPhone(null); setSteps([]); setIndex(0); }, [onClose]);
+  const choose = (choice: Phone) => { setPhone(choice); setSteps(installSteps(choice, device, { canPrompt: Boolean(installPrompt) })); setIndex(0); };
   const step = steps[index];
   const last = index === steps.length - 1;
 
@@ -81,7 +84,7 @@ function InstallGuide({ open, onClose, device, installPrompt, onInstalled }: { o
   return (
     <Sheet open={open} onClose={close} label="Get Intimo on your phone" footer={footer}>
       {!phone ? (
-        <ChoosePhone device={device} onChoose={(choice) => { setPhone(choice); setIndex(0); }} />
+        <ChoosePhone device={device} onChoose={choose} />
       ) : (
         <div>
           <div className="flex items-center justify-between gap-3">
@@ -91,7 +94,7 @@ function InstallGuide({ open, onClose, device, installPrompt, onInstalled }: { o
           <div className="mt-3 flex gap-1.5" aria-hidden>
             {steps.map((id, i) => <span key={id} className={`h-1 flex-1 rounded-full ${i <= index ? "bg-velora-accent" : "bg-velora-line"}`} />)}
           </div>
-          <StepView key={step} step={step} phone={phone} device={device} installPrompt={installPrompt} onInstalled={() => { onInstalled(); setIndex(index + 1); }} />
+          <StepView key={step} step={step} phone={phone} device={device} installPrompt={installPrompt} onInstalled={() => { onInstalled(); setIndex(Math.max(0, steps.indexOf("open-from-icon"))); }} />
         </div>
       )}
     </Sheet>
@@ -159,11 +162,14 @@ function StepView({ step, phone, device, installPrompt, onInstalled }: { step: I
       <p className="mt-2 leading-relaxed text-velora-ink2">{t(content.body, content.vars)}</p>
       <div className="mt-4 flex justify-center rounded-2xl bg-velora-night py-4"><CompactArt><StepArt step={step} phone={phone} /></CompactArt></div>
       {needsLink && <CopyLink />}
-      {step === "android-one-tap" && installPrompt && (
+      {step === "android-one-tap" && (installPrompt ? (
         <button type="button" onClick={async () => { await installPrompt.prompt(); const choice = await installPrompt.userChoice; if (choice.outcome === "accepted") onInstalled(); }} className="mt-4 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-velora-accent px-6 text-base font-semibold text-velora-paper hover:bg-velora-accentHover">
           <Download className="h-5 w-5" aria-hidden />{t("Install Intimo")}
         </button>
-      )}
+      ) : (
+        // The prompt can only be used once; if it's gone, point to the menu instead.
+        <p className="mt-3 text-sm text-velora-muted">{t("No install button? Tap the ⋮ menu, then “Install app”.")}</p>
+      ))}
       {step === "notifications" && phone === "ios" && <p className="mt-3 text-sm text-velora-muted">{t("On iPhone, notifications only work when you open Intimo from the home-screen icon.")}</p>}
     </div>
   );

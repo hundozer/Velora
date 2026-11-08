@@ -73,3 +73,11 @@ test("landing offers the guide, deep link opens it, nothing is asked without a t
   assert.doesNotMatch(guide, /Notification\.requestPermission|useAuth/);
   assert.match(guide, /<Sheet open=\{open\}/);
 });
+
+test("review fix: accepting the one-tap install keeps the chosen steps and jumps to the icon", async () => {
+  const guide = await read("src/components/pwa/GetOnMobile.tsx");
+  assert.match(guide, /const \[steps, setSteps\] = React\.useState<InstallStep\[\]>\(\[\]\);/);
+  assert.match(guide, /setSteps\(installSteps\(choice, device, \{ canPrompt: Boolean\(installPrompt\) \}\)\)/);
+  assert.doesNotMatch(guide, /const steps = phone \? installSteps/);
+  assert.match(guide, /setIndex\(Math\.max\(0, steps\.indexOf\("open-from-icon"\)\)\)/);
+});
