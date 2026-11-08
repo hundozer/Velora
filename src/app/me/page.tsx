@@ -10,6 +10,7 @@ import { useDurableNotifications } from "@/lib/notifications/useDurableNotificat
 import { AppOnThisDevice } from "@/components/pwa/AppOnThisDevice";
 import { StoryAvatar } from "@/components/stories/StoryAvatar";
 import { FoundingMemberMenuLink } from "@/components/community/FoundingMemberMenuLink";
+import { MailPlus } from "lucide-react";
 
 const ADMIN_ROLES = new Set(["SUPER_ADMIN", "SYSTEM_ADMIN", "TRUST_AND_SAFETY_ADMIN", "CONTENT_MODERATOR", "PRIVACY_ADMIN", "SUPPORT_ADMIN", "COMMUNITY_ADMIN"]);
 
@@ -75,6 +76,7 @@ export default function MePage() {
         <Row href="/me/private-photos" icon={Lock} label={t("Private photo access")} />
         <Row href="/favorites" icon={Bookmark} label={t("Saved")} />
         <Row href="/settings#privacy" icon={EyeOff} label={t("Privacy Center")} />
+        <Row href="/me/invite" icon={MailPlus} label={t("Invite friends")} />
         <FoundingMemberMenuLink mobile />
         <Row href="/settings" icon={Settings} label={t("Settings")} />
         {ADMIN_ROLES.has(String(role)) && <Row href="/admin" icon={Shield} label={t("Admin")} />}
