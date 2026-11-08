@@ -30,9 +30,20 @@ test("signup confirmation and onboarding preserve invitation token", () => {
  assert.match(read("src/app/onboarding/page.tsx"),/inviteToken/);
 });
 
-test("members have invitation menu, and founders no longer promise unlimited invites", () => {
+test("members have invitation menu and Founding Members keep unlimited invitations", () => {
  assert.match(read("src/app/me/page.tsx"),/href="\/me\/invite"/);
  assert.match(read("src/components/layout/Navbar.tsx"),/href="\/me\/invite"/);
- assert.doesNotMatch(read("src/lib/notifications/foundingMemberPromotion.ts"),/Unlimited personal invitations/);
- assert.doesNotMatch(read("src/components/community/FoundingMemberInvites.tsx"),/Unlimited invitations/);
+ assert.match(read("src/lib/notifications/foundingMemberPromotion.ts"),/Unlimited personal invitations/);
+ assert.match(read("src/components/community/FoundingMemberInvites.tsx"),/Unlimited invitations for Founding Members/);
+});
+
+test("Founding Members bypass quarterly limit in the claim RPC, ordinary members do not", () => {
+ const sql = read("supabase/migrations/20261108200000_founder_unlimited_invitations.sql");
+ const api = read("src/app/api/member/invitations/route.ts");
+ assert.match(sql,/v_membership is distinct from 'FOUNDING_MEMBER'/);
+ assert.match(sql,/interval '3 months'/);
+ assert.match(sql,/>= 3/);
+ assert.match(sql,/interval '30 days'/);
+ assert.match(api,/foundingMember: data.membership_level === "FOUNDING_MEMBER"/);
+ assert.match(api,/unlimited: true/);
 });

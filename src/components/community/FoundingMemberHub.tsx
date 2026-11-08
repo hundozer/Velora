@@ -15,7 +15,7 @@ export function FoundingMemberHub() {
       </div>
     </div>
     <FoundingMemberInvites />
-    <p className="text-sm text-velora-textMuted">{t("Your membership is recognition, not a moderator role. Every member can invite three people every three months.")}</p>
+    <p className="text-sm text-velora-textMuted">{t("Your membership is recognition, not a moderator role. Founding Members can invite as many people as they like.")}</p>
     <Link href="/me" className="inline-flex min-h-11 items-center text-sm font-semibold text-velora-gold">{t("Back to account")}</Link>
   </main>;
 }

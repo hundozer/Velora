@@ -4,7 +4,7 @@ import React from "react";
 import { Mail, Send, Crown } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 
-type InviteStatus = { eligible: boolean; remaining?: number; allowance?: number; period?: string; error?: string };
+type InviteStatus = { eligible: boolean; unlimited?: boolean; remaining?: number; allowance?: number; period?: string; error?: string };
 
 export function FoundingMemberInvites() {
   const { t } = useTranslation();
@@ -51,7 +51,7 @@ export function FoundingMemberInvites() {
       <div className="min-w-0 flex-1">
         <h2 id="founding-invite-heading" className="text-xl font-bold text-ink">{t("Invite friends")}</h2>
         <p className="mt-2 max-w-2xl text-sm text-velora-textSecondary">{t("Intimo is invitation-only. Bring people you know who would belong here.")}</p>
-        <p className="mt-2 text-xs text-velora-textMuted">{t("Three invitations every three months.")} {typeof status.remaining === "number" ? `${status.remaining} ${t("remaining")}` : ""}</p>
+        <p className="mt-2 text-xs text-velora-textMuted">{status.unlimited ? t("Unlimited invitations for Founding Members.") : <>{t("Three invitations every three months.")} {typeof status.remaining === "number" ? `${status.remaining} ${t("remaining")}` : ""}</>}</p>
       </div>
     </div>
     <form onSubmit={send} className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
