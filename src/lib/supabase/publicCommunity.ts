@@ -13,6 +13,7 @@ export type PublicProfileRow = Pick<
   | "is_couple_profile"
   | "verification_status"
   | "verification_level"
+  | "membership_level"
   | "location_precision"
   | "show_online_status"
   | "last_active_at"
@@ -32,6 +33,7 @@ export interface AnonymousPublicProfile {
   bio?: string;
   profileType: "COUPLE" | "INDIVIDUAL";
   verified: boolean;
+  foundingMember: boolean;
   recentlyActive: boolean;
   joinedAt: string;
   isDemo: boolean;
@@ -60,6 +62,7 @@ export function toAnonymousPublicProfile(row: PublicProfileRow): AnonymousPublic
     headline: cleanPublicText(row.headline, 160),
     bio: cleanPublicText(row.bio, 280),
     profileType: row.is_couple_profile ? "COUPLE" : "INDIVIDUAL",
+    foundingMember: row.membership_level === "FOUNDING_MEMBER",
     verified:
       row.verification_status === "VERIFIED" ||
       ["LEVEL_3_PROFILE_BIOMETRIC", "LEVEL_4_CREATOR"].includes(row.verification_level || ""),
