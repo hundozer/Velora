@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Heart, Compass, LogIn, ShieldAlert } from "lucide-react";
+import { Heart, Compass, ShieldAlert } from "lucide-react";
 
 export default function GoodbyePage() {
   const { t } = useTranslation();
@@ -49,14 +49,8 @@ export default function GoodbyePage() {
 
         {/* Action Triggers */}
         <div className="pt-2 space-y-3">
-          <Link href="/register" className="block">
-            <Button
-              variant="gold"
-              size="lg"
-              className="w-full font-bold uppercase tracking-wider shadow-gold-glow flex items-center justify-center gap-2"
-            >
-              <LogIn className="w-4 h-4 text-black" />{t("Start Fresh & Re-Register")}</Button>
-          </Link>
+          {/* Intimo is invitation-only: coming back needs a new invitation from a member. */}
+          <p className="text-xs leading-relaxed text-velora-textSecondary">{t("Want to come back one day? Ask a member to send you a new invitation.")}</p>
 
           <Link href="/" className="block">
             <Button

@@ -47,7 +47,7 @@ export default function AboutPage() {
 
       <div className="text-center pt-8">
         <Link href="/register">
-          <Button variant="gold" size="lg" className="font-bold uppercase tracking-wider gap-2">{t("Join Intimo")}<ArrowRight className="w-4 h-4" />
+          <Button variant="gold" size="lg" className="font-bold uppercase tracking-wider gap-2">{t("How to join Intimo")}<ArrowRight className="w-4 h-4" />
           </Button>
         </Link>
       </div>

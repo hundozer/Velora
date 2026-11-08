@@ -15,7 +15,9 @@ test("first visit shows only the 18+ screen: no cookie banner", () => {
 test("registration sends both declarations from the single agreement", () => {
   const page = read("src/app/register/page.tsx");
   assert.match(page, /adult: agreed, terms: agreed/);
-  assert.match(page, /const ready = email\.trim\(\) && password\.length >= MIN_PASSWORD && agreed && /);
+  assert.match(page, /const ready = email\.trim\(\) && password\.length >= MIN_PASSWORD && agreed;/);
+  // The form itself only renders for a well-formed, checked invitation link.
+  assert.match(page, /if \(!inviteToken\) return <InvitationOnly \/>;/);
 });
 
 test("focused screens hide site chrome", () => {

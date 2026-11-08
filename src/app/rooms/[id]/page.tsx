@@ -77,7 +77,7 @@ export default function RoomsPage() {
     <p className="mt-4 max-w-xl text-velora-ink2">{t(room?.description) || (id === "prague" ? t("The city-wide conversation. Say hello, talk about the scene, or find company.") : "")}</p>
     {room?.locked && <p className="mt-3 text-sm text-velora-muted">{t("Only approved members can read and post here.")}</p>}
     {room?.creator_id === profile?.id && <Link href={`/rooms/${encodeURIComponent(id)}/settings`} className="mt-3 inline-block text-velora-accent underline">{t("Manage room and members")}</Link>}
-    {!user ? <Link href="/register" className="mt-6 inline-flex min-h-11 items-center text-velora-accent underline">{t("Join to enter the room")}</Link> : <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]"><div className="min-w-0">
+    {!user ? <p className="mt-6 text-velora-textSecondary">{t("Rooms are for members.")}{" "}<Link href="/login" className="inline-flex min-h-11 items-center text-velora-accent underline">{t("Sign in")}</Link>{" "}<Link href="/register" className="inline-flex min-h-11 items-center text-velora-accent underline">{t("How to join")}</Link></p> : <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]"><div className="min-w-0">
       {error && <p role="status" className="mt-5 text-velora-accent">{t(error)}</p>}
       <section aria-label={t("Room conversation")} className="space-y-4">
         {loaded && !messages.length && !error && <p className="rounded-2xl border border-velora-line p-6 text-velora-ink2">{t("It's quiet here. Start the conversation.")}</p>}

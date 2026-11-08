@@ -38,7 +38,7 @@ export default function RoomsPage() {
     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-velora-accent">{t("Intimo · 18+")}</p>
     <h1 className="mt-3 font-display text-5xl">{t("Rooms")}</h1>
     <p className="mt-4 text-velora-ink2">{t("Come in, say what you want, or start your own room.")}</p>
-    {!user ? <Link href="/register" className="mt-6 inline-flex min-h-11 items-center text-velora-accent underline">{t("Join to see rooms")}</Link> : <>
+    {!user ? <p className="mt-6 text-velora-textSecondary">{t("Rooms are for members.")}{" "}<Link href="/login" className="inline-flex min-h-11 items-center text-velora-accent underline">{t("Sign in")}</Link>{" "}<Link href="/register" className="inline-flex min-h-11 items-center text-velora-accent underline">{t("How to join")}</Link></p> : <>
       {error && <p role="alert" className="mt-5 text-velora-danger">{t(error)}</p>}
       <section className="mt-10"><h2 className="font-display text-3xl">{t("Always open")}</h2><div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3">{rooms.filter(r => r.builtin).map(r => <RoomCard key={r.id} room={r} selfId={profile?.id} />)}</div>{loading && <p className="mt-4">{t("Loading rooms…")}</p>}</section>
       <section className="mt-12"><h2 className="font-display text-3xl">{t("Made by members")}</h2><div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3">{rooms.filter(r => !r.builtin).map(r => <RoomCard key={r.id} room={r} selfId={profile?.id} />)}</div>{!loading && !rooms.some(r => !r.builtin) && <p className="mt-4 text-velora-muted">{t("No member rooms yet. Make the first one.")}</p>}</section>

@@ -109,9 +109,9 @@ export function PublicCommunityHome() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-velora-accent">{t("Let's start something")}</p>
           <h2 id="founding-members-title" className="mt-3 font-display text-4xl leading-tight tracking-tight sm:text-5xl">{t("Be part of the first")}<br />{t("Prague crowd.")}</h2>
-          <p className="mt-4 max-w-lg text-base leading-relaxed text-velora-ink2">{t("We're bringing the first members together. Join, build your profile, and help shape the community.")}</p>
+          <p className="mt-4 max-w-lg text-base leading-relaxed text-velora-ink2">{t("Intimo grows by invitation, one member at a time. If someone invites you, join, build your profile and help shape the community.")}</p>
         </div>
-        <div><PrimaryAction href="/register">{t("Create your profile")}{" "}<ArrowUpRight className="h-5 w-5 shrink-0" aria-hidden /></PrimaryAction><p className="mt-4 text-sm text-velora-muted">{t("A little curiosity goes a long way.")}</p></div>
+        <div><PrimaryAction href="/register">{t("How invitations work")}{" "}<ArrowUpRight className="h-5 w-5 shrink-0" aria-hidden /></PrimaryAction><p className="mt-4 text-sm text-velora-muted">{t("A little curiosity goes a long way.")}</p></div>
       </section>
       <nav aria-label={t("Explore")} className="flex flex-wrap gap-x-6 gap-y-2 border-t border-velora-line py-6 text-sm text-velora-ink2">
         <Link href="/people" className="inline-flex min-h-11 items-center hover:text-velora-ink">{t("People")}</Link>

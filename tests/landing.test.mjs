@@ -10,7 +10,7 @@ const read = (file) => fs.readFile(path.join(root, file), "utf8");
 test("landing explains Intimo as Prague's sex-positive community without counts", async () => {
   const home = await read("src/components/community/PublicCommunityHome.tsx");
   assert.match(home, /Prague · Sex-positive · 18\+/);
-  for (const pillar of ["Looking for someone?", "Meet people who mean what they say.", "See Tonight", "A glimpse beyond the bio.", "Show more when you choose to.", "Guest Lists appear only when a real gathering is confirmed.", "Have an invitation? Join Intimo", "Create your profile", "Prague Scene"]) assert.ok(home.includes(pillar), pillar);
+  for (const pillar of ["Looking for someone?", "Meet people who mean what they say.", "See Tonight", "A glimpse beyond the bio.", "Show more when you choose to.", "Guest Lists appear only when a real gathering is confirmed.", "Have an invitation? Join Intimo", "How invitations work", "Prague Scene"]) assert.ok(home.includes(pillar), pillar);
   for (const destination of ["/people", "/tonight", "/stories", "/scene", "/guest-list"]) assert.ok(home.includes(`href="${destination}"`), destination);
   assert.match(home, /fictional examples, not members/);
   assert.doesNotMatch(home, /Example profile<\/span>/);

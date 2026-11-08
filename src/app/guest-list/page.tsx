@@ -35,7 +35,7 @@ export default function GuestListPage() {
     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-velora-accent">{t("Prague · Guest List")}</p>
     <h1 className="mt-3 font-display text-5xl leading-none">{t("A place at the table.")}</h1>
     <p className="mt-4 max-w-xl text-velora-ink2">{t("Small, real gatherings with a host. Tell them why you'd like to join. Only accepted guests receive the meeting address.")}</p>
-    {!user && <p className="mt-6"><Link href="/register" className="text-velora-accent underline">{t("Join Intimo to see Guest Lists")}</Link></p>}
+    {!user && <p className="mt-6">{t("Guest Lists are for members.")}{" "}<Link href="/login" className="text-velora-accent underline">{t("Sign in")}</Link>{" "}<Link href="/register" className="text-velora-accent underline">{t("How to join")}</Link></p>}
     {error && <p role="alert" className="mt-6 text-velora-crimson">{t(error)}</p>}
     {user && nights === null && <p role="status" className="mt-10">{t("Looking for gatherings…")}</p>}
     {user && nights?.length === 0 && <section className="mt-10 rounded-2xl border border-velora-line p-6"><h2 className="font-display text-3xl">{t("The next Guest List is taking shape.")}</h2><p className="mt-3 text-velora-ink2">{t("We only list confirmed hosts and real gatherings. For now, explore Prague's published Scene events.")}</p><Link href="/scene" className="mt-5 inline-flex min-h-11 items-center text-velora-accent underline">{t("Explore the Scene")}</Link></section>}
