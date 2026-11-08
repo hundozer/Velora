@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "@/context/LanguageContext";
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Camera, Heart, User, Users } from "lucide-react";
 import { BigButton, BigInput, ChoiceCard, FlowScreen } from "@/components/flow/Flow";
@@ -34,7 +34,7 @@ function birthdayError(value: string, who: "you" | "partner") {
   return "";
 }
 
-export default function OnboardingPage() {
+function OnboardingForm() {
   const { t } = useTranslation();
   const inviteToken = useSearchParams().get("invite") || "";
   const [step, setStep] = useState<StepId>("kind");
@@ -219,3 +219,5 @@ export default function OnboardingPage() {
     </FlowScreen>
   );
 }
+
+export default function OnboardingPage() { return <Suspense fallback={null}><OnboardingForm /></Suspense>; }
