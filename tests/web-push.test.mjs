@@ -57,3 +57,13 @@ test("devices are forgotten on sign-out and push events are wired", async () => 
   assert.match(migration, /revoke all on public\.push_subscriptions from public, anon, authenticated;/);
   assert.match(migration, /Rollback:/);
 });
+
+test("review fixes: local unsubscribe first, server-confirmed state, expired grants notify", async () => {
+  const client = await read("src/lib/notifications/pushClient.ts");
+  assert.ok(client.indexOf("subscription.unsubscribe()") < client.indexOf('method: "DELETE"'), "unsubscribe locally before the network call");
+  assert.match(client, /payload\?\.thisDevice === true/);
+  assert.match(await read("src/components/pwa/AppOnThisDevice.tsx"), /thisDeviceRegistered\(\)\.then\(setSubscribed\)/);
+  const access = await read("src/app/api/private-access/route.ts");
+  assert.match(access, /const hadAccess = Boolean\(before && grantIsActive\(before\)\);/);
+  assert.match(access, /data\.status === "GRANTED" && !hadAccess\) await sendPush/);
+});

@@ -48,17 +48,31 @@ export async function subscribeThisDevice(locale: string): Promise<"ok" | "unava
   }
 }
 
-/** Stops push on this device for this account (also used on sign-out). */
+/**
+ * Stops push on this device for this account (also used on sign-out).
+ * The browser unsubscribes first, with no network involved: from then on the push
+ * service rejects deliveries (404/410) and the server deletes the row on its next
+ * attempt, so a slow or failed request can't leave a shared device notifying.
+ * The server DELETE is a keepalive request that survives the sign-out navigation.
+ */
 export async function unsubscribeThisDevice(): Promise<void> {
-  try {
-    const subscription = await currentPushSubscription();
-    if (!subscription) return;
-    await fetch("/api/push/subscription", {
-      method: "DELETE", credentials: "same-origin", keepalive: true, headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ endpoint: subscription.endpoint }),
-    }).catch(() => undefined);
-    await subscription.unsubscribe();
-  } catch {
-    // Best effort: the server also drops subscriptions the browser reports as gone.
-  }
+  let subscription: PushSubscription | null = null;
+  try { subscription = await currentPushSubscription(); } catch { return; }
+  if (!subscription) return;
+  const endpoint = subscription.endpoint;
+  await subscription.unsubscribe().catch(() => false);
+  void fetch("/api/push/subscription", {
+    method: "DELETE", credentials: "same-origin", keepalive: true, headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ endpoint }),
+  }).catch(() => undefined);
+}
+
+/** True only when this browser is subscribed AND the server has it on file for this member. */
+export async function thisDeviceRegistered(): Promise<boolean> {
+  const subscription = await currentPushSubscription();
+  if (!subscription) return false;
+  const response = await fetch(`/api/push/subscription?endpoint=${encodeURIComponent(subscription.endpoint)}`, { credentials: "same-origin", cache: "no-store" });
+  if (!response.ok) return false;
+  const payload = await response.json().catch(() => null);
+  return payload?.thisDevice === true;
 }

@@ -115,11 +115,12 @@ export async function PATCH(req: NextRequest) {
   const update = decisionUpdate(body.decision);
   if (!UUID.test(viewerId) || !update) return NextResponse.json({ error: "Invalid decision" }, { status: 400 });
   const { data: before } = await db.from("album_access_grants").select("status,grant_type,expires_at").eq("owner_id", actor.profileId).eq("viewer_id", viewerId).maybeSingle();
-  const existingStatus = before && grantIsActive(before) ? "GRANTED" : before?.status;
+  // An expired 24-hour grant still reads GRANTED in the table; it counts as no access.
+  const hadAccess = Boolean(before && grantIsActive(before));
   const { data, error } = await db.rpc("intimo_decide_private_access", { p_owner: actor.profileId, p_viewer: viewerId, p_decision: body.decision });
   if (error) return NextResponse.json({ error: "Decision could not be saved" }, { status: 502 });
   if (!data) return NextResponse.json({ error: "Request not found" }, { status: 404 });
   // Denials and revocations are silent: the requester simply sees no access.
-  if (data.status === "GRANTED" && existingStatus !== "GRANTED") await sendPush({ recipientId: viewerId, actorId: actor.profileId, category: "PRIVATE_ACCESS" });
+  if (data.status === "GRANTED" && !hadAccess) await sendPush({ recipientId: viewerId, actorId: actor.profileId, category: "PRIVATE_ACCESS" });
   return NextResponse.json({ status: data.status, grantType: data.grant_type, expiresAt: data.expires_at }, { headers: noStore });
 }

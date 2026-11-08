@@ -3,7 +3,7 @@
 import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import { Bell, BellOff, Download, Smartphone } from "lucide-react";
-import { currentPushSubscription, pushSupport, subscribeThisDevice, unsubscribeThisDevice, type PushSupport } from "@/lib/notifications/pushClient";
+import { pushSupport, thisDeviceRegistered, subscribeThisDevice, unsubscribeThisDevice, type PushSupport } from "@/lib/notifications/pushClient";
 
 type InstallPrompt = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
 
@@ -27,7 +27,8 @@ export function AppOnThisDevice() {
     setIsIos(/iphone|ipad|ipod/i.test(navigator.userAgent));
     setPermission("Notification" in window ? Notification.permission : "unsupported");
     setSupport(pushSupport());
-    currentPushSubscription().then((subscription) => setSubscribed(Boolean(subscription))).catch(() => undefined);
+    // A browser subscription alone isn't enough: the server must have it, or show Allow again.
+    thisDeviceRegistered().then(setSubscribed).catch(() => setSubscribed(false));
     const onPrompt = (event: Event) => { event.preventDefault(); setInstallPrompt(event as InstallPrompt); };
     const onInstalled = () => setInstalled(true);
     window.addEventListener("beforeinstallprompt", onPrompt);
