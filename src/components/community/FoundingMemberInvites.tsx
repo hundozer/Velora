@@ -37,7 +37,7 @@ export function FoundingMemberInvites() {
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Invitation failed");
-      setMessage(t("Invitation sent. Thank you for helping grow Intimo."));
+      setMessage(t("Request received. If this person is not already a member, Intimo will send them an invitation."));
       setEmail(""); setPermissionConfirmed(false);
       await refresh();
     } catch (cause) {
