@@ -17,12 +17,15 @@ jobs:
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+      # Use GitHub runner's preinstalled ffmpeg; avoid flaky GitHub-release downloads during npm ci.
+      FFMPEG_BIN: /usr/bin/ffmpeg
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+      - run: test -x "$FFMPEG_BIN" && "$FFMPEG_BIN" -version | head -n 1
       - run: npm ci
       - run: npm test
       - run: npm run typecheck
