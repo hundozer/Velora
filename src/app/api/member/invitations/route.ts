@@ -52,7 +52,9 @@ export async function POST(req: NextRequest) {
   // Do not email existing members or disclose whether an email has an Intimo account.
   const { data: existing, error: existingError } = await auth.db.from("profiles").select("id").eq("email", address).limit(1);
   if (existingError) return NextResponse.json({ error: "Invitations temporarily unavailable" }, { status: 503, headers: noStore });
-  if (existing?.length) return NextResponse.json({ sent: true }, { headers: noStore });
+  // Privacy-preserving acknowledgement: this path does NOT send an email.
+  // Never report sent=true when a recipient already has an account.
+  if (existing?.length) return NextResponse.json({ accepted: true }, { headers: noStore });
   const hash = createHash("sha256").update(address).digest("hex");
   const token = randomBytes(32).toString("base64url");
   const tokenHash = createHash("sha256").update(token).digest("hex");
@@ -82,9 +84,11 @@ export async function POST(req: NextRequest) {
   try {
     const sent = await ResendClient.sendEmail({to: address,subject:"You have a personal invitation to Intimo",html});
     if (!sent.delivered || sent.provider !== "RESEND_API") throw new Error("Delivery unavailable");
-    const {error: recordError} = await auth.db.from("member_email_invites").update({status:"SENT",sent_at:new Date().toISOString()}).eq("id",inviteId).eq("inviter_profile_id",auth.actor.profileId);
+    const {error: recordError} = await auth.db.from("member_email_invites")
+      .update({status:"SENT",sent_at:new Date().toISOString(),provider_message_id:sent.id})
+      .eq("id",inviteId).eq("inviter_profile_id",auth.actor.profileId);
     if (recordError) return NextResponse.json({error:"Email accepted, but tracking failed. Do not retry."},{status:502,headers:noStore});
-    return NextResponse.json({sent:true},{headers:noStore});
+    return NextResponse.json({accepted:true},{headers:noStore});
   } catch {
     await auth.db.from("member_email_invites").update({status:"FAILED"}).eq("id",inviteId).eq("inviter_profile_id",auth.actor.profileId);
     return NextResponse.json({error:"Email could not be sent. Please try again later."},{status:502,headers:noStore});
