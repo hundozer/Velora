@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
   }
   const created = new Date(profile.data.created_at).getTime();
   return NextResponse.json({
+    profileId: id,
     newMember: Number.isFinite(created) && Date.now() - created >= 0 && Date.now() - created < 14 * 86400000,
     hasPhoto: Boolean(profile.data.avatar_url),
     hasPreferences: Array.isArray(profile.data.looking_for) && profile.data.looking_for.length > 0,
