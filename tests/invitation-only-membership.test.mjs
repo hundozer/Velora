@@ -45,5 +45,5 @@ test("Founding Members bypass quarterly limit in the claim RPC, ordinary members
  assert.match(sql,/>= 3/);
  assert.match(sql,/interval '30 days'/);
  assert.match(api,/foundingMember: data.membership_level === "FOUNDING_MEMBER"/);
- assert.match(api,/unlimited: true/);
+ assert.match(api,/unlimited: auth\.foundingMember/);
 });

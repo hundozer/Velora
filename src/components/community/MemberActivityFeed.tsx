@@ -5,6 +5,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { FeedInteractions } from "./FeedInteractions";
+import { NewMemberFirstSteps } from "./NewMemberFirstSteps";
 import { BadgeCheck, CalendarHeart, Images, ImageIcon, MessageSquareText, Play, UserPlus, UsersRound, CalendarDays } from "lucide-react";
 
 type FeedItem = {
@@ -78,6 +79,7 @@ export function MemberActivityFeed() {
           <div><p className="text-xs font-semibold uppercase tracking-[0.22em] text-velora-accent">{t("What's happening")}</p><h1 className="mt-2 font-display font-semibold text-ink text-5xl leading-[1.02] sm:text-6xl">{t("Around here")}</h1></div>
           <Link href="/people" className="text-sm font-semibold text-velora-accent hover:text-velora-accent">{t("Find people")}</Link>
         </div>
+        <NewMemberFirstSteps />
         <section aria-label={t("Activity feed filters")} className="mb-6 overflow-hidden rounded-2xl border border-ink/10 bg-velora-surface">
           <div className="flex border-b border-ink/10 px-3 sm:px-5">
             {[['newest','Newest'],['followed','Followed'],['friends','Friends']].map(([value, label]) => <button key={value} type="button" onClick={() => setScope(value)} aria-pressed={scope === value} className={`relative min-h-14 px-3 text-sm font-semibold transition sm:px-5 ${scope === value ? 'text-ink' : 'text-velora-textSecondary hover:text-ink'}`}>{t(label)}{scope === value && <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-velora-accent" />}</button>)}
