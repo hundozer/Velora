@@ -23,16 +23,75 @@ async function activeMember(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const auth = await activeMember(req);
   if (!auth) return NextResponse.json({ eligible: false }, { headers: noStore });
-  if (auth.foundingMember) {
-    return NextResponse.json({ eligible: true, unlimited: true }, { headers: noStore });
-  }
-  const { count, error } = await auth.db.from("member_email_invites")
-    .select("id", { count: "exact", head: true })
+  // Only the inviter's own records. Recipient addresses and token hashes stay private.
+  const { data: recent, error: recentError } = await auth.db.from("member_email_invites")
+    .select("id,status,created_at,sent_at,redeemed_at,expires_at,redeemed_auth_id")
     .eq("inviter_profile_id", auth.actor.profileId)
-    .in("status", ["PENDING","SENT","REDEEMED"])
-    .gte("created_at", (() => { const now = new Date(); const day = now.getUTCDate(); now.setUTCDate(1); now.setUTCMonth(now.getUTCMonth() - 3); const lastDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)).getUTCDate(); now.setUTCDate(Math.min(day, lastDay)); return now.toISOString(); })());
-  if (error) return NextResponse.json({ error: "Invitations unavailable" }, { status: 503, headers: noStore });
-  return NextResponse.json({ eligible: true, remaining: Math.max(0, 3 - (count ?? 0)), allowance: 3, period: "3 months" }, { headers: noStore });
+    .order("created_at", { ascending: false }).limit(20);
+  if (recentError) return NextResponse.json({ error: "Invitation history unavailable" }, { status: 503, headers: noStore });
+
+  const [issued, joined, outstanding, failed] = await Promise.all([
+    auth.db.from("member_email_invites").select("id", { count: "exact", head: true })
+      .eq("inviter_profile_id", auth.actor.profileId).in("status", ["SENT","REDEEMED"]),
+    auth.db.from("member_email_invites").select("id", { count: "exact", head: true })
+      .eq("inviter_profile_id", auth.actor.profileId).eq("status", "REDEEMED"),
+    auth.db.from("member_email_invites").select("id", { count: "exact", head: true })
+      .eq("inviter_profile_id", auth.actor.profileId).eq("status", "SENT"),
+    auth.db.from("member_email_invites").select("id", { count: "exact", head: true })
+      .eq("inviter_profile_id", auth.actor.profileId).eq("status", "FAILED"),
+  ]);
+  if ([issued, joined, outstanding, failed].some(result => result.error)) {
+    return NextResponse.json({ error: "Invitation metrics unavailable" }, { status: 503, headers: noStore });
+  }
+
+  // A first interaction is observable only through actual messages or interests,
+  // not a click on the invite email. Do not expose the invitee's identity.
+  const redeemed = (recent ?? []).filter(row => row.status === "REDEEMED" && row.redeemed_auth_id);
+  const ids = redeemed.map(row => row.redeemed_auth_id as string);
+  const [messages, interests] = ids.length ? await Promise.all([
+    auth.db.from("direct_messages").select("sender_id,created_at").in("sender_id", ids).limit(500),
+    auth.db.from("interests").select("from_id,created_at").in("from_id", ids).limit(500),
+  ]) : [{ data: [], error: null }, { data: [], error: null }];
+  if (messages.error || interests.error) {
+    return NextResponse.json({ error: "Invitation activity unavailable" }, { status: 503, headers: noStore });
+  }
+  const now = Date.now();
+  const history = (recent ?? []).map(row => {
+    const firstContact = row.status === "REDEEMED" && row.redeemed_auth_id && row.redeemed_at
+      ? Boolean(messages.data?.some(item => item.sender_id === row.redeemed_auth_id && new Date(item.created_at).getTime() >= new Date(row.redeemed_at!).getTime())
+        || interests.data?.some(item => item.from_id === row.redeemed_auth_id && new Date(item.created_at).getTime() >= new Date(row.redeemed_at!).getTime()))
+      : false;
+    return {
+      id: row.id, createdAt: row.created_at, sentAt: row.sent_at, joinedAt: row.redeemed_at,
+      status: row.status === "REDEEMED" ? "JOINED"
+        : row.status === "SENT" && row.expires_at && new Date(row.expires_at).getTime() <= now ? "EXPIRED"
+        : row.status, firstContact,
+    };
+  });
+
+  let remaining: number | null = null;
+  if (!auth.foundingMember) {
+    const nowDate = new Date();
+    const day = nowDate.getUTCDate();
+    nowDate.setUTCDate(1);
+    nowDate.setUTCMonth(nowDate.getUTCMonth() - 3);
+    const lastDay = new Date(Date.UTC(nowDate.getUTCFullYear(), nowDate.getUTCMonth()+1, 0)).getUTCDate();
+    nowDate.setUTCDate(Math.min(day, lastDay));
+    const { count, error } = await auth.db.from("member_email_invites")
+      .select("id", { count: "exact", head: true })
+      .eq("inviter_profile_id", auth.actor.profileId)
+      .in("status", ["PENDING","SENT","REDEEMED"])
+      .gte("created_at", nowDate.toISOString());
+    if (error) return NextResponse.json({ error: "Invitation allowance unavailable" }, { status: 503, headers: noStore });
+    remaining = Math.max(0, 3 - (count ?? 0));
+  }
+  return NextResponse.json({
+    eligible: true, unlimited: auth.foundingMember, remaining,
+    allowance: auth.foundingMember ? null : 3, period: auth.foundingMember ? null : "3 months",
+    totals: { issued: issued.count ?? 0, joined: joined.count ?? 0,
+      awaiting: outstanding.count ?? 0, failed: failed.count ?? 0 },
+    history,
+  }, { headers: noStore });
 }
 
 export async function POST(req: NextRequest) {
