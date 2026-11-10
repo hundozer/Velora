@@ -4,7 +4,16 @@ import React from "react";
 import { Mail, Send, Crown } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 
-type InviteStatus = { eligible: boolean; unlimited?: boolean; remaining?: number; allowance?: number; period?: string; error?: string };
+type InviteRecord = {
+  id: string; status: "PENDING" | "SENT" | "JOINED" | "EXPIRED" | "FAILED";
+  createdAt: string; sentAt: string | null; joinedAt: string | null; firstContact: boolean;
+};
+type InviteStatus = {
+  eligible: boolean; unlimited?: boolean; remaining?: number | null; allowance?: number;
+  period?: string; error?: string;
+  totals?: { issued: number; joined: number; awaiting: number; failed: number };
+  history?: InviteRecord[];
+};
 
 export function FoundingMemberInvites() {
   const { t } = useTranslation();
@@ -45,6 +54,7 @@ export function FoundingMemberInvites() {
     } finally { setSending(false); }
   }
 
+  const totals = status.totals;
   return <section aria-labelledby="founding-invite-heading" className="rounded-3xl border border-velora-gold/40 bg-velora-card p-6 sm:p-8">
     <div className="flex items-start gap-3">
       <Crown className="mt-1 h-6 w-6 shrink-0 text-velora-gold" aria-hidden />
@@ -73,5 +83,47 @@ export function FoundingMemberInvites() {
       {message && <p role="status" className="text-sm text-velora-success sm:col-span-2">{message}</p>}
       {error && <p role="alert" className="text-sm text-velora-danger sm:col-span-2">{error}</p>}
     </form>
+    {totals && <div className="mt-7 border-t border-ink/10 pt-6">
+      <h3 className="text-sm font-bold text-ink">{t("Your invitations")}</h3>
+      <p className="mt-1 text-xs leading-5 text-velora-textMuted">{t("Private totals. Recipient addresses and other members’ activity stay private.")}</p>
+      <div className="mt-4 grid grid-cols-3 gap-3">
+        {([
+          [t("Sent"), totals.issued],
+          [t("Joined"), totals.joined],
+          [t("Awaiting signup"), totals.awaiting],
+        ] as const).map(([label, value]) => (
+          <div key={label} className="rounded-xl border border-ink/10 bg-ink/[0.025] px-3 py-4">
+            <div className="text-2xl font-bold tabular-nums text-ink">{value}</div>
+            <div className="mt-1 text-xs text-velora-textMuted">{label}</div>
+          </div>
+        ))}
+      </div>
+      {status.history && status.history.length > 0 && (
+        <details className="mt-5 group">
+          <summary className="cursor-pointer text-sm font-semibold text-velora-accent">{t("Recent invitations")}</summary>
+          <div className="mt-3 divide-y divide-ink/10 rounded-xl border border-ink/10">
+            {status.history.map((item, index) => {
+              const label = item.status === "JOINED" ? t("Joined")
+                : item.status === "EXPIRED" ? t("Expired")
+                : item.status === "FAILED" ? t("Failed")
+                : item.status === "PENDING" ? t("Processing") : t("Awaiting signup");
+              return <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-ink">{t("Private invitation")} #{status.history!.length - index}</p>
+                  <p className="mt-1 text-xs text-velora-textMuted">
+                    {new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(item.createdAt))}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-semibold text-velora-accent">{label}</p>
+                  {item.firstContact && <p className="mt-1 text-xs text-velora-textMuted">{t("First contact made")}</p>}
+                </div>
+              </div>;
+            })}
+          </div>
+          <p className="mt-2 text-xs leading-5 text-velora-textMuted">{t("Sent means accepted by the email provider, not guaranteed inbox delivery. First contact means an observed message or interest.")}</p>
+        </details>
+      )}
+    </div>}
   </section>;
 }
