@@ -36,7 +36,8 @@ export async function GET(req: NextRequest) {
     auth.db.from("member_email_invites").select("id", { count: "exact", head: true })
       .eq("inviter_profile_id", auth.actor.profileId).eq("status", "REDEEMED"),
     auth.db.from("member_email_invites").select("id", { count: "exact", head: true })
-      .eq("inviter_profile_id", auth.actor.profileId).eq("status", "SENT"),
+      .eq("inviter_profile_id", auth.actor.profileId).eq("status", "SENT")
+      .gt("expires_at", new Date().toISOString()),
     auth.db.from("member_email_invites").select("id", { count: "exact", head: true })
       .eq("inviter_profile_id", auth.actor.profileId).eq("status", "FAILED"),
   ]);
