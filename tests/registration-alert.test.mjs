@@ -16,3 +16,17 @@ test("a new member triggers a minimal alert to registration@intimo.live without 
   const alerted = route.indexOf("await notifyNewRegistration(");
   assert.ok(created > 0 && alerted > created, "alert only after the profile and its audit record exist");
 });
+
+test("only photos and videos wait for approval; ads and plans go live and can only be removed", () => {
+  const ads = read("src/app/api/personal-ads/route.ts");
+  assert.match(ads, /insert\(\{ \.\.\.ad, moderation_status: "APPROVED"/, "new ads publish immediately");
+  assert.match(ads, /\.in\("moderation_status", \["APPROVED", "PENDING_REVIEW"\]\)/, "older ads still waiting become visible");
+  const plans = read("src/app/api/dating-ads/route.ts");
+  assert.match(plans, /const moderationStatus = "APPROVED";/);
+  for (const route of ["src/app/api/admin/personal-ads/route.ts", "src/app/api/admin/plans/route.ts"]) {
+    assert.match(read(route), /const decision = body\.decision === "REJECTED" \? body\.decision : null;/, `${route} only removes`);
+  }
+  for (const consoleFile of ["src/components/admin/AdminPersonalAdsConsole.tsx", "src/components/admin/AdminPlansConsole.tsx"]) assert.doesNotMatch(read(consoleFile), />Approve</);
+  assert.doesNotMatch(read("src/app/api/admin/queues/route.ts"), /Plans awaiting review/);
+  assert.match(read("src/app/api/media/[id]/complete/route.ts"), /moderation_status: "PENDING_REVIEW"/, "photos and videos are still reviewed first");
+});

@@ -164,8 +164,8 @@ export async function POST(req: NextRequest) {
   if (live.length >= MAX_LIVE_PLANS) return NextResponse.json({ error: `You can have up to ${MAX_LIVE_PLANS} live plans. End one first.` }, { status: 409 });
 
   const areaId = sceneEventId ? eventArea : typeof body.areaId === "string" && areaById(body.areaId) ? body.areaId : profile.area_id;
-  // A member's first Plan goes live immediately but is queued for moderator review.
-  const moderationStatus = (previous || []).some((row) => row.moderation_status === "APPROVED") ? "APPROVED" : "PENDING_REVIEW";
+  // Plans go live immediately with no review queue; moderators can still remove one (REJECTED).
+  const moderationStatus = "APPROVED";
   const row = {
     ...validated.plan,
     scene_event_id: sceneEventId,

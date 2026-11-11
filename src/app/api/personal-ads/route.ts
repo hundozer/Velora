@@ -29,7 +29,8 @@ export async function GET(req: NextRequest) {
   let query = db.from("personal_ads").select(columns).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(mine ? 30 : 60);
   if (id) query = query.eq("id", id);
   if (mine) query = query.eq("author_id", actor.actor.profileId);
-  else query = query.eq("status", "ACTIVE").eq("moderation_status", "APPROVED").gt("expires_at", new Date().toISOString());
+  // Ads go live immediately; only ads a moderator removed (REJECTED) are hidden.
+  else query = query.eq("status", "ACTIVE").in("moderation_status", ["APPROVED", "PENDING_REVIEW"]).gt("expires_at", new Date().toISOString());
   if (category) query = query.eq("category", category);
   if (areaId) query = query.eq("area_id", areaId);
   const [{ data: rows, error }, { data: blocks, error: blockError }, { data: viewer, error: viewerError }] = await Promise.all([
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
   const ads = visible.flatMap(row => {
     const author = byId.get(row.author_id);
     if (!author) return [];
-    const eligibility = planReplyEligibility({ plan: { ...row, status: row.status === "ACTIVE" && row.moderation_status === "APPROVED" ? "active" : "closed" }, viewer: { ...viewer, id: actor.actor.profileId } });
+    const eligibility = planReplyEligibility({ plan: { ...row, status: row.status === "ACTIVE" && row.moderation_status !== "REJECTED" ? "active" : "closed" }, viewer: { ...viewer, id: actor.actor.profileId } });
     return [{ id: row.id, authorId: row.author_id, authorName: author.display_name, authorAvatar: author.avatar_url, authorAge: author.age, category: row.category, categoryLabel: categoryLabel(row.category), title: row.title, body: row.body, boundaries: row.boundaries, areaName: areaById(row.area_id)?.name || null, allowedReplyGenders: row.allowed_reply_genders, minAge: row.min_age, maxAge: row.max_age, requireVerified: row.require_verified, moderationStatus: row.moderation_status, status: row.status, expiresAt: row.expires_at, createdAt: row.created_at, isMine: row.author_id === actor.actor.profileId, canReply: eligibility.canReply, replyReason: eligibility.reason }];
   });
   return NextResponse.json({ ads }, { headers: noStore });
@@ -74,9 +75,9 @@ export async function POST(req: NextRequest) {
   if ((previous || []).length >= 2) return NextResponse.json({ error: "You can have two current ads. Close one first." }, { status: 409 });
   const areaId = typeof body.areaId === "string" && areaById(body.areaId) ? body.areaId : profile.area_id;
   const { days, ...ad } = validated.ad;
-  const { data, error } = await db.from("personal_ads").insert({ ...ad, author_id: actor.actor.profileId, area_id: areaId || null, expires_at: new Date(Date.now() + days * 86_400_000).toISOString() }).select("id").single();
+  const { data, error } = await db.from("personal_ads").insert({ ...ad, moderation_status: "APPROVED", author_id: actor.actor.profileId, area_id: areaId || null, expires_at: new Date(Date.now() + days * 86_400_000).toISOString() }).select("id").single();
   if (error || !data) return NextResponse.json({ error: "Ad could not be posted" }, { status: 502 });
   const audited = await appendDurableAudit(db, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "PERSONAL_AD_CREATE", resourceType: "PERSONAL_AD", resourceId: data.id, outcome: "SUCCESS", metadata: { category: ad.category } });
   if (!audited) return NextResponse.json({ error: "Ad saved but audit recording failed; contact support" }, { status: 503 });
-  return NextResponse.json({ id: data.id, moderationStatus: "PENDING_REVIEW" }, { status: 201, headers: noStore });
+  return NextResponse.json({ id: data.id, moderationStatus: "APPROVED" }, { status: 201, headers: noStore });
 }

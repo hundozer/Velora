@@ -61,11 +61,11 @@ test("expired, ended or rejected plans are not live", () => {
   assert.equal(endsInLabel("2026-10-20T18:00:00Z", now), "Ends in 3 days");
 });
 
-test("plans are members-only, block-aware, capped, and first plans are queued for review", async () => {
+test("plans are members-only, block-aware, capped, and go live without approval", async () => {
   const collection = await read("src/app/api/dating-ads/route.ts");
   assert.match(collection, /\.filter\(\(row\) => !blocked\.has\(row\.author_id\)/);
   assert.match(collection, /live\.length >= MAX_LIVE_PLANS/);
-  assert.match(collection, /\? "APPROVED" : "PENDING_REVIEW"/);
+  assert.match(collection, /const moderationStatus = "APPROVED";/, "no approval queue for plans");
   assert.match(await read("src/app/api/public/community/route.ts"), /const datingAds: Array<Record<string, unknown>> = \[\];/);
   const search = await read("src/app/api/public/search/route.ts");
   assert.doesNotMatch(search, /from\("dating_ads"\)/);
