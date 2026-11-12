@@ -7,6 +7,7 @@ import { PrimaryAction } from "@/components/editorial/Editorial";
 import { LanguageSwitch } from "@/components/i18n/LanguageSwitch";
 import { editorialPhotos, type EditorialPhotoId } from "@/lib/editorialPhotos";
 import { GetOnMobileSection } from "@/components/pwa/GetOnMobile";
+import { InvitationRequestForm } from "@/components/community/InvitationRequestForm";
 
 // Presentation-only examples: no member IDs, profile links, activity or messaging.
 const EXAMPLE_PROFILES = [
@@ -40,7 +41,8 @@ export function PublicCommunityHome() {
           <h1 id="community-welcome" className="mt-5 font-display text-[clamp(3rem,6.5vw,6rem)] leading-[1.02] tracking-tight">{t("Kinky. Curious.")}<br /><span className="text-velora-accent">{t("Looking for someone?")}</span></h1>
           <p className="mt-6 max-w-lg text-lg leading-relaxed text-velora-ink2">{t("Sex, dates, friends with benefits, or someone who shares your kink. Find your people, make a plan, and say what you want without guessing games.")}</p>
           <div className="mt-7"><PrimaryAction href="/register">{t("Have an invitation? Join Intimo")}{" "}<ArrowUpRight className="h-5 w-5 shrink-0" aria-hidden /></PrimaryAction></div>
-          <p className="mt-4 text-sm leading-relaxed text-velora-muted">{t("18+ · Invitation-only · Free to join · Your boundaries, respected.")}</p>
+          <a href="#request-invitation" className="mt-4 inline-flex min-h-11 items-center gap-1 font-semibold text-velora-accent underline decoration-velora-accent/50 underline-offset-4 hover:decoration-velora-accent">{t("No invitation yet? Ask us for one ↓")}</a>
+          <p className="mt-2 text-sm leading-relaxed text-velora-muted">{t("18+ · Invitation-only · Free to join · Your boundaries, respected.")}</p>
           <a href="#inside" className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-velora-accent underline-offset-4 hover:underline">{t("See what happens inside ↓")}</a>
         </div>
         <div className="overflow-hidden rounded-xl border border-velora-line"><LandingPhoto photo="balcony-connection" hero /></div>
@@ -105,13 +107,15 @@ export function PublicCommunityHome() {
         <p className="mt-6 text-sm leading-relaxed text-velora-muted">{t("Say what turns you on. Say what's off limits. Singles, couples, queer and kink-curious adults are welcome.")}</p>
       </section>
 
-      <section className="flex flex-col items-start justify-between gap-7 border-t border-velora-line py-12 lg:flex-row lg:items-center" aria-labelledby="founding-members-title">
+      <section id="request-invitation" className="grid scroll-mt-24 gap-8 border-t border-velora-line py-12 sm:py-16 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-14" aria-labelledby="founding-members-title">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-velora-accent">{t("Let's start something")}</p>
           <h2 id="founding-members-title" className="mt-3 font-display text-4xl leading-tight tracking-tight sm:text-5xl">{t("Be part of the first")}<br />{t("Prague crowd.")}</h2>
-          <p className="mt-4 max-w-lg text-base leading-relaxed text-velora-ink2">{t("Intimo grows by invitation, one member at a time. If someone invites you, join, build your profile and help shape the community.")}</p>
+          <p className="mt-4 max-w-lg text-lg leading-relaxed text-velora-ink">{t("If you want to belong to this community, leave your email and we'll send you a personal invitation.")}</p>
+          <p className="mt-4 max-w-lg text-base leading-relaxed text-velora-ink2">{t("Intimo grows by invitation, one member at a time. Answer three quick questions so we can get to know you. We read every request personally.")}</p>
+          <Link href="/register" className="mt-5 inline-flex min-h-11 items-center gap-2 font-semibold text-velora-accent underline decoration-velora-accent/50 underline-offset-4 hover:decoration-velora-accent">{t("How invitations work")}<ArrowUpRight className="h-4 w-4" aria-hidden /></Link>
         </div>
-        <div><PrimaryAction href="/register">{t("How invitations work")}{" "}<ArrowUpRight className="h-5 w-5 shrink-0" aria-hidden /></PrimaryAction><p className="mt-4 text-sm text-velora-muted">{t("A little curiosity goes a long way.")}</p></div>
+        <InvitationRequestForm />
       </section>
       <nav aria-label={t("Explore")} className="flex flex-wrap gap-x-6 gap-y-2 border-t border-velora-line py-6 text-sm text-velora-ink2">
         <Link href="/people" className="inline-flex min-h-11 items-center hover:text-velora-ink">{t("People")}</Link>
