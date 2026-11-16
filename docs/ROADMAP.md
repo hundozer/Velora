@@ -37,6 +37,53 @@ Product decisions optimise for their safety, control and willingness to stay, no
 
 ---
 
+## Current priority: Founding Member feedback track  (milestone `FM-founding`, from 16 November 2026)
+**Source:** Founding Member vision document (Carolinka, November 2026). **Objective:** close the trust,
+privacy and safety gaps a founding member must see closed before recruiting, then prepare revenue.
+This track runs ahead of the open Phase 1/2 items below; where an item overlaps an existing ID, the existing
+ID is listed and the FM item tracks only the gap.
+
+Status is checked against the code on 16 November 2026: ✅ exists · 🟡 partial · ⬜ not started.
+The "Gap" column is the remaining work, not the whole feature.
+
+### Now (weeks 1–2): blockers before any growth
+| ID | Issue | Effort | Depends | Status (evidence) · Gap |
+|---|---|---|---|---|
+| FM-01 | **Consent and privacy plumbing** | M | — | 🟡 `user_consents` already stores versioned, timestamped GRANTED/WITHDRAWN records, but only desires use it (`SPECIAL_CATEGORY_DESIRES`). Self-service export, deletion and anonymisation exist (`src/lib/privacy/retention.ts`). **Gap:** separate explicit consent for orientation, gender identity and other sensitive profile fields, withdrawal that hides the data, and retention periods written into the policy. **Owner decision:** the legal entity and controller identity. Policies name only `contact@intimo.live`. |
+| FM-02 | **Remove AI imagery and fictional example profiles** | S | — | ⬜ The 12 generated images in `public/images/editorial/` appear on the landing and About pages. The landing also shows fictional example cards (`PublicCommunityHome`: "fictional examples, not members"). **Gap:** replace them with on-brand graphic placeholders until the illustrator delivers, delete the cards, update `docs/EDITORIAL_IMAGES.md` and the `landing-truth` e2e test. |
+| FM-03 | **Security baseline** | S | — | 🟡 Delivered variants are re-encoded with all metadata, GPS included, stripped (`src/lib/media/variants.mjs`). Private media uses signed URLs after a grant check. **Gap:** prove that no original upload is ever served with metadata (add a test). Audit album-grant revocation and R2 bucket privacy in production. List the profile columns with no current use (for example `pubic_hair_grooming`, `erogenous_zones`, `favourite_sex_places`) and drop them or make them optional. |
+| FM-04 | **Founding metrics (admin-only)** | M | — | 🟡 The admin overview counts pending items. `docs/invitation-activation-audit-2026-11.md` has a one-off baseline (3 active members). **Gap:** an MFA admin view with weekly members, invitation requests, invitations sent and redeemed, active members, gender and couple balance, and reports per 100 members. Use aggregate counts only, never member-level analytics, and never show the counts publicly (product rule). |
+| FM-05 | **Apply to a high-risk payment processor** | S (eng) | FM-01 entity | ⬜ Business task with a long lead time. It gates FM-11. Engineering supplies the policy URLs, the moderation description and the age-assurance description the application asks for. |
+
+### Next (weeks 3–6): trust and safety
+| ID | Issue | Effort | Depends | Status (evidence) · Gap |
+|---|---|---|---|---|
+| FM-06 | **Age verification at vetting** (extends P1-22) | M | FM-01 | 🟡 The age gate is a self-declaration button (`AgeVerificationModal`). Onboarding validates date of birth ≥18 on the server, for both partners in a couple. Selfie photo verification with manual review exists but is optional. **Gap:** make photo/age verification a condition of invitation approval or activation, record who reviewed it and when, and decide whether an ID or age-estimation provider is needed (`docs/archive/AGE_ASSURANCE_ARCHITECTURE.md`). |
+| FM-07 | **Reporting, moderation and DSA notice-and-action** (extends P1-18) | M | — | 🟡 Report modal, moderation cases with an `APPEALED` status, and a decision reason are required to resolve a case. Every action is audited. **Gap:** send the reporter an outcome notice and the affected member a statement of reasons, add a member-facing appeal entry point, track ban and evasion handling, and record response-time targets (<1 h underage or non-consensual content, <12 h everything else). Inviter accountability (FM-10) reads from this. |
+| FM-08 | **Message controls for every member** | S | — | 🟡 The Requests folder exists (unreplied conversations are requests) and the server enforces `VERIFIED_ONLY`, `FRIENDS_ONLY` and `PRIVATE`. **Gap:** Settings cannot select "Verified only" (`src/app/settings/page.tsx`, and `MESSAGE_PERMISSION` in `/api/privacy/settings` rejects it). Add the option with Czech copy. The control applies to all members, not only women and nonbinary members: gating by gender would require processing gender data and raises the same equal-treatment question as gendered pricing. |
+| FM-09 | **Orientation and identity fields** | M | FM-01 | 🟡 `gender` (fixed list) and `sexual_orientation` exist. One `sensitive_fields_visibility` setting covers all sensitive fields. **Gap:** optional fields, a self-described option, pronouns, and visibility set per field, all behind FM-01 consent. |
+| FM-10 | **Invite codes with attribution** | M | FM-04 | 🟡 Personal email invitations are hashed tokens with a 30-day expiry, a quota of 3 per rolling 3 months (unlimited for Founding Members), inviter attribution, and admin-reviewed invitation requests. **Gap:** batch codes (for QR stickers and the Guest List pilot with 3 party partners) with a redemption cap, an expiry, a source label and a named owner. Code redemption still goes through admin review, so a code is never open registration. Inviters see only aggregate outcomes for their codes. |
+
+### Then (weeks 7–12): revenue (needs the owner's sign-off, see the conflict below)
+| ID | Issue | Effort | Depends | Status (evidence) · Gap |
+|---|---|---|---|---|
+| FM-11 | **Entitlements and Premium** | L | FM-05, FM-01 | 🟡 `membership_level` (`MEMBER` / `FOUNDING_MEMBER` / `VIP`) exists as recognition only, and the `MemberTier` type is unused. **Gap:** server-side entitlements, tiers, a 14-day trial, capped inviter rewards, linked couple profiles (this is P2-02), and a 200-seat Founding Member cap enforced in SQL. Pricing must be the same for every gender. The cap must not show an exact public seat or member count. |
+| FM-12 | **Ticketing commission on the Guest List** | M | FM-11, FM-05 | ⬜ The Guest List pilot deliberately has no payments (`docs/GUEST_LIST_PILOT_2026-10-25.md`). **Gap:** paid places, the commission, refunds on cancellation, and the host payout. |
+
+**Deferred:** Journal, "share my plan" check-in (Safe Meet stays in Phase 2), native app (PWA first).
+
+**Open owner decisions**
+1. **Monetisation timing.** Phase 5 below says monetisation only after ≥5,000 MAU, but FM-11 and FM-12 put revenue in weeks 7–12. Before FM-11 starts, either amend Phase 5's entry criterion or keep FM-11 and FM-12 behind it.
+2. **Legal entity.** Blocks the final privacy policy text (FM-01) and the processor application (FM-05).
+3. **Admission.** The launch gate below still records open registration (20 October). Membership has been invitation-only since #142. Update the launch gate to match.
+
+**Acceptance:** no generated or fictional people on any public page. Every sensitive field has its own
+consent record and per-field visibility. Every member can restrict who messages them. No member is active
+without age verification. A report produces an outcome notice and a statement of reasons. Admins can
+read the founding metrics weekly.
+
+---
+
 ## Phase 0: Rescue and simplification  (milestone `M0-rescue`)
 **Objective:** one working production path, one identity, no dead code.
 
@@ -212,6 +259,10 @@ The emotional promise is not "more sex". It is:
 
 ## Sequencing summary
 ```text
+FM track first: FM-02 imagery · FM-03 security · FM-04 metrics · FM-01 consent · FM-05 processor (parallel)
+             ─► FM-06 age at vetting · FM-07 DSA reports · FM-08 message controls · FM-09 identity (needs FM-01) · FM-10 codes
+             ─► FM-11 Premium (needs FM-05 approval + owner decision on Phase 5) ─► FM-12 Guest List ticketing
+
 P0 remainder (parallel, small): P0-03 staging · P0-04 R2 check · P0-09 env cleanup · P0-10 admin · P0-12/13
 
 P1-03 Prague Areas ─► P1-02 Onboarding v3 ─► P1-19 Desire Graph ─► P1-20 Boundaries
