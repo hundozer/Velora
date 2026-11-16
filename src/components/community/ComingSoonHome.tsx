@@ -25,7 +25,7 @@ export function ComingSoonHome() {
     <div className="mx-auto max-w-6xl px-5 sm:px-8">
       <section className="flex min-h-[calc(100svh-9rem)] flex-col items-center justify-center py-16 text-center sm:py-24" aria-labelledby="coming-soon-title">
         <div aria-hidden className="intimo-reveal"><Logo variant="symbol" className="intimo-breathe h-24 w-auto text-velora-ink sm:h-32" /></div>
-        <p className="intimo-reveal mt-10 text-xs font-semibold uppercase tracking-[0.24em] text-velora-muted" style={delay(250)}>{t("Coming soon · Prague · 18+")}</p>
+        <p className="intimo-reveal mt-10 text-xs font-semibold uppercase tracking-[0.24em] text-velora-muted" style={delay(250)}><span className="block sm:inline">{t("Opening soon, by invitation")}</span><span className="hidden sm:inline" aria-hidden> · </span><span className="mt-2 block sm:mt-0 sm:inline">{t("Prague · 18+")}</span></p>
         <h1 id="coming-soon-title" className="mt-6 font-display text-[clamp(3rem,9vw,7.5rem)] font-extrabold leading-[0.98] tracking-[-0.04em]">
           <span className="intimo-reveal block" style={delay(450)}>{t("Not for everyone.")}</span>
           <span className="intimo-reveal block text-velora-ink2" style={delay(1100)}>{t("Maybe for you.")}</span>
