@@ -31,13 +31,13 @@ To see whether production holds any values, run this read-only query in the Supa
 
 ```sql
 select
-  count(*) filter (where cardinality(coalesce(erogenous_zones, '{}')) > 0)         as erogenous_zones,
-  count(*) filter (where cardinality(coalesce(favourite_sex_places, '{}')) > 0)    as favourite_sex_places,
-  count(*) filter (where cardinality(coalesce(favourite_sex_positions, '{}')) > 0) as favourite_sex_positions,
-  count(*) filter (where cardinality(coalesce(sex_hobbies, '{}')) > 0)             as sex_hobbies,
-  count(*) filter (where pubic_hair_grooming is not null)                          as pubic_hair_grooming,
-  count(*) filter (where piercing is not null)                                     as piercing,
-  count(*) filter (where tattoo is not null)                                       as tattoo
+  count(*) filter (where erogenous_zones         is not null and erogenous_zones         <> '[]'::jsonb) as erogenous_zones,
+  count(*) filter (where favourite_sex_places    is not null and favourite_sex_places    <> '[]'::jsonb) as favourite_sex_places,
+  count(*) filter (where favourite_sex_positions is not null and favourite_sex_positions <> '[]'::jsonb) as favourite_sex_positions,
+  count(*) filter (where sex_hobbies             is not null and sex_hobbies             <> '[]'::jsonb) as sex_hobbies,
+  count(*) filter (where pubic_hair_grooming is not null) as pubic_hair_grooming,
+  count(*) filter (where piercing            is not null) as piercing,
+  count(*) filter (where tattoo              is not null) as tattoo
 from public.profiles;
 ```
 
