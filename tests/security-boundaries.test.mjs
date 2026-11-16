@@ -649,7 +649,9 @@ test("media authorization and identity verification append durable audit evidenc
   for (const route of [presign, verification, evidence]) assert.match(route, /appendDurableAudit/);
   assert.match(presign, /Upload authorization could not be audited/);
   assert.match(evidence, /Verification evidence access could not be audited/);
-  assert.ok(evidence.indexOf("appendDurableAudit(db") < evidence.indexOf("NextResponse.redirect"));
+  // FM-03: evidence is proxied re-encoded bytes; the audit row is written before they go out.
+  assert.doesNotMatch(evidence, /NextResponse\.redirect|getPresignedDownloadUrl/);
+  assert.ok(evidence.indexOf("appendDurableAudit(db") < evidence.indexOf("deliverMedia(media"));
 });
 
 test("privileged admin decisions use explicit inline forms, not ambiguous browser prompts", async () => {
