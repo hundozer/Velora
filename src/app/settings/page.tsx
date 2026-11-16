@@ -399,9 +399,9 @@ export default function SettingsPage() {
           <VisibilityChoice
             icon={<MessageSquare className="h-5 w-5" />}
             title={t("Who can message you")}
-            description={t("Limit new conversations without hiding your profile. Friends means people whose request you accepted.")}
+            description={t("Limit new conversations without hiding your profile. Verified means members whose photo we have checked. Friends means people whose request you accepted.")}
             value={privacy.messagePermission}
-            options={[["EVERYONE", "Everyone"], ["MEMBERS_ONLY", "Members"], ["FRIENDS_ONLY", "Friends"], ["PRIVATE", "Nobody"]]}
+            options={[["EVERYONE", "Everyone"], ["MEMBERS_ONLY", "Members"], ["VERIFIED_ONLY", "Verified members"], ["FRIENDS_ONLY", "Friends"], ["PRIVATE", "Nobody"]]}
             onChange={(value) => setPrivacy({ ...privacy, messagePermission: value })}
           />
         </div>

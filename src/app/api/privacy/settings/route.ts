@@ -10,7 +10,7 @@ const COLUMNS = "profile_visibility,sensitive_fields_visibility,location_precisi
 const LEGACY_COLUMNS = "profile_visibility,sensitive_fields_visibility,location_precision,show_online_status,show_distance,message_permission,browse_invisibly";
 const UNDEFINED_COLUMN = "42703";
 const VISIBILITY = new Set(["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY", "PRIVATE"]);
-const MESSAGE_PERMISSION = new Set(["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY", "PRIVATE"]);
+const MESSAGE_PERMISSION = new Set(["EVERYONE", "MEMBERS_ONLY", "VERIFIED_ONLY", "FRIENDS_ONLY", "PRIVATE"]);
 
 export async function GET(req: NextRequest) {
   const actor = await resolveServerActor(req);
