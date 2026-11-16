@@ -64,6 +64,12 @@ body {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* Coming Soon: a slow reveal and a breathing logo. Reduced motion (below) turns both off. */
+@keyframes intimo-reveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes intimo-breathe { 0%, 100% { opacity: 0.82; transform: scale(1); } 50% { opacity: 1; transform: scale(1.03); } }
+.intimo-reveal { animation: intimo-reveal 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.intimo-breathe { animation: intimo-breathe 6s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
