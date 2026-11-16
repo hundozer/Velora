@@ -24,8 +24,10 @@ test("middleware closes the site for signed-out and forged sessions only", async
 });
 
 test("the front page is the invitation request, with no photos, example profiles or counts", async () => {
-  const page = await read("src/app/page.tsx");
-  assert.match(page, /COMING_SOON \? <ComingSoonHome \/> : <PublicCommunityHome \/>/);
+  // "/" and its cookie-bearing rewrite (/member-home) fall back to the same front page.
+  for (const file of ["src/app/page.tsx", "src/app/member-home/page.tsx"]) {
+    assert.match(await read(file), /COMING_SOON \? <ComingSoonHome \/> : <PublicCommunityHome \/>/, file);
+  }
   const home = await read("src/components/community/ComingSoonHome.tsx");
   assert.match(home, /<InvitationRequestForm \/>/);
   assert.match(home, /href="\/auth\/login"/);
