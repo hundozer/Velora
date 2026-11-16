@@ -83,7 +83,14 @@ test("the numbers API is admin-only, MFA-gated and returns aggregates", async ()
   assert.match(route, /requireAdminPermission\(req, "users:view_sensitive"\)/);
   assert.match(route, /Cache-Control": "private, no-store"/);
   // Only aggregate fields leave the server: no ids, emails or names are selected.
-  for (const select of route.matchAll(/select\("([^"]+)"\)/g)) assert.doesNotMatch(select[1], /\bid\b|email|display_name|username/);
+  const columns = [...route.matchAll(/readAll\(db, "[a-z_]+", "([^"]+)"/g)].map((match) => match[1]);
+  assert.equal(columns.length, 4);
+  for (const list of columns) assert.doesNotMatch(list, /\bid\b|email|display_name|username/);
+  // PostgREST caps each response at 1,000 rows: read in pages and detect truncation from the exact count.
+  assert.match(route, /const PAGE = 1_000/);
+  assert.match(route, /\.range\(from, from \+ PAGE - 1\)/);
+  assert.match(route, /count: from === 0 \? "exact"/);
+  assert.match(route, /truncated: total !== null \? total > rows\.length/);
   assert.match(route, /NextResponse\.json\(\{ metrics, truncated \}/);
   const center = await read("src/components/admin/AdminCommandCenter.tsx");
   assert.match(center, /pathname\.startsWith\("\/admin\/numbers"\)\) \{ title = "Numbers"; if \(can\("users:view_sensitive"\)\)/);
