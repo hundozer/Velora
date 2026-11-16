@@ -8,6 +8,7 @@ import { AdminPlansConsole } from "@/components/admin/AdminPlansConsole";
 import { AdminPersonalAdsConsole } from "@/components/admin/AdminPersonalAdsConsole";
 import { AdminQueuesOverview } from "@/components/admin/AdminQueuesOverview";
 import { AdminInvitationRequestsConsole } from "@/components/admin/AdminInvitationRequestsConsole";
+import { AdminNumbersConsole } from "@/components/admin/AdminNumbersConsole";
 import { usePathname, useSearchParams } from "next/navigation";
 import React from "react";
 import { AlertTriangle, Search, Shield } from "lucide-react";
@@ -21,7 +22,7 @@ import { AdminMembershipEditor } from "./AdminMembershipEditor";
 import type { WorkspaceActor } from "./workspaceTypes";
 
 const NAV = [
-  ["/admin", "Dashboard"], ["/admin/god", "God Mode"], ["/admin/users", "Users"], ["/admin/invitations", "Invitation requests"], ["/admin/verification", "Verification"], ["/admin/moderation", "Moderation"], ["/admin/queues", "Review queues"], ["/admin/content", "Content"], ["/admin/plans", "Plans"], ["/admin/scene", "Prague Scene"], ["/admin/reports", "Reports"], ["/admin/privacy", "Privacy & GDPR"], ["/admin/audit", "Audit Log"], ["/admin/settings", "System"], ["/admin/profile", "My Admin Profile"],
+  ["/admin", "Dashboard"], ["/admin/god", "God Mode"], ["/admin/users", "Users"], ["/admin/invitations", "Invitation requests"], ["/admin/numbers", "Numbers"], ["/admin/verification", "Verification"], ["/admin/moderation", "Moderation"], ["/admin/queues", "Review queues"], ["/admin/content", "Content"], ["/admin/plans", "Plans"], ["/admin/scene", "Prague Scene"], ["/admin/reports", "Reports"], ["/admin/privacy", "Privacy & GDPR"], ["/admin/audit", "Audit Log"], ["/admin/settings", "System"], ["/admin/profile", "My Admin Profile"],
 ] as const;
 
 function Panel({ title, value, detail, risk = false }: { title: string; value: React.ReactNode; detail: string; risk?: boolean }) {
@@ -78,6 +79,7 @@ export function AdminCommandCenter({ actor }: { actor: WorkspaceActor }) {
   if (inbox) return <AdminWorkspaceShell actor={actor}><AdminWorkInbox key={pathname} actor={actor} initialFilter={pathname.includes("content") ? "content" : pathname.includes("verification") ? "verification" : pathname.includes("moderation") || pathname.includes("reports") ? "report" : "all"}/></AdminWorkspaceShell>;
   let title = "Operations"; let content: React.ReactNode = <p>Your role does not have access to this tool.</p>;
   if (pathname.startsWith("/admin/users")) { title = "Members"; if (can("users:view_basic")) content = <UsersView actor={actor} key={params.get("q") || ""}/>; }
+  else if (pathname.startsWith("/admin/numbers")) { title = "Numbers"; if (can("users:view_sensitive")) content = <AdminNumbersConsole/>; }
   else if (pathname.startsWith("/admin/invitations")) { title = "Invitation requests"; if (can("users:view_sensitive")) content = <AdminInvitationRequestsConsole/>; }
   else if (pathname.startsWith("/admin/privacy")) { title = "Privacy requests"; if (can("privacy:view")) content = <><p className="mb-5 max-w-3xl text-sm text-velora-ink2">Track requests and deadlines. Marking a request complete does not itself execute an export or permanently erase files. Record the execution evidence in the decision reason.</p><QueueView kind="privacy"/></>; }
   else if (pathname.startsWith("/admin/audit")) { title = "Activity"; if (can("audit:view")) content = <QueueView kind="audit"/>; }
