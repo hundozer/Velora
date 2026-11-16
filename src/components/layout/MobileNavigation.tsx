@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useTranslation } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { isFlowPath } from "@/lib/flowRoutes";
+import { COMING_SOON } from "@/lib/comingSoon.mjs";
 import { useNavTone } from "@/lib/ui/navTone";
 import { useUnreadCounts } from "@/lib/notifications/useUnreadCounts";
 
@@ -36,6 +37,8 @@ export const MobileNavigation: React.FC = () => {
         { href: "/tonight", label: t("nav.tonight") },
       ] as { href: string; label: string; unread?: number }[];
   if (isFlowPath(pathname)) return null;
+  // Coming Soon: signed-out visitors have nowhere to go but the front page.
+  if (COMING_SOON && !user) return null;
   const dark = tone === "dark";
 
   return (
