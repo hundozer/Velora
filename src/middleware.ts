@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { MONETIZATION_ENABLED, isMonetizationRoute, isMvpSafetyDisabledRoute } from "@/lib/features";
+import { COMING_SOON, isOpenWhileComingSoon } from "@/lib/comingSoon.mjs";
+
+/** Coming Soon: signed-out visitors go back to the front page; public APIs answer 404. */
+function comingSoonResponse(request: NextRequest) {
+  if (request.nextUrl.pathname.startsWith("/api/")) return NextResponse.json({ error: "Not found" }, { status: 404, headers: { "Cache-Control": "no-store" } });
+  return NextResponse.redirect(new URL("/", request.url), 307);
+}
 
 /**
  * Route gating plus Supabase session refresh. Authorization itself happens in
@@ -28,9 +35,10 @@ export async function middleware(request: NextRequest) {
   }
 
   const hasSessionHint = request.cookies.getAll().some(({ name, value }) => value && /^sb-.+-auth-token(?:\.\d+)?$/.test(name));
+  const gated = COMING_SOON && !isOpenWhileComingSoon(pathname);
   // There is nothing to refresh for a cookie-free visitor. Protected handlers
   // still verify identity themselves; this shortcut never grants access.
-  if (!hasSessionHint) return NextResponse.next({ request });
+  if (!hasSessionHint) return gated ? comingSoonResponse(request) : NextResponse.next({ request });
 
   const nextResponse = () => {
     if (pathname === "/") {
@@ -54,7 +62,13 @@ export async function middleware(request: NextRequest) {
     },
   });
   // Refreshes an expiring session and writes the rotated cookies onto the response.
-  await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
+  // A stale or forged session cookie does not open the closed site.
+  if (gated && !user) {
+    const closed = comingSoonResponse(request);
+    response.cookies.getAll().forEach((cookie) => closed.cookies.set(cookie));
+    return closed;
+  }
   return response;
 }
 

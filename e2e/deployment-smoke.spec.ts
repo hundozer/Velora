@@ -4,17 +4,18 @@ import { expect, test } from "@playwright/test";
 test.beforeAll(() => {
   if (!process.env.E2E_BASE_URL) throw new Error("E2E_BASE_URL is required; smoke cannot silently skip.");
 });
-test("deployment serves public data and protects member/admin endpoints", async ({ request }) => {
+test("deployment serves the front page and protects member/admin endpoints", async ({ request }) => {
   const home = await request.get("/", { maxRedirects: 0 });
   const redirect = home.headers().location ? new URL(home.headers().location, process.env.E2E_BASE_URL) : null;
   const accessDetail = redirect ? `redirect to ${redirect.origin}${redirect.pathname}` : (home.headers()["x-vercel-error"] || "no redirect");
   expect(home.status(), `Preview access must reach Intimo directly (${accessDetail})`).toBe(200);
   expect((await home.text()).includes("Intimo"), "homepage must be the application").toBe(true);
+  // Coming Soon (src/lib/comingSoon.mjs): signed-out visitors get no public community data or pages.
   const community = await request.get("/api/public/community?limit=1", { maxRedirects: 0 });
-  expect(community.status(), "real database-backed request").toBe(200);
-  const data = await community.json();
-  expect(Array.isArray(data.profiles)).toBe(true);
-  expect(data.demoContentPresent).toBe(false);
+  expect(community.status(), "public community API is closed to signed-out visitors").toBe(404);
+  const people = await request.get("/people", { maxRedirects: 0 });
+  expect(people.status(), "public pages send signed-out visitors to the front page").toBe(307);
+  expect(new URL(people.headers().location, process.env.E2E_BASE_URL).pathname).toBe("/");
   for (const path of ["/api/profile/me", "/api/discovery/profiles", "/api/messages", "/api/admin/overview", "/api/admin/albums/12345678-1234-4123-8123-123456789012/photos", "/api/admin/media/12345678-1234-4123-8123-123456789012/preview"]) {
     const response = await request.get(path, { maxRedirects: 0 });
     expect(response.status(), path).toBe(401);

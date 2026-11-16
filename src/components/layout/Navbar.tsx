@@ -1,5 +1,6 @@
 "use client";
 import { Logo } from "@/components/brand/Logo";
+import { COMING_SOON } from "@/lib/comingSoon.mjs";
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -51,14 +52,14 @@ export const Navbar: React.FC = () => {
 
         {/* Me lives in the account menu. */}
         <nav className="hidden lg:flex items-center gap-1" aria-label={t("Primary navigation")}>
-          {[
+          {(COMING_SOON && !user ? [] : [
             { href: "/", label: "Home", active: pathname === "/" },
             { href: "/people", label: "People", active: pathname.startsWith("/people") },
             { href: "/personal-ads", label: "Dating Ads", active: pathname.startsWith("/personal-ads") },
             { href: "/tonight", label: "Tonight", active: pathname.startsWith("/tonight") },
             ...(user ? [{ href: "/rooms", label: "Rooms", active: pathname.startsWith("/rooms") }] : []),
             ...(user ? [{ href: "/messages", label: t("nav.messages"), active: pathname.startsWith("/messages") }] : []),
-          ].map((item) => (
+          ]).map((item) => (
             <Link key={item.href} href={item.href} aria-current={item.active ? "page" : undefined} className={`rounded-full px-4 py-2 text-[15px] font-medium transition ${item.active ? "bg-velora-accent text-velora-paper" : "text-velora-ink2 hover:bg-velora-ink/5 hover:text-velora-ink"}`}>
               {t(item.label)}
             </Link>
@@ -183,7 +184,7 @@ export const Navbar: React.FC = () => {
                 {t("auth.login")}
               </a>
               <a
-                href="/register"
+                href={COMING_SOON ? "/#request-invitation" : "/register"}
                 className="hidden whitespace-nowrap rounded-full bg-velora-accent px-5 py-2.5 text-[15px] font-semibold text-velora-paper transition hover:bg-velora-accentHover min-[440px]:inline-block"
               >{t("Invitation only")}</a>
             </div>

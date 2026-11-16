@@ -12,6 +12,7 @@ import { AgeVerificationModal } from "@/components/common/AgeVerificationModal";
 import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration";
 import { DiscreetMode } from "@/components/privacy/DiscreetMode";
 import { serverLang, serverT } from "@/lib/i18n/server";
+import { COMING_SOON } from "@/lib/comingSoon.mjs";
 
 export function generateMetadata(): Metadata {
   const t = serverT();
@@ -20,6 +21,8 @@ export function generateMetadata(): Metadata {
     description: t("Sex partners, dates and shared kinks. Intimo is Prague's free sex-positive community for adults. Say what turns you on and what is off limits."),
     metadataBase: new URL("https://intimo.live"),
     applicationName: "Intimo",
+    // Coming Soon: keep the closed site out of search results.
+    ...(COMING_SOON ? { robots: { index: false, follow: false } } : {}),
     appleWebApp: { capable: true, title: "Intimo", statusBarStyle: "black-translucent" },
     // Brand: "The overlap" (docs/brand/BRAND.md). SVG favicon first, PNG fallbacks.
     icons: {
