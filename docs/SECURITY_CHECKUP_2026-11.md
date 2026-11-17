@@ -59,31 +59,64 @@ storage, and the preview keys could read and delete real members' photos (previe
 Vercel login, and the bucket held 7.7 MB). Vercel has no `CLOUDFLARE_R2_PUBLIC_DOMAIN`, so the
 code never pointed members at a public bucket address.
 
-**Fix.** Production gets its own private bucket and key. Done in the dashboards, about 15 minutes:
+**Fix.** Production gets its own private bucket and key. Mostly done in the dashboards; about 45 minutes including a 20-minute wait:
 
 1. ✅ **Cloudflare → R2 → Create bucket** `intimo-media`, with public access disabled and no
    custom domain (created 17 November).
-2. **Cloudflare → R2 → Manage API tokens → Create token**: *Object Read & Write*, restricted to
-   **only** `intimo-media`. Keep the Access Key ID and Secret.
-3. **Copy the existing files** before switching, so current photos keep working. The script only
-   reads the source and writes the target, never deletes, skips files already copied, and checks
-   every file afterwards. Use the old (preview) key for the source and the new key for the target:
+2. **Cloudflare → R2 → Manage API tokens → Create Account API token** named `Intimo production`:
+   *Object Read & Write*, restricted to **only** `intimo-media`. Keep the Access Key ID and Secret
+   (the secret is shown once). For the copy, also create a temporary token
+   `Intimo migration (delete after)` with *Object Read & Write* on **both** buckets. The existing
+   tokens' secrets cannot be shown again.
+3. **Allow browser uploads (CORS) on `intimo-media`.** Members' browsers upload directly to the
+   bucket with a `PUT` and a `Content-Type` header, and a new bucket refuses that until CORS
+   allows it. Without this, every upload breaks after the switch. In **intimo-media → Settings →
+   CORS Policy → Add CORS policy**, paste the following (add any other domain the live site is
+   served from):
+
+   ```json
+   [
+     {
+       "AllowedOrigins": ["https://intimo.live", "https://www.intimo.live"],
+       "AllowedMethods": ["PUT"],
+       "AllowedHeaders": ["content-type"],
+       "MaxAgeSeconds": 3600
+     }
+   ]
+   ```
+
+   Downloads need no CORS rule: members never read the bucket directly, because the server
+   proxies every photo.
+4. **Pick a quiet moment** (late evening). With the site behind Coming Soon and a handful of
+   members, uploads are rare. An upload in the few minutes between the copy and the switch is
+   caught up in step 7.
+5. **Copy the existing files.** The script only reads the source and writes the target, never
+   deletes, skips files already copied, and checks every file afterwards. Use the temporary
+   migration key for both sides:
 
    ```bash
-   R2_ACCOUNT_ID=<account id>    R2_SOURCE_BUCKET=intimo-staging-media R2_SOURCE_KEY_ID=<old key id> R2_SOURCE_SECRET=<old secret>    R2_TARGET_BUCKET=intimo-media R2_TARGET_KEY_ID=<new key id> R2_TARGET_SECRET=<new secret>    node scripts/copy-r2-bucket.mjs
+   R2_ACCOUNT_ID=<account id> \
+   R2_SOURCE_BUCKET=intimo-staging-media R2_SOURCE_KEY_ID=<migration key id> R2_SOURCE_SECRET=<migration secret> \
+   R2_TARGET_BUCKET=intimo-media R2_TARGET_KEY_ID=<migration key id> R2_TARGET_SECRET=<migration secret> \
+   node scripts/copy-r2-bucket.mjs
    ```
 
    That is a dry run that lists what it would copy. Run it again with `--copy` at the end to
    copy. It prints `"verified":true` when every file arrived intact.
-4. **Vercel → Settings → Environment Variables, Production only.** Edit these three and leave
-   the Preview ones alone:
-   `CLOUDFLARE_R2_BUCKET_NAME` = `intimo-media`, plus `CLOUDFLARE_R2_ACCESS_KEY_ID` and
-   `CLOUDFLARE_R2_SECRET_ACCESS_KEY` = the new key.
-5. **Redeploy production** (Deployments → latest → Redeploy). Check that an existing member photo
-   still loads and that a new upload works.
-6. **Limit the preview key** to `intimo-staging-media` only (Cloudflare → R2 → API tokens → edit),
-   so a test site can never touch production photos again. If the old key was account-wide, it is
-   simpler to create a new staging-only key and update the three Preview variables the same way.
+6. **Switch production, then redeploy.** In **Vercel → Settings → Environment Variables,
+   Production only**, set `CLOUDFLARE_R2_BUCKET_NAME` = `intimo-media`, plus
+   `CLOUDFLARE_R2_ACCESS_KEY_ID` and `CLOUDFLARE_R2_SECRET_ACCESS_KEY` = the `Intimo production`
+   key. Leave the Preview ones alone. Then Deployments → latest production → **Redeploy**.
+7. **Wait 20 minutes, then run the same `--copy` command once more.** Upload links stay valid for
+   15 minutes, so anything uploaded through the old deployment has landed in the old bucket by
+   then. The re-run copies only those stragglers and skips everything else. An upload that
+   started before the switch and finished after it may show an error; the member just uploads
+   again.
+8. **Check the live site:** an existing member photo still loads, and a new photo upload works.
+   This upload is the only real test of step 3. Then delete the temporary migration token.
+9. **Previews:** the three existing tokens are already limited to `intimo-staging-media`, so a
+   test site cannot reach the production bucket. No change is needed. Delete
+   `Intimo Local Development` if nobody runs the app on their own computer.
 
 The staging bucket keeps its copies of production photos after the move. Once production is
 confirmed working, those can be removed from staging (an irreversible step, so owner's call).
