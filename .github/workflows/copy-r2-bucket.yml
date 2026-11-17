@@ -1,0 +1,48 @@
+name: Copy R2 bucket (one-off)
+
+# Copies production media from the shared staging bucket into the production bucket
+# (docs/SECURITY_CHECKUP_2026-11.md). Run it by hand from the Actions tab. It only reads the
+# source and writes the target; it never deletes. Logs show counts only, never file names.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry-run lists what would be copied; copy copies it"
+        type: choice
+        options: [dry-run, copy]
+        default: dry-run
+      source_bucket:
+        description: "Bucket to read from"
+        default: intimo-staging-media
+      target_bucket:
+        description: "Bucket to write to"
+        default: intimo-media
+
+permissions:
+  contents: read
+
+concurrency:
+  group: copy-r2-bucket
+  cancel-in-progress: false
+
+jobs:
+  copy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Copy
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_SOURCE_BUCKET: ${{ inputs.source_bucket }}
+          R2_SOURCE_KEY_ID: ${{ secrets.R2_MIGRATION_KEY_ID }}
+          R2_SOURCE_SECRET: ${{ secrets.R2_MIGRATION_SECRET }}
+          R2_TARGET_BUCKET: ${{ inputs.target_bucket }}
+          R2_TARGET_KEY_ID: ${{ secrets.R2_MIGRATION_KEY_ID }}
+          R2_TARGET_SECRET: ${{ secrets.R2_MIGRATION_SECRET }}
+        run: node scripts/copy-r2-bucket.mjs --quiet ${{ inputs.mode == 'copy' && '--copy' || '' }}

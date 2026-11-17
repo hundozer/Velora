@@ -8,7 +8,8 @@
 //   R2_SOURCE_BUCKET=intimo-staging-media R2_SOURCE_KEY_ID=... R2_SOURCE_SECRET=... \
 //   R2_TARGET_BUCKET=intimo-media R2_TARGET_KEY_ID=... R2_TARGET_SECRET=... \
 //   node scripts/copy-r2-bucket.mjs
-// Copy: add --copy at the end.
+// Copy: add --copy at the end. Add --quiet to print counts only, never object names
+// (used by the GitHub Actions workflow, whose logs other collaborators can read).
 import { GetObjectCommand, HeadObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 function required(name) {
@@ -44,25 +45,26 @@ async function existingSize(s3, bucket, key) {
 }
 
 /** Plans and (optionally) performs the copy. Returns a summary; never deletes anything. */
-export async function copyBucket({ source, target, sourceBucket, targetBucket, execute, log = console.log }) {
+export async function copyBucket({ source, target, sourceBucket, targetBucket, execute, log = console.log, redact = false }) {
+  const name = (key) => (redact ? "an object" : key);
   if (sourceBucket === targetBucket) throw new Error("Source and target bucket must differ");
   const objects = await listAll(source, sourceBucket);
   const summary = { total: objects.length, bytes: objects.reduce((sum, o) => sum + o.size, 0), copied: 0, skipped: 0 };
   for (const object of objects) {
     if ((await existingSize(target, targetBucket, object.key)) === object.size) { summary.skipped++; continue; }
-    if (!execute) { log(`would copy ${object.key} (${object.size} bytes)`); continue; }
+    if (!execute) { log(`would copy ${name(object.key)} (${object.size} bytes)`); continue; }
     const got = await source.send(new GetObjectCommand({ Bucket: sourceBucket, Key: object.key }));
     const body = Buffer.from(await got.Body.transformToByteArray());
-    if (body.length !== object.size) throw new Error(`Size changed while reading ${object.key}`);
+    if (body.length !== object.size) throw new Error(`Size changed while reading ${name(object.key)}`);
     await target.send(new PutObjectCommand({ Bucket: targetBucket, Key: object.key, Body: body, ContentType: got.ContentType, CacheControl: got.CacheControl, ContentLength: body.length }));
     summary.copied++;
-    log(`copied ${object.key}`);
+    log(`copied ${name(object.key)}`);
   }
   if (execute) {
     // Verify: every source object exists at the target with the same size.
     const copied = new Map((await listAll(target, targetBucket)).map((o) => [o.key, o.size]));
     const missing = objects.filter((o) => copied.get(o.key) !== o.size).map((o) => o.key);
-    if (missing.length) throw new Error(`Verification failed for ${missing.length} object(s): ${missing.slice(0, 5).join(", ")}`);
+    if (missing.length) throw new Error(`Verification failed for ${missing.length} object(s)${redact ? "" : `: ${missing.slice(0, 5).join(", ")}`}`);
     summary.verified = true;
   }
   return summary;
@@ -71,12 +73,15 @@ export async function copyBucket({ source, target, sourceBucket, targetBucket, e
 if (import.meta.url === `file://${process.argv[1]}`) {
   const accountId = required("R2_ACCOUNT_ID");
   const execute = process.argv.includes("--copy");
+  const quiet = process.argv.includes("--quiet");
   const summary = await copyBucket({
     source: client(accountId, required("R2_SOURCE_KEY_ID"), required("R2_SOURCE_SECRET")),
     target: client(accountId, required("R2_TARGET_KEY_ID"), required("R2_TARGET_SECRET")),
     sourceBucket: required("R2_SOURCE_BUCKET"),
     targetBucket: required("R2_TARGET_BUCKET"),
     execute,
+    redact: quiet,
+    log: quiet ? () => {} : console.log,
   });
   console.log(JSON.stringify(summary));
   if (!execute) console.log("Dry run only. Add --copy to copy.");

@@ -90,30 +90,29 @@ code never pointed members at a public bucket address.
 4. **Pick a quiet moment** (late evening). With the site behind Coming Soon and a handful of
    members, uploads are rare. An upload in the few minutes between the copy and the switch is
    caught up in step 7.
-5. **Copy the existing files.** The script only reads the source and writes the target, never
-   deletes, skips files already copied, and checks every file afterwards. Use the temporary
-   migration key for both sides:
+5. **Copy the existing files, from GitHub (no local setup).** The script only reads the source and
+   writes the target, never deletes, skips files already copied, and checks every file afterwards.
+   Its log shows counts only, never file names.
+   1. **GitHub → Velora → Settings → Secrets and variables → Actions → New repository secret.**
+      Add three secrets: `R2_ACCOUNT_ID` (Cloudflare → R2 → Overview, *Account ID*),
+      `R2_MIGRATION_KEY_ID` and `R2_MIGRATION_SECRET` (the temporary migration key).
+   2. **GitHub → Actions → "Copy R2 bucket (one-off)" → Run workflow** with mode `dry-run`. When it
+      finishes, open the run: the last line reads like `{"total":42,"bytes":8063121,...}`.
+   3. Run it again with mode `copy`. Success ends with `"verified":true`.
 
-   ```bash
-   R2_ACCOUNT_ID=<account id> \
-   R2_SOURCE_BUCKET=intimo-staging-media R2_SOURCE_KEY_ID=<migration key id> R2_SOURCE_SECRET=<migration secret> \
-   R2_TARGET_BUCKET=intimo-media R2_TARGET_KEY_ID=<migration key id> R2_TARGET_SECRET=<migration secret> \
-   node scripts/copy-r2-bucket.mjs
-   ```
-
-   That is a dry run that lists what it would copy. Run it again with `--copy` at the end to
-   copy. It prints `"verified":true` when every file arrived intact.
+   The same script also runs locally (`node scripts/copy-r2-bucket.mjs`, with the `R2_*` variables
+   from the workflow file set in the shell).
 6. **Switch production, then redeploy.** In **Vercel → Settings → Environment Variables,
    Production only**, set `CLOUDFLARE_R2_BUCKET_NAME` = `intimo-media`, plus
    `CLOUDFLARE_R2_ACCESS_KEY_ID` and `CLOUDFLARE_R2_SECRET_ACCESS_KEY` = the `Intimo production`
    key. Leave the Preview ones alone. Then Deployments → latest production → **Redeploy**.
-7. **Wait 20 minutes, then run the same `--copy` command once more.** Upload links stay valid for
+7. **Wait 20 minutes, then run the workflow once more in `copy` mode.** Upload links stay valid for
    15 minutes, so anything uploaded through the old deployment has landed in the old bucket by
    then. The re-run copies only those stragglers and skips everything else. An upload that
    started before the switch and finished after it may show an error; the member just uploads
    again.
 8. **Check the live site:** an existing member photo still loads, and a new photo upload works.
-   This upload is the only real test of step 3. Then delete the temporary migration token.
+   This upload is the only real test of step 3. Then delete the temporary migration token in Cloudflare, and the three `R2_*` secrets in GitHub.
 9. **Previews:** the three existing tokens are already limited to `intimo-staging-media`, so a
    test site cannot reach the production bucket. No change is needed. Delete
    `Intimo Local Development` if nobody runs the app on their own computer.

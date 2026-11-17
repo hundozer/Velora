@@ -36,3 +36,15 @@ test("dry run copies nothing; --copy copies everything, keeps types and verifies
   assert.ok(!s3.calls.some((name) => /Delete/.test(name)));
   await assert.rejects(copyBucket({ ...args, targetBucket: "src", execute: true }), /must differ/);
 });
+
+test("quiet mode never prints object names, even when verification fails", async () => {
+  const buckets = { src: new Map([["avatars/123_jana_novakova.jpg", { body: Buffer.from("aaaa"), type: "image/jpeg" }]]) };
+  const s3 = fakeS3(buckets);
+  const lines = [];
+  await copyBucket({ source: s3, target: s3, sourceBucket: "src", targetBucket: "dst", execute: false, redact: true, log: () => {} });
+  // Simulate a target that silently drops writes, so verification fails.
+  const dropping = { ...s3, send: async (command) => command.constructor.name === "PutObjectCommand" ? {} : s3.send(command) };
+  await assert.rejects(copyBucket({ source: s3, target: dropping, sourceBucket: "src", targetBucket: "dst2", execute: true, redact: true, log: (line) => lines.push(line) }),
+    (error) => /Verification failed for 1 object\(s\)$/.test(error.message) && !error.message.includes("jana"));
+  assert.ok(lines.every((line) => !line.includes("jana")));
+});
