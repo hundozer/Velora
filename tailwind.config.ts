@@ -1,6 +1,6 @@
 import type { Config } from "tailwindcss";
 
-// Graphite / ice-blue palette. Values live as RGB channels in globals.css so
+// Graphite / paper / ice + ember palette (docs/brand/BRAND.md). Values live as RGB channels in globals.css so
 // opacity modifiers (bg-intimo-accent/10) keep working.
 const token = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
 
@@ -18,6 +18,10 @@ const intimoColors = {
   control: token("control"),
   accent: token("accent"),
   accentHover: token("accent-hover"),
+  cream: token("cream"),
+  printInk: token("print-ink"),
+  warm: token("warm"),
+  warmHover: token("warm-hover"),
   blush: token("blush"),
   copper: token("copper"),
   copperInk: token("copper-ink"),

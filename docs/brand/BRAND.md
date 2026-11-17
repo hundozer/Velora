@@ -33,7 +33,7 @@ import { Logo } from "@/components/brand/Logo";
 ```
 
 Rings and letters use `currentColor` (set it with `text-velora-ink`, or `text-velora-onPhoto`
-over photos); the lit overlap and the first i-dot use the theme’s `--accent`. The component
+over photos); the lit overlap and the first i-dot use the theme’s `--accent` (ice — never Ember). The component
 is generated from font outlines, so it never depends on a font loading.
 
 ### Files
@@ -61,38 +61,61 @@ is generated from font outlines, so it never depends on a font loading.
 
 ---
 
-## 2. Colour
+## 2. Colour — “Warm, not obvious”
 
+Same Intimo, warmer: a cool night ground, warm paper-coloured text, the ice-blue overlap,
+and one warm detail you don't expect — like a sweater in a field.
 Values match `src/app/globals.css`; use the CSS variables / Tailwind `velora-*` tokens in code.
 
 | Name | Hex | Token | Use |
 |---|---|---|---|
-| Graphite | `#191C20` | `--paper` | Page background, app icon |
+| Graphite (ground) | `#191C20` | `--paper` | Page background, app icon |
 | Surface | `#252B31` | `--surface` | Raised surfaces |
 | Night | `#12161A` | `--night` / `--sunken` | Deepest background, scrims |
-| Mist | `#EDF1F4` | `--ink` | Primary text, logo on dark |
-| Ice | `#A8D5EF` | `--accent` | The one bright accent: overlap, first i-dot, key actions |
+| Paper | `#F1E8DC` | `--ink` / `--cream` | Primary text and logo on dark; the paper of illustration cards and print |
+| Print ink | `#17110F` | `--print-ink` | Lines and text on paper |
+| Secondary text | `#CFC7BC` / `#A9A39E` | `--ink-2` / `--muted` | Supporting text (warm greys) |
+| Ice (the cool) | `#A8D5EF` | `--accent` | The overlap, the first i-dot, focus rings, small trust marks |
 | Ice on light | `#5FAED8` | — | Ice on light backgrounds (contrast) |
-| Secondary text | `#C1CAD2` / `#AAB7C3` | `--ink-2` / `--muted` | Supporting text |
+| Ember (the warm) | `#E0704F` | `--warm` | The one warm moment per view: the italic line of a headline, its hand-drawn stroke, the main action |
 
-Ice is used sparingly — one lit thing per view, like the logo.
+- **One cool, one warm.** Ice stays the logo's light; Ember is the surprise. Never more than one
+  warm moment per view, and no lipstick red by default.
+- Ember text on graphite and graphite text on an Ember button are both 5.4 : 1 (WCAG AA).
+- Ember is not an error colour: errors keep `--danger`.
 
 ## 3. Type
 
-- **Plus Jakarta Sans** — everything: headings ExtraBold/Bold with tight tracking, body Regular/Medium.
-- **Instrument Serif Italic** — only for people’s own words and quotes (“Mám ráda pomalé večery…”).
+- **Instrument Serif** — the voice: headlines, the brand line, captions and people's own words.
+  Roman for the statement, *italic* for the turn (“Není pro každého. *Možná pro tebe.*”).
+- **Plus Jakarta Sans** — everything practical: navigation, body text, buttons, forms, labels, numbers.
+- Small labels: Plus Jakarta Sans, uppercase, 11–12 px, `0.24em` tracking, `--muted`.
+- The name is never typed as a heading in either font — use the logo (section 1).
 
-## 4. Voice
+## 4. Texture and illustration
 
-- Short, warm, direct. Consent and boundaries first, never pushy.
+- **Human, not perfect.** Lines that wobble, paper with rough edges, a stroke drawn by hand.
+  In code: `@/components/brand/HandDrawn` (`HandUnderline`, `PaperCard`) and the `intimo-grain`
+  class (a 13 % film-grain overlay). Nothing glossy, no gradients, no drop shadows.
+- **Read it twice.** Illustrations are everyday images with a second meaning: ink on paper, one cool
+  and one warm note, a title like a gallery print (“Blessed are those who ask.”, “Wine has legs.”,
+  “Bound to happen.”). The sketches in code brief the illustrator, who brings the real hand.
+- **Mood: the blue hour** (*Modrá hodinka*) — the minute at dawn before anything is assumed.
+  Natural light, film grain, a cool night and one warm detail. Consent as the held breath before yes.
+
+## 5. Voice
+
+- Short, warm, direct, a little wry. Consent and boundaries first, never pushy.
 - Brand line: **Hranice první. Pak chemie.** / *Boundaries first. Then chemistry.*
+- Lines we use: *Není pro každého. Možná pro tebe.* · *No is a full sentence.* ·
+  *We ask before we stick.* · *Blessed are those who ask.* · *Ask first.*
 - Czech first for Prague, English for expats.
-- Never show member counts or invent activity; never promise what the product doesn’t do.
+- Never show member counts or invent activity; never promise what the product doesn't do.
 
-## 5. Social media
+## 6. Social media
 
-- Templates and the first 10 TikTok posts follow this brand (graphite, ice, Plus Jakarta Sans,
-  the end card with the brand line and `intimo.live`).
+- Six posts, one voice: a print, a line, a note, a city, an event, a quote. Same margins, the
+  serif for the line, one warm detail, the end card with the brand line and `intimo.live`.
 - Profile picture: `public/brand/intimo-icon-512.png`.
 - Keep everything non-explicit: no nudity, lingerie or fetish imagery, no hook-up language.
   Restrict posts to 18+ where the platform allows.

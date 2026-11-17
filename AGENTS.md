@@ -9,8 +9,10 @@ emails, social media, documents and any generated images.
   stand-in logo, never recreate the mark, and never use the retired `intimo↗` arrow wordmark.
 - **Files** outside the app (decks, social, print): `public/brand/` — don’t redraw them.
 - **Icons:** `public/icons/` (favicon, PWA, Apple touch icon) are the brand icons; keep them in sync with `public/brand/`.
-- **Colours:** use the theme tokens in `src/app/globals.css` (`velora-*` in Tailwind). Ice blue (`--accent`) is the single accent.
-- **Type:** Plus Jakarta Sans for everything; Instrument Serif Italic only for quotes / people’s own words.
+- **Colours:** use the theme tokens in `src/app/globals.css` (`velora-*` in Tailwind). One cool, one warm:
+  ice blue (`--accent`) lights the logo and small trust marks; Ember (`--warm`) is the one warm moment per view.
+- **Type:** Instrument Serif for the voice (headlines, brand line, captions, quotes); Plus Jakarta Sans for
+  everything practical (nav, body, buttons, forms).
 - **Changing the brand** means updating `docs/brand/BRAND.md`, `public/brand/`, `public/icons/` and
   `src/components/brand/Logo.tsx` together in one PR.
 
