@@ -5,7 +5,7 @@ import { grantIsActive } from "@/lib/privateAccess.mjs";
 
 // Lists an owner's private photos for a viewer with an active grant (P1-06).
 // Each URL is the authenticated /api/media/{id} route, which re-checks the grant
-// on every read and redirects to a short-lived signed link.
+// on every read and proxies re-encoded bytes: no storage URL ever reaches the browser.
 export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 

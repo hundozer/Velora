@@ -5,7 +5,6 @@ const accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID || "";
 const accessKeyId = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || "";
 const secretAccessKey = process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || "";
 const bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME || "intimo-media";
-const publicDomain = process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN || "";
 
 export const isR2Configured = Boolean(accountId && accessKeyId && secretAccessKey);
 
@@ -34,7 +33,6 @@ export interface PresignedUploadParams {
 
 export interface PresignedUploadResponse {
   uploadUrl: string;
-  publicUrl: string;
   objectKey: string;
   isMock: boolean;
 }
@@ -55,13 +53,8 @@ export async function getPresignedUploadUrl({
 
   if (!isR2Configured || !r2Client) {
     // Development fallback mock
-    const mockPublicUrl = publicDomain
-      ? `${publicDomain.replace(/\/$/, "")}/${objectKey}`
-      : `https://intimo.live/uploads/${objectKey}`;
-
     return {
       uploadUrl: `https://mock-r2-upload.intimo.live/upload?key=${encodeURIComponent(objectKey)}`,
-      publicUrl: mockPublicUrl,
       objectKey,
       isMock: true,
     };
@@ -77,13 +70,10 @@ export async function getPresignedUploadUrl({
   // Presigned URL valid for 15 minutes (900 seconds)
   const uploadUrl = await getSignedUrl(r2Client, command, { expiresIn: 900 });
 
-  const publicUrl = publicDomain
-    ? `${publicDomain.replace(/\/$/, "")}/${objectKey}`
-    : `https://${bucketName}.${accountId}.r2.dev/${objectKey}`;
-
+  // FM-03: no public bucket address is ever built. Members read media only through
+  // /api/media/{id}, which re-checks access and re-encodes images on every request.
   return {
     uploadUrl,
-    publicUrl,
     objectKey,
     isMock: false,
   };
@@ -93,22 +83,6 @@ export async function getPresignedDownloadUrl(objectKey: string): Promise<string
   if (!isR2Configured || !r2Client) throw new Error("Private media storage is unavailable");
   const command = new GetObjectCommand({ Bucket: bucketName, Key: objectKey });
   return getSignedUrl(r2Client, command, { expiresIn: 300 });
-}
-
-/**
- * Signed URL that stays identical for a whole time window, so the browser can cache
- * the image instead of re-downloading it on every render. Only used for media the
- * caller has already authorised and that is not private-album or chat media.
- * The URL remains valid for at least `windowSeconds` after the window ends.
- */
-export async function getCacheableDownloadUrl(objectKey: string, windowSeconds = 1800, now = Date.now()): Promise<{ url: string; maxAgeSeconds: number }> {
-  if (!isR2Configured || !r2Client) throw new Error("Private media storage is unavailable");
-  const windowMs = windowSeconds * 1000;
-  const windowStart = Math.floor(now / windowMs) * windowMs;
-  const command = new GetObjectCommand({ Bucket: bucketName, Key: objectKey });
-  const url = await getSignedUrl(r2Client, command, { expiresIn: windowSeconds * 2, signingDate: new Date(windowStart) });
-  const maxAgeSeconds = Math.max(0, Math.floor((windowStart + windowMs - now) / 1000));
-  return { url, maxAgeSeconds };
 }
 
 export async function getStoredObject(objectKey: string): Promise<Buffer> {

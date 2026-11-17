@@ -163,13 +163,18 @@ export async function POST(req: NextRequest) {
     interests: strings(body.interests),
     lifestyle_tags: ["Discreet"],
     hobbies: strings(body.hobbies),
-    sex_hobbies: strings(body.hobbies),
-    favourite_sex_positions: strings(body.positions),
-    pubic_hair_grooming: typeof body.pubicHairGrooming === "string" ? body.pubicHairGrooming.slice(0, 50) : null,
-    piercing: typeof body.piercing === "string" ? body.piercing.slice(0, 50) : null,
-    tattoo: typeof body.tattoo === "string" ? body.tattoo.slice(0, 50) : null,
+    // FM-03: intimate legacy fields are no longer collected. Nothing shows them, and
+    // desires and boundaries cover them with consent (see docs/SECURITY_CHECKUP_2026-11.md).
+    sex_hobbies: [],
+    favourite_sex_positions: [],
+    pubic_hair_grooming: null,
+    piercing: null,
+    tattoo: null,
     is_couple_profile: profileType === "COUPLE",
-    avatar_url: typeof body.avatarUrl === "string" && body.avatarUrl.startsWith("https://") ? body.avatarUrl.slice(0, 2_000) : null,
+    // The photo is added afterwards through PUT, which only accepts the member's own uploaded
+    // media. An arbitrary https URL here would let a profile load a third-party image that
+    // learns every viewer's IP address.
+    avatar_url: null,
     gallery_images: [],
     profile_visibility: "MEMBERS_ONLY",
     sensitive_fields_visibility: "PRIVATE",
