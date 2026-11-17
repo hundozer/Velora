@@ -49,14 +49,44 @@ Lower priority, not personal data: legacy monetisation columns (`monthly_subscri
 `subscribers_count`, `member_tier`, `followers_count`, `total_content_count`) can go with the
 P0 cleanup.
 
-## Owner check: the storage bucket must stay private
+## Storage buckets: separate production from staging
 
-The code never builds a public bucket address any more, but only the Cloudflare dashboard can
-show whether the bucket itself is public. In **Cloudflare → R2 → `intimo-media` → Settings**:
+**Finding (17 November 2026).** Cloudflare had a single bucket, `intimo-staging-media`, with
+public access disabled. Previews are configured to use it. The production bucket setting in
+Vercel is stored as *sensitive*, so its value can no longer be read, but with only one bucket in
+the account it can only have been that one. The live site and the test sites therefore shared
+storage, and the preview keys could read and delete real members' photos (previews are behind
+Vercel login, and the bucket held 7.7 MB). Vercel has no `CLOUDFLARE_R2_PUBLIC_DOMAIN`, so the
+code never pointed members at a public bucket address.
 
-1. **Public Development URL (r2.dev)**: must be **Disabled**.
-2. **Custom Domains**: must be **empty**.
-3. In Vercel, `CLOUDFLARE_R2_PUBLIC_DOMAIN` is no longer read by the code. Delete it if it is set.
+**Fix.** Production gets its own private bucket and key. Done in the dashboards, about 15 minutes:
 
-If either of the first two is on, anyone holding an object path could fetch an original photo,
-GPS included, without logging in.
+1. ✅ **Cloudflare → R2 → Create bucket** `intimo-media`, with public access disabled and no
+   custom domain (created 17 November).
+2. **Cloudflare → R2 → Manage API tokens → Create token**: *Object Read & Write*, restricted to
+   **only** `intimo-media`. Keep the Access Key ID and Secret.
+3. **Copy the existing files** before switching, so current photos keep working. The script only
+   reads the source and writes the target, never deletes, skips files already copied, and checks
+   every file afterwards. Use the old (preview) key for the source and the new key for the target:
+
+   ```bash
+   R2_ACCOUNT_ID=<account id>    R2_SOURCE_BUCKET=intimo-staging-media R2_SOURCE_KEY_ID=<old key id> R2_SOURCE_SECRET=<old secret>    R2_TARGET_BUCKET=intimo-media R2_TARGET_KEY_ID=<new key id> R2_TARGET_SECRET=<new secret>    node scripts/copy-r2-bucket.mjs
+   ```
+
+   That is a dry run that lists what it would copy. Run it again with `--copy` at the end to
+   copy. It prints `"verified":true` when every file arrived intact.
+4. **Vercel → Settings → Environment Variables, Production only.** Edit these three and leave
+   the Preview ones alone:
+   `CLOUDFLARE_R2_BUCKET_NAME` = `intimo-media`, plus `CLOUDFLARE_R2_ACCESS_KEY_ID` and
+   `CLOUDFLARE_R2_SECRET_ACCESS_KEY` = the new key.
+5. **Redeploy production** (Deployments → latest → Redeploy). Check that an existing member photo
+   still loads and that a new upload works.
+6. **Limit the preview key** to `intimo-staging-media` only (Cloudflare → R2 → API tokens → edit),
+   so a test site can never touch production photos again. If the old key was account-wide, it is
+   simpler to create a new staging-only key and update the three Preview variables the same way.
+
+The staging bucket keeps its copies of production photos after the move. Once production is
+confirmed working, those can be removed from staging (an irreversible step, so owner's call).
+
+Checklist for both buckets (Cloudflare → bucket → Settings): **Public Development URL
+(r2.dev): Disabled**, and **Custom Domains: empty**.
