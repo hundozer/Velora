@@ -3,6 +3,9 @@ import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
+import { isMissingColumnError } from "@/lib/identity.mjs";
+import { affectedMemberMaySee, mayAppeal, reporterState } from "@/lib/moderation/outcomes.mjs";
+import { notifySafetyTeam } from "@/lib/notifications/safetyAlert";
 
 export const dynamic = "force-dynamic";
 const TYPES = new Set(["PROFILE","PHOTO","ALBUM","VIDEO","MESSAGE","POST","COMMENT","COMMUNITY","EVENT","LIVESTREAM"]);
@@ -10,15 +13,39 @@ const REASONS = new Set(["SUSPECTED_MINOR","NON_CONSENSUAL_INTIMATE_CONTENT","HA
 const CRITICAL = new Set(["SUSPECTED_MINOR","NON_CONSENSUAL_INTIMATE_CONTENT","EXPLOITATION_TRAFFICKING"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+const CASE_COLUMNS = "id,reporter_id,reported_user_id,content_type,reason,status,priority,decision_timestamp,appeal_status,created_at";
+
+/**
+ * FM-07: a member's own reports (outcome only) and the decisions taken about them (a statement
+ * of reasons). Open or dismissed reports about a member are never shown to them, and nobody
+ * learns who reported them.
+ */
 export async function GET(req: NextRequest) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
   if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Reporting service unavailable" }, { status: 503 });
-  const { data, error } = await supabase.from("moderation_cases").select("id,reporter_id,reported_user_id,content_type,content_id,reason,status,priority,decision,decision_reason,decision_timestamp,appeal_status,created_at").or(`reporter_id.eq.${actor.actor.profileId},reported_user_id.eq.${actor.actor.profileId}`).order("created_at", { ascending: false }).limit(200);
-  if (error) return NextResponse.json({ error: "Report history lookup failed" }, { status: 502 });
-  return NextResponse.json({ reports: (data || []).map(({ reporter_id, reported_user_id, ...item }) => ({ ...item, relationship: reported_user_id === actor.actor.profileId ? "AFFECTED_USER" : "REPORTER" })) }, { headers: { "Cache-Control": "private, no-store" } });
+  const me = actor.actor.profileId;
+  const list = (columns: string) => supabase.from("moderation_cases").select(columns).or(`reporter_id.eq.${me},reported_user_id.eq.${me}`).order("created_at", { ascending: false }).limit(200);
+  let result = await list(`${CASE_COLUMNS},action_taken,policy_ground,member_statement`);
+  // Before the FM-07 migration no statements exist, so nothing is shown to the reported member.
+  if (isMissingColumnError(result.error)) result = await list(CASE_COLUMNS);
+  if (result.error) return NextResponse.json({ error: "Report history lookup failed" }, { status: 502 });
+  const rows = (result.data || []) as unknown as Array<Record<string, any>>;
+  const { data: appeals, error: appealError } = await supabase.from("moderation_appeals").select("case_id,status,decision_reason,created_at,decided_at").eq("appellant_id", me);
+  if (appealError) return NextResponse.json({ error: "Report history lookup failed" }, { status: 502 });
+  const myAppeal = new Map((appeals || []).map((row) => [row.case_id, { status: row.status, explanation: row.decided_at ? row.decision_reason : null, submittedAt: row.created_at, decidedAt: row.decided_at }]));
+  const reports = rows.filter((row) => row.reporter_id === me).map((row) => ({
+    id: row.id, relationship: "REPORTER", contentType: row.content_type, reason: row.reason, createdAt: row.created_at,
+    state: reporterState(row), mayAppeal: mayAppeal(row, me), appeal: myAppeal.get(row.id) || null,
+  }));
+  const decisions = rows.filter((row) => row.reported_user_id === me && affectedMemberMaySee(row)).map((row) => ({
+    id: row.id, relationship: "AFFECTED_USER", contentType: row.content_type, decidedAt: row.decision_timestamp,
+    action: row.action_taken, ground: row.policy_ground, statement: row.member_statement, automated: false,
+    mayAppeal: mayAppeal(row, me), appeal: myAppeal.get(row.id) || null,
+  }));
+  return NextResponse.json({ reports, decisions }, { headers: { "Cache-Control": "private, no-store" } });
 }
 
 export async function POST(req: NextRequest) {
@@ -47,5 +74,7 @@ export async function POST(req: NextRequest) {
   const { data, error } = await supabase.rpc("intimo_create_report", { p_reporter_id: actor.actor.profileId, p_reported_user_id: reportedUserId, p_content_type: contentType, p_content_id: contentId, p_reason: reason, p_description: description, p_priority: priority, p_status: status });
   if (error || !data) return NextResponse.json({ error: "Report submission failed" }, { status: 502 });
   auditLogger.logEvent({ actorId: actor.actor.userId, actorRole: actor.actor.role as any, action: "REPORT_CREATE", resourceId: data.id, resourceType: "MODERATION_CASE", status: "SUCCESS", details: { contentType, reason, priority } });
+  // FM-07: a 1-hour target needs someone to know at once. The alert carries no report details.
+  if (priority === "CRITICAL") await notifySafetyTeam({ caseId: data.id, reason, createdAt: data.created_at || new Date().toISOString() });
   return NextResponse.json({ report: data }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
 }

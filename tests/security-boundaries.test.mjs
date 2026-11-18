@@ -139,10 +139,12 @@ test("affected users can see eligible decisions and appeal while plans expose re
   const settings = await read("src/app/settings/page.tsx");
   const dating = await read("src/app/tonight/page.tsx");
   const planCard = await read("src/components/plans/PlanCard.tsx");
-  assert.match(reports, /relationship: reported_user_id === actor\.actor\.profileId \? "AFFECTED_USER" : "REPORTER"/);
-  assert.match(appeal, /eq\("reported_user_id", actor\.actor\.profileId\)/);
-  assert.match(appeal, /\["RESOLVED", "REJECTED"\]/);
-  assert.match(settings, /Appeal this decision/);
+  // FM-07: the reported member sees only decided cases with action taken; reporters see outcomes.
+  assert.match(reports, /row\.reported_user_id === me && affectedMemberMaySee\(row\)/);
+  assert.match(reports, /relationship: "REPORTER"/);
+  assert.match(appeal, /or\(`reporter_id\.eq\.\$\{me\},reported_user_id\.eq\.\$\{me\}`\)/);
+  assert.match(appeal, /!mayAppeal\(moderationCase, me\)/);
+  assert.match(settings, /<ReportsAndDecisions \/>/);
   assert.match(dating, /contentType="POST"/);
   assert.match(planCard, /Report this plan/);
 });

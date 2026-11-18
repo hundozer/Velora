@@ -5,6 +5,7 @@ import { Inbox, Flag, Image, FileCheck2, Search, RefreshCw, ArrowLeft, AlertCirc
 import { sources, normalizeWork, sortWork, readable, waiting, photoReady, albumReady } from '@/lib/admin/workspace.mjs';
 import { AdminReviewGallery } from './AdminReviewGallery';
 import { AdminMemberContext } from './AdminMemberContext';
+import { ReportDecision } from './ReportDecision';
 import { buttonClass, type WorkspaceActor, type WorkItem, type ReviewPhoto } from './workspaceTypes';
 
 // FM-06: what an admin checks before letting a member in. The decision and reason are audited.
@@ -127,7 +128,7 @@ function ReviewDesk({ item, actor, onSaved }: { item: WorkItem; actor: Workspace
     <aside aria-label="Review and decide" className="min-w-0 space-y-5 rounded-xl border border-velora-line bg-velora-surface p-5"><h2 className="text-lg font-bold">Review & decide</h2><AdminMemberContext id={item.ownerId} actor={actor}/>
       {content && <section className="space-y-2 text-sm"><h3 className="font-semibold">Checks</h3><p className="text-velora-ink2">{photos.length} {photos.length === 1 ? "photo" : "photos"} in this review</p><p className={allApproved ? 'text-velora-success' : 'text-velora-warning'}>{allApproved ? 'Every photo is ready and approved' : 'Every photo needs its own approval first'}</p><p className="text-xs text-velora-muted">Consensual adult content is not a violation by itself.</p></section>}
       {photoNotice && <p role="status" className="rounded-lg border border-velora-accent/40 p-3 text-sm text-velora-accent">{photoNotice}</p>}
-      {!canDecide ? <p className="rounded-lg border border-velora-warning/40 p-3 text-sm text-velora-warning">Your role cannot decide this record{item.urgent ? '. Urgent cases require critical-case permission' : ''}.</p> : <fieldset disabled={saving || uncertain} className="space-y-5">
+      {!canDecide ? <p className="rounded-lg border border-velora-warning/40 p-3 text-sm text-velora-warning">Your role cannot decide this record{item.urgent ? '. Urgent cases require critical-case permission' : ''}.</p> : item.kind === 'report' ? <ReportDecision item={item} onSaved={onSaved}/> : <fieldset disabled={saving || uncertain} className="space-y-5">
         <label className="block text-sm font-semibold">Decision reason<select aria-label="Decision reason" value={policy} onChange={event => setPolicy(event.target.value)} className={`${buttonClass} mt-2 w-full font-normal`}><option value="">Choose policy reason</option>{(item.kind === 'verification' && item.row.verification_type === 'AGE' ? AGE_CHECK_REASONS : ['Consent or privacy', 'Suspected underage content', 'Harassment or threats', 'Impersonation or fraud', 'Photo quality or album details', 'Meets community guidelines', 'Other policy reason']).map(value => <option key={value}>{value}</option>)}</select></label>
         <label className="block text-sm font-semibold">Review note <span className="font-normal text-velora-muted">(required)</span><textarea rows={3} maxLength={3500} minLength={10} value={reason} onChange={event => setReason(event.target.value)} placeholder="What did you check? At least 10 characters." className="mt-2 w-full rounded-lg border border-velora-control bg-velora-sunken p-3 text-sm font-normal"/></label>
         {!valid && content && <p className="text-sm text-velora-warning">Add a review note to enable approval.</p>}

@@ -1,0 +1,16 @@
+type CaseRow = { id?: string; status?: string; priority?: string; created_at?: string; action_taken?: string | null; appeal_status?: string; reporter_id?: string | null; reported_user_id?: string | null };
+type Notice = { title: string; message: string };
+export declare const RESPONSE_TARGET_HOURS: Record<"CRITICAL" | "HIGH" | "STANDARD", number>;
+export declare const ACTIONS: Record<string, string>;
+export declare const POLICY_GROUNDS: Record<string, string>;
+export declare const DEFAULT_GROUND: Record<string, string>;
+export declare const APPEAL_OUTCOMES: string[];
+export declare function dueAt(row: CaseRow | null | undefined): string | null;
+export declare function isOverdue(row: CaseRow | null | undefined, now?: number): boolean;
+export declare function cleanDecision(status: string, input?: { actionTaken?: unknown; policyGround?: unknown; memberStatement?: unknown }): { value: { action_taken?: string; policy_ground?: string | null; member_statement?: string | null }; error?: undefined } | { error: string; value?: undefined };
+export declare function reporterNotice(status: string): Notice | null;
+export declare const AFFECTED_NOTICE: Notice;
+export declare function appealNotice(outcome: string): Notice | null;
+export declare function affectedMemberMaySee(row: CaseRow | null | undefined): boolean;
+export declare function reporterState(row: CaseRow | null | undefined): "IN_APPEAL" | "ACTION_TAKEN" | "NO_BREACH" | "IN_REVIEW";
+export declare function mayAppeal(row: CaseRow | null | undefined, profileId: string): boolean;
