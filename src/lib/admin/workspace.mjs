@@ -14,12 +14,15 @@ export function normalizeWork(kind, rows) {
       title: row.title || (kind === 'report' ? `${readable(row.content_type || 'Member')} report` : kind === 'verification' ? `${readable(row.verification_type)} verification` : row.media_type === 'VIDEO' ? 'Untitled video' : 'Untitled photo'),
       ownerId: row.owner_id || row.reported_user_id || row.profile_id,
       createdAt: row.submitted_at || row.created_at,
-      urgent: kind === 'report' && (row.priority === 'CRITICAL' || urgentReasons.has(row.reason) || row.overdue === true),
+      // urgent also gates the critical-case permission, so overdue is kept separate (FM-07).
+      urgent: kind === 'report' && (row.priority === 'CRITICAL' || urgentReasons.has(row.reason)),
+      overdue: kind === 'report' && row.overdue === true,
       priority: row.priority || 'NORMAL', assignedTo: row.assigned_moderator || row.reviewed_by || null,
     }));
 }
 export function sortWork(items) {
-  const rank = item => item.urgent ? 0 : item.priority === 'HIGH' ? 1 : 2;
+  // Urgent first, then overdue reports, then high priority, then the rest; oldest first within each.
+  const rank = item => item.urgent ? 0 : item.overdue ? 1 : item.priority === 'HIGH' ? 2 : 3;
   return [...items].sort((a, b) => rank(a) - rank(b) || (Date.parse(a.createdAt) || 0) - (Date.parse(b.createdAt) || 0) || a.key.localeCompare(b.key));
 }
 export function waiting(value, now = Date.now()) {

@@ -6,6 +6,7 @@ import { createRequire } from "node:module";
 import ts from "typescript";
 import * as outcomes from "../src/lib/moderation/outcomes.mjs";
 import * as identity from "../src/lib/identity.mjs";
+import { normalizeWork, sortWork } from "../src/lib/admin/workspace.mjs";
 
 const { dueAt, isOverdue, cleanDecision, mayAppeal, affectedMemberMaySee, reporterState, reporterNotice, appealNotice, AFFECTED_NOTICE } = outcomes;
 const require = createRequire(import.meta.url);
@@ -192,7 +193,12 @@ test("urgent reports alert the team at once without any report details", () => {
   const alert = read("src/lib/notifications/safetyAlert.ts");
   assert.match(alert, /process\.env\.SAFETY_ALERT_EMAIL \|\| "admin@intimo\.live"/);
   assert.doesNotMatch(alert, /\.description|display_name|reporter_id|reported_user_id/);
-  assert.match(read("src/lib/admin/workspace.mjs"), /row\.overdue === true/, "overdue reports rise to the top of the inbox");
+  // Overdue reports rise to the top without becoming "urgent", which would demand the critical-case permission.
+  const [standard] = normalizeWork("report", [{ id: "s", status: "OPEN", priority: "STANDARD", reason: "SPAM", created_at: "2026-11-18T09:00:00Z", overdue: true }]);
+  assert.equal(standard.urgent, false);
+  assert.equal(standard.overdue, true);
+  const sorted = sortWork([...normalizeWork("report", [{ id: "h", status: "OPEN", priority: "HIGH", reason: "THREATS", created_at: "2026-11-18T08:00:00Z" }]), standard]);
+  assert.deepEqual(sorted.map((item) => item.id), ["s", "h"]);
 });
 
 test("the migration is additive and appeals are open to both sides through server-only functions", () => {
