@@ -1,9 +1,12 @@
 import { dbRowToProfile, ProfileRow } from "./profileService";
 import { PRESENCE_LABELS, presenceBucket } from "@/lib/presence.mjs";
 import { trustSignals } from "@/lib/trust.mjs";
+import { visibleIdentity } from "@/lib/identity.mjs";
 
-export function toMemberVisibleProfile(row: ProfileRow, audience: { friends?: boolean } = {}) {
+export function toMemberVisibleProfile(row: ProfileRow, audience: { friends?: boolean; owner?: boolean } = {}) {
   const profile = dbRowToProfile(row);
+  // FM-09: orientation, the two notes and pronouns each follow their own audience.
+  const identity = visibleIdentity(row as unknown as Record<string, unknown>, audience);
   const sensitiveVisible = row.sensitive_fields_visibility === "EVERYONE"
     || row.sensitive_fields_visibility === "MEMBERS_ONLY"
     || (row.sensitive_fields_visibility === "FRIENDS_ONLY" && audience.friends === true);
@@ -15,7 +18,10 @@ export function toMemberVisibleProfile(row: ProfileRow, audience: { friends?: bo
     displayName: profile.displayName,
     age: profile.age,
     gender: profile.gender,
-    sexualOrientation: sensitiveVisible ? profile.sexualOrientation : undefined,
+    sexualOrientation: identity.sexualOrientation,
+    orientationNote: identity.orientationNote,
+    genderNote: identity.genderNote,
+    pronouns: identity.pronouns,
     country: locationVisible ? profile.country : "",
     city: locationVisible ? profile.city : "",
     location: locationVisible ? [profile.city, profile.country].filter(Boolean).join(", ") : "Hidden",

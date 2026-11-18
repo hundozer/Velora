@@ -14,8 +14,9 @@ export const CONSENTS = {
     acceptedVersions: ["sensitive-profile-v1", "sensitive-profile-v1-draft", "sensitive-profile-v2"],
     title: "Orientation and identity details",
     wording: "I explicitly consent to Intimo storing my sexual orientation and the identity details I choose to add, and showing them only to the audience I pick. I can withdraw this at any time in Settings, which deletes them.",
-    // Profile columns erased on withdrawal. FM-09 adds its new identity fields here.
-    erasesProfileColumns: ["sexual_orientation"],
+    // Profile columns erased on withdrawal. The two notes arrive with the FM-09 migration;
+    // routes fall back to sexual_orientation alone while it is not yet applied.
+    erasesProfileColumns: ["sexual_orientation", "orientation_note", "gender_note"],
   },
   SPECIAL_CATEGORY_DESIRES: {
     version: "desires-v1",

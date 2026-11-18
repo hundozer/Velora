@@ -1,4 +1,5 @@
 "use client";
+import { ORIENTATIONS } from "@/lib/identity.mjs";
 
 import { tr } from "@/lib/i18n/translate";
 import { useTranslation } from "@/context/LanguageContext";
@@ -24,6 +25,8 @@ type Profile = {
   id: string; displayName: string; age?: number; gender?: string; headline?: string; bio?: string; isCoupleProfile?: boolean; verified?: boolean; foundingMember?: boolean;
   presence?: "ONLINE" | "TODAY" | "WEEK" | null; areaName?: string | null; distance?: string | null; avatarUrl?: string;
   interests?: string[]; hobbies?: string[]; lifestyleTags?: string[]; lookingFor?: string[]; languages?: string[];
+  // FM-09: present only when the viewer is in the member's chosen audience (server-side).
+  sexualOrientation?: string; orientationNote?: string; genderNote?: string; pronouns?: string;
 };
 type Approach = { isOwner: boolean; sentences: BoundarySentence[]; canWrite: boolean; line: string | null; established: boolean; boundaries: Record<string, string> };
 type Desires = { desires: { desire_id: string; state: string }[]; shared: string[] };
@@ -178,6 +181,9 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
 
   const her = possessive(profile);
   const she = subject(profile);
+  // FM-09 identity details, in the member's own words where given.
+  const orientationLabel = profile.sexualOrientation ? ORIENTATIONS.find((item) => item.value === profile.sexualOrientation)?.label : undefined;
+  const identityLine = [orientationLabel ? t(orientationLabel) : null, profile.orientationNote || null, profile.genderNote || null].filter((part): part is string => Boolean(part));
   const status = [statusLine({ presence: profile.presence, areaName: profile.areaName }, t), profile.distance, profile.verified ? "photo verified" : null].filter(Boolean).join(" · ");
   const shared = new Set(desires?.shared || []);
   const known = (desires?.desires || []).filter((row) => desireById(row.desire_id));
@@ -215,6 +221,12 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
             </p>
           )}
           <h1 className="mt-1 font-display text-[clamp(3.25rem,15vw,4.75rem)] leading-[0.95] text-velora-ink">{name}{profile.age && !profile.isCoupleProfile ? `, ${profile.age}` : ""}</h1>
+          {(profile.pronouns || identityLine.length > 0) && (
+            <p className="mt-3 text-[15px] leading-relaxed text-velora-ink2">
+              {profile.pronouns && <span className="mr-2 rounded-full border border-ink/15 px-2.5 py-0.5 text-[13px] text-velora-ink">{profile.pronouns}</span>}
+              {identityLine.join(" · ")}
+            </p>
+          )}
           {profile.foundingMember && <div className="mt-3"><FoundingMemberBadge /></div>}
           {profile.headline && <p className="mt-4 font-display text-[clamp(1.5rem,6.5vw,1.9rem)] italic leading-[1.2] text-velora-ink">&ldquo;{profile.headline}&rdquo;</p>}
           {profile.bio && <p className="mt-4 whitespace-pre-line text-[17px] leading-[1.6] text-velora-ink2">{profile.bio}</p>}

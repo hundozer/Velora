@@ -55,7 +55,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const hidden = data.location_precision === "HIDDEN";
   const bucket = !hidden && viewerAreaId && data.area_id ? distanceBucket(viewerAreaId, data.area_id) : null;
   const profile = {
-    ...toMemberVisibleProfile(data as ProfileRow, { friends: friends || isOwner || isAdmin }),
+    ...toMemberVisibleProfile(data as ProfileRow, { friends: friends || isOwner || isAdmin, owner: isOwner }),
     bio: data.bio || "",
     areaName: hidden ? null : areaById(data.area_id)?.name || null,
     distance: bucket && data.show_distance !== false ? DISTANCE_BUCKET_LABELS[bucket] : null,

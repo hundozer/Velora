@@ -28,9 +28,15 @@ and is checked by `tests/consents.test.mjs` (every version and wording below mus
 - **Current version:** `sensitive-profile-v2` (18 November 2026). Earlier grants under
   `sensitive-profile-v1` and `sensitive-profile-v1-draft` covered the same scope and remain valid.
 - **Wording:** "I explicitly consent to Intimo storing my sexual orientation and the identity details I choose to add, and showing them only to the audience I pick. I can withdraw this at any time in Settings, which deletes them."
-- **Covers:** `profiles.sexual_orientation`, plus the optional identity fields added in FM-09.
-- **Withdrawal deletes:** those profile fields.
-- **Asked:** in Settings, and when a member first adds orientation or identity details.
+- **Covers:** `profiles.sexual_orientation`, `profiles.orientation_note` (orientation in the member's
+  own words) and `profiles.gender_note` (gender in their own words). The last two came with FM-09.
+- **Withdrawal deletes:** those three profile fields.
+- **Asked:** in Settings, and in Me → Orientation & identity before the first save of any of them.
+- **Not covered:** pronouns. They aren't special-category data, so saving them needs no consent and
+  withdrawal keeps them; the member removes them in the same editor. Account deletion clears them.
+- **Audiences:** orientation, the gender note and pronouns each have their own audience (Members,
+  Friends, Only me) in `profiles.identity_visibility`, applied on the server. Orientation and the
+  gender note start as *Only me*, pronouns as *Members*.
 
 ### Desires: `SPECIAL_CATEGORY_DESIRES`
 

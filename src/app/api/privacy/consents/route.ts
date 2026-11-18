@@ -4,9 +4,12 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
+import { isMissingColumnError } from "@/lib/identity.mjs";
 import { CONSENTS, MEMBER_CONSENT_TYPES, consentRow, consentStates, type ConsentType } from "@/lib/privacy/consents.mjs";
 
 export const dynamic = "force-dynamic";
+// Columns that exist before the FM-09 migration; used if the newer ones are missing.
+const BASE_PROFILE_COLUMNS = ["sexual_orientation"];
 const COLUMNS = "consent_type,consent_version,consent_timestamp,consent_status,withdrawn_at,source";
 
 function noStore(response: NextResponse) {
@@ -32,9 +35,14 @@ export async function GET(req: NextRequest) {
     const spec = CONSENTS[type];
     let pending = false;
     if (spec.erasesProfileColumns.length) {
-      const { data: profile, error: profileError } = await supabase.from("profiles").select(spec.erasesProfileColumns.join(",")).eq("id", actor.actor.profileId).maybeSingle();
+      let columns = spec.erasesProfileColumns;
+      let { data: profile, error: profileError } = await supabase.from("profiles").select(columns.join(",")).eq("id", actor.actor.profileId).maybeSingle();
+      if (isMissingColumnError(profileError)) {
+        columns = columns.filter((column) => BASE_PROFILE_COLUMNS.includes(column));
+        ({ data: profile, error: profileError } = await supabase.from("profiles").select(columns.join(",")).eq("id", actor.actor.profileId).maybeSingle());
+      }
       if (profileError) return noStore(NextResponse.json({ error: "Consent lookup failed" }, { status: 502 }));
-      pending = spec.erasesProfileColumns.some((column) => (profile as Record<string, unknown> | null)?.[column] != null);
+      pending = columns.some((column) => (profile as Record<string, unknown> | null)?.[column] != null);
     }
     for (const table of spec.erasesTables || []) {
       if (pending) break;
@@ -76,8 +84,9 @@ export async function POST(req: NextRequest) {
   // failure leaves the member recorded as withdrawn and the erasure retryable, never the reverse.
   if (!granted) {
     if (spec.erasesProfileColumns.length) {
-      const cleared = Object.fromEntries(spec.erasesProfileColumns.map((column) => [column, null]));
-      const { error: eraseError } = await supabase.from("profiles").update({ ...cleared, updated_at: row.consent_timestamp }).eq("id", profileId);
+      const clear = (columns: string[]) => supabase.from("profiles").update({ ...Object.fromEntries(columns.map((column) => [column, null])), updated_at: row.consent_timestamp }).eq("id", profileId);
+      let { error: eraseError } = await clear(spec.erasesProfileColumns);
+      if (isMissingColumnError(eraseError)) ({ error: eraseError } = await clear(spec.erasesProfileColumns.filter((column) => BASE_PROFILE_COLUMNS.includes(column))));
       if (eraseError) return NextResponse.json({ error: "Consent withdrawn but your details could not be deleted; please try again" }, { status: 502 });
     }
     for (const table of spec.erasesTables || []) {
