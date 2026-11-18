@@ -1,0 +1,14 @@
+export type Audience = "MEMBERS_ONLY" | "FRIENDS_ONLY" | "PRIVATE";
+export type IdentityKey = "orientation" | "gender_note" | "pronouns";
+export type IdentityColumns = { sexual_orientation: string | null; orientation_note: string | null; gender_note: string | null; pronouns: string | null; identity_visibility: Record<IdentityKey, Audience> };
+export type VisibleIdentity = { sexualOrientation?: string; orientationNote?: string; genderNote?: string; pronouns?: string };
+export declare const ORIENTATIONS: Array<{ value: string; label: string }>;
+export declare const PRONOUN_SUGGESTIONS: string[];
+export declare const AUDIENCES: Audience[];
+export declare const IDENTITY_KEYS: IdentityKey[];
+export declare const DEFAULT_VISIBILITY: Record<IdentityKey, Audience>;
+export declare const LIMITS: { note: number; pronouns: number };
+export declare function cleanNote(value: unknown, max: number): string | null | { error: string };
+export declare function cleanIdentityInput(input: unknown): { value: IdentityColumns; error?: undefined; field?: undefined } | { error: string; field: string; value?: undefined };
+export declare function needsSensitiveConsent(value: IdentityColumns): boolean;
+export declare function visibleIdentity(row: Record<string, unknown> | null | undefined, viewer?: { owner?: boolean; friends?: boolean }): VisibleIdentity;

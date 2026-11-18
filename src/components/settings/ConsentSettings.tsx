@@ -110,6 +110,7 @@ export function ConsentSettings() {
             )}
             {!granted && !data.pendingErasure?.[type] && type === "SPECIAL_CATEGORY_PROFILE" && (
               <div className="mt-3 space-y-2">
+                <Link href="/me/identity" className="inline-flex min-h-9 items-center rounded-full border border-velora-accent/40 px-4 text-xs font-semibold text-velora-accent">{t("Add orientation and identity details")}</Link>
                 <label className="flex items-start gap-2 text-[11px] leading-5 text-ink">
                   <input type="checkbox" checked={agreed} onChange={(event) => setAgreed(event.target.checked)} className="mt-0.5 h-4 w-4 accent-velora-accent" />
                   <span>{t("I agree to the wording above.")}</span>

@@ -18,6 +18,10 @@ export interface ProfileRow {
   age: number;
   gender: string;
   sexual_orientation: string;
+  orientation_note?: string | null;
+  gender_note?: string | null;
+  pronouns?: string | null;
+  identity_visibility?: Record<string, string> | null;
   country: string;
   city: string;
   location: string;
