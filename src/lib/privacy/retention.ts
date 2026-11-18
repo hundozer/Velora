@@ -1,3 +1,4 @@
+import { isMissingColumnError } from "@/lib/identity.mjs";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { deleteStoredObject, deleteVariantObjects } from "@/lib/storage/r2";
 import { EmailNotificationService } from "@/lib/notifications/emailService";
@@ -44,6 +45,10 @@ export async function anonymizeDeletedProfile(db: SupabaseClient, runId: string,
   const { error: receiverError } = await db.from("direct_messages").update({ receiver_id: null }).eq("receiver_id", profileId);
   if (senderError || receiverError) { const result: Result = { profileId, status: "FAILED", reason: "Message anonymization failed" }; await record(db, runId, result); return result; }
 
+  // FM-09 identity details, cleared while the profile is still ANONYMIZATION_IN_PROGRESS so a
+  // failure stays in the retention queue. Separate so a database without that migration still anonymizes.
+  const { error: identityNotesError } = await db.from("profiles").update({ orientation_note: null, gender_note: null, pronouns: null, identity_visibility: {} }).eq("id", profileId);
+  if (identityNotesError && !isMissingColumnError(identityNotesError)) { const result: Result = { profileId, status: "FAILED", reason: "Identity details cleanup failed" }; await record(db, runId, result); return result; }
   const completedAt = new Date().toISOString();
   const { error: profileError } = await db.from("profiles").update({
     auth_id: profileId, email: `deleted+${profileId}@invalid.intimo.live`, display_name: "Deleted member", username: null,
@@ -56,9 +61,6 @@ export async function anonymizeDeletedProfile(db: SupabaseClient, runId: string,
     account_status: "DEACTIVATED", account_lifecycle_status: "DELETED", deleted_at: completedAt, updated_at: completedAt,
   }).eq("id", profileId).eq("account_lifecycle_status", "ANONYMIZATION_IN_PROGRESS");
   if (profileError) { const result: Result = { profileId, status: "FAILED", reason: "Profile anonymization failed" }; await record(db, runId, result); return result; }
-  // FM-09 identity details. Separate so a database without that migration still anonymizes.
-  const { error: identityNotesError } = await db.from("profiles").update({ orientation_note: null, gender_note: null, pronouns: null, identity_visibility: {} }).eq("id", profileId);
-  if (identityNotesError && identityNotesError.code !== "42703") { const result: Result = { profileId, status: "FAILED", reason: "Identity details cleanup failed" }; await record(db, runId, result); return result; }
   await db.from("privacy_requests").update({ status: "COMPLETED", completed_at: completedAt, updated_at: completedAt, notes: "Automated erasure/anonymization completed" }).eq("profile_id", profileId).eq("request_type", "DELETION").neq("status", "COMPLETED");
   let notice = "Completion notice sent";
   try { await EmailNotificationService.sendPrivacyDeletionComplete(String(identity.email)); }

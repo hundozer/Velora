@@ -133,14 +133,72 @@ test("before the migration the editor says it isn't ready instead of failing", a
   assert.equal((await api({ consents: granted, updateError: missing }).put({ pronouns: "he/him" })).status, 503);
 });
 
-test("withdrawing consent clears the new notes, with a fallback while the migration is pending; deletion clears them too", () => {
+/** Recording fake database: `respond(call)` decides each query's result. */
+function recordingDb(respond) {
+  const calls = [];
+  return { calls, from(table) {
+    const call = { table, op: "select", values: null, filters: [] }; calls.push(call);
+    const q = {
+      select() { return q; }, maybeSingle() { call.single = true; return q; }, limit() { return q; }, order() { return q; }, not() { return q; }, in() { return q; }, neq() { return q; },
+      insert(values) { call.op = "insert"; call.values = values; return q; },
+      update(values) { call.op = "update"; call.values = values; return q; },
+      delete() { call.op = "delete"; return q; },
+      eq(column, value) { call.filters.push([column, value]); return q; },
+      then(resolve) { resolve(respond(call)); },
+    };
+    return q;
+  } };
+}
+const MISSING = [{ code: "42703" }, { code: "PGRST204" }];
+
+test("withdrawal before the migration falls back to the old column on either missing-column code", async () => {
   assert.deepEqual(registry.CONSENTS.SPECIAL_CATEGORY_PROFILE.erasesProfileColumns, ["sexual_orientation", "orientation_note", "gender_note"]);
-  const consents = read("src/app/api/privacy/consents/route.ts");
-  assert.match(consents, /if \(eraseError\?\.code === UNDEFINED_COLUMN\) \(\{ error: eraseError \} = await clear\(spec\.erasesProfileColumns\.filter/);
-  assert.match(consents, /if \(profileError\?\.code === UNDEFINED_COLUMN\) \{/);
-  const retention = read("src/lib/privacy/retention.ts");
-  assert.match(retention, /update\(\{ orientation_note: null, gender_note: null, pronouns: null, identity_visibility: \{\} \}\)/);
-  assert.match(retention, /identityNotesError\.code !== "42703"/);
+  for (const missing of MISSING) {
+    const db = recordingDb((call) => (call.table === "profiles" && call.op === "update" && "orientation_note" in call.values ? { error: missing } : { data: null, error: null }));
+    const route = load("src/app/api/privacy/consents/route.ts", {
+      "@/lib/auth/serverActor": { resolveServerActor: async () => ({ status: "authenticated", actor: { profileId: PROFILE, userId: "user-1", role: "MEMBER" } }) },
+      "@/lib/supabase/server": { getServerSupabase: () => db },
+      "@/lib/security/rateLimiter": { checkRateLimit: async () => ({ allowed: true }) },
+      "@/lib/auth/auditLogger": { auditLogger: { logEvent: () => {} } },
+      "@/lib/auth/durableAudit": { appendDurableAudit: async () => true },
+      "@/lib/identity.mjs": identity, "@/lib/privacy/consents.mjs": registry,
+    });
+    const response = await route.POST({ json: async () => ({ consentType: "SPECIAL_CATEGORY_PROFILE", granted: false }) });
+    assert.equal(response.status, 200, missing.code);
+    const updates = db.calls.filter((c) => c.table === "profiles" && c.op === "update").map((c) => Object.keys(c.values).filter((key) => key !== "updated_at"));
+    assert.deepEqual(updates, [["sexual_orientation", "orientation_note", "gender_note"], ["sexual_orientation"]], missing.code);
+  }
+  for (const missing of MISSING) assert.equal((await api({ consents: granted, updateError: missing }).put({ pronouns: "he/him" })).status, 503, missing.code);
+});
+
+/** Runs account anonymization against a fake database; `identityError` fails the FM-09 cleanup. */
+async function anonymize(identityError) {
+  const db = recordingDb((call) => {
+    if (call.table === "profiles" && call.op === "select") return { data: { email: "member@example.test" }, error: null };
+    if (call.table === "profiles" && call.op === "update" && "orientation_note" in call.values) return { error: identityError };
+    // Single-row lookups (e.g. legal holds) find nothing; list lookups return empty lists.
+    return { data: call.op === "select" && !call.single ? [] : null, error: null };
+  });
+  const retention = load("src/lib/privacy/retention.ts", {
+    "@/lib/identity.mjs": identity,
+    "@/lib/storage/r2": { deleteStoredObject: async () => {}, deleteVariantObjects: async () => {} },
+    "@/lib/notifications/emailService": { EmailNotificationService: class { async sendAccountDeletionComplete() { return true; } async send() { return true; } } },
+  });
+  const result = await retention.anonymizeDeletedProfile(db, "run-1", PROFILE);
+  const profileUpdates = db.calls.filter((c) => c.table === "profiles" && c.op === "update").map((c) => c.values.account_lifecycle_status ?? ("orientation_note" in c.values ? "IDENTITY_CLEANUP" : "OTHER"));
+  return { result, profileUpdates };
+}
+
+test("account deletion clears identity details before marking the profile deleted, so a failure stays retryable", async () => {
+  const ok = await anonymize(null);
+  assert.deepEqual(ok.profileUpdates, ["ANONYMIZATION_IN_PROGRESS", "IDENTITY_CLEANUP", "DELETED"]);
+  const failed = await anonymize({ code: "XX000" });
+  assert.equal(failed.result.status, "FAILED");
+  assert.deepEqual(failed.profileUpdates, ["ANONYMIZATION_IN_PROGRESS", "IDENTITY_CLEANUP"], "never marked DELETED, so the next run picks it up again");
+  for (const missing of MISSING) assert.deepEqual((await anonymize(missing)).profileUpdates, ["ANONYMIZATION_IN_PROGRESS", "IDENTITY_CLEANUP", "DELETED"], `${missing.code}: no migration yet, still completes`);
+});
+
+test("the migration is additive and has a rollback", () => {
   const migration = read("supabase/migrations/20261118120000_identity_fields.sql");
   assert.match(migration, /-- ROLLBACK:/);
   assert.doesNotMatch(migration.replace(/--.*$/gm, ""), /\bdrop\s+column\b|\bdelete\b|\btruncate\b/i, "additive only");

@@ -12,3 +12,4 @@ export declare function cleanNote(value: unknown, max: number): string | null | 
 export declare function cleanIdentityInput(input: unknown): { value: IdentityColumns; error?: undefined; field?: undefined } | { error: string; field: string; value?: undefined };
 export declare function needsSensitiveConsent(value: IdentityColumns): boolean;
 export declare function visibleIdentity(row: Record<string, unknown> | null | undefined, viewer?: { owner?: boolean; friends?: boolean }): VisibleIdentity;
+export declare function isMissingColumnError(error: { code?: string } | null | undefined): boolean;

@@ -4,10 +4,10 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
+import { isMissingColumnError } from "@/lib/identity.mjs";
 import { CONSENTS, MEMBER_CONSENT_TYPES, consentRow, consentStates, type ConsentType } from "@/lib/privacy/consents.mjs";
 
 export const dynamic = "force-dynamic";
-const UNDEFINED_COLUMN = "42703";
 // Columns that exist before the FM-09 migration; used if the newer ones are missing.
 const BASE_PROFILE_COLUMNS = ["sexual_orientation"];
 const COLUMNS = "consent_type,consent_version,consent_timestamp,consent_status,withdrawn_at,source";
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     if (spec.erasesProfileColumns.length) {
       let columns = spec.erasesProfileColumns;
       let { data: profile, error: profileError } = await supabase.from("profiles").select(columns.join(",")).eq("id", actor.actor.profileId).maybeSingle();
-      if (profileError?.code === UNDEFINED_COLUMN) {
+      if (isMissingColumnError(profileError)) {
         columns = columns.filter((column) => BASE_PROFILE_COLUMNS.includes(column));
         ({ data: profile, error: profileError } = await supabase.from("profiles").select(columns.join(",")).eq("id", actor.actor.profileId).maybeSingle());
       }
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
     if (spec.erasesProfileColumns.length) {
       const clear = (columns: string[]) => supabase.from("profiles").update({ ...Object.fromEntries(columns.map((column) => [column, null])), updated_at: row.consent_timestamp }).eq("id", profileId);
       let { error: eraseError } = await clear(spec.erasesProfileColumns);
-      if (eraseError?.code === UNDEFINED_COLUMN) ({ error: eraseError } = await clear(spec.erasesProfileColumns.filter((column) => BASE_PROFILE_COLUMNS.includes(column))));
+      if (isMissingColumnError(eraseError)) ({ error: eraseError } = await clear(spec.erasesProfileColumns.filter((column) => BASE_PROFILE_COLUMNS.includes(column))));
       if (eraseError) return NextResponse.json({ error: "Consent withdrawn but your details could not be deleted; please try again" }, { status: 502 });
     }
     for (const table of spec.erasesTables || []) {

@@ -3,13 +3,12 @@ import { resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
-import { cleanIdentityInput, needsSensitiveConsent } from "@/lib/identity.mjs";
+import { cleanIdentityInput, isMissingColumnError, needsSensitiveConsent } from "@/lib/identity.mjs";
 import { consentRow, consentStates } from "@/lib/privacy/consents.mjs";
 
 export const dynamic = "force-dynamic";
 const noStore = { "Cache-Control": "private, no-store" };
 const COLUMNS = "sexual_orientation,orientation_note,gender_note,pronouns,identity_visibility";
-const UNDEFINED_COLUMN = "42703";
 
 async function profileConsent(db: NonNullable<ReturnType<typeof getServerSupabase>>, profileId: string) {
   const { data, error } = await db.from("user_consents").select("consent_type,consent_version,consent_timestamp,consent_status").eq("profile_id", profileId).eq("consent_type", "SPECIAL_CATEGORY_PROFILE");
@@ -25,7 +24,7 @@ export async function GET(req: NextRequest) {
   if (!db) return NextResponse.json({ error: "Identity details unavailable" }, { status: 503 });
   const { data, error } = await db.from("profiles").select(COLUMNS).eq("id", auth.actor.profileId).maybeSingle();
   // Before the FM-09 migration is applied the editor explains it isn't ready yet.
-  if (error?.code === UNDEFINED_COLUMN) return NextResponse.json({ available: false }, { headers: noStore });
+  if (isMissingColumnError(error)) return NextResponse.json({ available: false }, { headers: noStore });
   if (error || !data) return NextResponse.json({ error: "Identity details lookup failed" }, { status: 502 });
   const consent = await profileConsent(db, auth.actor.profileId);
   if (consent === null) return NextResponse.json({ error: "Consent lookup failed" }, { status: 502 });
@@ -70,7 +69,7 @@ export async function PUT(req: NextRequest) {
   }
 
   const { error } = await db.from("profiles").update({ ...cleaned.value, updated_at: new Date().toISOString() }).eq("id", profileId);
-  if (error?.code === UNDEFINED_COLUMN) return NextResponse.json({ error: "Identity details aren't available yet" }, { status: 503 });
+  if (isMissingColumnError(error)) return NextResponse.json({ error: "Identity details aren't available yet" }, { status: 503 });
   if (error) return NextResponse.json({ error: "Identity details could not be saved" }, { status: 502 });
   // Which fields are filled, never their values: the audit trail must not copy special-category data.
   const filled = ["sexual_orientation", "orientation_note", "gender_note", "pronouns"].filter((key) => cleaned.value[key as keyof typeof cleaned.value]);

@@ -88,3 +88,12 @@ export function visibleIdentity(row, viewer = {}) {
   if (row.pronouns && allowed(audience.pronouns, viewer)) out.pronouns = row.pronouns;
   return out;
 }
+
+/**
+ * True when a Supabase error means "that column doesn't exist yet" (the FM-09 migration is
+ * not applied). PostgreSQL reports 42703; PostgREST reports PGRST204 for writes whose column
+ * is missing from its schema cache.
+ */
+export function isMissingColumnError(error) {
+  return error?.code === "42703" || error?.code === "PGRST204";
+}

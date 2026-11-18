@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import ts from "typescript";
 import * as registry from "../src/lib/privacy/consents.mjs";
+import * as identity from "../src/lib/identity.mjs";
 
 const { CONSENTS, consentStates, consentRow } = registry;
 const require = createRequire(import.meta.url);
@@ -71,6 +72,7 @@ async function post(body, { failErase = false } = {}) {
     "@/lib/auth/auditLogger": { auditLogger: { logEvent: () => {} } },
     "@/lib/auth/durableAudit": { appendDurableAudit: async (_db, entry) => { audits.push(entry.action); return true; } },
     "@/lib/privacy/consents.mjs": registry,
+    "@/lib/identity.mjs": identity,
   });
   const response = await route.POST({ json: async () => body });
   return { response, calls, audits };
@@ -126,6 +128,7 @@ async function get({ consents, profile, desires }) {
     "@/lib/supabase/server": { getServerSupabase: () => db },
     "@/lib/security/rateLimiter": {}, "@/lib/auth/auditLogger": {}, "@/lib/auth/durableAudit": {},
     "@/lib/privacy/consents.mjs": registry,
+    "@/lib/identity.mjs": identity,
   });
   return (await route.GET({})).json();
 }
