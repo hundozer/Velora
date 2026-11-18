@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { closedSiteRefusal } from "@/lib/publicAccess";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export async function GET(req:NextRequest,{params}:{params:{id:string}}){
+  const closed = await closedSiteRefusal(req); if (closed) return closed;
   if(!UUID.test(params.id))return NextResponse.json({error:"Album not found"},{status:404}); const client=req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()||"unknown"; if(!(await checkRateLimit(`public-album:${client.slice(0,80)}`,120,60)).allowed)return NextResponse.json({error:"Too many requests"},{status:429});
   const db=getServerSupabase(); if(!db)return NextResponse.json({error:"Album unavailable"},{status:503}); const {data:album,error}=await db.from("media_albums").select("id,owner_id,title,description,category,tags,cover_media_id,published_at,created_at").eq("id",params.id).eq("visibility","PUBLIC").eq("moderation_status","APPROVED").maybeSingle(); if(error||!album)return NextResponse.json({error:"Album not found"},{status:404});
   const {data:owner}=await db.from("profiles").select("id,display_name,username,verification_status,verification_level").eq("id",album.owner_id).eq("profile_visibility","EVERYONE").eq("public_profile_visibility",true).eq("account_status","ACTIVE").eq("age_verification_status","AGE_VERIFIED").eq("discovery_disabled",false).maybeSingle(); if(!owner)return NextResponse.json({error:"Album not found"},{status:404});

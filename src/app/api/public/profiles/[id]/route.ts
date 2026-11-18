@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { closedSiteRefusal } from "@/lib/publicAccess";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { toAnonymousPublicProfile } from "@/lib/supabase/publicCommunity";
 import type { PublicProfileRow } from "@/lib/supabase/publicCommunity";
@@ -9,6 +10,7 @@ export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const closed = await closedSiteRefusal(req); if (closed) return closed;
   const id = params.id?.trim();
   if (!id || !UUID.test(id)) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   const client = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";

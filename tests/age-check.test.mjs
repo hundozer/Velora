@@ -77,9 +77,10 @@ test("admin decisions map to the member's state; pages other than setup show the
 });
 
 /** The member age-check API against a recording fake database. */
-function api({ row, media = { id: MEDIA, owner_id: PROFILE, media_type: "IMAGE", upload_status: "AVAILABLE", visibility: "PRIVATE" }, actor = {}, claim = true, reviewError = null, selectError = null } = {}) {
+function api({ row, reloadRow, media = { id: MEDIA, owner_id: PROFILE, media_type: "IMAGE", upload_status: "AVAILABLE", visibility: "PRIVATE" }, actor = {}, claim = true, reviewError = null, selectError = null } = {}) {
   const calls = [];
   const audits = [];
+  let profileReads = 0;
   const db = { from(table) {
     const call = { table, op: "select", values: null, filters: [] }; calls.push(call);
     const q = {
@@ -88,8 +89,9 @@ function api({ row, media = { id: MEDIA, owner_id: PROFILE, media_type: "IMAGE",
       update(values) { call.op = "update"; call.values = values; return q; },
       eq(column, value) { call.filters.push(["eq", column, value]); return q; },
       in(column, value) { call.filters.push(["in", column, value]); return q; },
+      is(column, value) { call.filters.push(["is", column, value]); return q; },
       then(resolve) {
-        if (table === "profiles" && call.op === "select") return resolve({ data: row, error: selectError });
+        if (table === "profiles" && call.op === "select") return resolve({ data: profileReads++ && reloadRow ? reloadRow : row, error: selectError });
         if (table === "profiles" && call.op === "update") return resolve({ data: claim ? { id: PROFILE, age_check_code: call.values.age_check_code, age_check_code_issued_at: call.values.age_check_code_issued_at } : null, error: null });
         if (table === "media_objects") return resolve({ data: media, error: null });
         if (table === "verification_reviews") return resolve(reviewError ? { data: null, error: reviewError } : { data: { id: REVIEW, status: "PENDING", submitted_at: "now" }, error: null });
@@ -245,4 +247,27 @@ test("new members are sent to the age check and the app explains why pages are l
   const page = read("src/app/verify-age/page.tsx");
   assert.match(page, /uploadFileToR2\(file, "photos", setProgress, \{/);
   assert.match(page, /"PRIVATE", "NON_EXPLICIT", "AGE_CHECK"\)/);
+});
+
+test("two tabs asking for a code at once end up with the one the server kept", async () => {
+  const kept = { age_check_code: "KEPT23", age_check_code_issued_at: fresh() };
+  const fake = api({ row: member(), reloadRow: member(kept), claim: false });
+  const body = await (await fake.route.GET(get())).json();
+  assert.equal(body.code, "KEPT23");
+  const update = fake.calls.find((call) => call.op === "update");
+  assert.deepEqual(update.filters.find((f) => f[1] === "age_check_code"), ["is", "age_check_code", null], "only fills an empty code");
+  const replaced = api({ row: member({ age_check_code: "OLD234", age_check_code_issued_at: "2026-01-01T00:00:00Z" }) });
+  await replaced.route.GET(get());
+  assert.deepEqual(replaced.calls.find((call) => call.op === "update").filters.find((f) => f[1] === "age_check_code"), ["eq", "age_check_code", "OLD234"], "only replaces the expired code it read");
+});
+
+test("while the site is closed, public APIs refuse signed-in members who aren't age-checked", () => {
+  const helper = read("src/lib/publicAccess.ts");
+  assert.match(helper, /if \(!COMING_SOON\) return null;/);
+  assert.match(helper, /actor\.status === "authenticated" && hasAdultAccess\(actor\.actor\)\) return null;/);
+  for (const file of ["src/app/api/public/community/route.ts", "src/app/api/public/profiles/[id]/route.ts", "src/app/api/public/search/route.ts", "src/app/api/public/albums/route.ts", "src/app/api/public/albums/[id]/route.ts", "src/app/api/public/media/route.ts", "src/app/api/public/media/[id]/route.ts"]) {
+    assert.match(read(file), /export async function GET\([^)]*\)[^{]*\{\n  const closed = await closedSiteRefusal\(req\); if \(closed\) return closed;/, file);
+  }
+  // An approved member's "Go to Intimo" reloads the app so the gate sees the approval.
+  assert.match(read("src/app/verify-age/page.tsx"), /<a href="\/dashboard"/);
 });

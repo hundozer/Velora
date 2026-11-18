@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { closedSiteRefusal } from "@/lib/publicAccess";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { toAnonymousPublicProfile } from "@/lib/supabase/publicCommunity";
 import type { PublicProfileRow } from "@/lib/supabase/publicCommunity";
@@ -22,6 +23,7 @@ function positiveInteger(value: string | null, fallback: number, maximum: number
 }
 
 export async function GET(req: NextRequest) {
+  const closed = await closedSiteRefusal(req); if (closed) return closed;
   const rate = (await checkRateLimit(`public-community:${clientKey(req)}`, 90, 60));
   if (!rate.allowed) {
     return NextResponse.json(

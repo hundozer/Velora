@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { closedSiteRefusal } from "@/lib/publicAccess";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { toAnonymousPublicProfile, type PublicProfileRow } from "@/lib/supabase/publicCommunity";
 
@@ -10,6 +11,7 @@ function queryText(value: string | null) {
 }
 
 export async function GET(req: NextRequest) {
+  const closed = await closedSiteRefusal(req); if (closed) return closed;
   const q = queryText(new URL(req.url).searchParams.get("q"));
   if (q.length < 2) return NextResponse.json({ error: "Enter at least two characters" }, { status: 400 });
   const client = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";

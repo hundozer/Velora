@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { closedSiteRefusal } from "@/lib/publicAccess";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 
 export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
+  const closed = await closedSiteRefusal(req); if (closed) return closed;
   const url = new URL(req.url); const page = Math.min(Math.max(Number(url.searchParams.get("page")) || 1, 1), 500); const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 18, 1), 36); const offset = (page - 1) * limit; const ownerId = url.searchParams.get("ownerId");
   if (ownerId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(ownerId)) return NextResponse.json({ error: "Invalid owner" }, { status: 400 });
   const client = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";

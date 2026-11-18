@@ -87,7 +87,8 @@ export default function VerifyAgePage() {
     {header}
     <section className="rounded-2xl border border-emerald-400/25 bg-emerald-400/10 p-5">
       <p className="flex items-center gap-2 font-semibold text-velora-textPrimary"><ShieldCheck className="h-5 w-5 text-velora-success" aria-hidden />{t("You're in. Your age check is approved.")}</p>
-      <Link href="/dashboard" className="mt-4 inline-flex min-h-11 items-center rounded-full bg-velora-accent px-6 text-sm font-bold text-velora-paper">{t("Go to Intimo")}</Link>
+      {/* A full page load, so the app picks up the approval instead of the status it loaded earlier. */}
+      <a href="/dashboard" className="mt-4 inline-flex min-h-11 items-center rounded-full bg-velora-accent px-6 text-sm font-bold text-velora-paper">{t("Go to Intimo")}</a>
     </section>
   </>);
 

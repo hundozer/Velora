@@ -44,11 +44,20 @@ export async function GET(req: NextRequest) {
     if (!(await checkRateLimit(`age-check-code:${auth.actor.userId}`, 10, 24 * 60 * 60)).allowed) return NextResponse.json({ error: "Too many new codes today. Try again tomorrow." }, { status: 429 });
     code = newChallengeCode(randomBytes);
     issuedAt = new Date().toISOString();
-    // Only replace the code we read, so two open tabs end up showing the same code.
-    const { data: saved, error: saveError } = await db.from("profiles").update({ age_check_code: code, age_check_code_issued_at: issuedAt })
-      .eq("id", row.id).in("age_verification_status", SUBMIT_STATUSES).select("age_check_code,age_check_code_issued_at").maybeSingle();
+    // Only replace the code we read: if another tab issued one meanwhile, show that one, so the
+    // selfie always matches the code stored on the server.
+    let replace = db.from("profiles").update({ age_check_code: code, age_check_code_issued_at: issuedAt })
+      .eq("id", row.id).in("age_verification_status", SUBMIT_STATUSES);
+    replace = row.age_check_code === null ? replace.is("age_check_code", null) : replace.eq("age_check_code", row.age_check_code);
+    const { data: saved, error: saveError } = await replace.select("age_check_code,age_check_code_issued_at").maybeSingle();
     if (saveError) return NextResponse.json({ error: "Age check code could not be created" }, { status: 502 });
-    if (!saved) return NextResponse.json({ error: "Your age check changed. Reload the page." }, { status: 409 });
+    if (!saved) {
+      const { row: latest, error: reloadError } = await load(db, auth.actor.profileId);
+      if (reloadError || !latest) return NextResponse.json({ error: "Age check lookup failed" }, { status: 502 });
+      if (!SUBMIT_STATUSES.includes(latest.age_verification_status) || !challengeIsFresh(latest.age_check_code, latest.age_check_code_issued_at)) return NextResponse.json({ error: "Your age check changed. Reload the page." }, { status: 409 });
+      code = latest.age_check_code;
+      issuedAt = latest.age_check_code_issued_at;
+    }
   }
   return NextResponse.json({ ...base, code, expiresAt: new Date(Date.parse(issuedAt as string) + 24 * 60 * 60 * 1000).toISOString() }, { headers: noStore });
 }
