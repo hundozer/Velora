@@ -68,7 +68,10 @@ test("desire APIs require consent, hide private rows, honour blocks, and erase o
   assert.match(me, /metadata: \{ count: rows\.length \}/);
   assert.match(other, /eq\("visibility", "MEMBERS"\)/);
   assert.match(other, /resolveMemberProfileAccess\(req, params\.id\)/);
-  assert.match(consents, /consentType === DESIRE_CONSENT_TYPE[\s\S]*from\("member_desires"\)\.delete\(\)/);
+  // FM-01: withdrawal erasure is driven by the consent registry; tests/consents.test.mjs runs it.
+  const registry = await read("src/lib/privacy/consents.mjs");
+  assert.match(registry, /SPECIAL_CATEGORY_DESIRES: \{[\s\S]*?erasesTables: \["member_desires"\]/);
+  assert.match(consents, /for \(const table of spec\.erasesTables \|\| \[\]\)[\s\S]*from\(table\)\.delete\(\)\.eq\("profile_id", profileId\)/);
   assert.match(retention, /\["member_desires", "profile_id"\]/);
   assert.match(discovery, /\.eq\("visibility", "MEMBERS"\)/);
   assert.match(discovery, /\.in\("state", POSITIVE_STATES\)/);

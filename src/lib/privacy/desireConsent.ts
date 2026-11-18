@@ -1,7 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { CONSENTS } from "@/lib/privacy/consents.mjs";
+
 export const DESIRE_CONSENT_TYPE = "SPECIAL_CATEGORY_DESIRES";
-export const DESIRE_CONSENT_VERSION = "desires-v1";
+// Versions live in the FM-01 registry (src/lib/privacy/consents.mjs).
+export const DESIRE_CONSENT_VERSION = CONSENTS.SPECIAL_CATEGORY_DESIRES.version;
 
 /** True when the member's most recent desire consent record is GRANTED. */
 export async function hasDesireConsent(db: SupabaseClient, profileId: string): Promise<boolean | null> {
