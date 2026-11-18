@@ -17,6 +17,7 @@ import { Modal } from "@/components/ui/Modal";
 import { VerificationWizard } from "@/components/verification/VerificationWizard";
 import { useAuth } from "@/context/AuthContext";
 import { requestParticipantDeclaration, uploadFileToR2 } from "@/lib/storage/clientUpload";
+import { ReportsAndDecisions } from "@/components/settings/ReportsAndDecisions";
 import {
   Settings,
   Shield,
@@ -66,10 +67,6 @@ export default function SettingsPage() {
   const [rightsDetails, setRightsDetails] = useState("");
   const [rightsMessage, setRightsMessage] = useState("");
   const [rightsPending, setRightsPending] = useState(false);
-  const [reportHistory, setReportHistory] = useState<any[]>([]);
-  const [appealCaseId, setAppealCaseId] = useState("");
-  const [appealReason, setAppealReason] = useState("");
-  const [appealMessage, setAppealMessage] = useState("");
   const [avatarImageFailed, setAvatarImageFailed] = useState(false);
   const [coverImageFailed, setCoverImageFailed] = useState(false);
 
@@ -147,10 +144,7 @@ export default function SettingsPage() {
   };
 
   React.useEffect(() => {
-    Promise.all([
-      fetch("/api/privacy/settings", { credentials: "same-origin" }).then((response) => response.ok ? response.json() : null),
-      fetch("/api/reports", { credentials: "same-origin" }).then((response) => response.ok ? response.json() : null),
-    ]).then(([settingsPayload, reportsPayload]) => {
+    fetch("/api/privacy/settings", { credentials: "same-origin" }).then((response) => response.ok ? response.json() : null).then((settingsPayload) => {
       const settings = settingsPayload?.settings;
       if (settings) setPrivacy({
         profileVisibility: settings.profile_visibility || "MEMBERS_ONLY",
@@ -162,7 +156,6 @@ export default function SettingsPage() {
         showInIntroductions: settings.show_in_introductions !== false,
         showDistance: settings.show_distance === true,
       });
-      setReportHistory(reportsPayload?.reports || []);
     }).catch(() => undefined);
   }, []);
 
@@ -238,14 +231,6 @@ export default function SettingsPage() {
     setRightsDetails(""); setRightsMessage(`Request ${payload.request.id} was recorded.`);
   };
 
-  const submitAppeal = async () => {
-    setAppealMessage("");
-    const response = await fetch(`/api/reports/${encodeURIComponent(appealCaseId)}/appeal`, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason: appealReason }) });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) { setAppealMessage(payload.error || "Appeal could not be submitted"); return; }
-    setReportHistory((items) => items.map((item) => item.id === appealCaseId ? { ...item, status: "APPEALED", appeal_status: "OPEN" } : item));
-    setAppealCaseId(""); setAppealReason(""); setAppealMessage(`Appeal ${payload.appeal.id} was submitted.`);
-  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-left">
@@ -451,12 +436,7 @@ export default function SettingsPage() {
             <Button variant="glass" size="sm" disabled={rightsPending || rightsDetails.trim().length < 20} onClick={submitRightsRequest}>{rightsPending ? t("Submitting…") : t("Submit privacy request")}</Button>
           </div>
 
-          {reportHistory.some((item) => item.relationship === "AFFECTED_USER") && <div className="space-y-3 rounded-2xl border border-ink/10 p-4">
-            <div><h4 className="text-xs font-bold text-velora-textPrimary">{t("Moderation decisions and appeals")}</h4><p className="mt-1 text-[11px] text-velora-textMuted">{t("Eligible resolved decisions can be appealed once. Give a specific reason for independent review.")}</p></div>
-            {reportHistory.filter((item) => item.relationship === "AFFECTED_USER").map((item) => <div key={item.id} className="rounded-xl bg-ink/5 p-3 text-xs"><div className="flex flex-wrap justify-between gap-2"><span>{item.content_type} · {item.reason.replaceAll("_", " ")}</span><strong>{t(item.status)}</strong></div>{item.decision_reason && <p className="mt-2 text-velora-textMuted">{t("Decision reason: {decision_reason}", { decision_reason: item.decision_reason })}</p>}{["RESOLVED", "REJECTED"].includes(item.status) && item.appeal_status === "NONE" && <Button variant="glass" size="sm" className="mt-3" onClick={() => setAppealCaseId(item.id)}>{t("Appeal this decision")}</Button>}</div>)}
-            {appealCaseId && <div className="space-y-2"><label className="block text-xs"><span className="mb-2 block font-semibold">{t("Why should this decision be reviewed?")}</span><textarea value={appealReason} onChange={(event) => setAppealReason(event.target.value)} rows={4} maxLength={4000} className="w-full rounded-xl border border-ink/10 bg-ink/5 p-3 text-ink" /></label><div className="flex gap-2"><Button variant="ghost" size="sm" onClick={() => { setAppealCaseId(""); setAppealReason(""); }}>{t("Cancel appeal")}</Button><Button variant="glass" size="sm" disabled={appealReason.trim().length < 20} onClick={submitAppeal}>{t("Submit appeal")}</Button></div></div>}
-            {appealMessage && <p role="status" className="text-xs text-velora-success">{t(appealMessage)}</p>}
-          </div>}
+          <ReportsAndDecisions />
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl border border-velora-gold/30">
             <div>

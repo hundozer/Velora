@@ -45,7 +45,10 @@ export async function GET(req: NextRequest) {
     savedItems: supabase.from("saved_items").select("target_type,target_id,created_at").eq("profile_id", profileId),
     reactions: supabase.from("content_reactions").select("target_type,target_id,reaction,created_at").eq("profile_id", profileId),
     notifications: supabase.from("notifications").select("type,title,message,actor_name,target_link,is_read,created_at").eq("user_id", profileId),
-    submittedReports: supabase.from("moderation_cases").select("id,reported_user_id,content_type,content_id,reason,description,status,priority,decision,decision_reason,appeal_status,created_at,updated_at").eq("reporter_id", profileId),
+    // FM-07: a reporter gets their report and its outcome, not the team's notes about the other member.
+    submittedReports: supabase.from("moderation_cases").select("id,reported_user_id,content_type,content_id,reason,description,status,priority,appeal_status,created_at,updated_at").eq("reporter_id", profileId),
+    // The statements of reasons for decisions taken about the member.
+    decisionsAboutYou: supabase.from("moderation_cases").select("id,content_type,action_taken,policy_ground,member_statement,decision_timestamp,appeal_status").eq("reported_user_id", profileId).not("action_taken", "is", null).neq("action_taken", "NO_ACTION"),
     appeals: supabase.from("moderation_appeals").select("case_id,reason,status,decision_reason,created_at,decided_at").eq("appellant_id", profileId),
     copyrightNotices: supabase.from("copyright_notices").select("id,claimant_name,claimant_email,content_type,content_id,complaint,status,action,counter_notice,resolution,created_at,updated_at").eq("claimant_profile_id", profileId),
     verification: supabase.from("verification_reviews").select("verification_type,status,provider_method,submitted_at,reviewed_at,reason").eq("profile_id", profileId),
@@ -67,7 +70,7 @@ export async function GET(req: NextRequest) {
   if (!audited) return NextResponse.json({ error: "Export audit evidence could not be recorded" }, { status: 502 });
   return NextResponse.json({
     generatedAt: completedAt,
-    scopeNote: "Reports made about you and restricted safety records require a reviewed access request so third-party rights are protected.",
+    scopeNote: "Decisions taken about you are included with their reasons. Other reports made about you and restricted safety records require a reviewed access request so third-party rights are protected.",
     profile: result.profile.data,
     ...Object.fromEntries(Object.entries(result).filter(([key]) => key !== "profile").map(([key, value]) => [key, rows(value)])),
   }, { headers: { "Cache-Control": "private, no-store", "Content-Disposition": `attachment; filename="intimo-data-export-${completedAt.slice(0, 10)}.json"` } });
