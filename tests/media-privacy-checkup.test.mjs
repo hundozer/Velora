@@ -9,6 +9,7 @@ import ts from "typescript";
 import sharp from "sharp";
 import { sanitizeDeliveredImage } from "../src/lib/media/variants.mjs";
 import { grantIsActive } from "../src/lib/privateAccess.mjs";
+import * as ageCheck from "../src/lib/auth/ageCheck.mjs";
 
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -75,11 +76,12 @@ function mediaRoute({ grant, deliver }) {
     if (table === "album_access_grants") return { data: grant(), error: null };
     if (table === "media_album_items") return { data: [], error: null };
     if (table === "user_blocks") return { data: null, error: null };
-    if (table === "profiles") return { data: { account_status: "ACTIVE", discovery_disabled: false }, error: null };
+    if (table === "profiles") return { data: { account_status: "ACTIVE", age_verification_status: "AGE_VERIFIED", discovery_disabled: false }, error: null };
     return { data: null, error: null };
   });
   return load("src/app/api/media/[id]/route.ts", {
     "@/lib/auth/serverActor": { resolveServerActor: async () => ({ status: "authenticated", actor: { profileId: VIEWER, userId: VIEWER } }), hasAdultAccess: () => true },
+    "@/lib/auth/ageCheck.mjs": ageCheck,
     "@/lib/supabase/server": { getServerSupabase: () => db },
     "@/lib/storage/r2": {}, "@/lib/auth/durableAudit": {},
     "@/lib/media/variants.mjs": { parseRequestedWidth: () => null, pickVariantWidth: () => null },

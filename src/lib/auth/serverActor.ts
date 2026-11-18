@@ -4,6 +4,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { shouldTouchActivity } from "@/lib/presence.mjs";
 import { hasValidAdminMfaSession } from "./adminMfaSession";
 import type { ProfileRow } from "@/lib/supabase/profileService";
+import { hasVerifiedAccess } from "@/lib/auth/ageCheck.mjs";
 
 export const ADMIN_ROLES = new Set(["ADMIN", "SUPER_ADMIN", "SYSTEM_ADMIN", "TRUST_AND_SAFETY_ADMIN", "CONTENT_MODERATOR", "PRIVACY_ADMIN", "SUPPORT_ADMIN", "COMMUNITY_ADMIN"]);
 
@@ -100,8 +101,13 @@ export async function resolveServerActor(req?: NextRequest, options: { includePr
   };
 }
 
+/**
+ * FM-06: community access needs an age check reviewed by an admin, not just a declared date of
+ * birth. Members still waiting can use their own profile and the age check (see
+ * `hasSetupAccess` in `@/lib/auth/ageCheck.mjs`), nothing else.
+ */
 export function hasAdultAccess(actor: ServerActor): boolean {
-  return actor.accountStatus === "ACTIVE" && (actor.ageVerificationStatus === "AGE_DECLARED" || actor.ageVerificationStatus === "AGE_VERIFIED");
+  return hasVerifiedAccess(actor);
 }
 
 export function isAdminActor(actor: ServerActor): boolean {

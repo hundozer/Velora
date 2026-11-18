@@ -17,7 +17,8 @@ export async function GET(req: NextRequest) {
   if (status && DECISIONS.has(status)) query = query.eq("moderation_status", status);
   if (req.nextUrl.searchParams.get("queue") === "1") query = query.in("moderation_status", ["PENDING_REVIEW", "UNDER_REVIEW"]).eq("upload_status", "AVAILABLE");
   // Chat photos are private 1:1 media: moderated when reported, not queued proactively.
-  query = query.or("category.is.null,category.neq.MESSAGE");
+  // Age check selfies (FM-06) are reviewed in the verification queue, never as content.
+  query = query.or("category.is.null,and(category.neq.MESSAGE,category.neq.AGE_CHECK)");
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: "Content queue lookup failed; confirm migration 20260814 is applied" }, { status: 502 });
   return NextResponse.json({ media: data || [] }, { headers: { "Cache-Control": "private, no-store" } });

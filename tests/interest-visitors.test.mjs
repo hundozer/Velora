@@ -24,7 +24,7 @@ test("views are recorded server-side, never for invisible browsers or owners", a
 
 test("interest is block-aware and notifies once; activity hides blocked members", async () => {
   const interests = await read("src/app/api/interests/route.ts");
-  assert.match(interests, /if \(blockError \|\| block \|\| !target \|\| target\.account_status !== "ACTIVE"/);
+  assert.match(interests, /if \(blockError \|\| block \|\| !target \|\| !isVisibleMember\(target\)/);
   assert.match(interests, /rpc\("intimo_save_interest", \{ p_from: auth.profileId, p_to: targetId \}\)/);
   const activity = await read("src/app/api/activity/route.ts");
   assert.match(activity, /\.filter\(\(id\) => !blocked\.has\(id\)\)/);

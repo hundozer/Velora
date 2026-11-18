@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPresignedUploadUrl, isR2Configured } from "@/lib/storage/r2";
-import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
+import { resolveServerActor } from "@/lib/auth/serverActor";
+import { hasSetupAccess } from "@/lib/auth/ageCheck.mjs";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
@@ -16,7 +17,8 @@ const PROFILE_IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp
 export async function POST(req: NextRequest) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
-  if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
+  // FM-06: members waiting for their age check upload their own photos and the selfie.
+  if (!hasSetupAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
 
   const rate = (await checkRateLimit(`media-presign:${actor.actor.userId}`, 20, 60));
   if (!rate.allowed) return NextResponse.json({ error: "Too many upload requests" }, { status: 429, headers: { "Retry-After": String(rate.resetInSeconds) } });
@@ -32,8 +34,10 @@ export async function POST(req: NextRequest) {
     if (isStory && (!PROFILE_IMAGE_MIME_TYPES.has(fileType) || body.contentRating !== "NON_EXPLICIT")) {
       return NextResponse.json({ error: "Stories support non-explicit JPEG, PNG or WebP photos" }, { status: 400 });
     }
+    const isAgeCheck = body.category === "AGE_CHECK" && !isProfileImage;
     const visibility = isProfileImage
       ? "MEMBERS_ONLY"
+      : isAgeCheck ? "PRIVATE"
       : (["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY", "PRIVATE", "APPROVED_USERS_ONLY"].includes(body.visibility) ? body.visibility : "PRIVATE");
     // Unknown media is treated as explicit. This fail-safe default prevents a
     // new upload from becoming anonymously accessible because a client omitted

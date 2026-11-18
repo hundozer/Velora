@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Messaging unavailable" }, { status: 503 });
   if (await blocked(supabase, actor.actor.profileId, receiverId)) return NextResponse.json({ error: "Messaging is not allowed between these profiles" }, { status: 403 });
-  const { data: recipient } = await supabase.from("profiles").select("id,display_name,message_permission,allow_direct_messages").eq("id", receiverId).eq("account_status", "ACTIVE").maybeSingle();
+  const { data: recipient } = await supabase.from("profiles").select("id,display_name,message_permission,allow_direct_messages").eq("id", receiverId).eq("account_status", "ACTIVE").eq("age_verification_status", "AGE_VERIFIED").maybeSingle();
   if (!recipient || recipient.allow_direct_messages === false) return NextResponse.json({ error: "Recipient is not accepting messages" }, { status: 403 });
   const { data: sender } = await supabase.from("profiles").select("display_name,avatar_url,verification_level,verification_status,gender,is_couple_profile,date_of_birth").eq("id", actor.actor.profileId).single();
   if (!sender) return NextResponse.json({ error: "Sender profile unavailable" }, { status: 502 });

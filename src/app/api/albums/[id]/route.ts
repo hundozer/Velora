@@ -26,8 +26,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     allowed = Boolean(friendship);
   }
   if (!allowed) return NextResponse.json({ error: "Album not found" }, { status: 404 });
-  const { data: owner } = await db.from("profiles").select("id,display_name,username,verification_status,verification_level,account_status,discovery_disabled").eq("id", album.owner_id).maybeSingle();
-  if (!owner || (!isOwner && (owner.account_status !== "ACTIVE" || owner.discovery_disabled))) return NextResponse.json({ error: "Album not found" }, { status: 404 });
+  const { data: owner } = await db.from("profiles").select("id,display_name,username,verification_status,verification_level,account_status,age_verification_status,discovery_disabled").eq("id", album.owner_id).maybeSingle();
+  if (!owner || (!isOwner && (owner.account_status !== "ACTIVE" || owner.age_verification_status !== "AGE_VERIFIED" || owner.discovery_disabled))) return NextResponse.json({ error: "Album not found" }, { status: 404 });
   const { data: links } = await db.from("media_album_items").select("media_id,sort_order").eq("album_id", album.id).order("sort_order", { ascending: true });
   const mediaIds = (links || []).map((link) => link.media_id);
   const { data: media } = mediaIds.length ? await db.from("media_objects").select("id,title,description,visibility,upload_status,processing_status,moderation_status").in("id", mediaIds).eq("owner_id", album.owner_id).or("category.is.null,category.neq.STORY") : { data: [] };

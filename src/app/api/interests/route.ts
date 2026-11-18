@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
+import { isVisibleMember } from "@/lib/auth/ageCheck.mjs";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { sendPush } from "@/lib/notifications/webPush";
@@ -41,11 +42,11 @@ export async function POST(req: NextRequest) {
   if (!(await checkRateLimit(`interest:${auth.userId}`, 60, 60 * 60)).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
 
   const [{ data: target }, { data: block, error: blockError }, { data: me }] = await Promise.all([
-    db.from("profiles").select("id,display_name,avatar_url,account_status").eq("id", targetId).maybeSingle(),
+    db.from("profiles").select("id,display_name,avatar_url,account_status,age_verification_status").eq("id", targetId).maybeSingle(),
     db.from("user_blocks").select("id").or(`and(blocker_id.eq.${auth.profileId},blocked_profile_id.eq.${targetId}),and(blocker_id.eq.${targetId},blocked_profile_id.eq.${auth.profileId})`).limit(1).maybeSingle(),
     db.from("profiles").select("display_name,avatar_url").eq("id", auth.profileId).single(),
   ]);
-  if (blockError || block || !target || target.account_status !== "ACTIVE" || !me) return NextResponse.json({ error: "Member not available" }, { status: 404 });
+  if (blockError || block || !target || !isVisibleMember(target) || !me) return NextResponse.json({ error: "Member not available" }, { status: 404 });
 
   const { data: created, error } = await db.rpc("intimo_save_interest", { p_from: auth.profileId, p_to: targetId });
   if (error) return NextResponse.json({ error: "Interest could not be saved" }, { status: 502 });

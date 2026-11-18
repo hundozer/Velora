@@ -11,10 +11,10 @@ export function AdminAccountAction({ member, action, onCancel, onComplete }: {
   onComplete: (message?: string) => void;
 }) {
   const deleting = action === 'DELETE';
-  const highRisk = deleting || ['SUSPEND', 'BAN', 'REACTIVATE'].includes(action);
+  const highRisk = deleting || ['SUSPEND', 'BAN', 'REACTIVATE', 'APPROVE_AGE'].includes(action);
   const expected = deleting ? `DELETE ${member.id}` : `CONFIRM ${action}`;
   const [reason, setReason] = React.useState('');
-  const [category, setCategory] = React.useState(deleting ? 'PRIVACY_DELETION' : 'ACCOUNT_SAFETY');
+  const [category, setCategory] = React.useState(deleting ? 'PRIVACY_DELETION' : action === 'APPROVE_AGE' ? 'AGE_CHECK' : 'ACCOUNT_SAFETY');
   const [confirmation, setConfirmation] = React.useState('');
   const [error, setError] = React.useState('');
   const [reauthenticate, setReauthenticate] = React.useState(false);

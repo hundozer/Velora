@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { closedSiteRefusal } from "@/lib/publicAccess";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { toAnonymousPublicProfile, type PublicProfileRow } from "@/lib/supabase/publicCommunity";
 
@@ -10,6 +11,7 @@ function queryText(value: string | null) {
 }
 
 export async function GET(req: NextRequest) {
+  const closed = await closedSiteRefusal(req); if (closed) return closed;
   const q = queryText(new URL(req.url).searchParams.get("q"));
   if (q.length < 2) return NextResponse.json({ error: "Enter at least two characters" }, { status: 400 });
   const client = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
@@ -21,7 +23,7 @@ export async function GET(req: NextRequest) {
 
   const [profilesResult, mediaResult, albumsResult] = await Promise.all([
     db.from("profiles").select("id,display_name,username,age,country,city,headline,bio,is_couple_profile,verification_status,verification_level,location_precision,show_online_status,last_active_at,created_at")
-      .eq("profile_visibility", "EVERYONE").eq("public_profile_visibility", true).eq("account_status", "ACTIVE").eq("discovery_disabled", false)
+      .eq("profile_visibility", "EVERYONE").eq("public_profile_visibility", true).eq("account_status", "ACTIVE").eq("age_verification_status", "AGE_VERIFIED").eq("discovery_disabled", false)
       .or(`display_name.ilike.${pattern},username.ilike.${pattern},headline.ilike.${pattern}`).order("created_at", { ascending: false }).order("id", { ascending: true }).limit(16),
     db.from("media_objects").select("id,owner_id,media_type,title,description,category,published_at,created_at")
       .eq("visibility", "PUBLIC").eq("upload_status", "AVAILABLE").eq("processing_status", "READY").eq("moderation_status", "APPROVED")
@@ -33,7 +35,7 @@ export async function GET(req: NextRequest) {
   if (profilesResult.error || mediaResult.error || albumsResult.error) return NextResponse.json({ error: "Search lookup failed" }, { status: 502 });
 
   const ownerIds = [...new Set([...(mediaResult.data || []).map((row) => row.owner_id), ...(albumsResult.data || []).map((row) => row.owner_id)])];
-  const { data: owners } = ownerIds.length ? await db.from("profiles").select("id,display_name,username,verification_status,verification_level").in("id", ownerIds).eq("profile_visibility", "EVERYONE").eq("public_profile_visibility", true).eq("account_status", "ACTIVE").eq("discovery_disabled", false) : { data: [] };
+  const { data: owners } = ownerIds.length ? await db.from("profiles").select("id,display_name,username,verification_status,verification_level").in("id", ownerIds).eq("profile_visibility", "EVERYONE").eq("public_profile_visibility", true).eq("account_status", "ACTIVE").eq("age_verification_status", "AGE_VERIFIED").eq("discovery_disabled", false) : { data: [] };
   const ownerMap = new Map((owners || []).map((owner) => [owner.id, owner]));
   const ownerName = (id: string) => ownerMap.get(id)?.display_name || ownerMap.get(id)?.username || "Intimo member";
   return NextResponse.json({

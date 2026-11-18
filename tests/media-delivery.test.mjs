@@ -5,6 +5,7 @@ import { createRequire } from "node:module";
 import ts from "typescript";
 import sharp from "sharp";
 import { sanitizeDeliveredImage } from "../src/lib/media/variants.mjs";
+import * as ageCheck from "../src/lib/auth/ageCheck.mjs";
 
 const require = createRequire(import.meta.url);
 function load(path, mocks) {
@@ -25,7 +26,7 @@ function route({ ownerStatus = "ACTIVE", blockError = null, category = null, del
       if (key === "then") return (resolve) => resolve(table === "media_objects"
         ? { data: columns === "variants" ? { variants: null } : { id, owner_id: ownerId, category, object_key: "photos/raw.jpg", mime_type: "image/jpeg", upload_status: "AVAILABLE", visibility: "MEMBERS_ONLY", moderation_status: "APPROVED", processing_status: "READY" }, error: null }
         : table === "user_blocks" ? { data: null, error: blockError }
-        : { data: { account_status: ownerStatus, discovery_disabled: false }, error: null });
+        : { data: { account_status: ownerStatus, age_verification_status: "AGE_VERIFIED", discovery_disabled: false }, error: null });
       return () => q;
     }});
     return q;
@@ -38,6 +39,7 @@ function route({ ownerStatus = "ACTIVE", blockError = null, category = null, del
     "@/lib/security/rateLimiter": { checkRateLimit: async () => ({ allowed: true }) },
     "@/lib/auth/durableAudit": {}, "@/lib/privateAccess.mjs": {},
     "@/lib/media/delivery": { deliverMedia: deliver },
+    "@/lib/auth/ageCheck.mjs": ageCheck,
   });
 }
 const request = () => ({ nextUrl: new URL("https://example.test/api/media/" + id), headers: new Headers() });

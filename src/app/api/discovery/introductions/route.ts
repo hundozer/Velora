@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
       .select(DISCOVERY_COLUMNS)
       .in("profile_visibility", ["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY"])
       .eq("account_status", "ACTIVE")
+      .eq("age_verification_status", "AGE_VERIFIED")
       .eq("discovery_disabled", false)
       .neq("auth_id", actorResult.actor.userId)
       .or(audienceExpression(context.friendIds))

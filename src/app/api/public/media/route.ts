@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { closedSiteRefusal } from "@/lib/publicAccess";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 
@@ -7,6 +8,7 @@ export const dynamic = "force-dynamic";
 const MAX_LIMIT = 36;
 
 export async function GET(req: NextRequest) {
+  const closed = await closedSiteRefusal(req); if (closed) return closed;
   const url = new URL(req.url);
   const mediaType = url.searchParams.get("type");
   const ownerId = url.searchParams.get("ownerId");
@@ -45,6 +47,7 @@ export async function GET(req: NextRequest) {
     .eq("profile_visibility", "EVERYONE")
     .eq("public_profile_visibility", true)
     .eq("account_status", "ACTIVE")
+    .eq("age_verification_status", "AGE_VERIFIED")
     .eq("discovery_disabled", false) : { data: [] };
   const ownerMap = new Map((owners || []).map((owner) => [owner.id, owner]));
   const media = (rows || []).flatMap((row) => {

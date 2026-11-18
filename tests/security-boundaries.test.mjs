@@ -150,7 +150,8 @@ test("affected users can see eligible decisions and appeal while plans expose re
 test("media presigning requires identity and enforces size and type allowlists", async () => {
   const source = await read("src/app/api/media/presign-upload/route.ts");
   assert.match(source, /resolveServerActor\(req\)/);
-  assert.match(source, /hasAdultAccess\(actor\.actor\)/);
+  // FM-06: members waiting for their age check may upload their own photos and the selfie.
+  assert.match(source, /hasSetupAccess\(actor\.actor\)/);
   assert.match(source, /ALLOWED_MIME_TYPES\.has\(fileType\)/);
   assert.match(source, /fileSize > maxBytes/);
   assert.match(source, /NODE_ENV === "production" && !isR2Configured/);

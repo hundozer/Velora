@@ -9,7 +9,7 @@ const urgentReasons = new Set(['SUSPECTED_MINOR', 'NON_CONSENSUAL_INTIMATE_CONTE
 export function normalizeWork(kind, rows) {
   return rows.filter(row => kind === 'report' ? ['OPEN', 'UNDER_REVIEW', 'ACTION_REQUIRED', 'ESCALATED', 'APPEALED'].includes(row.status)
     : kind === 'verification' ? ['PENDING', 'REVIEW_REQUIRED'].includes(row.status)
-    : ['PENDING_REVIEW', 'UNDER_REVIEW'].includes(row.moderation_status) && (kind !== 'photo' || (row.category !== 'MESSAGE' && row.upload_status === 'AVAILABLE')))
+    : ['PENDING_REVIEW', 'UNDER_REVIEW'].includes(row.moderation_status) && (kind !== 'photo' || (row.category !== 'MESSAGE' && row.category !== 'AGE_CHECK' && row.upload_status === 'AVAILABLE')))
     .map(row => ({ key: `${kind}:${row.id}`, kind, id: row.id, row,
       title: row.title || (kind === 'report' ? `${readable(row.content_type || 'Member')} report` : kind === 'verification' ? `${readable(row.verification_type)} verification` : row.media_type === 'VIDEO' ? 'Untitled video' : 'Untitled photo'),
       ownerId: row.owner_id || row.reported_user_id || row.profile_id,

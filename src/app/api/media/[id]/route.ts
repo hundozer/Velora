@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
+import { hasSetupAccess, isVisibleMember } from "@/lib/auth/ageCheck.mjs";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { deleteStoredObject, deleteVariantObjects } from "@/lib/storage/r2";
 import { parseRequestedWidth, pickVariantWidth } from "@/lib/media/variants.mjs";
@@ -14,7 +15,9 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
-  if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
+  // FM-06: a member waiting for their age check sees only their own media.
+  const ageChecked = hasAdultAccess(actor.actor);
+  if (!ageChecked && !hasSetupAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
   if (!UUID.test(params.id)) return NextResponse.json({ error: "Invalid media identifier" }, { status: 400 });
   const requestedWidth = parseRequestedWidth(req.nextUrl.searchParams.get("w"));
   // Thumbnails are small and requested in bulk by lists; they get their own budget.
@@ -33,6 +36,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (media.mime_type.startsWith("video/") && !media.object_key.startsWith(`variants/${media.id}/safe.`)) return NextResponse.json({ error: "Media not found" }, { status: 404 });
   if ("category" in media && media.category === "STORY") return NextResponse.json({ error: "Media not found" }, { status: 404, headers: { "Cache-Control": "private, no-store" } });
   const isOwner = media.owner_id === actor.actor.profileId;
+  if (!isOwner && !ageChecked) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
+  // FM-06: an age check selfie is evidence for admins only (served by the admin evidence route).
+  if (!isOwner && "category" in media && media.category === "AGE_CHECK") return NextResponse.json({ error: "Media not found" }, { status: 404 });
   const moderationStatus = "moderation_status" in media ? media.moderation_status : null;
   const processingStatus = "processing_status" in media ? media.processing_status : null;
   // Chat photos (P1-10) are private 1:1 media: visible to the two participants without
@@ -50,8 +56,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (blockError || block) return NextResponse.json({ error: "Media not found" }, { status: 404 });
   if (!isOwner) {
     const { data: owner, error: ownerError } = await supabase.from("profiles")
-      .select("account_status,discovery_disabled").eq("id", media.owner_id).maybeSingle();
-    if (ownerError || !owner || owner.account_status !== "ACTIVE" || owner.discovery_disabled) {
+      .select("account_status,age_verification_status,discovery_disabled").eq("id", media.owner_id).maybeSingle();
+    if (ownerError || !owner || !isVisibleMember(owner) || owner.discovery_disabled) {
       return NextResponse.json({ error: "Media not found" }, { status: 404 });
     }
   }
@@ -112,6 +118,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Media service unavailable" }, { status: 503 });
   const { data: existing, error: existingError } = await db.from("media_objects").select("category").eq("id", params.id).eq("owner_id", actor.actor.profileId).maybeSingle();
   if (existingError) return NextResponse.json({ error: "Media lookup failed" }, { status: 502 });
+  if (existing?.category === "AGE_CHECK" || category === "AGE_CHECK") return NextResponse.json({ error: "Age check photos can't be changed" }, { status: 409 });
   if (existing?.category === "STORY" || category === "STORY") return NextResponse.json({ error: "Manage story photos in Stories" }, { status: 409 });
   const { data, error } = await db.from("media_objects").update({ title: title || null, description: description || null, category: category || null, tags, visibility, moderation_status: "PENDING_REVIEW", published_at: null, updated_at: new Date().toISOString() }).eq("id", params.id).eq("owner_id", actor.actor.profileId).neq("upload_status", "REMOVED").select("id,title,description,category,tags,visibility,moderation_status,processing_status,upload_status").maybeSingle();
   if (error) return NextResponse.json({ error: "Media update failed" }, { status: 502 }); if (!data) return NextResponse.json({ error: "Media not found" }, { status: 404 });

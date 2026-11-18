@@ -9,6 +9,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { MobileNavigation } from "@/components/layout/MobileNavigation";
 import { AgeVerificationModal } from "@/components/common/AgeVerificationModal";
+import { AgeCheckGate } from "@/components/auth/AgeCheckGate";
 import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration";
 import { DiscreetMode } from "@/components/privacy/DiscreetMode";
 import { serverLang, serverT } from "@/lib/i18n/server";
@@ -73,7 +74,7 @@ export default function RootLayout({
           <AuthProvider>
             <Navbar />
             <AgeVerificationModal />
-            <main className="flex-1 w-full">{children}</main>
+            <main className="flex-1 w-full"><AgeCheckGate>{children}</AgeCheckGate></main>
             <MobileNavigation />
             <Footer />
           </AuthProvider>

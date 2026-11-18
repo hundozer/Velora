@@ -119,7 +119,8 @@ function OnboardingForm() {
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Your photo could not be saved.");
-      window.location.replace("/");
+      // FM-06: a new member goes straight to the age check.
+      window.location.replace("/verify-age");
     } catch (failure) {
       if (uploadedUrl.startsWith("/api/media/")) await fetch(uploadedUrl, { method: "DELETE", credentials: "same-origin" }).catch(() => undefined);
       setError(failure instanceof Error ? failure.message : "Your photo could not be uploaded.");
@@ -215,7 +216,7 @@ function OnboardingForm() {
       </label>
       <p className="flex items-center gap-2 text-base text-velora-textMuted"><Heart className="h-4 w-4 text-velora-gold" aria-hidden />{t("Members only. Keep it non-explicit.")}</p>
       {t(errorLine)}
-      <button type="button" disabled={photoProgress !== null} onClick={() => window.location.replace("/")} className="w-full py-4 text-lg font-semibold text-velora-textSecondary hover:text-velora-textPrimary">{t("Skip for now")}</button>
+      <button type="button" disabled={photoProgress !== null} onClick={() => window.location.replace("/verify-age")} className="w-full py-4 text-lg font-semibold text-velora-textSecondary hover:text-velora-textPrimary">{t("Skip for now")}</button>
     </FlowScreen>
   );
 }

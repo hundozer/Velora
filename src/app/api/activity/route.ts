@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
 
   const ids = [...new Set([...latestVisit.keys(), ...received.keys()])].filter((id) => !blocked.has(id));
   const { data: rows, error } = ids.length
-    ? await db.from("profiles").select("*").in("id", ids).eq("account_status", "ACTIVE")
+    ? await db.from("profiles").select("*").in("id", ids).eq("account_status", "ACTIVE").eq("age_verification_status", "AGE_VERIFIED")
     : { data: [], error: null };
   if (error) return NextResponse.json({ error: "Activity lookup failed" }, { status: 502 });
   const byId = new Map((rows || []).map((row) => [row.id as string, toMemberVisibleProfile(row as ProfileRow)]));

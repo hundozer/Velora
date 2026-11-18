@@ -63,5 +63,6 @@ test("boundaries are exported, erased with the account, and served behind profil
   assert.match(await read("src/app/api/profiles/[id]/boundaries/route.ts"), /resolveMemberProfileAccess\(req, params\.id\)/);
   const access = await read("src/lib/profiles/memberProfileAccess.ts");
   assert.match(access, /from\("user_blocks"\)/);
-  assert.match(access, /account_status !== "ACTIVE"/);
+  // FM-06: only active, age-checked members are visible.
+  assert.match(access, /!isVisibleMember\(target\)/);
 });
