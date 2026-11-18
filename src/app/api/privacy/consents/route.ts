@@ -4,27 +4,32 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { auditLogger } from "@/lib/auth/auditLogger";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
-import { DESIRE_CONSENT_TYPE } from "@/lib/privacy/desireConsent";
+import { CONSENTS, MEMBER_CONSENT_TYPES, consentRow, consentStates, type ConsentType } from "@/lib/privacy/consents.mjs";
 
 export const dynamic = "force-dynamic";
-const CONSENT_VERSION = "sensitive-profile-v1-draft";
-const CONSENT_TYPES = new Set(["SPECIAL_CATEGORY_PROFILE", "PERSONALIZED_DISCOVERY", DESIRE_CONSENT_TYPE]);
+const COLUMNS = "consent_type,consent_version,consent_timestamp,consent_status,withdrawn_at,source";
 
 function noStore(response: NextResponse) {
   response.headers.set("Cache-Control", "private, no-store");
   return response;
 }
 
+/** The member's consent state per category, plus their full history (newest first). */
 export async function GET(req: NextRequest) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return noStore(NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 }));
   const supabase = getServerSupabase();
   if (!supabase) return noStore(NextResponse.json({ error: "Privacy service unavailable" }, { status: 503 }));
-  const { data, error } = await supabase.from("user_consents").select("consent_type,consent_version,consent_timestamp,consent_status,withdrawn_at").eq("profile_id", actor.actor.profileId).order("consent_timestamp", { ascending: false });
+  const { data, error } = await supabase.from("user_consents").select(COLUMNS).eq("profile_id", actor.actor.profileId).order("consent_timestamp", { ascending: false });
   if (error) return noStore(NextResponse.json({ error: "Consent lookup failed" }, { status: 502 }));
-  return noStore(NextResponse.json({ consents: data || [], currentVersion: CONSENT_VERSION }));
+  const consents = (data || []).filter((row) => (MEMBER_CONSENT_TYPES as string[]).includes(row.consent_type));
+  return noStore(NextResponse.json({ consents, states: consentStates(consents) }));
 }
 
+/**
+ * Grants or withdraws one consent. Withdrawal deletes the data that consent covered, in the
+ * same request, before the change is reported as done. Consent rows are append-only evidence.
+ */
 export async function POST(req: NextRequest) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return noStore(NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 }));
@@ -35,27 +40,34 @@ export async function POST(req: NextRequest) {
   const input = body as Record<string, unknown>;
   const consentType = typeof input.consentType === "string" ? input.consentType : "";
   const granted = input.granted;
-  if (!CONSENT_TYPES.has(consentType) || typeof granted !== "boolean") return NextResponse.json({ error: "Invalid consent choice" }, { status: 400 });
-  const now = new Date().toISOString();
+  if (!(MEMBER_CONSENT_TYPES as string[]).includes(consentType) || typeof granted !== "boolean") return NextResponse.json({ error: "Invalid consent choice" }, { status: 400 });
+  const type = consentType as ConsentType;
+  const spec = CONSENTS[type];
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Privacy service unavailable" }, { status: 503 });
-  const { error } = await supabase.from("user_consents").insert({
-    profile_id: actor.actor.profileId,
-    consent_type: consentType,
-    consent_version: CONSENT_VERSION,
-    consent_timestamp: now,
-    consent_status: granted ? "GRANTED" : "WITHDRAWN",
-    withdrawn_at: granted ? null : now,
-    source: "PRIVACY_CENTER",
-  });
+  const profileId = actor.actor.profileId;
+  const row = consentRow({ profileId, type, granted, source: "PRIVACY_CENTER" });
+
+  const { error } = await supabase.from("user_consents").insert(row);
   if (error) return NextResponse.json({ error: "Consent update failed" }, { status: 502 });
-  // Withdrawing desire consent erases the data it covered.
-  if (!granted && consentType === DESIRE_CONSENT_TYPE) {
-    const { error: eraseError } = await supabase.from("member_desires").delete().eq("profile_id", actor.actor.profileId);
-    if (eraseError) return NextResponse.json({ error: "Consent withdrawn but desires could not be erased; contact support" }, { status: 502 });
+
+  // Withdrawal erases what the consent covered. Done after the withdrawal row exists, so a
+  // failure leaves the member recorded as withdrawn and the erasure retryable, never the reverse.
+  if (!granted) {
+    if (spec.erasesProfileColumns.length) {
+      const cleared = Object.fromEntries(spec.erasesProfileColumns.map((column) => [column, null]));
+      const { error: eraseError } = await supabase.from("profiles").update({ ...cleared, updated_at: row.consent_timestamp }).eq("id", profileId);
+      if (eraseError) return NextResponse.json({ error: "Consent withdrawn but your details could not be deleted; please try again" }, { status: 502 });
+    }
+    for (const table of spec.erasesTables || []) {
+      const { error: eraseError } = await supabase.from(table).delete().eq("profile_id", profileId);
+      if (eraseError) return NextResponse.json({ error: "Consent withdrawn but your details could not be deleted; please try again" }, { status: 502 });
+    }
   }
-  auditLogger.logEvent({ actorId: actor.actor.userId, actorRole: actor.actor.role as any, action: granted ? "CONSENT_GRANTED" : "CONSENT_WITHDRAWN", resourceType: "CONSENT", status: "SUCCESS", details: { consentType, consentVersion: CONSENT_VERSION } });
-  const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: granted ? "CONSENT_GRANTED" : "CONSENT_WITHDRAWN", resourceType: "CONSENT", resourceId: consentType, outcome: "SUCCESS", metadata: { consentVersion: CONSENT_VERSION } });
+
+  const action = granted ? "CONSENT_GRANTED" : "CONSENT_WITHDRAWN";
+  auditLogger.logEvent({ actorId: actor.actor.userId, actorRole: actor.actor.role as any, action, resourceType: "CONSENT", status: "SUCCESS", details: { consentType: type, consentVersion: spec.version } });
+  const audited = await appendDurableAudit(supabase, { actorProfileId: profileId, actorUserId: actor.actor.userId, action, resourceType: "CONSENT", resourceId: type, outcome: "SUCCESS", metadata: { consentVersion: spec.version } });
   if (!audited) return NextResponse.json({ error: "Consent saved but audit evidence failed; contact support" }, { status: 502 });
-  return noStore(NextResponse.json({ consentType, consentVersion: CONSENT_VERSION, status: granted ? "GRANTED" : "WITHDRAWN", timestamp: now }));
+  return noStore(NextResponse.json({ consentType: type, consentVersion: spec.version, status: row.consent_status, timestamp: row.consent_timestamp }));
 }

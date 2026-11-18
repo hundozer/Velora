@@ -335,7 +335,8 @@ test("privacy APIs derive ownership from the server actor and public profiles mi
   const settings = await read("src/app/api/privacy/settings/route.ts");
   const exportRoute = await read("src/app/api/privacy/export/route.ts");
   const publicProfile = await read("src/lib/supabase/publicProfile.ts");
-  assert.match(consents, /profile_id: actor\.actor\.profileId/);
+  assert.match(consents, /const profileId = actor\.actor\.profileId/);
+  assert.match(consents, /consentRow\(\{ profileId, type, granted/);
   assert.match(settings, /\.eq\("id", actor\.actor\.profileId\)/);
   assert.match(exportRoute, /profileId = actor\.actor\.profileId/);
   assert.doesNotMatch(publicProfile, /dateOfBirth:/);

@@ -1,6 +1,7 @@
 import { notifyNewRegistration } from "@/lib/notifications/registrationAlert";
 import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { CONSENTS } from "@/lib/privacy/consents.mjs";
 import { getVerifiedIdentity } from "@/lib/auth/serverSession";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { createSessionClient } from "@/lib/supabase/session";
@@ -197,7 +198,7 @@ export async function POST(req: NextRequest) {
     const { error: consentError } = await supabase.from("user_consents").insert({
       profile_id: data.id,
       consent_type: "SPECIAL_CATEGORY_PROFILE",
-      consent_version: "sensitive-profile-v1",
+      consent_version: CONSENTS.SPECIAL_CATEGORY_PROFILE.version,
       consent_timestamp: consentTimestamp,
       consent_status: "GRANTED",
       withdrawn_at: null,

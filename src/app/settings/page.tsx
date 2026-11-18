@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { AreaSelect } from "@/components/profile/AreaSelect";
 import { EmailPreferences, PushPreferences } from "@/components/settings/EmailPreferences";
+import { ConsentSettings } from "@/components/settings/ConsentSettings";
 import { AppOnThisDevice } from "@/components/pwa/AppOnThisDevice";
 import { readDiscreet, writeDiscreet } from "@/lib/discreet";
 import { Badge } from "@/components/ui/Badge";
@@ -51,7 +52,6 @@ export default function SettingsPage() {
     showInIntroductions: true,
     showDistance: true,
   });
-  const [sensitiveConsentGranted, setSensitiveConsentGranted] = useState(false);
   const [discreet, setDiscreet] = useState(false);
   React.useEffect(() => setDiscreet(readDiscreet()), []);
   const [verificationWizardOpen, setVerificationWizardOpen] = useState(false);
@@ -149,9 +149,8 @@ export default function SettingsPage() {
   React.useEffect(() => {
     Promise.all([
       fetch("/api/privacy/settings", { credentials: "same-origin" }).then((response) => response.ok ? response.json() : null),
-      fetch("/api/privacy/consents", { credentials: "same-origin" }).then((response) => response.ok ? response.json() : null),
       fetch("/api/reports", { credentials: "same-origin" }).then((response) => response.ok ? response.json() : null),
-    ]).then(([settingsPayload, consentPayload, reportsPayload]) => {
+    ]).then(([settingsPayload, reportsPayload]) => {
       const settings = settingsPayload?.settings;
       if (settings) setPrivacy({
         profileVisibility: settings.profile_visibility || "MEMBERS_ONLY",
@@ -163,8 +162,6 @@ export default function SettingsPage() {
         showInIntroductions: settings.show_in_introductions !== false,
         showDistance: settings.show_distance === true,
       });
-      const latest = consentPayload?.consents?.find((item: any) => item.consent_type === "SPECIAL_CATEGORY_PROFILE");
-      setSensitiveConsentGranted(latest?.consent_status === "GRANTED");
       setReportHistory(reportsPayload?.reports || []);
     }).catch(() => undefined);
   }, []);
@@ -211,14 +208,6 @@ export default function SettingsPage() {
 
     setExportSuccess(true);
     setTimeout(() => setExportSuccess(false), 3000);
-  };
-
-  const updateSensitiveConsent = async (granted: boolean) => {
-    const response = await fetch("/api/privacy/consents", {
-      method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ consentType: "SPECIAL_CATEGORY_PROFILE", granted }),
-    });
-    if (response.ok) setSensitiveConsentGranted(granted);
   };
 
   const handleDeleteAccount = async () => {
@@ -418,11 +407,7 @@ export default function SettingsPage() {
           <div><p className="text-xs font-bold text-ink">{t("Photos, videos, and albums")}</p><p className="mt-1 text-[11px] leading-5 text-velora-textMuted">{t("Choose Public, Members, Followers, or Private separately for every album. Switch an album to Private to hide it without deleting it.")}</p></div>
           <Link href="/albums/manage" className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-velora-accent/40 px-4 text-xs font-bold text-velora-accent transition hover:bg-velora-accent/10">{t("Manage media visibility")}</Link>
         </div>
-        <div className="p-4 border border-emerald-500/30 rounded-xl space-y-3">
-          <p className="text-xs font-bold">{t("Explicit sensitive-data consent")}</p>
-          <p className="text-[11px] text-velora-textMuted">{t("Controls processing of sexual orientation and intimate preferences for your profile and discovery. Withdrawal may make these features unavailable; it does not replace a deletion request.")}</p>
-          <Button variant="glass" size="sm" onClick={() => updateSensitiveConsent(!sensitiveConsentGranted)}>{sensitiveConsentGranted ? t("Withdraw consent") : t("Grant consent")}</Button>
-        </div>
+        <ConsentSettings />
       </Card>
 
       {/* Emails (P1-11) */}
