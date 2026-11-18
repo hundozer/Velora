@@ -6,7 +6,7 @@ import { ShieldCheck } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 import type { ConsentRecord, ConsentState, ConsentType } from "@/lib/privacy/consents.mjs";
 
-type Payload = { consents: ConsentRecord[]; states: Record<ConsentType, ConsentState> };
+type Payload = { consents: ConsentRecord[]; states: Record<ConsentType, ConsentState>; pendingErasure?: Partial<Record<ConsentType, boolean>> };
 
 /**
  * FM-01: one card per consent. Each shows the exact wording, when it was given, and lets the
@@ -25,16 +25,21 @@ export function ConsentSettings() {
   const load = React.useCallback(() => {
     fetch("/api/privacy/consents", { credentials: "same-origin", cache: "no-store" })
       .then((response) => (response.ok ? response.json() : Promise.reject()))
-      .then((payload: Payload) => { setData(payload); setError(""); })
+      .then((payload: Payload) => setData(payload))
       .catch(() => setError(t("Your consents could not be loaded. Please try again.")));
   }, [t]);
   React.useEffect(load, [load]);
 
   async function change(type: ConsentType, granted: boolean) {
     setBusy(type); setError("");
-    const response = await fetch("/api/privacy/consents", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ consentType: type, granted }) });
-    setBusy(null); setConfirming(null); setAgreed(false);
-    if (!response.ok) setError(t("That didn't work. Please try again."));
+    let ok = false;
+    try {
+      const response = await fetch("/api/privacy/consents", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ consentType: type, granted }) });
+      ok = response.ok;
+    } catch { /* network failure: reported below */ }
+    finally { setBusy(null); setConfirming(null); setAgreed(false); }
+    // The error stays visible after the reload; a failed deletion also shows "Delete now".
+    if (!ok) setError(t("That didn't work. Please try again."));
     load();
   }
 
@@ -94,10 +99,16 @@ export function ConsentSettings() {
               </div>
             )}
 
-            {!granted && type === "SPECIAL_CATEGORY_DESIRES" && (
+            {!granted && data.pendingErasure?.[type] && (
+              <div role="alert" className="mt-3 rounded-xl border border-velora-danger/40 bg-velora-danger/10 p-3">
+                <p className="text-xs font-semibold text-ink">{t("You withdrew this consent, but some of these details are still stored. Delete them now.")}</p>
+                <button type="button" disabled={busy === type} onClick={() => void change(type, false)} className="mt-3 min-h-9 rounded-full bg-velora-danger px-4 text-xs font-bold text-velora-paper disabled:opacity-60">{busy === type ? t("One moment…") : t("Delete now")}</button>
+              </div>
+            )}
+            {!granted && !data.pendingErasure?.[type] && type === "SPECIAL_CATEGORY_DESIRES" && (
               <Link href="/me/desires" className="mt-3 inline-flex min-h-9 items-center rounded-full border border-velora-accent/40 px-4 text-xs font-semibold text-velora-accent">{t("Add desires")}</Link>
             )}
-            {!granted && type === "SPECIAL_CATEGORY_PROFILE" && (
+            {!granted && !data.pendingErasure?.[type] && type === "SPECIAL_CATEGORY_PROFILE" && (
               <div className="mt-3 space-y-2">
                 <label className="flex items-start gap-2 text-[11px] leading-5 text-ink">
                   <input type="checkbox" checked={agreed} onChange={(event) => setAgreed(event.target.checked)} className="mt-0.5 h-4 w-4 accent-velora-accent" />

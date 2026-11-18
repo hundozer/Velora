@@ -23,7 +23,28 @@ export async function GET(req: NextRequest) {
   const { data, error } = await supabase.from("user_consents").select(COLUMNS).eq("profile_id", actor.actor.profileId).order("consent_timestamp", { ascending: false });
   if (error) return noStore(NextResponse.json({ error: "Consent lookup failed" }, { status: 502 }));
   const consents = (data || []).filter((row) => (MEMBER_CONSENT_TYPES as string[]).includes(row.consent_type));
-  return noStore(NextResponse.json({ consents, states: consentStates(consents) }));
+  const states = consentStates(consents);
+  // A withdrawal whose deletion failed leaves data behind. Report it so Settings can offer
+  // "Delete now" until it is gone, including after a page reload.
+  const pendingErasure: Partial<Record<ConsentType, boolean>> = {};
+  for (const type of MEMBER_CONSENT_TYPES) {
+    if (states[type].granted) continue;
+    const spec = CONSENTS[type];
+    let pending = false;
+    if (spec.erasesProfileColumns.length) {
+      const { data: profile, error: profileError } = await supabase.from("profiles").select(spec.erasesProfileColumns.join(",")).eq("id", actor.actor.profileId).maybeSingle();
+      if (profileError) return noStore(NextResponse.json({ error: "Consent lookup failed" }, { status: 502 }));
+      pending = spec.erasesProfileColumns.some((column) => (profile as Record<string, unknown> | null)?.[column] != null);
+    }
+    for (const table of spec.erasesTables || []) {
+      if (pending) break;
+      const { data: rows, error: tableError } = await supabase.from(table).select("profile_id").eq("profile_id", actor.actor.profileId).limit(1);
+      if (tableError) return noStore(NextResponse.json({ error: "Consent lookup failed" }, { status: 502 }));
+      pending = Boolean(rows?.length);
+    }
+    pendingErasure[type] = pending;
+  }
+  return noStore(NextResponse.json({ consents, states, pendingErasure }));
 }
 
 /**

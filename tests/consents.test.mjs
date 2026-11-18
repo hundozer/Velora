@@ -108,3 +108,43 @@ test("a failed deletion is reported, unknown consents are refused, and the owner
   const spoof = await post({ consentType: "SPECIAL_CATEGORY_PROFILE", granted: true, profileId: "someone-else" });
   assert.equal(spoof.calls[0].values.profile_id, PROFILE);
 });
+
+/** Runs GET with a fake database holding the given consent rows and covered data. */
+async function get({ consents, profile, desires }) {
+  const db = { from(table) {
+    const q = new Proxy({}, { get(_, key) {
+      if (key === "then") return (resolve) => resolve(
+        table === "user_consents" ? { data: consents, error: null }
+        : table === "profiles" ? { data: profile, error: null }
+        : { data: desires, error: null });
+      return () => q;
+    } });
+    return q;
+  } };
+  const route = load("src/app/api/privacy/consents/route.ts", {
+    "@/lib/auth/serverActor": { resolveServerActor: async () => ({ status: "authenticated", actor: { profileId: PROFILE, userId: "user-1", role: "MEMBER" } }) },
+    "@/lib/supabase/server": { getServerSupabase: () => db },
+    "@/lib/security/rateLimiter": {}, "@/lib/auth/auditLogger": {}, "@/lib/auth/durableAudit": {},
+    "@/lib/privacy/consents.mjs": registry,
+  });
+  return (await route.GET({})).json();
+}
+
+test("a withdrawn consent with data still stored is reported, so Settings can offer Delete now after a reload", async () => {
+  const withdrawn = (type) => ({ consent_type: type, consent_version: CONSENTS[type].version, consent_timestamp: "2026-11-18T08:00:00Z", consent_status: "WITHDRAWN" });
+  const leftover = await get({ consents: [withdrawn("SPECIAL_CATEGORY_PROFILE"), withdrawn("SPECIAL_CATEGORY_DESIRES")], profile: { sexual_orientation: "QUEER" }, desires: [{ profile_id: PROFILE }] });
+  assert.deepEqual(leftover.pendingErasure, { SPECIAL_CATEGORY_PROFILE: true, SPECIAL_CATEGORY_DESIRES: true });
+  const clean = await get({ consents: [withdrawn("SPECIAL_CATEGORY_PROFILE")], profile: { sexual_orientation: null }, desires: [] });
+  assert.deepEqual(clean.pendingErasure, { SPECIAL_CATEGORY_PROFILE: false, SPECIAL_CATEGORY_DESIRES: false });
+  // A granted consent is never flagged, whatever is stored.
+  const granted = await get({ consents: [{ ...withdrawn("SPECIAL_CATEGORY_PROFILE"), consent_status: "GRANTED" }], profile: { sexual_orientation: "QUEER" }, desires: [] });
+  assert.equal(granted.pendingErasure.SPECIAL_CATEGORY_PROFILE, undefined);
+});
+
+test("Settings recovers from network failures and keeps a failed deletion retryable", () => {
+  const ui = read("src/components/settings/ConsentSettings.tsx");
+  assert.match(ui, /try \{[\s\S]*await fetch\("\/api\/privacy\/consents", \{ method: "POST"[\s\S]*\} catch \{[\s\S]*finally \{ setBusy\(null\)/);
+  assert.match(ui, /!granted && data\.pendingErasure\?\.\[type\][\s\S]*onClick=\{\(\) => void change\(type, false\)\}[\s\S]*t\("Delete now"\)/);
+  // A successful reload must not wipe the error the member needs to see.
+  assert.doesNotMatch(ui, /setData\(payload\); setError\(""\)/);
+});
