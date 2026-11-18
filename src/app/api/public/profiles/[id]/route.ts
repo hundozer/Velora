@@ -24,6 +24,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     .eq("profile_visibility", "EVERYONE")
     .eq("public_profile_visibility", true)
     .eq("account_status", "ACTIVE")
+    .eq("age_verification_status", "AGE_VERIFIED")
     .eq("discovery_disabled", false)
     .maybeSingle();
   if (error) return NextResponse.json({ error: "Public profile lookup failed" }, { status: 502 });

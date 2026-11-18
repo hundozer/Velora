@@ -5,6 +5,8 @@ import { getServerSupabase } from "@/lib/supabase/server";
 
 const ACTIONS: Record<string, { permission: AdminPermission; status?: string; flags?: Record<string, boolean>; highRisk?: boolean }> = {
   WARN: { permission: "users:warn" }, RESTRICT: { permission: "users:restrict", status: "RESTRICTED" }, SUSPEND: { permission: "users:suspend", status: "SUSPENDED", highRisk: true }, BAN: { permission: "users:ban", status: "BANNED", highRisk: true }, REACTIVATE: { permission: "users:reactivate", status: "ACTIVE", highRisk: true }, DISABLE_DISCOVERY: { permission: "users:restrict", flags: { discovery_disabled: true } }, DISABLE_MESSAGING: { permission: "users:restrict", flags: { messaging_disabled: true } }, DISABLE_UPLOADS: { permission: "users:restrict", flags: { media_uploads_disabled: true } }, REQUEST_REVERIFICATION: { permission: "verification:decide" },
+  // FM-06: an admin vouches for a member's age without a selfie (e.g. known in person). Audited, with a reason.
+  APPROVE_AGE: { permission: "verification:decide", highRisk: true },
 };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -41,7 +43,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const { data: before } = await db.from("profiles").select("id,account_status,account_lifecycle_status,discovery_disabled,messaging_disabled,media_uploads_disabled,age_verification_status").eq("id", params.id).maybeSingle();
   if (!before) return NextResponse.json({ error: "User not found" }, { status: 404 });
   if (before.account_lifecycle_status && before.account_lifecycle_status !== "ACTIVE") return NextResponse.json({ error: "This account is in the deletion or retention process. Review its privacy record; account actions cannot reactivate it." }, { status: 409 });
-  const update: Record<string, unknown> = { ...(definition.flags || {}), restriction_reason: reason };
+  if (body.action === "APPROVE_AGE" && before.age_verification_status === "AGE_VERIFIED") return NextResponse.json({ error: "This member's age is already verified" }, { status: 409 });
+  if (body.action === "APPROVE_AGE" && before.account_status !== "ACTIVE") return NextResponse.json({ error: "Reactivate the account before approving its age check" }, { status: 409 });
+  const update: Record<string, unknown> = body.action === "APPROVE_AGE"
+    ? { age_verification_status: "AGE_VERIFIED", age_verified_at: new Date().toISOString(), age_verification_method: "ADMIN_ATTESTATION" }
+    : { ...(definition.flags || {}), restriction_reason: reason };
   if (definition.status) update.account_status = definition.status;
   if (body.action === "REACTIVATE") Object.assign(update, { discovery_disabled: false, messaging_disabled: false, media_uploads_disabled: false, restriction_reason: null, restriction_expires_at: null });
   if (body.action === "REQUEST_REVERIFICATION") Object.assign(update, { age_verification_status: "REVIEW_REQUIRED" });
@@ -49,5 +55,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (error || !after) return NextResponse.json({ error: "Account action failed" }, { status: 502 });
   const { error: auditError } = await db.from("admin_action_events").insert({ actor_profile_id: auth.actor.profileId, actor_role: auth.actor.role, action: body.action, category, resource_type: "USER", resource_id: params.id, reason, notes, previous_state: before, new_state: after, security_metadata: requestSecurityMetadata(req) });
   if (auditError) return NextResponse.json({ error: "Action applied but audit persistence failed; escalate immediately" }, { status: 502 });
+  if (body.action === "APPROVE_AGE") {
+    // Keep the verification history complete: close any open age check, and record who vouched and why.
+    const reviewedAt = new Date().toISOString();
+    const closed = await db.from("verification_reviews").update({ status: "VERIFIED", reason: `Approved by hand: ${reason}`, reviewed_by: auth.actor.profileId, reviewed_at: reviewedAt }).eq("profile_id", params.id).eq("verification_type", "AGE").in("status", ["PENDING", "REVIEW_REQUIRED"]).select("id");
+    const recorded = closed.error || (closed.data || []).length ? null : (await db.from("verification_reviews").insert({ profile_id: params.id, verification_type: "AGE", status: "VERIFIED", provider_method: "ADMIN_ATTESTATION", reason, reviewed_by: auth.actor.profileId, reviewed_at: reviewedAt })).error;
+    if (closed.error || recorded) return NextResponse.json({ user: after, warning: "Age approved, but the verification history could not be updated. Check the verification queue." });
+  }
   return NextResponse.json({ user: after });
 }

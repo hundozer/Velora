@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
+import { resolveServerActor } from "@/lib/auth/serverActor";
+import { hasSetupAccess } from "@/lib/auth/ageCheck.mjs";
 import { deleteStoredObject, getPresignedDownloadUrl, getStoredObject, inspectStoredObject, putStoredObject } from "@/lib/storage/r2";
 import { processMediaVariants } from "@/lib/media/variants.mjs";
 import { MAX_VIDEO_BYTES, sanitizeVideo } from "@/lib/media/sanitizeVideo.mjs";
@@ -13,7 +14,8 @@ export const maxDuration = 300;
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const actor = await resolveServerActor(req);
   if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
-  if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
+  // FM-06: members waiting for their age check upload their own photos and the selfie.
+  if (!hasSetupAccess(actor.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
   if (!UUID.test(params.id)) return NextResponse.json({ error: "Invalid media identifier" }, { status: 400 });
   if (!(await checkRateLimit(`media-complete:${actor.actor.userId}`, 30, 60)).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   const supabase = getServerSupabase();

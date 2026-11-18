@@ -41,9 +41,9 @@ export async function GET(req: NextRequest) {
   const blocked = new Set((blocks || []).map(row => row.blocker_id === actor.actor.profileId ? row.blocked_profile_id : row.blocker_id));
   const visible = (rows || []).filter(row => !blocked.has(row.author_id));
   const ids = [...new Set(visible.map(row => row.author_id))];
-  const { data: authors, error: authorError } = ids.length ? await db.from("profiles").select("id,display_name,avatar_url,age,account_status,discovery_disabled,allow_direct_messages").in("id", ids) : { data: [], error: null };
+  const { data: authors, error: authorError } = ids.length ? await db.from("profiles").select("id,display_name,avatar_url,age,account_status,age_verification_status,discovery_disabled,allow_direct_messages").in("id", ids) : { data: [], error: null };
   if (authorError) return NextResponse.json({ error: "Dating ads lookup failed" }, { status: 502 });
-  const byId = new Map((authors || []).filter(row => row.account_status === "ACTIVE" && !row.discovery_disabled && row.allow_direct_messages !== false).map(row => [row.id, row]));
+  const byId = new Map((authors || []).filter(row => row.account_status === "ACTIVE" && row.age_verification_status === "AGE_VERIFIED" && !row.discovery_disabled && row.allow_direct_messages !== false).map(row => [row.id, row]));
   const ads = visible.flatMap(row => {
     const author = byId.get(row.author_id);
     if (!author) return [];

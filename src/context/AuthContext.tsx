@@ -21,6 +21,9 @@ interface AuthContextType {
   authIdentity: { id: string; email?: string; emailVerified: boolean } | null;
   authError: string | null;
   isAgeVerified: boolean;
+  /** FM-06: profiles.age_verification_status of the signed-in member; staff are never gated. */
+  ageCheckStatus: string | null;
+  isStaff: boolean;
   confirmAge: () => Promise<void>;
   signIn: (mode?: "signup") => void;
   signOut: (returnTo?: string) => void;
@@ -39,6 +42,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authIdentity, setAuthIdentity] = useState<AuthContextType["authIdentity"]>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isAgeVerified, setIsAgeVerified] = useState<boolean>(false);
+  const [ageCheckStatus, setAgeCheckStatus] = useState<string | null>(null);
+  const [isStaff, setIsStaff] = useState(false);
 
   // Age declaration is only a low-assurance visitor gate. Identity and roles
   // are restored exclusively by the verified server-session effect below.
@@ -111,6 +116,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const freshProfile = { ...dbRowToProfile(data), userId: session.actor.id };
         setUser(freshUser);
         setProfile(freshProfile);
+        setAgeCheckStatus(typeof data.age_verification_status === "string" ? data.age_verification_status : null);
+        setIsStaff(session.actor.adminAuthorized === true);
         setRole(session.actor.role as UserRole);
         setAuthIdentity({
           id: session.actor.id,
@@ -221,6 +228,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         authIdentity,
         authError,
         isAgeVerified,
+        ageCheckStatus,
+        isStaff,
         confirmAge,
         signIn,
         signOut,

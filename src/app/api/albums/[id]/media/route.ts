@@ -13,7 +13,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   if (uniqueIds.length !== mediaIds.length || uniqueIds.length > 30 || (coverMediaId && !uniqueIds.includes(coverMediaId))) return NextResponse.json({ error: "An album can contain no more than 30 photos" }, { status: 400 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Albums unavailable" }, { status: 503 });
   if (uniqueIds.length) {
-    const { data: stories, error: storyError } = await db.from("media_objects").select("id").in("id", uniqueIds).eq("category", "STORY");
+    const { data: stories, error: storyError } = await db.from("media_objects").select("id").in("id", uniqueIds).in("category", ["STORY", "AGE_CHECK"]);
     if (storyError) return NextResponse.json({ error: "Photo lookup failed" }, { status: 502 });
     if (stories?.length) return NextResponse.json({ error: "Story photos cannot be added to albums" }, { status: 409 });
   }

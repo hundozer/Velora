@@ -1,0 +1,16 @@
+type ActorLike = { accountStatus?: string; ageVerificationStatus?: string } | null | undefined;
+export declare const VERIFIED: "AGE_VERIFIED";
+export declare const SETUP_STATUSES: string[];
+export declare const SUBMIT_STATUSES: string[];
+export declare const CODE_ALPHABET: string;
+export declare const CODE_LENGTH: number;
+export declare const CODE_TTL_MS: number;
+export declare const CODE_PATTERN: RegExp;
+export declare function hasVerifiedAccess(actor: ActorLike): boolean;
+export declare function hasSetupAccess(actor: ActorLike): boolean;
+export declare function isVisibleMember(row: { account_status?: string | null; age_verification_status?: string | null } | null | undefined): boolean;
+export declare function newChallengeCode(randomBytes: (size: number) => Uint8Array): string;
+export declare function challengeIsFresh(code: string | null | undefined, issuedAt: string | null | undefined, now?: number): boolean;
+export declare function profileStatusForDecision(decision: string): string | null;
+export declare function memberAgeCheckState(status: string | null | undefined): "VERIFIED" | "PENDING" | "FAILED" | "RETRY" | "REQUIRED" | "UNAVAILABLE";
+export declare function ageCheckOpenPath(pathname: string | null | undefined): boolean;

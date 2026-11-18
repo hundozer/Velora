@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
+import { isVisibleMember } from "@/lib/auth/ageCheck.mjs";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
@@ -31,8 +32,8 @@ export async function POST(req: NextRequest) {
   const action = typeof body.action === "string" ? body.action : "";
   if (!UUID.test(targetId) || targetId === auth.actor.profileId || !ACTIONS.has(action)) return NextResponse.json({ error: "Invalid friend action" }, { status: 400 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Friends unavailable" }, { status: 503 });
-  const { data: target } = await db.from("profiles").select("id,display_name,account_status").eq("id", targetId).maybeSingle();
-  if (!target || target.account_status !== "ACTIVE") return NextResponse.json({ error: "Member unavailable" }, { status: 404 });
+  const { data: target } = await db.from("profiles").select("id,display_name,account_status,age_verification_status").eq("id", targetId).maybeSingle();
+  if (!target || !isVisibleMember(target)) return NextResponse.json({ error: "Member unavailable" }, { status: 404 });
   const { data, error } = await db.rpc("intimo_friend_action", { p_actor_id: auth.actor.profileId, p_target_id: targetId, p_action: action });
   if (error) return NextResponse.json({ error: "Friend action unavailable" }, { status: 409 });
   const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorUserId: auth.actor.userId, action: `FRIEND_${action}`, resourceType: "PROFILE", resourceId: targetId, outcome: "SUCCESS" });

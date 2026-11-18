@@ -110,10 +110,10 @@ export async function GET(req: NextRequest) {
 
   const authorIds = [...new Set(visibleRows.map((row) => row.author_id))];
   const { data: authors, error: authorError } = authorIds.length
-    ? await supabase.from("profiles").select("id,display_name,avatar_url,age,is_couple_profile,verification_status,area_id,account_status,discovery_disabled").in("id", authorIds)
+    ? await supabase.from("profiles").select("id,display_name,avatar_url,age,is_couple_profile,verification_status,area_id,account_status,age_verification_status,discovery_disabled").in("id", authorIds)
     : { data: [], error: null };
   if (authorError) return NextResponse.json({ error: "Plans lookup failed" }, { status: 502 });
-  const activeAuthors = new Map((authors || []).filter((author) => mine || (author.account_status === "ACTIVE" && !author.discovery_disabled)).map((author) => [author.id, author as Author]));
+  const activeAuthors = new Map((authors || []).filter((author) => mine || (author.account_status === "ACTIVE" && (author as { age_verification_status?: string }).age_verification_status === "AGE_VERIFIED" && !author.discovery_disabled)).map((author) => [author.id, author as Author]));
 
   let viewerHasApprovedMedia = false;
   if (visibleRows.some((row) => row.require_media)) {

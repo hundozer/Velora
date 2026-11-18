@@ -56,6 +56,7 @@ export async function GET(req: NextRequest) {
     .eq("profile_visibility", "EVERYONE")
     .eq("public_profile_visibility", true)
     .eq("account_status", "ACTIVE")
+    .eq("age_verification_status", "AGE_VERIFIED")
     .eq("discovery_disabled", false)
     .order("created_at", { ascending: false })
     .order("id", { ascending: true })

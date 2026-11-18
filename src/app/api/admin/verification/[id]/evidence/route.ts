@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const auth = await requireAdminPermission(req, "verification:view"); if ("response" in auth) return auth.response;
   if (!UUID.test(params.id)) return NextResponse.json({ error: "Evidence not found" }, { status: 404 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Verification evidence unavailable" }, { status: 503 });
-  const { data: review } = await db.from("verification_reviews").select("id,profile_id,provider_reference").eq("id", params.id).eq("verification_type", "IDENTITY").maybeSingle();
+  const { data: review } = await db.from("verification_reviews").select("id,profile_id,provider_reference").eq("id", params.id).in("verification_type", ["IDENTITY", "AGE"]).maybeSingle();
   if (!review || !UUID.test(review.provider_reference || "")) return NextResponse.json({ error: "Evidence not found" }, { status: 404 });
   const { data: media } = await db.from("media_objects").select("id,owner_id,object_key,mime_type,visibility,upload_status").eq("id", review.provider_reference).eq("owner_id", review.profile_id).maybeSingle();
   if (!media || media.visibility !== "PRIVATE" || media.upload_status !== "AVAILABLE") return NextResponse.json({ error: "Evidence not found" }, { status: 404 });

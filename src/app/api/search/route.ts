@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
+import { isVisibleMember } from "@/lib/auth/ageCheck.mjs";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
 
   const [profileResult, mediaResult, albumResult, adResult, postResult] = await Promise.all([
     db.from("profiles").select("id,display_name,username,avatar_url,age,country,city,headline,is_couple_profile,verification_status,verification_level")
-      .eq("account_status", "ACTIVE").eq("discovery_disabled", false).in("profile_visibility", ["EVERYONE", "MEMBERS_ONLY"])
+      .eq("account_status", "ACTIVE").eq("age_verification_status", "AGE_VERIFIED").eq("discovery_disabled", false).in("profile_visibility", ["EVERYONE", "MEMBERS_ONLY"])
       .or(`display_name.ilike.${pattern},username.ilike.${pattern},headline.ilike.${pattern}`).order("created_at", { ascending: false }).order("id", { ascending: true }).limit(16),
     db.from("media_objects").select("id,owner_id,media_type,title,description,category,published_at,created_at")
       .eq("upload_status", "AVAILABLE").eq("processing_status", "READY").eq("moderation_status", "APPROVED").in("visibility", ["PUBLIC", "MEMBERS_ONLY"])
@@ -49,8 +50,8 @@ export async function GET(req: NextRequest) {
     ...(adResult.data || []).map((row) => row.author_id),
     ...(postResult.data || []).map((row) => row.author_id),
   ])).filter((id) => !blocked.has(id));
-  const { data: ownerRows } = ownerIds.length ? await db.from("profiles").select("id,display_name,username,account_status,discovery_disabled").in("id", ownerIds) : { data: [] };
-  const owners = new Map((ownerRows || []).filter((owner) => owner.account_status === "ACTIVE" && !owner.discovery_disabled).map((owner) => [owner.id, owner]));
+  const { data: ownerRows } = ownerIds.length ? await db.from("profiles").select("id,display_name,username,account_status,age_verification_status,discovery_disabled").in("id", ownerIds) : { data: [] };
+  const owners = new Map((ownerRows || []).filter((owner) => isVisibleMember(owner) && !owner.discovery_disabled).map((owner) => [owner.id, owner]));
   const author = (id: string) => owners.get(id)?.display_name || owners.get(id)?.username || "Intimo member";
 
   return NextResponse.json({

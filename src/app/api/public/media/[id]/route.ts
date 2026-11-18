@@ -23,7 +23,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     if (actor.status !== "authenticated") return NextResponse.json({ error: "Sign in to view explicit media" }, { status: 401 });
     if (!hasAdultAccess(actor.actor)) return NextResponse.json({ error: "Adult member access required" }, { status: 403 });
   }
-  const { data: owner } = await db.from("profiles").select("id").eq("id", media.owner_id).eq("profile_visibility", "EVERYONE").eq("public_profile_visibility", true).eq("account_status", "ACTIVE").eq("discovery_disabled", false).maybeSingle();
+  const { data: owner } = await db.from("profiles").select("id").eq("id", media.owner_id).eq("profile_visibility", "EVERYONE").eq("public_profile_visibility", true).eq("account_status", "ACTIVE").eq("age_verification_status", "AGE_VERIFIED").eq("discovery_disabled", false).maybeSingle();
   if (!owner) return NextResponse.json({ error: "Media not found" }, { status: 404 });
   if (actor.status === "authenticated" && actor.actor.profileId !== media.owner_id) {
     const viewerId = actor.actor.profileId;

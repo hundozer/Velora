@@ -45,6 +45,7 @@ export async function GET(req: NextRequest) {
     .eq("profile_visibility", "EVERYONE")
     .eq("public_profile_visibility", true)
     .eq("account_status", "ACTIVE")
+    .eq("age_verification_status", "AGE_VERIFIED")
     .eq("discovery_disabled", false) : { data: [] };
   const ownerMap = new Map((owners || []).map((owner) => [owner.id, owner]));
   const media = (rows || []).flatMap((row) => {
