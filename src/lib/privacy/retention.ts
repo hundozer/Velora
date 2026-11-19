@@ -67,3 +67,55 @@ export async function anonymizeDeletedProfile(db: SupabaseClient, runId: string,
   catch { notice = "Completion notice delivery failed; operator follow-up required"; }
   const result: Result = { profileId, status: "COMPLETED", reason: notice }; await record(db, runId, result); return result;
 }
+
+/** FM-06: delete age evidence bytes, variants and metadata, leaving the human decision.
+ * Idempotent: a partially deleted object is safe to retry. Never touches other media.
+ */
+export async function eraseAgeReviewSelfie(db: SupabaseClient, reviewId: string): Promise<boolean> {
+  const {data:review,error:readError}=await db.from("verification_reviews")
+    .select("id,verification_type,status,provider_reference,reviewed_at")
+    .eq("id",reviewId).maybeSingle();
+  if(readError || !review || review.verification_type!=="AGE") return false;
+  const due=review.status==="VERIFIED" ||
+    (["FAILED","RETRY_REQUESTED"].includes(review.status) &&
+      Boolean(review.reviewed_at) && Date.parse(review.reviewed_at)<=Date.now()-30*86400000);
+  if(!due) return false;
+  const mediaId=review.provider_reference;
+  if(!mediaId) return true;
+  const {data:media,error:mediaError}=await db.from("media_objects")
+    .select("id,object_key,variants").eq("id",mediaId).maybeSingle();
+  if(mediaError) return false;
+  if(media){
+    const keys=new Set<string>();
+    if(typeof media.object_key==="string" && media.object_key)keys.add(media.object_key);
+    const source=(media.variants as {source?:unknown}|null)?.source;
+    if(typeof source==="string" && source)keys.add(source);
+    try {
+      for(const key of keys)await deleteStoredObject(key);
+      await deleteVariantObjects(String(media.id));
+    }catch{return false;}
+  }
+  // Remove the pointer before removing metadata so audit and appeal decisions survive.
+  const {error:unlinkError}=await db.from("verification_reviews")
+    .update({provider_reference:null}).eq("id",reviewId).eq("provider_reference",mediaId);
+  if(unlinkError)return false;
+  if(media){
+    const {error:deleteError}=await db.from("media_objects").delete().eq("id",mediaId);
+    if(deleteError)return false;
+  }
+  return true;
+}
+
+/** Called by the authenticated scheduled retention job. Returns counts only. */
+export async function eraseExpiredAgeReviewSelfies(db: SupabaseClient): Promise<{scanned:number;deleted:number;failed:number}> {
+  const cutoff=new Date(Date.now()-30*86400000).toISOString();
+  const {data,error}=await db.from("verification_reviews")
+    .select("id").eq("verification_type","AGE")
+    .in("status",["FAILED","RETRY_REQUESTED"])
+    .not("provider_reference","is",null).lte("reviewed_at",cutoff)
+    .order("reviewed_at",{ascending:true}).limit(100);
+  if(error)throw new Error("Age selfie retention inventory unavailable");
+  let deleted=0;
+  for(const row of data??[])if(await eraseAgeReviewSelfie(db,String(row.id)))deleted++;
+  return {scanned:data?.length??0,deleted,failed:(data?.length??0)-deleted};
+}
