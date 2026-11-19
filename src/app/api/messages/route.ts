@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
   if (personalAdId) {
     const { data: ad, error: adError } = await supabase.from("personal_ads").select("id,author_id,status,moderation_status,expires_at,allowed_reply_genders,min_age,max_age,require_verified").eq("id", personalAdId).maybeSingle();
     if (adError) return NextResponse.json({ error: "Ad eligibility could not be checked" }, { status: 502 });
-    if (!ad || ad.author_id !== receiverId || ad.status !== "ACTIVE" || ad.moderation_status !== "APPROVED") return NextResponse.json({ error: "Ad unavailable" }, { status: 404 });
+    if (!ad || ad.author_id !== receiverId || ad.status !== "ACTIVE" || ad.moderation_status === "REJECTED") return NextResponse.json({ error: "Ad unavailable" }, { status: 404 });
     const eligibility = planReplyEligibility({ plan: { ...ad, status: "active" }, viewer: { ...sender, id: actor.actor.profileId } });
     if (!eligibility.canReply) return NextResponse.json({ error: eligibility.reason === "NOT_LIVE" || eligibility.reason === "OWN_PLAN" ? "Ad unavailable" : "You do not match this ad's reply rules" }, { status: eligibility.reason === "NOT_LIVE" || eligibility.reason === "OWN_PLAN" ? 404 : 403 });
   }

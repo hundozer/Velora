@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { PERSONAL_CATEGORIES, validatePersonalAd } from "../src/lib/personalAds.mjs";
+import { PERSONAL_CATEGORIES, validatePersonalAd, validateDatingAdContent } from "../src/lib/personalAds.mjs";
 
 const base = { category: "HOOKUP", title: "Sex with someone who knows what they want", body: "Looking for a casual hookup with clear communication.", boundaries: "No surprise guests.", minAge: 25, maxAge: 55, days: 7 };
 test("personal categories are explicit, personal and distinct from paid services", () => {
@@ -18,4 +18,21 @@ test("personal ad validation bounds life, ages, text and reply types", () => {
   for (const change of [{ days: 365 }, { minAge: 17 }, { maxAge: 100 }, { minAge: 56 }, { category: "SERVICES" }, { body: "sex" }, { boundaries: "" }]) {
     assert.ok(validatePersonalAd({ ...base, ...change }).error, JSON.stringify(change));
   }
+});
+
+test("immediate ad publication blocks off-platform contacts and explicit price offers", () => {
+  for (const text of [
+    "Find me at https://example.com",
+    "Reach me at example@example.com",
+    "Telegram: myhandle",
+    "My number is +420 777 123 456",
+    "Pay me 500 Kč for a session",
+    "100 EUR for a meeting",
+  ]) assert.ok(validateDatingAdContent(text), text);
+  for (const text of [
+    "No surprises. I want a respectful connection in Prague.",
+    "No paid services, please. Consent matters.",
+    "I am 32 years old and looking for another adult.",
+  ]) assert.equal(validateDatingAdContent(text), null, text);
+  assert.ok(validatePersonalAd({ ...base, body: "You can message me at example@example.com to meet." }).error);
 });
