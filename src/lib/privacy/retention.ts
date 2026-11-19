@@ -123,15 +123,21 @@ export async function eraseAgeReviewSelfie(db: SupabaseClient, reviewId: string)
 }
 
 /** Called by the authenticated scheduled retention job. Returns counts only. */
-export async function eraseExpiredAgeReviewSelfies(db: SupabaseClient): Promise<{scanned:number;deleted:number;failed:number}> {
-  const cutoff=new Date(Date.now()-30*86400000).toISOString();
-  const {data,error}=await db.from("verification_reviews")
-    .select("id").eq("verification_type","AGE")
-    .in("status",["FAILED","RETRY_REQUESTED"])
-    .not("provider_reference","is",null).lte("reviewed_at",cutoff)
-    .order("reviewed_at",{ascending:true}).limit(100);
-  if(error)throw new Error("Age selfie retention inventory unavailable");
-  let deleted=0;
-  for(const row of data??[])if(await eraseAgeReviewSelfie(db,String(row.id)))deleted++;
-  return {scanned:data?.length??0,deleted,failed:(data?.length??0)-deleted};
+export async function eraseExpiredAgeReviewSelfies(db: SupabaseClient): Promise<{ scanned: number; deleted: number; failed: number }> {
+  const cutoff = new Date(Date.now() - 30 * 86400000).toISOString();
+  const [approved, refused] = await Promise.all([
+    // Backstop for interrupted or hand-approved reviews: approved evidence must not linger.
+    db.from("verification_reviews").select("id").eq("verification_type", "AGE")
+      .eq("status", "VERIFIED").not("provider_reference", "is", null)
+      .order("reviewed_at", { ascending: true }).limit(100),
+    db.from("verification_reviews").select("id").eq("verification_type", "AGE")
+      .in("status", ["FAILED", "RETRY_REQUESTED"])
+      .not("provider_reference", "is", null).lte("reviewed_at", cutoff)
+      .order("reviewed_at", { ascending: true }).limit(100),
+  ]);
+  if (approved.error || refused.error) throw new Error("Age selfie retention inventory unavailable");
+  const ids = [...new Set([...(approved.data ?? []), ...(refused.data ?? [])].map(row => String(row.id)))];
+  let deleted = 0;
+  for (const id of ids) if (await eraseAgeReviewSelfie(db, id)) deleted++;
+  return { scanned: ids.length, deleted, failed: ids.length - deleted };
 }
