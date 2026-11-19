@@ -8,6 +8,7 @@ export default function InviteCodesAdminPage(){
  const [links,setLinks]=useState<Created[]>([]);
  const [sourceLabel,setSource]=useState("Carolinka test group");
  const [ownerName,setOwner]=useState("Carolinka");
+ const [ownerProfileId,setOwnerProfileId]=useState("");
  const [quantity,setQuantity]=useState(10);
  const [maxUses,setUses]=useState(1);
  const [expiresAt,setExpires]=useState(()=>new Date(Date.now()+21*86400000).toISOString().slice(0,10));
@@ -17,7 +18,7 @@ export default function InviteCodesAdminPage(){
  useEffect(()=>{void load();},[]);
  const create=async(e:React.FormEvent)=>{
   e.preventDefault();setWorking(true);setMessage("");setLinks([]);
-  const res=await fetch("/api/admin/invite-codes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sourceLabel,ownerName,quantity,maxUses,expiresAt:new Date(expiresAt+"T23:59:59Z").toISOString()})});
+  const res=await fetch("/api/admin/invite-codes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sourceLabel,ownerName,ownerProfileId,quantity,maxUses,expiresAt:new Date(expiresAt+"T23:59:59Z").toISOString()})});
   const json=await res.json().catch(()=>({}));
   if(res.ok){setLinks(json.links ?? []);setMessage("Codes created. Copy these links now: they will never be shown again.");await load();}
   else setMessage(json.error ?? "Creation failed");
@@ -37,6 +38,7 @@ export default function InviteCodesAdminPage(){
   <form onSubmit={create} className="mt-8 grid gap-4 rounded-3xl border border-velora-line bg-velora-surface p-6 sm:grid-cols-2">
    <label className="grid gap-1">Source label<input className="rounded-lg border p-3 text-velora-ink" value={sourceLabel} required maxLength={120} onChange={e=>setSource(e.target.value)}/></label>
    <label className="grid gap-1">Named owner<input className="rounded-lg border p-3 text-velora-ink" value={ownerName} required maxLength={120} onChange={e=>setOwner(e.target.value)}/></label>
+   <label className="grid gap-1">Owner member ID (optional; enables their aggregate tracking)<input className="rounded-lg border p-3 text-velora-ink" value={ownerProfileId} onChange={e=>setOwnerProfileId(e.target.value)} placeholder="UUID"/></label>
    <label className="grid gap-1">Number of unique links<input className="rounded-lg border p-3 text-velora-ink" type="number" min={1} max={50} value={quantity} onChange={e=>setQuantity(Number(e.target.value))}/></label>
    <label className="grid gap-1">Uses per link<input className="rounded-lg border p-3 text-velora-ink" type="number" min={1} max={1000} value={maxUses} onChange={e=>setUses(Number(e.target.value))}/></label>
    <label className="grid gap-1">Expiry date (UTC)<input className="rounded-lg border p-3 text-velora-ink" type="date" required value={expiresAt} onChange={e=>setExpires(e.target.value)}/></label>
