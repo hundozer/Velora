@@ -46,6 +46,10 @@ and chooses **uphold**, **change part of it** or **reverse**, with an explanatio
 who appealed. If possible someone other than the original reviewer decides; when it's the same
 person, the audit log records it. Reversing an account action is then done in Admin → Users.
 
+## Screenshot and recording rule (19 November follow-up)
+
+Sharing someone's screenshot, screen recording or private message without their permission violates the Community Guidelines and can lead to removal. Members can choose the dedicated `NON_CONSENSUAL_SCREENSHOT` report reason. Admins can use the `SCREENSHOT_CONSENT` policy ground when explaining a decision. Browser chat text disables ordinary selection/copy as a deterrent only; screenshots and external recording cannot be reliably blocked on the web. Stronger platform-level screenshot controls would require a native app.
+
 ## Not yet done
 
 - Stopping banned people from coming back with a new invitation (ban evasion).

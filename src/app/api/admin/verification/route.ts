@@ -3,6 +3,7 @@ import { requestSecurityMetadata, requireAdminPermission } from "@/lib/auth/admi
 import { getServerSupabase } from "@/lib/supabase/server";
 import { isMissingColumnError } from "@/lib/identity.mjs";
 import { profileStatusForDecision } from "@/lib/auth/ageCheck.mjs";
+import { eraseAgeReviewSelfie } from "@/lib/privacy/retention";
 const REVIEW_COLUMNS = "id,profile_id,verification_type,status,provider_method,provider_reference,submitted_at,reviewed_at,reviewed_by,reason";
 const DECISIONS = new Set(["VERIFIED","FAILED","REVIEW_REQUIRED","RETRY_REQUESTED"]);
 export async function GET(req: NextRequest) {
@@ -48,5 +49,9 @@ export async function PATCH(req: NextRequest) {
   if (before.verification_type === "IDENTITY") await db.from("profiles").update({ verification_status: status === "VERIFIED" ? "VERIFIED" : status, verification_level: status === "VERIFIED" ? "LEVEL_3_PROFILE_BIOMETRIC" : null }).eq("id", before.profile_id);
   const { error: auditError } = await db.from("admin_action_events").insert({ actor_profile_id: auth.actor.profileId, actor_role: auth.actor.role, action: "VERIFICATION_DECISION", category: before.verification_type, resource_type: "VERIFICATION_REVIEW", resource_id: id, reason, previous_state: { status: before.status }, new_state: { status }, security_metadata: requestSecurityMetadata(req) });
   if (auditError) return NextResponse.json({ error: "Verification audit failed" }, { status: 502 });
+  if (before.verification_type === "AGE" && status === "VERIFIED") {
+    const deleted = await eraseAgeReviewSelfie(db, id);
+    if (!deleted) return NextResponse.json({ error: "Age approved, but selfie erasure is incomplete. Retry this decision to finish deletion." }, { status: 502 });
+  }
   return NextResponse.json({ review: after });
 }

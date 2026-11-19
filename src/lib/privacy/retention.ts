@@ -67,3 +67,77 @@ export async function anonymizeDeletedProfile(db: SupabaseClient, runId: string,
   catch { notice = "Completion notice delivery failed; operator follow-up required"; }
   const result: Result = { profileId, status: "COMPLETED", reason: notice }; await record(db, runId, result); return result;
 }
+
+/** FM-06: delete age evidence bytes, variants and metadata, leaving the human decision.
+ * Idempotent: a partially deleted object is safe to retry. Never touches other media.
+ */
+export async function eraseAgeReviewSelfie(db: SupabaseClient, reviewId: string): Promise<boolean> {
+  const { data: review, error: readError } = await db.from("verification_reviews")
+    .select("id,profile_id,verification_type,status,provider_reference,reviewed_at")
+    .eq("id", reviewId).maybeSingle();
+  if (readError || !review || review.verification_type !== "AGE") return false;
+  const due = review.status === "VERIFIED" ||
+    (["FAILED", "RETRY_REQUESTED"].includes(review.status) &&
+      Boolean(review.reviewed_at) && Date.parse(review.reviewed_at) <= Date.now() - 30 * 86400000);
+  if (!due) return false;
+  const mediaId = review.provider_reference;
+  if (!mediaId) return true;
+
+  // Fail closed on legal holds, including before deleting any R2 bytes.
+  const { data: hold, error: holdError } = await db.from("retention_holds")
+    .select("id").eq("profile_id", review.profile_id)
+    .eq("status", "ACTIVE").limit(1).maybeSingle();
+  if (holdError || hold) return false;
+
+  const { data: media, error: mediaError } = await db.from("media_objects")
+    .select("id,owner_id,category,visibility,object_key,variants")
+    .eq("id", mediaId).maybeSingle();
+  if (mediaError) return false;
+
+  if (media) {
+    // The review reference is not an authorization to erase arbitrary objects.
+    if (media.owner_id !== review.profile_id || media.category !== "AGE_CHECK" ||
+        media.visibility !== "PRIVATE" || !media.object_key) return false;
+    const keys = new Set<string>([String(media.object_key)]);
+    const source = (media.variants as { source?: unknown } | null)?.source;
+    if (typeof source === "string" && source) keys.add(source);
+    try {
+      for (const key of keys) await deleteStoredObject(key);
+      await deleteVariantObjects(String(media.id));
+    } catch { return false; }
+
+    // Remove media metadata FIRST. If it fails, the review retains the media ID
+    // so a second call can retry the deletion. R2 deletions are idempotent.
+    const { error: deleteError } = await db.from("media_objects").delete()
+      .eq("id", mediaId).eq("owner_id", review.profile_id).eq("category", "AGE_CHECK");
+    if (deleteError) return false;
+  }
+
+  // Now remove the dangling evidence pointer, retaining the decision and reason.
+  // If metadata was already erased during a prior attempt, this step completes the retry.
+  const { data: unlinked, error: unlinkError } = await db.from("verification_reviews")
+    .update({ provider_reference: null }).eq("id", reviewId)
+    .eq("provider_reference", mediaId)
+    .eq("verification_type", "AGE").select("id").maybeSingle();
+  return !unlinkError && Boolean(unlinked);
+}
+
+/** Called by the authenticated scheduled retention job. Returns counts only. */
+export async function eraseExpiredAgeReviewSelfies(db: SupabaseClient): Promise<{ scanned: number; deleted: number; failed: number }> {
+  const cutoff = new Date(Date.now() - 30 * 86400000).toISOString();
+  const [approved, refused] = await Promise.all([
+    // Backstop for interrupted or hand-approved reviews: approved evidence must not linger.
+    db.from("verification_reviews").select("id").eq("verification_type", "AGE")
+      .eq("status", "VERIFIED").not("provider_reference", "is", null)
+      .order("reviewed_at", { ascending: true }).limit(100),
+    db.from("verification_reviews").select("id").eq("verification_type", "AGE")
+      .in("status", ["FAILED", "RETRY_REQUESTED"])
+      .not("provider_reference", "is", null).lte("reviewed_at", cutoff)
+      .order("reviewed_at", { ascending: true }).limit(100),
+  ]);
+  if (approved.error || refused.error) throw new Error("Age selfie retention inventory unavailable");
+  const ids = [...new Set([...(approved.data ?? []), ...(refused.data ?? [])].map(row => String(row.id)))];
+  let deleted = 0;
+  for (const id of ids) if (await eraseAgeReviewSelfie(db, id)) deleted++;
+  return { scanned: ids.length, deleted, failed: ids.length - deleted };
+}

@@ -29,6 +29,7 @@ export const POLICY_GROUNDS = {
   IMPERSONATION: "Honesty: fake identity or impersonation",
   SCAM: "Honesty: scams, fraud or selling sex",
   PRIVACY: "Privacy: sharing someone's personal information",
+  SCREENSHOT_CONSENT: "Consent: sharing screenshots or recordings without permission",
   ILLEGAL: "Illegal content",
   COPYRIGHT: "Someone else's copyrighted content",
   SPAM: "Spam or advertising",
@@ -40,6 +41,7 @@ export const DEFAULT_GROUND = {
   SUSPECTED_MINOR: "MINORS", NON_CONSENSUAL_INTIMATE_CONTENT: "CONSENT", EXPLOITATION_TRAFFICKING: "ILLEGAL",
   HARASSMENT: "HARASSMENT", THREATS: "HARASSMENT", IMPERSONATION: "IMPERSONATION", SCAM_FRAUD: "SCAM",
   PROHIBITED_COMMERCIAL_SEXUAL_SERVICES: "SCAM", PRIVACY_VIOLATION: "PRIVACY", ILLEGAL_CONTENT: "ILLEGAL",
+  NON_CONSENSUAL_SCREENSHOT: "SCREENSHOT_CONSENT",
   COPYRIGHT_INFRINGEMENT: "COPYRIGHT", SPAM: "SPAM", OTHER: "OTHER",
 };
 

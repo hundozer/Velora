@@ -307,7 +307,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 <li key={m.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
                   <div className={`max-w-[85%] px-4 py-3 text-[16px] leading-relaxed md:max-w-md ${isMe ? "rounded-[20px] rounded-br-md bg-velora-accent text-velora-paper" : "rounded-[20px] rounded-bl-md bg-velora-sunken text-velora-ink"}`}>
                     {m.mediaUrl && <div className={m.content ? "mb-2" : ""}><ChatPhoto src={m.mediaUrl} mine={isMe} messageId={m.id} viewOnce={Boolean(m.viewOnce)} opened={Boolean(m.viewOnceOpenedAt)} /></div>}
-                    {m.content && <p className="whitespace-pre-line">{m.content}</p>}
+                    {m.content && <p className="whitespace-pre-line select-none" onCopy={(event) => { event.preventDefault(); event.stopPropagation(); }}>{m.content}</p>}
                   </div>
                   <span className="mt-1 px-1 text-[13px] text-velora-muted">{m.createdAt}{isMe && m.status === "READ" ? t(" · Read") : ""}</span>
                 </li>
