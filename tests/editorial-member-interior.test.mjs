@@ -34,3 +34,17 @@ test("member profile keeps consent-first interactions and messaging", async () =
   assert.match(story, /requestPhotos/);
   assert.match(story, /intimo-member-primary/);
 });
+
+test("secondary social surfaces use the same interior design", async () => {
+  for (const path of [
+    "src/app/dating/page.tsx",
+    "src/app/rooms/page.tsx",
+    "src/app/favorites/page.tsx",
+    "src/app/notifications/page.tsx",
+    "src/app/settings/page.tsx",
+    "src/app/tonight/page.tsx",
+  ]) {
+    const src = await read(path);
+    assert.match(src, /intimo-member-(page|heading|panel|primary)/, path);
+  }
+});
