@@ -19,9 +19,9 @@ test("/register explains invitation-only instead of showing a form it can't acce
 
 test("invitation check reveals only coarse link state and type", async () => {
   const route = await read("src/app/api/invitations/check/route.ts");
-  assert.match(route, /select\("status,expires_at"\)\.eq\("token_sha256",\\s*hash\)/);
-  assert.match(route, /select\\("max_uses,uses,expires_at,revoked_at"\\)/);
-  assert.match(route, /NextResponse\\.json\\(\\{ state, kind \\}/);
+  assert.match(route, /select\("status,expires_at"\)\.eq\("token_sha256",\s*hash\)/);
+  assert.match(route, /select\("max_uses,uses,expires_at,revoked_at"\)/);
+  assert.match(route, /NextResponse\.json\(\{ state, kind \}/);
   assert.match(route, /checkRateLimit\(`invite-check:\$\{ip\}`, 30, 60 \* 60\)/);
   assert.doesNotMatch(route, /inviter_profile_id|recipient_sha256|display_name/);
   assert.match(route, /"Cache-Control": "private, no-store"/);
