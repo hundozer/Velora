@@ -42,10 +42,15 @@ Staff accounts are not gated by the page prompt, but the APIs apply to them like
 3. Merge the code. Merging before step 2 would lock the existing members out of the community
    until approved.
 
-## Open questions
+## Selfie retention (FM-06 follow-up, 19 November 2026)
 
-- **How long selfies are kept.** Today they stay until the account is deleted. Proposed: delete
-  the photo 30 days after the decision and keep only the decision record. Needs the legal review.
+- **Legal hold:** active retention holds block evidence erasure, including approved evidence. Cleanup resumes when the hold is released; the member-facing copy discloses this exception.
+- **VERIFIED:** after the reviewer records the decision, delete the object and all stored variants immediately, remove the media record and clear the reference in the review. Keep only who decided, when and why. This includes an ADMIN_ATTESTATION review if it happens to contain selfie evidence.
+- **FAILED / RETRY_REQUESTED:** keep the evidence for 30 days after the decision so an appeal can be reviewed, then delete it. `/api/cron/age-selfie-retention` runs daily with Vercel CRON_SECRET and retries partial failures. No selfie goes on member profiles.
+- If the member is suspected of being underage later, they undergo a fresh age check. The old selfie cannot be retrieved after deletion.
+- The owner must verify the production R2 bucket is correct before activating deletion. Evidence removal is irreversible, so test with staging objects first. The decision record persists for accountability.
+
+## Open questions
 - **An outside age-check provider** (Yoti, Veriff…) for scale; see
   `docs/archive/AGE_ASSURANCE_ARCHITECTURE.md`. The manual check is the first-100 process.
 - **A refused member's account.** Today it stays active but locked. Decide whether a refusal

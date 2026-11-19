@@ -112,13 +112,13 @@ export default function VerifyAgePage() {
 
   return shell(<>
     {header}
-    <p className="text-sm leading-relaxed text-velora-textSecondary">{check.state === "RETRY" ? t("We need a new selfie from you. Please follow the steps again with the new code.") : t("Intimo is only for adults, so a person on our team checks every new member. It takes a minute.")}</p>
+    <p className="text-sm leading-relaxed text-velora-textSecondary">{check.state === "RETRY" ? t("We need a new selfie from you. Please follow the steps again with the new code.") : t("We check everyone to make sure we are all adults here. It takes a minute, and only our team sees your selfie.")}</p>
 
     <section className="space-y-4 rounded-2xl border border-velora-accent/30 bg-velora-accent/5 p-5">
-      <p className="text-sm font-semibold text-velora-textPrimary">{t("1. Write this code on a piece of paper")}</p>
+      <p className="text-sm font-semibold text-velora-textPrimary">{t("1. Write this code somewhere we can read it — a napkin, a coaster or even your hand.")}</p>
       <p className="select-all text-center font-mono text-4xl font-bold tracking-[0.35em] text-velora-textPrimary" aria-label={t("Your code")}>{check.code}</p>
       <p className="text-xs text-velora-textMuted">{t("The code works for 24 hours and only once.")}</p>
-      <p className="text-sm font-semibold text-velora-textPrimary">{check.couple ? t("2. Take a selfie of both of you, {partner} included, holding the paper", { partner: check.partnerName || t("your partner") }) : t("2. Take a selfie holding the paper next to your face")}</p>
+      <p className="text-sm font-semibold text-velora-textPrimary">{check.couple ? t("2. Take a selfie together with {partner}, showing the code", { partner: check.partnerName || t("your partner") }) : t("2. Take a selfie showing the code beside your face")}</p>
       <ul className="list-disc space-y-1 pl-5 text-sm text-velora-textSecondary">
         <li>{t("Faces clearly visible, good light, no filters or sunglasses.")}</li>
         <li>{t("Keep it clothed and simple. This is not a profile photo.")}</li>
@@ -137,7 +137,7 @@ export default function VerifyAgePage() {
       <button type="button" onClick={() => void submit()} disabled={!file || progress !== null} className="min-h-12 w-full rounded-full bg-velora-accent px-6 text-sm font-bold text-velora-paper disabled:opacity-50">
         {progress !== null ? t("Sending… {progress}%", { progress }) : t("Send for review")}
       </button>
-      <p className="text-xs leading-relaxed text-velora-textMuted">{t("Only the Intimo team reviewing your check can see this photo. It is never shown on your profile.")}</p>
+      <p className="text-xs leading-relaxed text-velora-textMuted">{t("Only our review team sees this photo. We normally delete it after approval, or 30 days after a refusal or retry request. A legal hold may require longer retention.")}</p>
     </section>
   </>);
 }
