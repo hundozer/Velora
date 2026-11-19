@@ -6,13 +6,20 @@ type Ad = { id: string; author_id: string; category: string; title: string; body
 export function AdminPersonalAdsConsole() {
   const [ads, setAds] = React.useState<Ad[]>([]);
   const [reason, setReason] = React.useState<Record<string, string>>({});
+  const [nextOffset, setNextOffset] = React.useState<number | null>(null);
+  const [loadingMore, setLoadingMore] = React.useState(false);
   const [error, setError] = React.useState("");
   const [notice, setNotice] = React.useState("");
-  const load = React.useCallback(async () => {
-    const response = await fetch("/api/admin/personal-ads", { cache: "no-store" });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) return setError(payload.error || "Live ads unavailable");
-    setError(""); setAds(payload.ads || []);
+  const load = React.useCallback(async (offset = 0) => {
+    if (offset > 0) setLoadingMore(true);
+    try {
+      const response = await fetch(`/api/admin/personal-ads?offset=${offset}`, { cache: "no-store" });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) return setError(payload.error || "Live ads unavailable");
+      setError("");
+      setAds(current => offset === 0 ? (payload.ads || []) : [...current, ...(payload.ads || []).filter((ad: Ad) => !current.some(item => item.id === ad.id))]);
+      setNextOffset(typeof payload.nextOffset === "number" ? payload.nextOffset : null);
+    } finally { setLoadingMore(false); }
   }, []);
   React.useEffect(() => { void load(); }, [load]);
   async function remove(id: string) {
@@ -26,5 +33,6 @@ export function AdminPersonalAdsConsole() {
     {error && <p role="alert" className="text-velora-danger">{error}</p>}{notice && <p role="status">{notice}</p>}
     {!ads.length && <p className="text-sm text-velora-muted">No live ads.</p>}
     {ads.map(ad => <article key={ad.id} className="rounded-xl border border-velora-line bg-velora-surface p-5"><p className="text-xs text-velora-muted">{categoryLabel(ad.category)} · {ad.area_id || "No area"} · {new Date(ad.created_at).toLocaleString()}</p><h3 className="mt-2 text-xl font-bold">{ad.title}</h3><p className="mt-2 whitespace-pre-wrap">{ad.body}</p><p className="mt-3 text-sm"><strong>Off-limits:</strong> {ad.boundaries}</p><p className="mt-2 font-mono text-xs">Author {ad.author_id} · Ad {ad.id}</p><label className="mt-4 block text-sm">Removal reason (shown to the author)<input value={reason[ad.id] || ""} onChange={event => setReason(current => ({ ...current, [ad.id]: event.target.value }))} className="mt-1 w-full rounded border border-velora-control bg-velora-paper p-2" /></label><div className="mt-3 flex gap-3"><button onClick={() => remove(ad.id)} className="min-h-11 border border-velora-danger px-4 py-2 text-velora-danger">Remove ad</button></div></article>)}
+    {nextOffset !== null && <button type="button" disabled={loadingMore} onClick={() => void load(nextOffset)} className="min-h-11 border border-velora-line px-5 text-sm text-velora-ink disabled:opacity-50">{loadingMore ? "Loading…" : "Load more ads"}</button>}
   </section>;
 }
