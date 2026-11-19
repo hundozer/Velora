@@ -30,6 +30,16 @@ test("age evidence erasure is safely scoped, hold-aware and retryable",()=>{
  assert.ok(metadataDelete>0 && unlink>metadataDelete,"keep the reference when media metadata deletion fails");
 });
 
+test("manual age approval erases evidence and the cron retries missed approvals",()=>{
+ const admin=read("src/app/api/admin/users/[id]/route.ts");
+ const retention=read("src/lib/privacy/retention.ts");
+ assert.match(admin,/await eraseAgeReviewSelfie\(db, reviewId\)/);
+ assert.match(admin,/The retention worker will retry it/);
+ assert.match(retention,/eq\("status", "VERIFIED"\).not\("provider_reference", "is", null\)/);
+ assert.match(retention,/Promise.all\(\[/);
+ assert.match(retention,/if \(approved.error \|\| refused.error\)/);
+});
+
 test("age evidence retention cron is authenticated and scheduled daily",()=>{
  const route=read("src/app/api/cron/age-selfie-retention/route.ts");
  const vercel=JSON.parse(read("vercel.json"));
