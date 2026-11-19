@@ -44,6 +44,7 @@ Staff accounts are not gated by the page prompt, but the APIs apply to them like
 
 ## Selfie retention (FM-06 follow-up, 19 November 2026)
 
+- **Legal hold:** active retention holds block evidence erasure, including approved evidence. Cleanup resumes when the hold is released; the member-facing copy discloses this exception.
 - **VERIFIED:** after the reviewer records the decision, delete the object and all stored variants immediately, remove the media record and clear the reference in the review. Keep only who decided, when and why. This includes an ADMIN_ATTESTATION review if it happens to contain selfie evidence.
 - **FAILED / RETRY_REQUESTED:** keep the evidence for 30 days after the decision so an appeal can be reviewed, then delete it. `/api/cron/age-selfie-retention` runs daily with Vercel CRON_SECRET and retries partial failures. No selfie goes on member profiles.
 - If the member is suspected of being underage later, they undergo a fresh age check. The old selfie cannot be retrieved after deletion.
