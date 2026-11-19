@@ -239,7 +239,7 @@ export default function SettingsPage() {
         <div className="flex items-center gap-3">
           <Settings className="w-8 h-8 text-velora-gold" />
           <div>
-            <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">{t("Privacy, Safety & Regional Settings")}</h1>
+            <h1 className="intimo-member-heading">{t("Privacy, Safety & Regional Settings")}</h1>
             <p className="text-xs text-velora-textSecondary mt-1">{t("Manage messaging permissions, privacy rights, consent and safety controls.")}</p>
           </div>
         </div>
@@ -504,7 +504,7 @@ function VisibilityChoice({ icon, title, description, value, options, onChange }
   onChange: (value: string) => void;
 }) {
   const { t } = useTranslation();
-  return <section className="rounded-2xl border border-ink/10 bg-ink/5 p-4">
+  return <section className="intimo-member-panel p-5">
     <div className="flex gap-3">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ink/5 text-velora-accent">{icon}</div>
       <div><h3 className="text-sm font-bold text-ink">{t(title)}</h3><p className="mt-1 text-[11px] leading-5 text-velora-textMuted">{t(description)}</p></div>
@@ -523,7 +523,7 @@ function PrivacyToggle({ title, description, checked, disabled = false, onChange
   onChange: (checked: boolean) => void;
 }) {
   const { t } = useTranslation();
-  return <label className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-ink/10 bg-ink/5 p-4 ${disabled ? "cursor-not-allowed opacity-50" : ""}`}>
+  return <label className={`intimo-member-panel flex cursor-pointer items-center justify-between gap-4 p-5 ${disabled ? "cursor-not-allowed opacity-50" : ""}`}>
     <span><strong className="block text-xs text-ink">{t(title)}</strong><span className="mt-1 block text-[11px] leading-4 text-velora-textMuted">{t(description)}</span></span>
     <span className={`relative h-6 w-11 shrink-0 rounded-full transition focus-within:outline focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-velora-accent ${checked ? "bg-velora-accent" : "bg-ink/10"}`}><input className="sr-only" type="checkbox" checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} /><span className={`absolute top-1 h-4 w-4 rounded-full shadow transition ${checked ? "left-6 bg-velora-paper" : "left-1 bg-velora-ink"}`} /></span>
   </label>;
