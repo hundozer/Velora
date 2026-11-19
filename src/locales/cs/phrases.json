@@ -2408,5 +2408,8 @@
  "Connection removed.": "Spojení bylo odebráno.",
  "Connection unavailable. Try again.": "Spojení není dostupné. Zkus to znovu.",
  "Connection action failed": "Akce se nezdařila",
- "Connections could not be loaded": "Spojení se nepodařilo načíst"
+ "Connections could not be loaded": "Spojení se nepodařilo načíst",
+ "Personal ads only. No prices, paid services, outside contact details, minors or non-consensual content. Your ad goes live immediately and can be removed if it breaks the rules. A reply is not consent to a meeting or sex.": "Jen osobní inzeráty. Žádné ceny, placené služby, externí kontaktní údaje, nezletilí ani obsah bez souhlasu. Tvůj inzerát se zveřejní ihned, ale při porušení pravidel ho moderátoři mohou odstranit. Odpověď není souhlasem se schůzkou ani sexem.",
+ "Post ad": "Zveřejnit inzerát",
+ "Removed by moderators": "Odstraněno moderátory"
 }
