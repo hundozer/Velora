@@ -5,7 +5,7 @@ export const REGISTRATION_ALERT_TO = process.env.REGISTRATION_ALERT_EMAIL || "re
 
 const escape = (text: string) => text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
-export type NewMember = { profileId: string; displayName: string; profileType: string; areaName: string | null; createdAt: string };
+export type NewMember = { profileId: string; displayName: string; profileType: string; areaName: string | null; createdAt: string; invitationLabel?: string | null };
 
 /**
  * Tells the team someone joined. Deliberately minimal: no email address, birth date,
@@ -16,9 +16,13 @@ export async function notifyNewRegistration(member: NewMember): Promise<boolean>
   if (REGISTRATION_ALERT_TO === "off") return false;
   const when = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Prague" }).format(new Date(member.createdAt));
   const name = escape(member.displayName);
+  const invitation = typeof member.invitationLabel === "string" ? member.invitationLabel.trim().slice(0, 120) : "";
+  const invitationRow = invitation ? `<p style="margin:8px 0 0"><strong>Invitation:</strong> ${escape(invitation)}</p>` : `<p style="margin:8px 0 0"><strong>Invitation:</strong> Personal invitation</p>`;
   const html = `<div style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.5;color:#191C20">
 <p style="margin:0 0 12px"><strong>New member on Intimo</strong></p>
 <p style="margin:0">${name} · ${member.profileType === "COUPLE" ? "Couple" : "Individual"}${member.areaName ? ` · ${escape(member.areaName)}` : ""}</p>
+${invitationRow}
+<p style="margin:8px 0 16px"><strong>Status:</strong> Registered, awaiting age verification</p>
 <p style="margin:0 0 16px;color:#5b6570">${when} (Prague time)</p>
 <p style="margin:0"><a href="https://intimo.live/admin" style="color:#1f6f9c">Open Admin</a> · profile ${escape(member.profileId)}</p>
 </div>`;

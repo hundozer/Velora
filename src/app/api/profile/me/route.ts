@@ -220,8 +220,18 @@ export async function POST(req: NextRequest) {
   auditLogger.logEvent({ actorId: identity.sub, actorRole: "MEMBER", action: "PROFILE_CREATE", resourceId: String(data.id), resourceType: "PROFILE", status: "SUCCESS", details: { profileType } });
   const audited = await appendDurableAudit(supabase, { actorProfileId: data.id, actorUserId: identity.sub, action: "PROFILE_CREATE", resourceType: "PROFILE", resourceId: String(data.id), outcome: "SUCCESS", metadata: { profileType } });
   if (!audited) return NextResponse.json({ error: "Profile created but audit recording failed; contact support" }, { status: 503 });
-  // Email the team about the new member (registration@intimo.live). Best effort: never blocks or fails sign-up.
-  await notifyNewRegistration({ profileId: String(data.id), displayName, profileType, areaName: areaById(areaId)?.name ?? null, createdAt: String(data.created_at || new Date().toISOString()) });
+  // Attribute only after a successful redemption, never based on an unredeemed link click.
+  // The code's display label is admin-controlled; no raw token or recipient email is mailed.
+  // Lookup failures must not interfere with successful registration or suppress its alert.
+  let invitationLabel: string | null = null;
+  try {
+    const { data: code, error: labelError } = await supabase.from("invitation_codes")
+      .select("source_label").eq("code_sha256", tokenHash).maybeSingle();
+    if (!labelError && code?.source_label) invitationLabel = code.source_label;
+  } catch { /* older schema / temporary attribution lookup failure */ }
+
+  // Best effort: failed email delivery does not roll back a successful registration.
+  await notifyNewRegistration({ profileId: String(data.id), displayName, profileType, areaName: areaById(areaId)?.name ?? null, createdAt: String(data.created_at || new Date().toISOString()), invitationLabel });
   return noStore(NextResponse.json({ profile: data }, { status: 201 }));
 }
 
