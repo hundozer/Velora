@@ -9,8 +9,8 @@ import { checkRateLimit } from "@/lib/security/rateLimiter";
 // profile creation (/api/auth/email, /api/profile/me).
 export const dynamic = "force-dynamic";
 const TOKEN = /^[a-zA-Z0-9_-]{43}$/;
-const reply = (state: "valid" | "expired" | "used" | "invalid", status = 200) =>
-  NextResponse.json({ state }, { status, headers: { "Cache-Control": "private, no-store" } });
+const reply = (state: "valid" | "expired" | "used" | "invalid", status = 200, kind: "code" | "email" | null = null) =>
+  NextResponse.json({ state, kind }, { status, headers: { "Cache-Control": "private, no-store" } });
 
 export async function GET(req: NextRequest) {
   const token = new URL(req.url).searchParams.get("invite") || "";
@@ -28,13 +28,13 @@ export async function GET(req: NextRequest) {
   ]);
   if (error || codeError) return NextResponse.json({ error: "Invitation checks are unavailable" }, { status: 503 });
   if (code) {
-    if (code.revoked_at) return reply("invalid");
-    if (new Date(code.expires_at).getTime() <= Date.now()) return reply("expired");
-    return reply(code.uses >= code.max_uses ? "used" : "valid");
+    if (code.revoked_at) return reply("invalid",200,"code");
+    if (new Date(code.expires_at).getTime() <= Date.now()) return reply("expired",200,"code");
+    return reply(code.uses >= code.max_uses ? "used" : "valid",200,"code");
   }
   if (!data) return reply("invalid");
-  if (data.status === "REDEEMED") return reply("used");
+  if (data.status === "REDEEMED") return reply("used",200,"email");
   if (data.status !== "SENT") return reply("invalid");
-  if (!data.expires_at || new Date(data.expires_at).getTime() <= Date.now()) return reply("expired");
-  return reply("valid");
+  if (!data.expires_at || new Date(data.expires_at).getTime() <= Date.now()) return reply("expired",200,"email");
+  return reply("valid",200,"email");
 }
