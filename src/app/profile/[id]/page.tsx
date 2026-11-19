@@ -12,7 +12,7 @@ export default function CanonicalProfilePage() {
   const router = useRouter();
   const back = () => (window.history.length > 1 ? router.back() : router.push("/people"));
   return (
-    <main className="mx-auto min-h-screen max-w-2xl bg-velora-surface md:my-6 md:overflow-hidden md:rounded-[28px] md:border md:border-velora-line">
+    <main className="mx-auto min-h-screen max-w-2xl bg-velora-paper md:my-8 md:overflow-hidden md:border md:border-velora-line/70">
       <ProfileStory id={id} variant="page" onBack={back} />
     </main>
   );

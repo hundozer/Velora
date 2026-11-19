@@ -106,8 +106,8 @@ function MessagesContent() {
 
   if (!activeConv) {
     return (
-      <div className="mx-auto max-w-2xl px-5 py-12">
-        <h1 className="font-display text-[44px] leading-none text-velora-ink">{t("Messages")}</h1>
+      <div className="intimo-member-page intimo-grain mx-auto min-h-[65vh] max-w-3xl px-6 py-14">
+        <h1 className="intimo-member-heading">{t("Messages")}</h1>
         <p className="mt-4 text-[17px] text-velora-ink2">{t("Curious about someone? Open their profile in People and say hello.")}</p>
         <Link href="/people" className="mt-6 inline-flex min-h-11 items-center text-[16px] font-semibold text-velora-ink underline underline-offset-4">{t("Go to People")}</Link>
       </div>
@@ -115,7 +115,7 @@ function MessagesContent() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl md:px-6 md:py-6">
+    <div className="intimo-member-page mx-auto max-w-6xl md:px-6 md:py-8">
       <ChatWindow
         conversations={conversations}
         activeConversation={activeConv}

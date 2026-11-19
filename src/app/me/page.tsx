@@ -17,8 +17,8 @@ const ADMIN_ROLES = new Set(["SUPER_ADMIN", "SYSTEM_ADMIN", "TRUST_AND_SAFETY_AD
 function Row({ href, icon: Icon, label, detail }: { href: string; icon: React.ElementType; label: string; detail?: React.ReactNode }) {
   const { t } = useTranslation();
   return (
-    <Link href={href} className="flex min-h-14 items-center gap-3 px-4 py-3 text-velora-textPrimary hover:bg-ink/5">
-      <Icon className="h-5 w-5 shrink-0 text-velora-gold" aria-hidden />
+    <Link href={href} className="flex min-h-14 items-center gap-4 px-5 py-4 text-velora-ink hover:bg-velora-sunken/80">
+      <Icon className="h-[18px] w-[18px] shrink-0 text-velora-accent" aria-hidden />
       <span className="flex-1 text-sm font-semibold">{t(label)}</span>
       {t(detail)}
       <ChevronRight className="h-4 w-4 text-velora-textMuted" aria-hidden />
@@ -49,7 +49,7 @@ export default function MePage() {
 
   const name = profile?.displayName || user.username || "Member";
   return (
-    <main className="mx-auto max-w-lg space-y-5 px-4 py-6">
+    <main className="intimo-member-page intimo-grain mx-auto max-w-2xl space-y-8 px-5 pb-24 pt-10 sm:px-8">
       <div className="flex items-center gap-4">
         {profile?.id&&<StoryAvatar ownerId={profile.id} name={name} src={profile.avatarUrl} size={64} fallbackHref="/stories"/>}
         {!profile?.id&&<div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-velora-gold/50 bg-velora-card">
@@ -59,12 +59,12 @@ export default function MePage() {
             : <span className="text-xl font-bold text-velora-gold">{name.slice(0, 1).toUpperCase()}</span>}
         </div>}
         <div className="min-w-0">
-          <h1 className="truncate font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">{name}</h1>
+          <h1 className="intimo-member-heading truncate">{name}</h1>
           <p className="truncate text-xs text-velora-textMuted">{user.email}</p>
         </div>
       </div>
 
-      <nav aria-label={t("Account")} className="divide-y divide-ink/5 overflow-hidden rounded-2xl border border-ink/10 bg-ink/[0.02]">
+      <nav aria-label={t("Account")} className="intimo-member-panel divide-y divide-velora-line/50 overflow-hidden">
         <Row href="/activity" icon={Activity} label={t("Activity: interest & visitors")} />
         <Row href="/connections" icon={UsersRound} label={t("Connections & requests")} />
         <Row href={`/profile/${profile?.id || "me"}`} icon={User} label={t("My profile")} />
@@ -86,7 +86,7 @@ export default function MePage() {
 
       <AppOnThisDevice />
 
-      <section className="rounded-2xl border border-ink/10 bg-ink/[0.02] px-4 py-3">
+      <section className="intimo-member-panel px-5 py-5">
         <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">{t("Language")}</h2>
         <LanguageSwitch variant="list" />
       </section>

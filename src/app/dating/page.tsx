@@ -57,12 +57,12 @@ export default function DatingPage() {
   }
   const tabs = [{ value: "", label: "Everything" }, ...PERSONAL_CATEGORIES.map(item => ({ value: item.value, label: SHORT[item.value] || item.label }))];
   const tab = (active: boolean) => `shrink-0 border-b-2 pb-3 pt-1 text-[15px] transition-colors ${active ? "border-velora-accent font-semibold text-velora-ink" : "border-transparent text-velora-muted hover:text-velora-ink"}`;
-  return <main className="mx-auto max-w-4xl px-4 pb-28 pt-10 sm:px-6 md:pt-14">
+  return <main className="intimo-member-page intimo-grain mx-auto min-h-[75vh] max-w-5xl px-5 pb-28 pt-12 sm:px-8 md:pt-16">
     <header>
       <p className="text-[13px] font-semibold uppercase tracking-[0.2em] text-velora-muted">{t("Prague · adults only")}</p>
       <div className="mt-3 flex items-end justify-between gap-4">
-        <h1 className="font-display text-[clamp(2.5rem,8vw,3.75rem)] font-extrabold leading-none tracking-tight text-velora-ink">{t("Dating Ads")}</h1>
-        <Link href="/personal-ads/new" className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-velora-accent px-5 text-[15px] font-semibold text-velora-paper"><Plus aria-hidden className="h-4 w-4" />{t("Post an ad")}</Link>
+        <h1 className="intimo-member-heading">{t("Dating Ads")}</h1>
+        <Link href="/personal-ads/new" className="intimo-member-primary h-11 shrink-0 gap-1.5 px-5 text-[15px]"><Plus aria-hidden className="h-4 w-4" />{t("Post an ad")}</Link>
       </div>
       <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-velora-ink2">{t("Sex, kink, a fuck buddy, or someone to talk dirty with. Say what you want and where your limits are.")}</p>
     </header>
@@ -81,19 +81,19 @@ export default function DatingPage() {
       {sent && <p role="status" className="mt-6 text-velora-ink2">{t("Reply sent. It's in")}{" "}<Link href="/messages" className="text-velora-ink underline underline-offset-4">{t("Messages")}</Link>.</p>}
       {loading ? <p role="status" className="mt-12 text-velora-muted">{t("Loading ads…")}</p> : !ads.length ? (
         <section className="mt-14 max-w-md">
-          <h2 className="text-[24px] font-bold tracking-tight text-velora-ink">{mine ? t("You haven't posted an ad yet.") : category ? t("Nothing in this one yet.") : t("No ads right now.")}</h2>
+          <h2 className="intimo-member-subheading text-velora-ink">{mine ? t("You haven't posted an ad yet.") : category ? t("Nothing in this one yet.") : t("No ads right now.")}</h2>
           <p className="mt-2 text-[16px] leading-relaxed text-velora-ink2">{mine ? t("Say what you're after and what's off-limits. Ads run for 7 or 30 days.") : t("Be the first: post what you want, or try another category.")}</p>
           <Link href="/personal-ads/new" className="mt-5 inline-flex h-11 items-center rounded-full border border-velora-control px-5 text-[15px] font-semibold text-velora-ink hover:border-velora-ink">{t("Post an ad")}</Link>
         </section>
       ) : <ol className="mt-6 divide-y divide-velora-line">{ads.map(ad => <li key={ad.id} className="py-8">
         <article>
           <p className="flex flex-wrap gap-x-2 text-[13px]"><span className="font-semibold uppercase tracking-[0.12em] text-velora-accent">{t(SHORT[ad.category]) || t(ad.categoryLabel)}</span><span className="text-velora-muted">{ad.areaName || t("Area private")} · {day(ad.createdAt)}</span></p>
-          <h2 className="mt-2 text-[26px] font-bold leading-tight tracking-tight text-velora-ink">{t(ad.title)}</h2>
+          <h2 className="mt-2 font-serif text-[30px] font-normal leading-tight text-velora-ink">{t(ad.title)}</h2>
           <Link className="mt-1 inline-block text-[15px] text-velora-ink2 underline-offset-4 hover:underline" href={`/profile/${ad.authorId}`}>{ad.authorName}{ad.authorAge ? `, ${ad.authorAge}` : ""}{" "}{t("· profile")}</Link>
           <p className="mt-4 whitespace-pre-wrap text-[16px] leading-7 text-velora-ink">{t(ad.body)}</p>
           <p className="mt-4 border-l-2 border-velora-accent pl-3 text-[15px] text-velora-ink2"><span className="font-semibold text-velora-ink">{t("Off-limits:")}</span> {ad.boundaries}</p>
-          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">{ad.isMine ? <><span className="text-[14px] text-velora-muted">{ad.moderationStatus === "PENDING_REVIEW" ? t("Awaiting review") : ad.status === "CLOSED" ? t("Closed") : ad.moderationStatus === "REJECTED" ? t("Not published") : t("Live until ") + day(ad.expiresAt)}</span>{ad.status === "ACTIVE" && <button onClick={() => close(ad)} className="min-h-11 text-[15px] text-velora-ink underline underline-offset-4">{t("Close ad")}</button>}</> : ad.canReply ? <button onClick={() => { setReplyId(ad.id === replyId ? null : ad.id); setSent(false); }} className="inline-flex min-h-11 items-center rounded-full bg-velora-accent px-5 text-[15px] font-semibold text-velora-paper">{t("Reply privately")}</button> : <span className="text-[14px] text-velora-ink2">{ad.replyReason === "VERIFIED" ? t("Verified members can reply") : t("You don't match this ad's reply rules")}</span>}</div>
-          {replyId === ad.id && <div className="mt-5"><label className="block text-[14px] font-semibold text-velora-ink">{t("Your first message")}<textarea value={reply} onChange={event => setReply(event.target.value)} maxLength={4000} rows={4} placeholder={t("Be direct. Say why you're interested and respect what's off-limits.")} className="mt-2 w-full rounded-xl border border-velora-control bg-velora-sunken p-3 font-normal" /></label><p className="mt-2 text-[13px] text-velora-muted">{t("A reply starts a private chat. No one owes a response or a meeting.")}</p><button disabled={busy || reply.trim().length < 10} onClick={() => send(ad)} className="mt-3 inline-flex min-h-11 items-center rounded-full bg-velora-accent px-5 text-[15px] font-semibold text-velora-paper disabled:opacity-50">{busy ? t("Sending…") : t("Send reply")}</button></div>}
+          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">{ad.isMine ? <><span className="text-[14px] text-velora-muted">{ad.moderationStatus === "PENDING_REVIEW" ? t("Awaiting review") : ad.status === "CLOSED" ? t("Closed") : ad.moderationStatus === "REJECTED" ? t("Not published") : t("Live until ") + day(ad.expiresAt)}</span>{ad.status === "ACTIVE" && <button onClick={() => close(ad)} className="min-h-11 text-[15px] text-velora-ink underline underline-offset-4">{t("Close ad")}</button>}</> : ad.canReply ? <button onClick={() => { setReplyId(ad.id === replyId ? null : ad.id); setSent(false); }} className="intimo-member-primary px-5 text-[15px]">{t("Reply privately")}</button> : <span className="text-[14px] text-velora-ink2">{ad.replyReason === "VERIFIED" ? t("Verified members can reply") : t("You don't match this ad's reply rules")}</span>}</div>
+          {replyId === ad.id && <div className="mt-5"><label className="block text-[14px] font-semibold text-velora-ink">{t("Your first message")}<textarea value={reply} onChange={event => setReply(event.target.value)} maxLength={4000} rows={4} placeholder={t("Be direct. Say why you're interested and respect what's off-limits.")} className="mt-2 w-full rounded-xl border border-velora-control bg-velora-sunken p-3 font-normal" /></label><p className="mt-2 text-[13px] text-velora-muted">{t("A reply starts a private chat. No one owes a response or a meeting.")}</p><button disabled={busy || reply.trim().length < 10} onClick={() => send(ad)} className="intimo-member-primary mt-3 px-5 text-[15px] disabled:opacity-50">{busy ? t("Sending…") : t("Send reply")}</button></div>}
         </article>
       </li>)}</ol>}
     </>}

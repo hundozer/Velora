@@ -47,7 +47,7 @@ export const Navbar: React.FC = () => {
   const phoneHidden = Boolean(user) && (pathname.startsWith("/people") || pathname.startsWith("/profile/") || pathname.startsWith("/messages") || pathname.startsWith("/tonight"));
 
   return (
-    <header className={`${phoneHidden ? "hidden md:block" : ""} sticky top-0 z-40 w-full border-b border-velora-line/70 bg-velora-paper/85 backdrop-blur-xl`}>
+    <header className={`${phoneHidden ? "hidden md:block" : ""} sticky top-0 z-40 w-full border-b border-velora-line/70 ${user ? "bg-velora-night/95" : "bg-velora-paper/85"} backdrop-blur-xl`}>
       <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 lg:h-20 flex items-center justify-between gap-4">
         <Link href="/" aria-label={t("Intimo")} className="shrink-0 text-velora-ink"><Logo className="h-8 w-auto lg:h-9" /></Link>
 
@@ -61,7 +61,7 @@ export const Navbar: React.FC = () => {
             ...(user ? [{ href: "/rooms", label: "Rooms", active: pathname.startsWith("/rooms") }] : []),
             ...(user ? [{ href: "/messages", label: t("nav.messages"), active: pathname.startsWith("/messages") }] : []),
           ]).map((item) => (
-            <Link key={item.href} href={item.href} aria-current={item.active ? "page" : undefined} className={`rounded-full px-4 py-2 text-[15px] font-medium transition ${item.active ? "bg-velora-accent text-velora-paper" : "text-velora-ink2 hover:bg-velora-ink/5 hover:text-velora-ink"}`}>
+            <Link key={item.href} href={item.href} aria-current={item.active ? "page" : undefined} className={`border-b-2 px-4 py-2 text-[13px] font-semibold tracking-wide transition ${item.active ? "border-velora-warm text-velora-ink" : "border-transparent text-velora-ink2 hover:border-velora-line hover:text-velora-ink"}`}>
               {t(item.label)}
             </Link>
           ))}
@@ -103,7 +103,7 @@ export const Navbar: React.FC = () => {
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
                 className="flex items-center gap-2.5 p-1 rounded-full hover:bg-ink/5 transition-colors"
               >
-                <div className="w-10 h-10 rounded-full border-2 border-velora-gold/50 overflow-hidden bg-velora-card">
+                <div className="h-10 w-10 overflow-hidden border border-velora-line bg-velora-surface">
                   {profile?.avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={profile.avatarUrl} alt={t("User avatar")} className="w-full h-full object-cover" />
@@ -117,7 +117,7 @@ export const Navbar: React.FC = () => {
 
               {isUserDropdownOpen && (
                 <div
-                  className="absolute right-0 mt-2 w-56 glass-panel-gold rounded-2xl p-2 shadow-2xl z-50"
+                  className="intimo-member-panel absolute right-0 z-50 mt-2 w-60 p-2"
                   onClick={() => setIsUserDropdownOpen(false)}
                 >
                   <div className="px-4 py-3 border-b border-ink/10 mb-1">

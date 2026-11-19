@@ -91,3 +91,90 @@ html[data-discreet="on"] main video:not([data-revealed]) {
   filter: blur(24px) saturate(0.4);
   cursor: pointer;
 }
+
+
+/* Member interior: the same print-led Intimo design as the invitation landing.
+   Scoped opt-in classes deliberately do not affect public landing/marketing pages. */
+.intimo-member-page {
+  background: rgb(var(--paper));
+  color: rgb(var(--ink));
+}
+.intimo-member-page.intimo-grain::before { opacity: 0.07; }
+.intimo-member-kicker {
+  font-family: var(--font-sans);
+  color: rgb(var(--muted));
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+}
+.intimo-member-heading {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: clamp(3.25rem, 8vw, 6.25rem);
+  font-weight: 400;
+  line-height: .96;
+  letter-spacing: -.025em;
+  color: rgb(var(--ink));
+}
+.intimo-member-subheading {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  font-weight: 400;
+  line-height: 1.06;
+  letter-spacing: -.01em;
+}
+.intimo-member-italic { font-style: italic; color: rgb(var(--warm)); }
+.intimo-member-panel {
+  border: 1px solid rgb(var(--line) / .75);
+  background: rgb(var(--surface));
+  border-radius: 0;
+  box-shadow: none;
+}
+.intimo-member-paper {
+  border: 1px solid rgb(var(--cream));
+  background: rgb(var(--cream));
+  color: rgb(var(--print-ink));
+  border-radius: 0;
+}
+.intimo-member-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 0;
+  border: 1px solid rgb(var(--warm));
+  background: rgb(var(--warm));
+  color: rgb(var(--night));
+  font-weight: 700;
+  transition: background-color .18s ease, border-color .18s ease;
+}
+.intimo-member-primary:hover:not(:disabled) {
+  background: rgb(var(--warm-hover));
+  border-color: rgb(var(--warm-hover));
+}
+.intimo-member-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 0;
+  border: 1px solid rgb(var(--line));
+  background: transparent;
+  color: rgb(var(--ink));
+  font-weight: 600;
+}
+.intimo-member-secondary:hover:not(:disabled) { border-color: rgb(var(--accent)); }
+.intimo-member-tab {
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: rgb(var(--muted));
+  font-size: 14px;
+}
+.intimo-member-tab[aria-selected="true"],
+.intimo-member-tab[aria-pressed="true"] {
+  border-bottom-color: rgb(var(--warm));
+  color: rgb(var(--ink));
+}
+.intimo-member-rule { border-color: rgb(var(--line) / .8); }
+.intimo-member-caption { color: rgb(var(--muted)); font-size: 12px; letter-spacing: .02em; }
+.intimo-member-portrait { overflow: hidden; border-radius: 0; background: rgb(var(--sunken)); }

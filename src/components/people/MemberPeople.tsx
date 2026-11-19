@@ -193,12 +193,12 @@ export function MemberPeople() {
   const darkHeader = showIntroductions;
 
   return (
-    <div className="min-h-screen bg-velora-surface pb-24 md:pb-16">
+    <div className="intimo-member-page min-h-screen pb-24 md:pb-16">
       <header className={`z-20 mx-auto flex ${showIntroductions ? "max-w-5xl" : "max-w-2xl"} items-center justify-between px-5 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-8 ${darkHeader ? "absolute inset-x-0 top-0 md:static md:pt-6" : "pt-4 md:pt-8"}`}>
         <Link href="/" className={`md:invisible ${darkHeader ? "text-velora-onPhoto md:text-velora-ink" : "text-velora-ink"}`} aria-label={t("Intimo")}><Logo className="h-7 w-auto" /></Link>
         <ModeSwitch view={view} onChange={switchView} dark={darkHeader} />
       </header>
-      <div className={`mx-auto max-w-2xl px-5 py-3 text-sm sm:px-8 ${showIntroductions?"relative z-20 mt-16 text-velora-onPhoto md:mt-0 md:text-velora-ink":"text-velora-ink"}`}><Link href="/stories" className="inline-flex min-h-11 items-center underline underline-offset-4">{t("Stories · see what people are sharing")}</Link></div>
+      <div className={`mx-auto max-w-2xl px-5 py-3 text-sm sm:px-8 ${showIntroductions?"relative z-20 mt-16 text-velora-onPhoto md:mt-0 md:text-velora-ink":"text-velora-ink"}`}><Link href="/stories" className="inline-flex min-h-11 items-center border-b border-velora-warm pb-1 text-[13px] font-semibold tracking-wide text-velora-ink hover:text-velora-warm">{t("Stories · see what people are sharing")}</Link></div>
 
       {showIntroductions && introductions && (
         <div ref={spreads} className="mx-auto max-w-5xl md:space-y-6 md:px-8 md:pt-4">
@@ -210,8 +210,8 @@ export function MemberPeople() {
         </div>
       )}
 
-      <section id="everyone-nearby" aria-label={t("Everyone nearby")} className="mx-auto max-w-2xl scroll-mt-4 px-5 pt-8 sm:px-8 md:pt-12">
-        {showIntroductions && <h1 className="mb-4 font-display text-[44px] leading-[1.02] text-velora-ink">{t("Everyone nearby")}</h1>}
+      <section id="everyone-nearby" aria-label={t("Everyone nearby")} className="mx-auto max-w-2xl scroll-mt-4 border-t border-velora-line/50 px-5 pt-10 sm:px-8 md:pt-14">
+        {showIntroductions && <h1 className="intimo-member-heading mb-7">{t("Everyone nearby")}</h1>}
         {!showIntroductions && <h1 className="sr-only">{t("People")}</h1>}
         <FilterSentence filters={filters} onOpen={(section) => setSheet({ open: true, section })} onSearch={onSearch} />
 
@@ -219,7 +219,7 @@ export function MemberPeople() {
           {error && <p role="alert" className="mb-4 border-l-2 border-velora-crimson pl-4 text-[15px] text-velora-crimson">{t(error)}</p>}
           {people !== null && people.length === 0 ? (
             <div className="py-10">
-              <h2 className="font-display text-[32px] leading-tight text-velora-ink">{filtersActive ? t("Nobody here with these filters yet") : t("Members are on their way")}</h2>
+              <h2 className="intimo-member-subheading text-velora-ink">{filtersActive ? t("Nobody here with these filters yet") : t("Members are on their way")}</h2>
               <p className="mt-3 text-[16px] text-velora-ink2">{filtersActive ? t("Try a wider distance or fewer filters.") : t("Post a plan for tonight so new members find you first.")}</p>
               {filtersActive
                 ? <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)} className="mt-5 min-h-11 text-[16px] font-semibold text-velora-ink underline underline-offset-4">{t("Show everyone")}</button>
