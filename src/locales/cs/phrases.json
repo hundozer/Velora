@@ -2421,5 +2421,6 @@
  "Found someone": "Našel/našla jsem někoho",
  "Just trying it out": "Jen jsem to zkoušel(a)",
  "Other reason": "Jiný důvod",
- "Choosing a reason is optional and never delays account deletion.": "Uvedení důvodu je nepovinné a nikdy neoddálí smazání účtu."
+ "Choosing a reason is optional and never delays account deletion.": "Uvedení důvodu je nepovinné a nikdy neoddálí smazání účtu.",
+ "Could not hide your profile.": "Profil se nepodařilo skrýt. Zkus to prosím znovu."
 }
