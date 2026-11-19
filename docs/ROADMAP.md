@@ -163,7 +163,7 @@ On day one a member can:
 - remove legacy monetisation columns where safe
 
 ### Explicitly not MVP
-Generic feed, compatibility summaries, relationship links between profiles, chat rooms, groups/forums, blogs, livestreaming, creator economy, credits, video calls, webcam rooms, algorithmic swiping, public popularity scores.
+Generic feed, compatibility summaries, relationship links between profiles, chat rooms, groups/forums, blogs, creator economy, credits, algorithmic swiping, public popularity scores. Video uploads, video streaming, livestreaming, video calls and webcam rooms are excluded from the entire roadmap (see Phase 4 scope decision).
 
 ### Acceptance
 - all full-loop journeys pass in Playwright on production-like staging
@@ -219,12 +219,12 @@ Further Phase 2 work (tracked in the M2 epic):
 
 ---
 
-## Phase 4: Rich media / realtime  (milestone `M4-media`)
-- Video upload with transcoding + moderation (XL)
-- Ephemeral / one-time media (M)
-- Stories only if the feed demonstrates demand (M)
-- 1:1 video calls with consent prompts and abuse controls (L)
-- Webcam rooms only after separate legal, moderation and infrastructure review (XL)
+## Phase 4: Photo-first experiences  (milestone `M4-media`)
+- Improve existing photo Stories, subject to adoption and safety evidence (M)
+- Ephemeral / one-time **photo** sharing with consent, access controls and moderation (M)
+- Review photo moderation capacity, secure delivery and retention before expansion (M)
+
+**Product scope decision (19 November 2026):** Intimo is a photo-first, text-chat adult community. **Video uploads, hosted or user-generated videos, video streaming, livestreaming, video calls and webcam rooms are excluded from the product roadmap across all phases.** This is a deliberate scope boundary, not a postponed feature. Reintroducing any video capability requires a separate explicit product decision and legal/safety assessment.
 
 ---
 
@@ -281,6 +281,6 @@ All ─► P1-17 Full-loop E2E ─► Launch gate
 
 Launch ─► P2 chemistry / relationship links / push / Safe Meet / Scene v1
       ─► P3 community rooms & organiser tooling only when density proves demand
-      ─► P4 rich media
+      ─► P4 photo-first experiences (no video)
       ─► P5 monetisation only after retention and scale
 ```
