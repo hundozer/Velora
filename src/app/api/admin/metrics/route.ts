@@ -35,15 +35,16 @@ export async function GET(req: NextRequest) {
   if ("response" in auth) return auth.response;
   const db = getServerSupabase();
   if (!db) return NextResponse.json({ error: "Admin data service unavailable" }, { status: 503 });
-  const [profiles, requests, invites, reports] = await Promise.all([
+  const [profiles, requests, invites, reports, codes] = await Promise.all([
     readAll(db, "profiles", "created_at,last_active_at,gender,is_couple_profile,verification_status,account_status,account_lifecycle_status,membership_level,is_demo"),
     readAll(db, "invitation_requests", "identity,status,created_at"),
     readAll(db, "member_email_invites", "status,created_at,sent_at,redeemed_at,expires_at"),
     readAll(db, "moderation_cases", "created_at", new Date(Date.now() - 90 * 86_400_000).toISOString()),
+    readAll(db, "invitation_codes", "created_at,source_label,uses"),
   ]);
-  if ([profiles, requests, invites, reports].some((result) => "error" in result)) return NextResponse.json({ error: "Numbers could not be loaded" }, { status: 502 });
+  if ([profiles, requests, invites, reports, codes].some((result) => "error" in result)) return NextResponse.json({ error: "Numbers could not be loaded" }, { status: 502 });
   const ok = (result: typeof profiles) => result as { rows: Record<string, unknown>[]; truncated: boolean };
-  const metrics = founderMetrics({ profiles: ok(profiles).rows, requests: ok(requests).rows, invites: ok(invites).rows, reports: ok(reports).rows });
+  const metrics = founderMetrics({ profiles: ok(profiles).rows, requests: ok(requests).rows, invites: ok(invites).rows, reports: ok(reports).rows, codes: ok(codes).rows });
   const truncated = [profiles, requests, invites, reports].some((result) => ok(result).truncated);
   return NextResponse.json({ metrics, truncated }, { headers: { "Cache-Control": "private, no-store" } });
 }

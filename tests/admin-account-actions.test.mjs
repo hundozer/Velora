@@ -16,6 +16,7 @@ function setup({ fresh = true, denied = 0, lifecycle = 'ACTIVE' } = {}) {
     '@/lib/auth/adminAuthorization': { adminSessionFresh: () => fresh, hasAdminPermission: () => true },
     '@/lib/auth/adminApi': { requireAdminPermission: async () => denied ? { response: new Response(null, { status: denied }) } : { actor: { profileId: 'admin', role: 'SUPER_ADMIN' } }, requestSecurityMetadata: () => ({}) },
     '@/lib/supabase/server': { getServerSupabase: () => db },
+    '@/lib/privacy/retention': { eraseAgeReviewSelfie: async () => true },
   };
   const source = readFileSync(new URL('../src/app/api/admin/users/[id]/route.ts', import.meta.url), 'utf8');
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;

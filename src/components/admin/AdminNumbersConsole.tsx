@@ -89,6 +89,12 @@ export function AdminNumbersConsole() {
     </div>
 
     <section className="rounded-xl border border-velora-line bg-velora-surface p-5">
+      <h2 className="font-bold">Joined by code source</h2>
+      <p className="mt-1 text-xs text-velora-muted">Only completed code redemptions; no personal details.</p>
+      <ul className="mt-3 space-y-2">{(m.invitationCodeSources || []).map(row=><li key={row.source} className="flex justify-between gap-3 border-b border-velora-line py-2"><span>{row.source}</span><strong>{row.signups}</strong></li>)}</ul>
+      {!m.invitationCodeSources?.length && <p className="mt-2 text-sm">No code redemptions yet.</p>}
+    </section>
+    <section className="rounded-xl border border-velora-line bg-velora-surface p-5">
       <h2 className="font-bold">Week by week</h2>
       <p className="mt-1 text-xs text-velora-muted">Weeks start on Monday (UTC). The last row is the current week so far.</p>
       <div className="mt-4 overflow-x-auto">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminSessionFresh, AdminPermission, hasAdminPermission } from "@/lib/auth/adminAuthorization";
 import { requestSecurityMetadata, requireAdminPermission } from "@/lib/auth/adminApi";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { eraseAgeReviewSelfie } from "@/lib/privacy/retention";
 
 const ACTIONS: Record<string, { permission: AdminPermission; status?: string; flags?: Record<string, boolean>; highRisk?: boolean }> = {
   WARN: { permission: "users:warn" }, RESTRICT: { permission: "users:restrict", status: "RESTRICTED" }, SUSPEND: { permission: "users:suspend", status: "SUSPENDED", highRisk: true }, BAN: { permission: "users:ban", status: "BANNED", highRisk: true }, REACTIVATE: { permission: "users:reactivate", status: "ACTIVE", highRisk: true }, DISABLE_DISCOVERY: { permission: "users:restrict", flags: { discovery_disabled: true } }, DISABLE_MESSAGING: { permission: "users:restrict", flags: { messaging_disabled: true } }, DISABLE_UPLOADS: { permission: "users:restrict", flags: { media_uploads_disabled: true } }, REQUEST_REVERIFICATION: { permission: "verification:decide" },
@@ -61,6 +62,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const closed = await db.from("verification_reviews").update({ status: "VERIFIED", reason: `Approved by hand: ${reason}`, reviewed_by: auth.actor.profileId, reviewed_at: reviewedAt }).eq("profile_id", params.id).eq("verification_type", "AGE").in("status", ["PENDING", "REVIEW_REQUIRED"]).select("id");
     const recorded = closed.error || (closed.data || []).length ? null : (await db.from("verification_reviews").insert({ profile_id: params.id, verification_type: "AGE", status: "VERIFIED", provider_method: "ADMIN_ATTESTATION", reason, reviewed_by: auth.actor.profileId, reviewed_at: reviewedAt })).error;
     if (closed.error || recorded) return NextResponse.json({ user: after, warning: "Age approved, but the verification history could not be updated. Check the verification queue." });
+    // The hand-approval path can close an existing selfie review too.
+    // Report incomplete deletion, but leave its pointer for the daily retry worker.
+    const evidenceIds = (closed.data || []).map(row => String(row.id));
+    for (const reviewId of evidenceIds) {
+      if (!(await eraseAgeReviewSelfie(db, reviewId))) {
+        return NextResponse.json({ user: after, warning: "Age approved, but selfie deletion is incomplete. The retention worker will retry it." }, { status: 502 });
+      }
+    }
   }
   return NextResponse.json({ user: after });
 }
