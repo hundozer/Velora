@@ -80,6 +80,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             >
               <option value="SUSPECTED_MINOR">{t("Suspected minor (critical)")}</option>
               <option value="NON_CONSENSUAL_INTIMATE_CONTENT">{t("Non-consensual intimate content (critical)")}</option>
+              <option value="NON_CONSENSUAL_SCREENSHOT">{t("Shared screenshot or recording without consent")}</option>
               <option value="HARASSMENT">{t("Harassment")}</option>
               <option value="THREATS">{t("Threats")}</option>
               <option value="IMPERSONATION">{t("Impersonation")}</option>
