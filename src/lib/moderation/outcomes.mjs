@@ -29,6 +29,7 @@ export const POLICY_GROUNDS = {
   IMPERSONATION: "Honesty: fake identity or impersonation",
   SCAM: "Honesty: scams, fraud or selling sex",
   PRIVACY: "Privacy: sharing someone's personal information",
+  SCREENSHOT_CONSENT: "Consent: sharing screenshots or recordings without permission",
   ILLEGAL: "Illegal content",
   COPYRIGHT: "Someone else's copyrighted content",
   SPAM: "Spam or advertising",
