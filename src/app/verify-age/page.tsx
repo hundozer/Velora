@@ -137,7 +137,7 @@ export default function VerifyAgePage() {
       <button type="button" onClick={() => void submit()} disabled={!file || progress !== null} className="min-h-12 w-full rounded-full bg-velora-accent px-6 text-sm font-bold text-velora-paper disabled:opacity-50">
         {progress !== null ? t("Sending… {progress}%", { progress }) : t("Send for review")}
       </button>
-      <p className="text-xs leading-relaxed text-velora-textMuted">{t("Only our review team sees this photo. We delete it when approved, or 30 days after a refusal or retry request.")}</p>
+      <p className="text-xs leading-relaxed text-velora-textMuted">{t("Only our review team sees this photo. We normally delete it after approval, or 30 days after a refusal or retry request. A legal hold may require longer retention.")}</p>
     </section>
   </>);
 }
