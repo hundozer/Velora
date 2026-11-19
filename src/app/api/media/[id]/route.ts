@@ -36,6 +36,15 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (media.mime_type.startsWith("video/") && !media.object_key.startsWith(`variants/${media.id}/safe.`)) return NextResponse.json({ error: "Media not found" }, { status: 404 });
   if ("category" in media && media.category === "STORY") return NextResponse.json({ error: "Media not found" }, { status: 404, headers: { "Cache-Control": "private, no-store" } });
   const isOwner = media.owner_id === actor.actor.profileId;
+  // A view-once message is never obtainable through the ordinary media endpoint,
+  // even if its category or visibility was changed before this guard was introduced.
+  // Apply this independently of the media category; fail closed on database errors.
+  if (!isOwner && media.mime_type?.startsWith("image/")) {
+    const { data: oneTimeMessages, error: oneTimeError } = await supabase.from("direct_messages")
+      .select("id").eq("media_url", `/api/media/${media.id}`).eq("view_once", true).limit(1);
+    if (oneTimeError || (oneTimeMessages?.length ?? 0) > 0)
+      return NextResponse.json({ error: "Media not found" }, { status: 404 });
+  }
   if (!isOwner && !ageChecked) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
   // FM-06: an age check selfie is evidence for admins only (served by the admin evidence route).
   if (!isOwner && "category" in media && media.category === "AGE_CHECK") return NextResponse.json({ error: "Media not found" }, { status: 404 });
@@ -124,6 +133,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Media service unavailable" }, { status: 503 });
   const { data: existing, error: existingError } = await db.from("media_objects").select("category").eq("id", params.id).eq("owner_id", actor.actor.profileId).maybeSingle();
   if (existingError) return NextResponse.json({ error: "Media lookup failed" }, { status: 502 });
+  // Chat attachment media is immutable through the general photo editor.
+  // Otherwise its category/visibility can be changed to bypass view-once delivery.
+  if (existing?.category === "MESSAGE" || category === "MESSAGE")
+    return NextResponse.json({ error: "Chat photos cannot be edited here" }, { status: 409 });
   if (existing?.category === "AGE_CHECK" || category === "AGE_CHECK") return NextResponse.json({ error: "Age check photos can't be changed" }, { status: 409 });
   if (existing?.category === "STORY" || category === "STORY") return NextResponse.json({ error: "Manage story photos in Stories" }, { status: 409 });
   const { data, error } = await db.from("media_objects").update({ title: title || null, description: description || null, category: category || null, tags, visibility, moderation_status: "PENDING_REVIEW", published_at: null, updated_at: new Date().toISOString() }).eq("id", params.id).eq("owner_id", actor.actor.profileId).neq("upload_status", "REMOVED").select("id,title,description,category,tags,visibility,moderation_status,processing_status,upload_status").maybeSingle();
