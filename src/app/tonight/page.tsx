@@ -50,7 +50,7 @@ function Featured({ plan, onReport }: { plan: Plan; onReport: (plan: Plan) => vo
         {plan.text && <p className="mt-2 max-w-lg text-[15px] leading-relaxed text-velora-onPhoto/80">{t(plan.text)}</p>}
         <div className="mt-3"><Eligibility plan={plan} dark /></div>
         <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
-          {plan.canReply && <Link href={replyHref(plan)} className="inline-flex min-h-12 items-center rounded-full bg-velora-accent px-6 text-[15px] font-semibold text-velora-paper">{plan.authorIsCouple ? t("Reply to their invitation") : t("Reply to the invitation")}</Link>}
+          {plan.canReply && <Link href={replyHref(plan)} className="intimo-member-primary min-h-12 px-6 text-[15px]">{plan.authorIsCouple ? t("Reply to their invitation") : t("Reply to the invitation")}</Link>}
           <Link href={`/profile/${plan.authorId}`} className="min-h-11 py-3 text-[15px] text-velora-onPhoto underline decoration-velora-onPhoto/50 underline-offset-4">{t(portraitOf(plan))}</Link>
           <ReportLink plan={plan} onReport={onReport} dark />
         </div>
@@ -79,7 +79,7 @@ function Later({ title, plans, onReport }: { title: string; plans: Plan[]; onRep
                   <div className="mt-2"><Eligibility plan={plan} dark /></div>
                   <div className="mt-3 flex flex-wrap items-center gap-x-5">
                     {plan.canReply
-                      ? <Link href={replyHref(plan)} className="inline-flex min-h-11 items-center rounded-full bg-velora-accent px-5 text-[15px] font-semibold text-velora-paper">{t("Reply to {authorName}", { authorName: plan.authorName })}</Link>
+                      ? <Link href={replyHref(plan)} className="intimo-member-primary px-5 text-[15px]">{t("Reply to {authorName}", { authorName: plan.authorName })}</Link>
                       : <Link href={`/profile/${plan.authorId}`} className="min-h-11 py-3 text-[15px] text-velora-onPhoto underline decoration-velora-onPhoto/50 underline-offset-4">{t("See {authorName}'s portrait", { authorName: plan.authorName })}</Link>}
                     <ReportLink plan={plan} onReport={onReport} dark />
                   </div>
@@ -98,7 +98,7 @@ function Tomorrow({ plans, onReport }: { plans: Plan[]; onReport: (plan: Plan) =
   const { t, locale } = useTranslation();
   return (
     <section aria-label={t("Upcoming")} className="px-6 py-12 sm:px-10">
-      <h2 className="font-display text-[40px] leading-none text-velora-ink">{t("Upcoming")}</h2>
+      <h2 className="intimo-member-subheading text-velora-ink">{t("Upcoming")}</h2>
       <ol className="mt-6 divide-y divide-velora-line">
         {plans.map((plan) => (
           <li key={plan.id} className="py-6 first:pt-0">
@@ -108,7 +108,7 @@ function Tomorrow({ plans, onReport }: { plans: Plan[]; onReport: (plan: Plan) =
             <div className="mt-2"><Eligibility plan={plan} /></div>
             <div className="mt-3 flex flex-wrap items-center gap-x-5">
               {plan.canReply
-                ? <Link href={replyHref(plan)} className="inline-flex min-h-11 items-center rounded-full bg-velora-accent px-5 text-[15px] font-semibold text-velora-paper">{t("Reply to {authorName}", { authorName: plan.authorName })}</Link>
+                ? <Link href={replyHref(plan)} className="intimo-member-primary px-5 text-[15px]">{t("Reply to {authorName}", { authorName: plan.authorName })}</Link>
                 : <Link href={`/profile/${plan.authorId}`} className="min-h-11 py-3 text-[15px] text-velora-ink underline underline-offset-4">{t("See {authorName}'s portrait", { authorName: plan.authorName })}</Link>}
               <ReportLink plan={plan} onReport={onReport} />
             </div>
@@ -185,7 +185,7 @@ export default function TonightPage() {
 
   return (
     <div ref={root} className="min-h-screen bg-velora-surface pb-20 md:pb-12">
-      <section className="relative isolate overflow-hidden bg-gradient-to-br from-velora-blush via-velora-surface to-velora-surface md:mx-auto md:mt-6 md:max-w-5xl md:rounded-[28px]">
+      <section className="relative isolate overflow-hidden border-y border-velora-line bg-velora-surface md:mx-auto md:mt-6 md:max-w-5xl md:border">
         <div aria-hidden className="absolute -right-24 top-10 -z-10 h-80 w-80 rounded-full bg-velora-copperLight/30 blur-3xl" />
         <header className="flex items-center justify-between px-6 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-10 md:pt-6">
           <Link href="/" aria-label={t("Intimo")} className="text-velora-ink md:invisible"><Logo className="h-7 w-auto" /></Link>
@@ -194,7 +194,7 @@ export default function TonightPage() {
         <div className="px-6 pb-10 pt-8 sm:px-10">
           <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-velora-copperInk">{now ? t("Prague, tonight · {value}", { value: clock(now) }) : t("Prague, tonight")}</p>
           {eventFilter && <p className="mt-3 text-sm text-velora-ink2">{t("Company invitations for this event ·")}{" "}<Link href={`/scene?event=${encodeURIComponent(eventFilter)}`} className="text-velora-accent underline">{t("View event")}</Link> · <a href="/tonight" className="text-velora-accent underline">{t("All Plans")}</a></p>}
-          <h1 className="mt-3 font-display text-[clamp(3rem,13vw,4.5rem)] leading-[0.98] text-velora-ink">{t("Take us out.")}<br /><em className="text-velora-copperInk">{t("Or make the first move.")}</em></h1>
+          <h1 className="intimo-member-heading mt-4">{t("Take us out.")}<br /><em className="text-velora-copperInk">{t("Or make the first move.")}</em></h1>
 
           {error && <p role="alert" className="mt-6 border-l-2 border-velora-crimson pl-4 text-[15px] text-velora-crimson">{t(error)}</p>}
           {plans === null || !now ? (
@@ -202,7 +202,7 @@ export default function TonightPage() {
           ) : glance.length === 0 ? (
             <div className="mt-8">
               <p className="text-[17px] text-velora-ink2">{t("A drink that turns into flirting. A table for three. A night worth getting dressed for. Tell Prague what you have in mind.")}</p>
-              <Link href={eventFilter ? `/tonight/new?event=${encodeURIComponent(eventFilter)}` : "/tonight/new"} className="mt-5 inline-flex min-h-12 items-center rounded-full bg-velora-accent px-6 text-[16px] font-semibold text-velora-paper">{t("Extend an invitation")}</Link>
+              <Link href={eventFilter ? `/tonight/new?event=${encodeURIComponent(eventFilter)}` : "/tonight/new"} className="intimo-member-primary mt-5 min-h-12 px-6 text-[16px]">{t("Extend an invitation")}</Link>
             </div>
           ) : (
             <ol aria-label={t("At a glance")} className="mt-8 divide-y divide-velora-line/80">
@@ -226,7 +226,7 @@ export default function TonightPage() {
       <div className="mx-auto max-w-5xl space-y-0 md:mt-6 md:space-y-6">
         {mine.length > 0 && (
           <section aria-label={t("Your invitations")} className="px-6 py-10 sm:px-10">
-            <h2 className="font-display text-[34px] leading-tight text-velora-ink">{mine.length === 1 ? t("Your invitation") : t("Your invitations")}</h2>
+            <h2 className="intimo-member-subheading text-velora-ink">{mine.length === 1 ? t("Your invitation") : t("Your invitations")}</h2>
             <ol className="mt-4 divide-y divide-velora-line">
               {mine.map((plan) => (
                 <li key={plan.id} className="py-4">
@@ -246,9 +246,9 @@ export default function TonightPage() {
         {tomorrow.length > 0 && <Tomorrow plans={tomorrow} onReport={setReporting} />}
         {plans && plans.length > 0 && (
           <section aria-label={t("Extend an invitation")} className="px-6 py-12 sm:px-10">
-            <h2 className="font-display text-[40px] leading-none text-velora-ink">{t("Extend an invitation")}</h2>
+            <h2 className="intimo-member-subheading text-velora-ink">{t("Extend an invitation")}</h2>
             <p className="mt-4 font-display text-[24px] leading-[1.5] text-velora-muted">{t("Tonight I'd like to … in … from … until … I'd welcome …")}</p>
-            <Link href={eventFilter ? `/tonight/new?event=${encodeURIComponent(eventFilter)}` : "/tonight/new"} className="mt-5 inline-flex min-h-12 items-center rounded-full bg-velora-accent px-6 text-[16px] font-semibold text-velora-paper">{t("Write yours")}</Link>
+            <Link href={eventFilter ? `/tonight/new?event=${encodeURIComponent(eventFilter)}` : "/tonight/new"} className="intimo-member-primary mt-5 min-h-12 px-6 text-[16px]">{t("Write yours")}</Link>
           </section>
         )}
       </div>
