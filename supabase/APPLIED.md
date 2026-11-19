@@ -1,3 +1,22 @@
+
+## 19 November 2026 — FM-10 / screenshot reporting / view-once production rollout
+
+Owner instructed completion of the four merged founding-member feedback workstreams. GitHub `main` reached merge #170 at `d9b245fd496172cb5fbb170bd0d67ac229f1d8d1`, deployed as Vercel production `dpl_Dyv2y2XDwquipQyyEWd6XpQS6EDc` (READY). After schema rollout, a production redeployment of the same commit was started as `dpl_4UJf1BLQXyZ1rZaVdnPP9ya5MvUD` (READY), to load the new `CRON_SECRET` environment setting. No member credentials or destructive media tests were used.
+
+Three official migrations were applied via connected Supabase tooling, staging first, then production; each reported success. The repository source files were `20261119150000_attributed_invitation_codes.sql`, `20261119160000_nonconsensual_screenshot_reports.sql`, and `20261119170000_view_once_chat_photos.sql`. Connector-generated ledger versions, **not** the repository filename versions:
+
+| Schema change | Staging receipt (`fuczjjcwtxzzvoxilrme`) | Production receipt (`bkdyjdbmtucqvgebqadp`) |
+|---|---|---|
+| Attributed invitation codes | `20261119145444` | `20261119145539` |
+| Non-consensual screenshot report reason | `20261119145446` | `20261119145542` |
+| View-once chat photos | `20261119145448` | `20261119145545` |
+
+Independent post-apply queries confirmed both invitation-code tables, the screenshot reason check, and the view-once column in both environments. Staging test: service-only invite validation/redeem RPC grants confirmed; arbitrary unissued token denied; transaction-scoped single-use code could be redeemed once but not twice; test record rolled back leaving zero fixtures. Staging moderation constraint preflight had been applied inside a transaction and rolled back before the official migration. No end-to-end authenticated two-account view-once test, production R2 object deletion, or formal legal review has been recorded.
+
+**Carolinka / C.** Ten correctly formatted 43-character, one-use codes were issued in production for Founding Member profile `d54ebb65-9399-4ee5-960d-43bc5e7eb834` with owner label `Carolinka`, source label `Carolinka — founding member testers — 19 Nov 2026`, and expiry 10 December 2026 UTC. A first 10-code batch had an incompatible token length, was unused, and was revoked before distribution. The replacement batch was independently checked: 10 active, 10 revoked, zero redemptions, `max_uses=1`, valid hashed token and 43-character registration format. Invitation secrets are intentionally **not** stored in this ledger.
+
+**Outstanding before claiming full launch assurance:** authenticated signup-to-age-approval journey; two-user view-once + watermark + denial tests; R2 environment/bucket and age-evidence deletion tests including legal holds; completion and ongoing monitoring of the cron job; ban-evasion response, automatic appeal-sanction reversal safeguards, and DSA legal/out-of-court review. The merged code + schema checks are not equivalent to real-member acceptance tests.
+
 # Applied migrations
 
 18 November FM-07 report outcomes: owner-approved in session ("yes" to "Reply yes and I'll make the database change") and applied with Supabase `apply_migration` from the statements of `supabase/migrations/20261118180000_report_outcomes.sql` (5748 bytes, SHA-256 `a39fec03ab5b1513d7aa71d1c8cbae33489141c72026a8ad75ef8819094acb03`; the comment header is not sent). Staging `fuczjjcwtxzzvoxilrme` first (receipt `20261118140426 report_outcomes`), then production `bkdyjdbmtucqvgebqadp` (receipt `20261118140500 report_outcomes`). Pre-checks on both: the five new `moderation_cases` columns and `intimo_decide_appeal` absent; no moderation cases, appeals or events. Post-checks inside always-rolled-back blocks: an ALBUM report accepted; a member statement under 20 characters rejected; the reported member's appeal accepted after action and refused after no action; the reporter's appeal accepted; `intimo_decide_appeal` returns the case to its decided status with the appeal outcome; anon and authenticated have no EXECUTE on either function. Afterwards production still has 0 cases, appeals, events and moderation notices. Done before merging [hundozer/Velora#162](https://github.com/hundozer/Velora/pull/162). Rollback is in the migration header.
