@@ -31,6 +31,7 @@ const rows = {
     { status: "FAILED", created_at: daysAgo(3) },
   ],
   reports: [{ created_at: daysAgo(1) }, { created_at: daysAgo(45) }],
+  codes: [{source_label:"Carolinka test group",uses:2},{source_label:"Party partner: X",uses:3}],
 };
 
 test("counts only active, non-demo, non-deleted members", () => {
@@ -48,6 +49,7 @@ test("founding numbers are aggregate counts with the agreed definitions", () => 
   assert.deepEqual(m.invitationRequests, { pending: 1, approved: 1, rejected: 1, total: 3, mix: { women: 1, men: 1, couples: 1, nonBinaryOrOther: 0 } });
   // Sent = provider accepted (SENT or REDEEMED); FAILED is not sent. Joined = redeemed.
   assert.deepEqual(m.invitations, { sent: 3, joined: 1, waiting: 1, expired: 1, acceptancePct: 33.3 });
+  assert.deepEqual(m.invitationCodeSources, [{source:"Party partner: X",signups:3},{source:"Carolinka test group",signups:2}]);
   assert.deepEqual(m.reports, { last30Days: 1, per100Members: 20 });
 });
 
@@ -84,7 +86,7 @@ test("the numbers API is admin-only, MFA-gated and returns aggregates", async ()
   assert.match(route, /Cache-Control": "private, no-store"/);
   // Only aggregate fields leave the server: no ids, emails or names are selected.
   const columns = [...route.matchAll(/readAll\(db, "[a-z_]+", "([^"]+)"/g)].map((match) => match[1]);
-  assert.equal(columns.length, 4);
+  assert.equal(columns.length, 5);
   for (const list of columns) assert.doesNotMatch(list, /\bid\b|email|display_name|username/);
   // PostgREST caps each response at 1,000 rows: read in pages and detect truncation from the exact count.
   assert.match(route, /const PAGE = 1_000/);

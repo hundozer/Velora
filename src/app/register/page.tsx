@@ -22,6 +22,7 @@ function RegisterForm() {
   const inviteToken = params.get("invite") || "";
   const hasToken = TOKEN.test(inviteToken);
   const [state, setState] = useState<InviteState>(hasToken ? "checking" : "invalid");
+  const [kind,setKind] = useState<"email" | "code">("email");
 
   useEffect(() => {
     if (!hasToken) { setState("invalid"); return; }
@@ -29,7 +30,7 @@ function RegisterForm() {
     setState("checking");
     fetch(`/api/invitations/check?invite=${encodeURIComponent(inviteToken)}`, { cache: "no-store" })
       .then((response) => (response.ok ? response.json() : Promise.reject()))
-      .then((payload) => { if (live) setState(["valid", "expired", "used", "invalid"].includes(payload?.state) ? payload.state : "unavailable"); })
+      .then((payload) => { if (live) { setKind(payload?.kind === "code" ? "code" : "email"); setState(["valid", "expired", "used", "invalid"].includes(payload?.state) ? payload.state : "unavailable"); } })
       // If the check itself is down, let the invited person try; sign-up re-checks it.
       .catch(() => { if (live) setState("unavailable"); });
     return () => { live = false; };
@@ -38,7 +39,7 @@ function RegisterForm() {
   if (!inviteToken) return <InvitationOnly />;
   if (state === "checking") return <AuthShell title="Your invitation to Intimo" subtitle="Checking your invitation…"><span className="sr-only" role="status">…</span></AuthShell>;
   if (state === "expired" || state === "used" || state === "invalid") return <InvitationProblem state={state} />;
-  return <SignUp inviteToken={inviteToken} />;
+  return <SignUp inviteToken={inviteToken} kind={kind} />;
 }
 
 function InvitationOnly() {
@@ -46,11 +47,11 @@ function InvitationOnly() {
   return (
     <AuthShell
       title="Intimo is invitation-only"
-      subtitle="To join, a member invites you by email. Their invitation is your way in."
+      subtitle="You need a personal invitation email or an invitation code to join."
       footer={<>{t("Already a member?")}{" "}<Link href="/login" className="font-semibold text-velora-gold">{t("Sign in")}</Link></>}
     >
       <ol className="space-y-4">
-        <Step icon={<UserRound className="h-5 w-5" aria-hidden />} title="Know someone on Intimo?" body="Ask them to invite you. Members can send invitations from their account." />
+        <Step icon={<UserRound className="h-5 w-5" aria-hidden />} title="Know someone on Intimo?" body="Ask them for an invitation. Members can send personal links from their account." />
         <Step icon={<Mail className="h-5 w-5" aria-hidden />} title="Got an invitation email?" body="Open the link in it. It brings you back here with everything ready, and only works for the address it was sent to." />
       </ol>
       <p className="text-base text-velora-textMuted">{t("Invitations keep Intimo small, safe and real. There is no waiting list.")}</p>
@@ -85,7 +86,7 @@ function InvitationProblem({ state }: { state: "expired" | "used" | "invalid" })
   );
 }
 
-function SignUp({ inviteToken }: { inviteToken: string }) {
+function SignUp({ inviteToken,kind }: { inviteToken: string;kind:"email"|"code" }) {
   const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -107,7 +108,7 @@ function SignUp({ inviteToken }: { inviteToken: string }) {
 
   return (
     <AuthShell title="Your invitation to Intimo" subtitle="Membership is by invitation. Free to join. Adults only." footer={<>{t("Already a member?")}{" "}<Link href="/login" className="font-semibold text-velora-gold">{t("Sign in")}</Link></>}>
-      <AuthMessage tone="info">{t("Use the email address your invitation was sent to.")}</AuthMessage>
+      <AuthMessage tone="info">{t(kind === "code" ? "Use an email address you can verify." : "Use the email address your invitation was sent to.")}</AuthMessage>
       <form onSubmit={register} className="space-y-5" noValidate>
         <AuthField id="email" label={t("Email")} type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <div className="space-y-2">

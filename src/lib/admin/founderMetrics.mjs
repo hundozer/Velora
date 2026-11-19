@@ -36,7 +36,7 @@ export function mixOf(p) {
  * @param {number} now
  * @param {number} weeks
  */
-export function founderMetrics({ profiles, requests, invites, reports }, now = Date.now(), weeks = 8) {
+export function founderMetrics({ profiles, requests, invites, reports, codes = [] }, now = Date.now(), weeks = 8) {
   const members = profiles.filter(isCountedMember);
   const total = members.length;
   const weekAgo = now - 7 * DAY;
@@ -78,7 +78,14 @@ export function founderMetrics({ profiles, requests, invites, reports }, now = D
     };
   });
 
+  const sources = {};
+  for (const code of codes) {
+    const source = code.source_label || "Unlabelled";
+    sources[source] = (sources[source] || 0) + (code.uses || 0);
+  }
+
   return {
+    invitationCodeSources: Object.entries(sources).map(([source, signups]) => ({source, signups})).sort((a,b) => b.signups-a.signups),
     generatedAt: new Date(now).toISOString(),
     members: {
       total,
@@ -107,5 +114,6 @@ export function metricsSummary(m) {
     `Invitation requests: ${m.invitationRequests.total} (${m.invitationRequests.pending} waiting, ${m.invitationRequests.approved} approved, ${m.invitationRequests.rejected} rejected)`,
     `Invitations: ${m.invitations.sent} sent, ${m.invitations.joined} joined${m.invitations.acceptancePct === null ? "" : ` (${m.invitations.acceptancePct}%)`}, ${m.invitations.waiting} waiting, ${m.invitations.expired} expired`,
     `Reports (last 30 days): ${m.reports.last30Days}${m.reports.per100Members === null ? "" : ` (${m.reports.per100Members} per 100 members)`}`,
+    `Signups by invitation code source: ${(m.invitationCodeSources || []).map(s=>`${s.source}: ${s.signups}`).join(", ") || "none yet"}`,
   ].join("\n");
 }
