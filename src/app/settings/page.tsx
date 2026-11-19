@@ -210,19 +210,17 @@ export default function SettingsPage() {
     if (hidePending || deletePending) return;
     setHidePending(true); setDeleteError("");
     try {
-      const next = { ...privacy, profileVisibility: "PRIVATE", showInIntroductions: false };
       const response = await fetch("/api/privacy/settings", {
-        method: "PUT", credentials: "same-origin",
+        method: "PATCH", credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(next),
+        body: JSON.stringify({ action: "HIDE_PROFILE" }),
       });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || "Could not hide your profile.");
-      setPrivacy(next);
+      if (!response.ok) throw new Error("Could not hide your profile.");
+      setPrivacy(current => ({ ...current, profileVisibility: "PRIVATE", showInIntroductions: false }));
       setDeleteModalOpen(false);
       setSaveSuccess(true);
     } catch (error) {
-      setDeleteError(error instanceof Error ? error.message : "Could not hide your profile.");
+      setDeleteError("Could not hide your profile.");
     } finally { setHidePending(false); }
   };
 
@@ -493,7 +491,7 @@ export default function SettingsPage() {
 
       {/* Account Deletion Confirmation Modal */}
       <Modal isOpen={deleteModalOpen} onClose={() => { if (!deletePending) setDeleteModalOpen(false); }} showCloseButton={!deletePending} title={t("Confirm Account Deletion")}>
-        <div className="space-y-4 text-left">
+        <div className="max-h-[65dvh] space-y-4 overflow-y-auto overscroll-contain pr-2 text-left">
           <div className="p-4 bg-red-500/10 border border-red-500/40 rounded-2xl flex items-center gap-3">
             <AlertTriangle className="w-6 h-6 text-velora-danger shrink-0" />
             <p className="text-xs text-velora-danger leading-relaxed">{t("Your login will be removed and your profile deactivated. Deletion or anonymization of profile data, messages, and media follows the documented retention workflow, subject to legitimate safety or legal retention duties.")}</p>
@@ -516,7 +514,7 @@ export default function SettingsPage() {
             </select>
           </label>
           <p className="text-xs text-velora-muted">{t("Choosing a reason is optional and never delays account deletion.")}</p>
-          {deleteError && <p role="alert" className="text-xs text-velora-danger">{deleteError}</p>}
+          {deleteError && <p role="alert" className="text-xs text-velora-danger">{t(deleteError)}</p>}
           <div className="flex gap-3 pt-2">
             <Button variant="ghost" className="w-1/2 text-xs" disabled={deletePending || hidePending} onClick={() => setDeleteModalOpen(false)}>{t("Cancel")}</Button>
             <Button variant="danger" className="w-1/2 text-xs font-bold uppercase tracking-wider" disabled={deletePending || hidePending} onClick={handleDeleteAccount}>
