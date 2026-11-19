@@ -2422,5 +2422,11 @@
  "Just trying it out": "Jen jsem to zkoušel(a)",
  "Other reason": "Jiný důvod",
  "Choosing a reason is optional and never delays account deletion.": "Uvedení důvodu je nepovinné a nikdy neoddálí smazání účtu.",
- "Could not hide your profile.": "Profil se nepodařilo skrýt. Zkus to prosím znovu."
+ "Could not hide your profile.": "Profil se nepodařilo skrýt. Zkus to prosím znovu.",
+ "Personal ads only. No prices, paid services, outside contact details, minors or non-consensual content. Your ad goes live immediately and can be removed if it breaks the rules. A reply is not consent to a meeting or sex.": "Jen osobní inzeráty. Žádné ceny, placené služby, externí kontaktní údaje, nezletilí ani obsah bez souhlasu. Tvůj inzerát se zveřejní ihned, ale při porušení pravidel ho moderátoři mohou odstranit. Odpověď není souhlasem se schůzkou ani sexem.",
+ "Post ad": "Zveřejnit inzerát",
+ "Removed by moderators": "Odstraněno moderátory",
+ "Keep contact details on Intimo. External links, handles, emails and phone numbers are not allowed in dating ads.": "Komunikuj přes Intimo. Externí odkazy, uživatelská jména, e-maily a telefonní čísla nejsou v seznamovacích inzerátech povolené.",
+ "Dating ads cannot offer paid services or list prices.": "Seznamovací inzeráty nesmějí nabízet placené služby ani uvádět ceny.",
+ "Your dating ad was removed": "Tvůj seznamovací inzerát byl odstraněn"
 }

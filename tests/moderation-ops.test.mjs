@@ -10,7 +10,8 @@ const read = (file) => fs.readFile(path.join(root, file), "utf8");
 test("plan review requires moderator permission, a reason to remove, and is audited", async () => {
   const route = await read("src/app/api/admin/plans/route.ts");
   assert.equal((route.match(/requireAdminPermission\(req, "content:moderate"\)/g) || []).length, 2);
-  assert.match(route, /if \(decision === "REJECTED" && reason\.length < 10\)/);
+  assert.match(route, /if \(reason\.length < 10\)/);
+  assert.match(route, /body\.decision === "REJECTED" \? "REJECTED" : null/);
   assert.match(route, /appendDurableAudit/);
   assert.match(route, /type: "PLAN_REMOVED"/);
 });
