@@ -54,7 +54,7 @@ test("member-facing age explanation is translated in both languages",()=>{
  const cs=JSON.parse(read("src/locales/cs/phrases.json"));
  const phrases=[
   "We check everyone to make sure we are all adults here. It takes a minute, and only our team sees your selfie.",
-  "Only our review team sees this photo. We delete it when approved, or 30 days after a refusal or retry request.",
+  "Only our review team sees this photo. We normally delete it after approval, or 30 days after a refusal or retry request. A legal hold may require longer retention.",
   "We check every person to make sure everyone here is an adult. It takes a minute, and only our team sees your selfie. Until we approve it, your profile stays private."
  ];
  for(const phrase of phrases){assert.ok(cs[phrase]);assert.ok(page.includes(phrase)||gate.includes(phrase));}
