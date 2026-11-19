@@ -6,11 +6,13 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 test("delete account shows a non-blocking hide alternative", () => {
   const settings = read("src/app/settings/page.tsx");
   assert.match(settings, /Need a break instead\?/);
-  assert.match(settings, /profileVisibility: "PRIVATE", showInIntroductions: false/);
+  assert.match(settings, /action: "HIDE_PROFILE"/);
+  assert.match(read("src/app/api/privacy/settings/route.ts"), /profile_visibility: "PRIVATE", public_profile_visibility: false, show_in_introductions: false/);
   assert.match(settings, /fetch\("\/api\/privacy\/settings"/);
   assert.match(settings, /handleDeleteAccount/);
   assert.match(settings, /confirmation: "DELETE"/);
   assert.match(settings, /Why are you leaving\? \(optional\)/);
+  assert.match(settings, /max-h-\[65dvh\]/);
 });
 
 test("deletion reasons are limited to fixed categories and never block deletion", () => {
