@@ -1,3 +1,11 @@
+## 19 November 2026 — sanctioned invitation owner guard (PR #173)
+
+Source: `supabase/migrations/20261119180000_sanctioned_inviter_guard.sql`. Official connected Supabase migration receipts: staging `20261119150819`, production `20261119151257`; both applied successfully. The RPCs `is_member_invite_valid` and `redeem_member_invite` now require an active inviter or owner profile for member-sent invitation links and owner-attributed codes; admin-issued ownerless codes continue to work. The original service-role-only function grants were restored after replacing definitions.
+
+Staging test in a transaction: existing test profile temporarily changed to ACTIVE, owned code accepted, changed to RESTRICTED, validation and redemption rejected, ROLLBACK restored the profile and left zero test-code records. Production check after rollout: Carolinka's account remains ACTIVE, her legitimate first code validates, and anon cannot execute privileged redemption. This is a limited ban-evasion control, not detection of the same person returning with a different identity.
+
+PR #174 also sealed a separate once-only media access bypass: existing MESSAGE media cannot be reclassified through general media PATCH, and ordinary media GET denies images used in a view-once message regardless of the stored category or visibility. CI passed; an authenticated two-account end-to-end test remains outstanding.
+
 
 ## 19 November 2026 — FM-10 / screenshot reporting / view-once production rollout
 
