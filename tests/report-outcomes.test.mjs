@@ -210,7 +210,8 @@ test("the migration is additive and appeals are open to both sides through serve
   assert.match(sql, /revoke all on function public\.intimo_decide_appeal\(uuid, uuid, text, text, text\) from public, anon, authenticated;/);
   assert.doesNotMatch(sql, /\bdrop table\b|\bdelete from\b/i);
   for (const action of Object.keys(outcomes.ACTIONS)) assert.ok(sql.includes(`'${action}'`), action);
-  for (const ground of Object.keys(outcomes.POLICY_GROUNDS)) assert.ok(sql.includes(`'${ground}'`), ground);
+  const policyUpdates = read("supabase/migrations/20261119160000_nonconsensual_screenshot_reports.sql");
+  for (const ground of Object.keys(outcomes.POLICY_GROUNDS)) assert.ok(sql.includes(`'${ground}'`) || policyUpdates.includes(`'${ground}'`), ground);
 });
 
 test("the data export gives reporters no notes about the other member and includes decisions about you", () => {
