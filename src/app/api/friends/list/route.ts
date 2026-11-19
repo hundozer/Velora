@@ -28,12 +28,12 @@ export async function GET(req: NextRequest) {
   })).filter(row => !hidden.has(row.peerId));
   const ids = [...new Set(relations.map(row => row.peerId))];
   const { data: members, error: memberError } = ids.length
-    ? await db.from("profiles").select("id,display_name,avatar_url,city,account_status,age_verification_status").in("id", ids)
+    ? await db.from("profiles").select("id,display_name,avatar_url,city,location_precision,account_status,age_verification_status").in("id", ids)
     : { data: [], error: null };
   if (memberError) return NextResponse.json({ error: "Connections could not be loaded" }, { status: 502 });
   const byId = new Map((members || []).filter(isVisibleMember).map(p => [p.id, p]));
   return NextResponse.json({ connections: relations.flatMap(row => {
     const profile = byId.get(row.peerId);
-    return profile ? [{ ...row, name: profile.display_name, avatarUrl: profile.avatar_url, city: profile.city }] : [];
+    return profile ? [{ ...row, name: profile.display_name, avatarUrl: profile.avatar_url, city: profile.location_precision === "HIDDEN" ? null : profile.city }] : [];
   }) }, { headers: { "Cache-Control": "private, no-store" } });
 }
