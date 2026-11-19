@@ -10,16 +10,24 @@ test("approved evidence is deleted on the decision path, not deferred",()=>{
  assert.match(admin,/Retry this decision to finish deletion/);
 });
 
-test("age evidence policy retains decision but deletes stored bytes and variants",()=>{
+test("age evidence erasure is safely scoped, hold-aware and retryable",()=>{
  const retention=read("src/lib/privacy/retention.ts");
- assert.match(retention,/review\.status==="VERIFIED"/);
- assert.match(retention,/\["FAILED","RETRY_REQUESTED"\]/);
- assert.match(retention,/Date\.parse\(review\.reviewed_at\)<=Date\.now\(\)-30\*86400000/);
+ assert.match(retention,/review.status === "VERIFIED"/);
+ assert.match(retention,/\["FAILED", "RETRY_REQUESTED"\]/);
+ assert.match(retention,/Date.parse\(review.reviewed_at\) <= Date.now\(\) - 30 \* 86400000/);
+ assert.match(retention,/from\("retention_holds"\)/);
+ assert.match(retention,/if \(holdError \|\| hold\) return false/);
+ assert.match(retention,/media.owner_id !== review.profile_id/);
+ assert.match(retention,/media.category !== "AGE_CHECK"/);
+ assert.match(retention,/media.visibility !== "PRIVATE"/);
  assert.match(retention,/deleteStoredObject\(key\)/);
- assert.match(retention,/deleteVariantObjects\(String\(media\.id\)\)/);
- assert.match(retention,/provider_reference:null/);
- assert.match(retention,/from\("media_objects"\)\.delete\(\)/);
- assert.doesNotMatch(retention,/from\("verification_reviews"\)\.delete\(\)/);
+ assert.match(retention,/deleteVariantObjects\(String\(media.id\)\)/);
+ assert.match(retention,/from\("media_objects"\).delete\(\)/);
+ assert.match(retention,/provider_reference: null/);
+ assert.doesNotMatch(retention,/from\("verification_reviews"\).delete\(\)/);
+ const metadataDelete=retention.indexOf('from("media_objects").delete()');
+ const unlink=retention.indexOf('update({ provider_reference: null })');
+ assert.ok(metadataDelete>0 && unlink>metadataDelete,"keep the reference when media metadata deletion fails");
 });
 
 test("age evidence retention cron is authenticated and scheduled daily",()=>{
