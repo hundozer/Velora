@@ -516,7 +516,7 @@ export default function SettingsPage() {
             </select>
           </label>
           <p className="text-xs text-velora-muted">{t("Choosing a reason is optional and never delays account deletion.")}</p>
-          {deleteError && <p role="alert" className="text-xs text-velora-danger">{deleteError}</p>
+          {deleteError && <p role="alert" className="text-xs text-velora-danger">{deleteError}</p>}
           <div className="flex gap-3 pt-2">
             <Button variant="ghost" className="w-1/2 text-xs" disabled={deletePending || hidePending} onClick={() => setDeleteModalOpen(false)}>{t("Cancel")}</Button>
             <Button variant="danger" className="w-1/2 text-xs font-bold uppercase tracking-wider" disabled={deletePending || hidePending} onClick={handleDeleteAccount}>
