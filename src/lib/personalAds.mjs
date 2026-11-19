@@ -19,7 +19,7 @@ export function validateDatingAdContent(text) {
     || /(?:\+\d{1,3}[\s.-]?)?(?:\d[\s.-]?){9,15}/.test(text)) {
     return "Keep contact details on Intimo. External links, handles, emails and phone numbers are not allowed in dating ads.";
   }
-  if (/(?:€|\$|£|Kč)\s*\d+|\b\d+(?:[.,]\d+)?\s*(?:€|EUR|USD|CZK|Kč|GBP)\b/i.test(text)) {
+  if (/(?:€|\$|£|Kč)\s*\d+|\b\d+(?:[.,]\d+)?\s*(?:€|EUR|USD|CZK|Kč|GBP)(?=$|[\s.,;:!?)]|[^\p{L}\p{N}_])/iu.test(text)) {
     return "Dating ads cannot offer paid services or list prices.";
   }
   return null;
