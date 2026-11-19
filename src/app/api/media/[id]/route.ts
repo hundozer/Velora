@@ -46,8 +46,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const isChatImage = "category" in media && media.category === "MESSAGE";
   let chatParticipant = false;
   if (isChatImage && !isOwner && !["REJECTED", "HIDDEN", "REMOVED"].includes(String(moderationStatus))) {
-    const { data: message } = await supabase.from("direct_messages").select("id").eq("media_url", `/api/media/${media.id}`).eq("sender_id", media.owner_id).eq("receiver_id", actor.actor.profileId).limit(1).maybeSingle();
-    chatParticipant = Boolean(message) && processingStatus === "READY";
+    const { data: message } = await supabase.from("direct_messages").select("id,view_once").eq("media_url", `/api/media/${media.id}`).eq("sender_id", media.owner_id).eq("receiver_id", actor.actor.profileId).limit(1).maybeSingle();
+    chatParticipant = Boolean(message) && message?.view_once !== true && processingStatus === "READY";
   }
   if (moderationStatus === "REMOVED" || (!isOwner && !chatParticipant && (moderationStatus !== "APPROVED" || processingStatus !== "READY"))) {
     return NextResponse.json({ error: "Media not found" }, { status: 404 });
@@ -101,7 +101,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   // Recheck authorization on every fetch. A no-store redirect still leaked a reusable
   // five-minute storage URL; proxy bytes instead so revoke/block/delete stop future reads.
   try {
-    return await deliverMedia(objectKey, media.mime_type, req.headers.get("range") || undefined);
+    let watermark: string | undefined;
+    if (!isOwner && media.mime_type.startsWith("image/") && (media.visibility === "PRIVATE" || isChatImage)) {
+      const { data: viewer, error: viewerError } = await supabase.from("profiles").select("display_name").eq("id", actor.actor.profileId).maybeSingle();
+      if (viewerError || !viewer?.display_name) return NextResponse.json({error:"Private media unavailable"},{status:503});
+      watermark = viewer.display_name;
+    }
+    return await deliverMedia(objectKey, media.mime_type, req.headers.get("range") || undefined, watermark);
   } catch {
     return NextResponse.json({ error: "Private media unavailable" }, { status: 503, headers: { "Cache-Control": "private, no-store" } });
   }
