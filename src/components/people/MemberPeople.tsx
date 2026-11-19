@@ -193,7 +193,7 @@ export function MemberPeople() {
   const darkHeader = showIntroductions;
 
   return (
-    <div className="intimo-member-page intimo-grain min-h-screen pb-24 md:pb-16">
+    <div className="intimo-member-page min-h-screen pb-24 md:pb-16">
       <header className={`z-20 mx-auto flex ${showIntroductions ? "max-w-5xl" : "max-w-2xl"} items-center justify-between px-5 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-8 ${darkHeader ? "absolute inset-x-0 top-0 md:static md:pt-6" : "pt-4 md:pt-8"}`}>
         <Link href="/" className={`md:invisible ${darkHeader ? "text-velora-onPhoto md:text-velora-ink" : "text-velora-ink"}`} aria-label={t("Intimo")}><Logo className="h-7 w-auto" /></Link>
         <ModeSwitch view={view} onChange={switchView} dark={darkHeader} />
