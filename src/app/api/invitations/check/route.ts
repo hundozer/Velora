@@ -22,8 +22,16 @@ export async function GET(req: NextRequest) {
   const db = getServerSupabase();
   if (!db) return NextResponse.json({ error: "Invitation checks are unavailable" }, { status: 503 });
   const hash = createHash("sha256").update(token).digest("hex");
-  const { data, error } = await db.from("member_email_invites").select("status,expires_at").eq("token_sha256", hash).maybeSingle();
-  if (error) return NextResponse.json({ error: "Invitation checks are unavailable" }, { status: 503 });
+  const [{data,error},{data:code,error:codeError}] = await Promise.all([
+    db.from("member_email_invites").select("status,expires_at").eq("token_sha256",hash).maybeSingle(),
+    db.from("invitation_codes").select("max_uses,uses,expires_at,revoked_at").eq("code_sha256",hash).maybeSingle(),
+  ]);
+  if (error || codeError) return NextResponse.json({ error: "Invitation checks are unavailable" }, { status: 503 });
+  if (code) {
+    if (code.revoked_at) return reply("invalid");
+    if (new Date(code.expires_at).getTime() <= Date.now()) return reply("expired");
+    return reply(code.uses >= code.max_uses ? "used" : "valid");
+  }
   if (!data) return reply("invalid");
   if (data.status === "REDEEMED") return reply("used");
   if (data.status !== "SENT") return reply("invalid");
