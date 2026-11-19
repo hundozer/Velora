@@ -16,13 +16,13 @@ export type Person = {
 export function PersonTile({ person, compact = false }: { person: Person; compact?: boolean }) {
   const { t } = useTranslation();
   return (
-    <Link href={`/profile/${person.id}`} className={`group block overflow-hidden rounded-2xl border border-ink/10 bg-velora-card/70 transition hover:border-velora-gold/40 ${compact ? "w-36 shrink-0" : ""}`}>
-      <div className="relative aspect-[4/5] bg-velora-bg">
+    <Link href={`/profile/${person.id}`} className={`group block overflow-hidden border border-velora-line/70 bg-velora-surface transition hover:border-velora-accent/60 ${compact ? "w-36 shrink-0" : ""}`}>
+      <div className="intimo-member-portrait relative aspect-[4/5]">
         <Portrait src={person.avatarUrl} name={person.displayName} sizes={compact ? "144px" : "(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"} className="h-full w-full" monogramClassName="text-4xl" />
         {person.presence === "ONLINE" && <span className="absolute left-2 top-2 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-velora-bg" aria-label={t("Online now")} />}
       </div>
-      <div className="space-y-0.5 p-3">
-        <p className="flex items-center gap-1 truncate text-sm font-semibold text-velora-textPrimary">
+      <div className="space-y-1.5 border-t border-velora-line/60 px-3 pb-4 pt-3">
+        <p className="flex items-center gap-1 truncate font-serif text-[23px] leading-none text-velora-ink">
           <span className="truncate">{person.displayName}{person.age ? `, ${person.age}` : ""}</span>
           {person.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-velora-success" aria-label={t("Verified")} />}
         </p>
