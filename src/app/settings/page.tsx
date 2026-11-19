@@ -59,6 +59,8 @@ export default function SettingsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletePending, setDeletePending] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [hidePending, setHidePending] = useState(false);
+  const [leaveReason, setLeaveReason] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
   const [mediaUpload, setMediaUpload] = useState<{ kind: "avatar" | "cover"; progress: number } | null>(null);
@@ -203,6 +205,27 @@ export default function SettingsPage() {
     setTimeout(() => setExportSuccess(false), 3000);
   };
 
+  // Hide from discovery without deleting data or changing messaging permissions.
+  const hideInstead = async () => {
+    if (hidePending || deletePending) return;
+    setHidePending(true); setDeleteError("");
+    try {
+      const next = { ...privacy, profileVisibility: "PRIVATE", showInIntroductions: false };
+      const response = await fetch("/api/privacy/settings", {
+        method: "PUT", credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(next),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Could not hide your profile.");
+      setPrivacy(next);
+      setDeleteModalOpen(false);
+      setSaveSuccess(true);
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "Could not hide your profile.");
+    } finally { setHidePending(false); }
+  };
+
   const handleDeleteAccount = async () => {
     if (!user || deletePending) return;
     setDeletePending(true);
@@ -211,7 +234,7 @@ export default function SettingsPage() {
       const response = await fetch("/api/auth/delete-account", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ confirmation: "DELETE" }),
+        body: JSON.stringify({ confirmation: "DELETE", reason: leaveReason || undefined }),
       });
       if (!response.ok) throw new Error("Deletion request failed");
       // Clear the session only after the server accepts the deletion request.
@@ -476,10 +499,27 @@ export default function SettingsPage() {
             <p className="text-xs text-velora-danger leading-relaxed">{t("Your login will be removed and your profile deactivated. Deletion or anonymization of profile data, messages, and media follows the documented retention workflow, subject to legitimate safety or legal retention duties.")}</p>
           </div>
 
-          {deleteError && <p role="alert" className="text-xs text-velora-danger">{deleteError}</p>}
+          <section className="border border-velora-line bg-velora-surface p-4">
+            <h3 className="font-serif text-3xl text-velora-ink">{t("Need a break instead?")}</h3>
+            <p className="mt-2 text-sm text-velora-ink2">{t("Hide your profile from discovery and introductions while keeping your account and data. Existing messages and access rules are unchanged.")}</p>
+            <button type="button" disabled={hidePending || deletePending} onClick={() => void hideInstead()} className="mt-4 min-h-11 border border-velora-accent px-4 text-sm font-semibold text-velora-ink disabled:opacity-50">{hidePending ? t("Hiding profile…") : t("Hide my profile instead")}</button>
+          </section>
+          <label className="block text-sm text-velora-ink2">{t("Why are you leaving? (optional)")}
+            <select value={leaveReason} onChange={(event) => setLeaveReason(event.target.value)} disabled={deletePending} className="mt-2 w-full border border-velora-control bg-velora-surface p-3 text-velora-ink">
+              <option value="">{t("Prefer not to say")}</option>
+              <option value="TOO_FEW_PEOPLE">{t("Too few people here")}</option>
+              <option value="NOT_WHAT_I_EXPECTED">{t("Not what I expected")}</option>
+              <option value="PRIVACY">{t("Privacy concerns")}</option>
+              <option value="FOUND_SOMEONE">{t("Found someone")}</option>
+              <option value="JUST_TRYING">{t("Just trying it out")}</option>
+              <option value="OTHER">{t("Other reason")}</option>
+            </select>
+          </label>
+          <p className="text-xs text-velora-muted">{t("Choosing a reason is optional and never delays account deletion.")}</p>
+          {deleteError && <p role="alert" className="text-xs text-velora-danger">{deleteError}</p>
           <div className="flex gap-3 pt-2">
-            <Button variant="ghost" className="w-1/2 text-xs" disabled={deletePending} onClick={() => setDeleteModalOpen(false)}>{t("Cancel")}</Button>
-            <Button variant="danger" className="w-1/2 text-xs font-bold uppercase tracking-wider" disabled={deletePending} onClick={handleDeleteAccount}>
+            <Button variant="ghost" className="w-1/2 text-xs" disabled={deletePending || hidePending} onClick={() => setDeleteModalOpen(false)}>{t("Cancel")}</Button>
+            <Button variant="danger" className="w-1/2 text-xs font-bold uppercase tracking-wider" disabled={deletePending || hidePending} onClick={handleDeleteAccount}>
               {deletePending ? t("Submitting…") : t("Confirm Deletion Request")}
             </Button>
           </div>
