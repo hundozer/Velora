@@ -366,7 +366,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
                 )}
               </div>
               <button type="button" onClick={() => void toggleFavorite()} aria-pressed={favorite} className="mt-3 inline-flex min-h-11 items-center gap-2 text-[14px] text-velora-ink2"><Bookmark className={`h-4 w-4 ${favorite ? "fill-current" : ""}`} />{t(favorite ? "Saved privately" : "Save privately")}</button>
-              {friendStatus === "INCOMING" && <button type="button" disabled={friendBusy} onClick={() => void friendAction("DECLINE")} className="ml-4 min-h-11 text-[14px] text-velora-muted underline disabled:opacity-50">{t("Decline request")}</button>}
+              {friendStatus === "INCOMING" && <button type="button" disabled={friendBusy} onClick={() => void friendAction("DECLINE")} className="ml-4 min-h-11 text-[14px] text-velora-muted underline disabled:opacity-50">{t("Not now")}</button>}
               {interest.mutual && <p className="mt-2 text-[14px] text-velora-copperInk">{t("You're both interested.")}</p>}
             </>
           )}
