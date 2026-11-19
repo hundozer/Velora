@@ -76,7 +76,7 @@ function mediaRoute({ grant, deliver }) {
     if (table === "album_access_grants") return { data: grant(), error: null };
     if (table === "media_album_items") return { data: [], error: null };
     if (table === "user_blocks") return { data: null, error: null };
-    if (table === "profiles") return { data: { account_status: "ACTIVE", age_verification_status: "AGE_VERIFIED", discovery_disabled: false }, error: null };
+    if (table === "profiles") return { data: { account_status: "ACTIVE", age_verification_status: "AGE_VERIFIED", discovery_disabled: false, display_name: "Viewer" }, error: null };
     return { data: null, error: null };
   });
   return load("src/app/api/media/[id]/route.ts", {

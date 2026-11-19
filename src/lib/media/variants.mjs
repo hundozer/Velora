@@ -90,7 +90,15 @@ export async function processMediaVariants({ media, readObject, writeObject, rec
  * Re-encode even on variant failure, for widthless requests and animated uploads.
  * Decode/storage failures propagate: callers return 503 instead of leaking the source.
  */
-export async function sanitizeDeliveredImage(input) {
-  return sharp(input, { limitInputPixels: MAX_INPUT_PIXELS, animated: true })
-    .rotate().webp({ quality: 85 }).toBuffer();
+export async function sanitizeDeliveredImage(input, viewerName = null) {
+  const image=sharp(input,{limitInputPixels:MAX_INPUT_PIXELS,animated:true}).rotate();
+  if(!viewerName)return image.webp({quality:85}).toBuffer();
+  const metadata=await image.metadata();
+  const w=Math.max(1,metadata.width||0),h=Math.max(1,metadata.height||0);
+  if(!metadata.width||!metadata.height)throw new Error("Unreadable image");
+  const safe=String(viewerName).trim().slice(0,70).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&apos;");
+  const fontSize=Math.max(12,Math.min(35,Math.round(w/22)));
+  const x=Math.floor(w/2),y=Math.max(fontSize+8,h-24);
+  const overlay=Buffer.from(`<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg"><text x="${x}" y="${y}" text-anchor="middle" font-family="sans-serif" font-size="${fontSize}" fill="white" fill-opacity=".34" stroke="black" stroke-opacity=".18" stroke-width="2" paint-order="stroke">${safe}</text></svg>`);
+  return image.composite([{input:overlay}]).webp({quality:85}).toBuffer();
 }

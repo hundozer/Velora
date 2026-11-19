@@ -30,6 +30,7 @@ interface ChatWindowProps {
 }
 
 type Folder = "INBOX" | "UNREAD" | "REQUESTS";
+type ChatMessage = Message & {viewOnce?:boolean;viewOnceOpenedAt?:string|null};
 type ThreadContext = {
   approach: { canWrite: boolean; line: string | null; established: boolean; explicitMediaInChat?: string } | null;
   shared: string[];
@@ -61,7 +62,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [folder, setFolder] = useState<Folder>("INBOX");
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [loadedThread, setLoadedThread] = useState<string | null>(null);
@@ -133,6 +134,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   };
 
   const [photoExplicit, setPhotoExplicit] = useState(false);
+  const [photoViewOnce,setPhotoViewOnce]=useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState<number | null>(null);
   const photoInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -145,7 +147,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       const declaration = await requestParticipantDeclaration();
       setUploadingPhoto(0);
       const result = await uploadFileToR2(file, "photos", setUploadingPhoto, declaration, "PRIVATE", photoExplicit ? "EXPLICIT" : "NON_EXPLICIT", "MESSAGE");
-      await handleSendMessage(result.mediaId);
+      await handleSendMessage(result.mediaId,photoViewOnce);
     } catch (error) {
       setSendError(error instanceof Error ? error.message : "Photo could not be sent.");
     } finally {
@@ -154,7 +156,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   };
 
-  const handleSendMessage = async (mediaId?: string) => {
+  const handleSendMessage = async (mediaId?: string,viewOnce=false) => {
     const content = inputMessage.trim();
     if ((!content && !mediaId) || sendingRef.current) return;
     sendingRef.current = true;
@@ -163,7 +165,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     try {
     const response = await fetch("/api/messages", {
       method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ receiverId: participantId, content, datingAdId, mediaId }),
+      body: JSON.stringify({ receiverId: participantId, content, datingAdId, mediaId, viewOnce }),
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -171,7 +173,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       return;
     }
 
-    const newMsg: Message = {
+    const newMsg: ChatMessage = {
       id: payload.message?.id || "m-" + Date.now(),
       conversationId: activeConversation.id,
       senderId: "user-current",
@@ -179,11 +181,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       senderAvatar: "",
       content,
       mediaUrl: payload.message?.media_url || undefined,
+      viewOnce:Boolean(payload.message?.view_once),viewOnceOpenedAt:payload.message?.view_once_opened_at || null,
       status: "SENT",
       createdAt: new Date().toLocaleTimeString(LOCALE[currentLang()], { hour: "2-digit", minute: "2-digit" }),
     };
     setMessages((current) => current.some((message) => message.id === newMsg.id) ? current : [...current, newMsg]);
     setInputMessage((current) => current.trim() === content ? "" : current);
+    if(mediaId)setPhotoViewOnce(false);
     } catch { setSendError("Message could not be sent. Try again."); }
     finally { sendingRef.current = false; setSending(false); }
   };
@@ -302,7 +306,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               return (
                 <li key={m.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
                   <div className={`max-w-[85%] px-4 py-3 text-[16px] leading-relaxed md:max-w-md ${isMe ? "rounded-[20px] rounded-br-md bg-velora-accent text-velora-paper" : "rounded-[20px] rounded-bl-md bg-velora-sunken text-velora-ink"}`}>
-                    {m.mediaUrl && <div className={m.content ? "mb-2" : ""}><ChatPhoto src={m.mediaUrl} mine={isMe} /></div>}
+                    {m.mediaUrl && <div className={m.content ? "mb-2" : ""}><ChatPhoto src={m.mediaUrl} mine={isMe} messageId={m.id} viewOnce={Boolean(m.viewOnce)} opened={Boolean(m.viewOnceOpenedAt)} /></div>}
                     {m.content && <p className="whitespace-pre-line select-none" onCopy={(event) => { event.preventDefault(); event.stopPropagation(); }}>{m.content}</p>}
                   </div>
                   <span className="mt-1 px-1 text-[13px] text-velora-muted">{m.createdAt}{isMe && m.status === "READ" ? t(" · Read") : ""}</span>
@@ -337,6 +341,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 <input type="checkbox" className="mt-1 h-5 w-5 accent-velora-ink" checked={photoExplicit && explicitAllowed} disabled={!explicitAllowed} onChange={(event) => setPhotoExplicit(event.target.checked)} />
                 <span>{t("This photo is explicit")}{!explicitAllowed && <span className="block text-[14px]">{explicitRule || t("Not available in this conversation.")}</span>}</span>
               </label>
+              <label className="mt-3 flex items-center gap-3 text-[15px] text-velora-ink"><input type="checkbox" checked={photoViewOnce} onChange={event=>setPhotoViewOnce(event.target.checked)} className="h-5 w-5 accent-velora-ink"/>{t("View once — photo opens once for the recipient")}</label>
             </div>
           )}
           <div className="flex items-end gap-2">
@@ -387,7 +392,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   );
 };
 
-function toMessage(item: any, conversation: Conversation): Message {
+function toMessage(item: any, conversation: Conversation): ChatMessage {
   const participantId = conversation.participant.id || conversation.participant.userId;
   const theirs = item.sender_id === participantId;
   return {
@@ -398,6 +403,7 @@ function toMessage(item: any, conversation: Conversation): Message {
     senderAvatar: theirs ? conversation.participant.avatarUrl : "",
     content: item.content,
     mediaUrl: item.attachment_type === "IMAGE" ? item.media_url || undefined : undefined,
+    viewOnce:item.view_once===true,viewOnceOpenedAt:item.view_once_opened_at || null,
     status: item.status,
     createdAt: new Date(item.created_at).toLocaleString(LOCALE[currentLang()], { weekday: "short", hour: "2-digit", minute: "2-digit" }),
   };
