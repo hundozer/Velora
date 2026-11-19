@@ -28,6 +28,11 @@ test("view-once endpoint claims exactly one recipient read before returning byte
 test("ordinary media URL cannot bypass view-once delivery",()=>{
  const media=read("src/app/api/media/[id]/route.ts");
  assert.match(media,/message\?\.view_once !== true/);
+ assert.match(media,/oneTimeMessages/);
+ assert.match(media,/\.eq\("view_once", true\)/);
+ assert.match(media,/oneTimeError \|\|/);
+ assert.match(media,/existing\?\.category === "MESSAGE"/);
+ assert.match(media,/Chat photos cannot be edited here/);
  assert.match(media,/viewer\.display_name/);
  assert.match(read("src/app/api/messages/route.ts"),/view_once_opened_at/);
  const sql=read("supabase/migrations/20261119170000_view_once_chat_photos.sql");
