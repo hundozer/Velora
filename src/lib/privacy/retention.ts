@@ -72,38 +72,54 @@ export async function anonymizeDeletedProfile(db: SupabaseClient, runId: string,
  * Idempotent: a partially deleted object is safe to retry. Never touches other media.
  */
 export async function eraseAgeReviewSelfie(db: SupabaseClient, reviewId: string): Promise<boolean> {
-  const {data:review,error:readError}=await db.from("verification_reviews")
-    .select("id,verification_type,status,provider_reference,reviewed_at")
-    .eq("id",reviewId).maybeSingle();
-  if(readError || !review || review.verification_type!=="AGE") return false;
-  const due=review.status==="VERIFIED" ||
-    (["FAILED","RETRY_REQUESTED"].includes(review.status) &&
-      Boolean(review.reviewed_at) && Date.parse(review.reviewed_at)<=Date.now()-30*86400000);
-  if(!due) return false;
-  const mediaId=review.provider_reference;
-  if(!mediaId) return true;
-  const {data:media,error:mediaError}=await db.from("media_objects")
-    .select("id,object_key,variants").eq("id",mediaId).maybeSingle();
-  if(mediaError) return false;
-  if(media){
-    const keys=new Set<string>();
-    if(typeof media.object_key==="string" && media.object_key)keys.add(media.object_key);
-    const source=(media.variants as {source?:unknown}|null)?.source;
-    if(typeof source==="string" && source)keys.add(source);
+  const { data: review, error: readError } = await db.from("verification_reviews")
+    .select("id,profile_id,verification_type,status,provider_reference,reviewed_at")
+    .eq("id", reviewId).maybeSingle();
+  if (readError || !review || review.verification_type !== "AGE") return false;
+  const due = review.status === "VERIFIED" ||
+    (["FAILED", "RETRY_REQUESTED"].includes(review.status) &&
+      Boolean(review.reviewed_at) && Date.parse(review.reviewed_at) <= Date.now() - 30 * 86400000);
+  if (!due) return false;
+  const mediaId = review.provider_reference;
+  if (!mediaId) return true;
+
+  // Fail closed on legal holds, including before deleting any R2 bytes.
+  const { data: hold, error: holdError } = await db.from("retention_holds")
+    .select("id").eq("profile_id", review.profile_id)
+    .eq("status", "ACTIVE").limit(1).maybeSingle();
+  if (holdError || hold) return false;
+
+  const { data: media, error: mediaError } = await db.from("media_objects")
+    .select("id,owner_id,category,visibility,object_key,variants")
+    .eq("id", mediaId).maybeSingle();
+  if (mediaError) return false;
+
+  if (media) {
+    // The review reference is not an authorization to erase arbitrary objects.
+    if (media.owner_id !== review.profile_id || media.category !== "AGE_CHECK" ||
+        media.visibility !== "PRIVATE" || !media.object_key) return false;
+    const keys = new Set<string>([String(media.object_key)]);
+    const source = (media.variants as { source?: unknown } | null)?.source;
+    if (typeof source === "string" && source) keys.add(source);
     try {
-      for(const key of keys)await deleteStoredObject(key);
+      for (const key of keys) await deleteStoredObject(key);
       await deleteVariantObjects(String(media.id));
-    }catch{return false;}
+    } catch { return false; }
+
+    // Remove media metadata FIRST. If it fails, the review retains the media ID
+    // so a second call can retry the deletion. R2 deletions are idempotent.
+    const { error: deleteError } = await db.from("media_objects").delete()
+      .eq("id", mediaId).eq("owner_id", review.profile_id).eq("category", "AGE_CHECK");
+    if (deleteError) return false;
   }
-  // Remove the pointer before removing metadata so audit and appeal decisions survive.
-  const {error:unlinkError}=await db.from("verification_reviews")
-    .update({provider_reference:null}).eq("id",reviewId).eq("provider_reference",mediaId);
-  if(unlinkError)return false;
-  if(media){
-    const {error:deleteError}=await db.from("media_objects").delete().eq("id",mediaId);
-    if(deleteError)return false;
-  }
-  return true;
+
+  // Now remove the dangling evidence pointer, retaining the decision and reason.
+  // If metadata was already erased during a prior attempt, this step completes the retry.
+  const { data: unlinked, error: unlinkError } = await db.from("verification_reviews")
+    .update({ provider_reference: null }).eq("id", reviewId)
+    .eq("provider_reference", mediaId)
+    .eq("verification_type", "AGE").select("id").maybeSingle();
+  return !unlinkError && Boolean(unlinked);
 }
 
 /** Called by the authenticated scheduled retention job. Returns counts only. */
