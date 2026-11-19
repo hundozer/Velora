@@ -18,9 +18,8 @@ export async function GET(req: NextRequest) {
     if (error) return { count: null, oldestHours: null };
     return { count: count ?? 0, oldestHours: data?.[0] ? Math.round(((Date.now() - new Date(data[0].created_at).getTime()) / HOUR) * 10) / 10 : null };
   };
-  const [photos, plans, scene, reports, urgent] = await Promise.all([
+  const [photos, scene, reports, urgent] = await Promise.all([
     oldest("media_objects", (query) => query.eq("moderation_status", "PENDING_REVIEW").eq("upload_status", "AVAILABLE").or("category.is.null,category.neq.MESSAGE")),
-    oldest("dating_ads", (query) => query.eq("moderation_status", "PENDING_REVIEW").eq("status", "active")),
     oldest("scene_events", (query) => query.eq("status", "PENDING_REVIEW")),
     oldest("moderation_cases", (query) => query.in("status", OPEN_STATUSES)),
     oldest("moderation_cases", (query) => query.in("status", OPEN_STATUSES).in("reason", URGENT_REASONS)),
@@ -30,7 +29,6 @@ export async function GET(req: NextRequest) {
     { id: "urgent", label: "Urgent reports (underage, non-consensual)", targetHours: 1, href: "/admin/moderation", ...urgent },
     { id: "reports", label: "All open reports", targetHours: 12, href: "/admin/moderation", ...reports },
     { id: "photos", label: "Photos awaiting review", targetHours: 12, href: "/admin/content", ...photos },
-    { id: "plans", label: "Plans awaiting review", targetHours: 12, href: "/admin/plans", ...plans },
     { id: "scene", label: "Scene suggestions", targetHours: 48, href: "/admin/scene", ...scene },
   ];
   return NextResponse.json({ queues }, { headers: { "Cache-Control": "private, no-store" } });
