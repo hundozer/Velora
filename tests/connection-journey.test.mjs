@@ -37,3 +37,16 @@ test("connections page offers received, accepted, sent and the relevant actions"
   assert.match(src, /\/api\/friends\/list/);
   assert.match(src, /\/api\/friends"/);
 });
+
+test("connections list redacts deliberately hidden city from API responses", async () => {
+  const src = await read("src/app/api/friends/list/route.ts");
+  assert.match(src, /location_precision/);
+  assert.match(src, /location_precision === "HIDDEN" \? null : profile\.city/);
+});
+
+test("friendship changes refresh recipient messaging permissions", async () => {
+  const src = await read("src/components/profile/ProfileStory.tsx");
+  assert.match(src, /action === "ACCEPT" \|\| action === "REMOVE"/);
+  assert.match(src, /refreshedApproach/);
+  assert.match(src, /setApproach\(refreshedApproach\)/);
+});
