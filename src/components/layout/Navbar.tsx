@@ -25,6 +25,7 @@ import {
   Megaphone,
   Heart,
   Bookmark,
+  UsersRound,
 } from "lucide-react";
 
 export const Navbar: React.FC = () => {
@@ -156,6 +157,8 @@ export const Navbar: React.FC = () => {
                     className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
                   >
                     <Bookmark className="w-4 h-4 text-velora-accent" />{t("Saved items")}</Link>
+
+                  <Link href="/connections" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-velora-textPrimary hover:bg-ink/5"><UsersRound className="h-4 w-4 text-velora-gold" />{t("Connections")}</Link>
 
                   <Link href="/me/invite" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-velora-textPrimary hover:bg-ink/5"><MailPlus className="h-4 w-4 text-velora-gold" />{t("Invite friends")}</Link>
                   <FoundingMemberMenuLink />
