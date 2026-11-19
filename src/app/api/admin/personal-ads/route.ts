@@ -12,9 +12,13 @@ export async function GET(req: NextRequest) {
   if ("response" in guard) return guard.response;
   const db = getServerSupabase();
   if (!db) return NextResponse.json({ error: "Dating ads unavailable" }, { status: 503 });
-  const { data, error } = await db.from("personal_ads").select("id,author_id,category,title,body,boundaries,area_id,created_at,expires_at").neq("moderation_status", "REJECTED").eq("status", "ACTIVE").gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(200);
-  if (error) return NextResponse.json({ error: "Dating ads review unavailable" }, { status: 502 });
-  return NextResponse.json({ ads: data || [] }, { headers: noStore });
+  const rawOffset = Number(req.nextUrl.searchParams.get("offset") ?? "0");
+  if (!Number.isSafeInteger(rawOffset) || rawOffset < 0 || rawOffset > 10000) return NextResponse.json({ error: "Invalid pagination offset" }, { status: 400 });
+  const pageSize = 100;
+  const { data, error } = await db.from("personal_ads").select("id,author_id,category,title,body,boundaries,area_id,created_at,expires_at").neq("moderation_status", "REJECTED").eq("status", "ACTIVE").gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).order("id", { ascending: false }).range(rawOffset, rawOffset + pageSize);
+  if (error) return NextResponse.json({ error: "Live dating ads unavailable" }, { status: 502 });
+  const page = data || [];
+  return NextResponse.json({ ads: page.slice(0, pageSize), nextOffset: page.length > pageSize ? rawOffset + pageSize : null }, { headers: noStore });
 }
 
 export async function PATCH(req: NextRequest) {
