@@ -60,3 +60,30 @@ export async function PUT(req: NextRequest) {
   if (!audited) return NextResponse.json({ error: "Settings saved but audit evidence failed; contact support" }, { status: 502 });
   return NextResponse.json({ settings: data }, { headers: { "Cache-Control": "private, no-store" } });
 }
+
+/**
+ * Hide a member in place. Never accept a full settings draft here:
+ * hiding must not widen messaging, location or sensitive-field permissions.
+ */
+export async function PATCH(req: NextRequest) {
+  const actor = await resolveServerActor(req);
+  if (actor.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: actor.status === "unauthenticated" ? 401 : 503 });
+  const rate = (await checkRateLimit(`privacy-hide:${actor.actor.userId}`, 10, 60 * 60));
+  if (!rate.allowed) return NextResponse.json({ error: "Too many settings changes" }, { status: 429 });
+  let body: unknown;
+  try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
+  if (!body || typeof body !== "object" || (body as Record<string, unknown>).action !== "HIDE_PROFILE") return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+  const db = getServerSupabase();
+  if (!db) return NextResponse.json({ error: "Privacy service unavailable" }, { status: 503 });
+  const now = new Date().toISOString();
+  const update = { profile_visibility: "PRIVATE", public_profile_visibility: false, show_in_introductions: false, updated_at: now };
+  let { data, error } = await db.from("profiles").update(update).eq("id", actor.actor.profileId).select("id,profile_visibility,show_in_introductions").single();
+  if (error?.code === UNDEFINED_COLUMN) {
+    const { show_in_introductions: _unavailable, ...legacy } = update;
+    ({ data, error } = await db.from("profiles").update(legacy).eq("id", actor.actor.profileId).select("id,profile_visibility").single());
+  }
+  if (error || !data) return NextResponse.json({ error: "Profile could not be hidden" }, { status: 502 });
+  const audited = await appendDurableAudit(db, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "PRIVACY_PROFILE_HIDE", resourceType: "PROFILE", resourceId: actor.actor.profileId, outcome: "SUCCESS" });
+  if (!audited) return NextResponse.json({ error: "Profile hidden but audit recording failed; contact support" }, { status: 502 });
+  return NextResponse.json({ hidden: true }, { headers: { "Cache-Control": "private, no-store" } });
+}

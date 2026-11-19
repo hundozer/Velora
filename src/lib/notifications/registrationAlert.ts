@@ -33,3 +33,30 @@ export async function notifyNewRegistration(member: NewMember): Promise<boolean>
     return false;
   }
 }
+
+/** Only these six optional departure categories are accepted, never arbitrary free text. */
+export const LEAVING_REASONS = ["TOO_FEW_PEOPLE", "NOT_WHAT_I_EXPECTED", "PRIVACY", "FOUND_SOMEONE", "JUST_TRYING", "OTHER"] as const;
+export type LeavingReason = (typeof LEAVING_REASONS)[number];
+
+export function cleanLeavingReason(value: unknown): LeavingReason | null {
+  return typeof value === "string" && LEAVING_REASONS.some((reason) => reason === value) ? value as LeavingReason : null;
+}
+
+/** Privacy-minimal notification: no nickname, identifying profile ID, notes or intimate details. */
+export async function notifyAccountDeleted({ reason }: { reason: LeavingReason | null }): Promise<boolean> {
+  if (REGISTRATION_ALERT_TO === "off") return false;
+  const html = `<div style="font-family:system-ui,sans-serif;line-height:1.5;color:#191C20">
+<p><strong>A member has left Intimo</strong></p>
+<p>Optional reason category: ${escape(reason ?? "NOT_GIVEN")}</p>
+<p>Review aggregate retention trends in Admin. No member identifiers are sent in this alert.</p>
+</div>`;
+  try {
+    const sent = await Promise.race([
+      ResendClient.sendEmail({ to: REGISTRATION_ALERT_TO, subject: "Intimo: a member left", html }),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
+    ]);
+    return Boolean(sent?.delivered);
+  } catch {
+    return false;
+  }
+}

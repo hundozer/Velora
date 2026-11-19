@@ -4,6 +4,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { auditLogger } from "@/lib/auth/auditLogger";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
+import { cleanLeavingReason, notifyAccountDeleted } from "@/lib/notifications/registrationAlert";
 
 export async function POST(req: NextRequest) {
   const identity = await getVerifiedIdentity(req);
@@ -15,9 +16,11 @@ export async function POST(req: NextRequest) {
   }
 
   let confirmation: unknown;
+  let leaveReason: ReturnType<typeof cleanLeavingReason> = null;
   try {
     const body = await req.json();
     confirmation = body?.confirmation;
+    leaveReason = cleanLeavingReason(body?.reason);
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
@@ -52,7 +55,9 @@ export async function POST(req: NextRequest) {
       status: "SUCCESS",
       details: { selfService: true, lifecycleStatus: "DEACTIVATED", hardDeletionPending: true },
     });
-    await appendDurableAudit(supabase, { actorProfileId: profile.id, actorUserId: identity.sub, action: "GDPR_DELETE_ACCOUNT", resourceType: "PROFILE", resourceId: profile.id, outcome: "SUCCESS", metadata: { lifecycleStatus: "DEACTIVATED", hardDeletionPending: true } });
+    await appendDurableAudit(supabase, { actorProfileId: profile.id, actorUserId: identity.sub, action: "GDPR_DELETE_ACCOUNT", resourceType: "PROFILE", resourceId: profile.id, outcome: "SUCCESS", metadata: { lifecycleStatus: "DEACTIVATED", hardDeletionPending: true, ...(leaveReason ? { leavingReason: leaveReason } : {}) } });
+    // Best effort, after deletion and audit; minimal category only, never free-text or sexual data.
+    await notifyAccountDeleted({ reason: leaveReason });
     return NextResponse.json({ success: true });
   } catch (error) {
     auditLogger.logEvent({ actorId: identity.sub, actorRole: "MEMBER", action: "GDPR_DELETE_ACCOUNT", status: "ERROR" });

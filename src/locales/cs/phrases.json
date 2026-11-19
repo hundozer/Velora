@@ -2408,5 +2408,19 @@
  "Connection removed.": "Spojení bylo odebráno.",
  "Connection unavailable. Try again.": "Spojení není dostupné. Zkus to znovu.",
  "Connection action failed": "Akce se nezdařila",
- "Connections could not be loaded": "Spojení se nepodařilo načíst"
+ "Connections could not be loaded": "Spojení se nepodařilo načíst",
+ "Need a break instead?": "Potřebuješ si dát pauzu?",
+ "Hide your profile from discovery and introductions while keeping your account and data. Existing messages and access rules are unchanged.": "Skryj svůj profil z vyhledávání a představování. Účet i data ti zůstanou. Stávající zprávy a pravidla přístupu se nemění.",
+ "Hide my profile instead": "Raději skrýt můj profil",
+ "Hiding profile…": "Skrývání profilu…",
+ "Why are you leaving? (optional)": "Proč odcházíš? (nepovinné)",
+ "Prefer not to say": "Nechci uvádět",
+ "Too few people here": "Je tu zatím málo lidí",
+ "Not what I expected": "Není to, co jsem čekal(a)",
+ "Privacy concerns": "Obavy o soukromí",
+ "Found someone": "Našel/našla jsem někoho",
+ "Just trying it out": "Jen jsem to zkoušel(a)",
+ "Other reason": "Jiný důvod",
+ "Choosing a reason is optional and never delays account deletion.": "Uvedení důvodu je nepovinné a nikdy neoddálí smazání účtu.",
+ "Could not hide your profile.": "Profil se nepodařilo skrýt. Zkus to prosím znovu."
 }
