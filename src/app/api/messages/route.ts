@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 50, 1), 100);
   const before = url.searchParams.get("before");
   if (before && Number.isNaN(new Date(before).getTime())) return NextResponse.json({ error: "Invalid message cursor" }, { status: 400 });
-  let query = supabase.from("direct_messages").select("id,conversation_id,sender_id,receiver_id,content,media_url,attachment_type,is_disappearing,disappear_timer_sec,is_opened,status,created_at").eq("conversation_id", conversationId(actor.actor.profileId, peerId)).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(limit + 1);
+  let query = supabase.from("direct_messages").select("id,conversation_id,sender_id,receiver_id,content,media_url,attachment_type,is_disappearing,disappear_timer_sec,view_once,view_once_opened_at,is_opened,status,created_at").eq("conversation_id", conversationId(actor.actor.profileId, peerId)).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(limit + 1);
   if (before) query = query.lt("created_at", before);
   const { data: newestFirst, error } = await query;
   if (error) return NextResponse.json({ error: "Messages lookup failed" }, { status: 502 });
@@ -101,6 +101,8 @@ export async function POST(req: NextRequest) {
   const datingAdId = typeof body.datingAdId === "string" ? body.datingAdId : null;
   const personalAdId = typeof body.personalAdId === "string" ? body.personalAdId : null;
   const mediaId = typeof body.mediaId === "string" && UUID.test(body.mediaId) ? body.mediaId : null;
+  const viewOnce = body.viewOnce === true;
+  if(viewOnce && !mediaId)return NextResponse.json({error:"View once requires a photo"},{status:400});
   // A message needs text, a photo, or both (P1-10).
   if (!UUID.test(receiverId) || receiverId === actor.actor.profileId || (content.length < 1 && !mediaId) || content.length > 4_000) return NextResponse.json({ error: "Invalid message" }, { status: 400 });
   if (datingAdId && !UUID.test(datingAdId)) return NextResponse.json({ error: "Invalid dating ad context" }, { status: 400 });
@@ -189,8 +191,8 @@ export async function POST(req: NextRequest) {
   // Suppress an identical retry while the first request is still completing.
   const duplicateKey = createHash("sha256").update(JSON.stringify([actor.actor.profileId, receiverId, content, datingAdId, personalAdId, mediaId])).digest("hex");
   if (!(await checkRateLimit(`message-repeat:${duplicateKey}`, 1, 10)).allowed) return NextResponse.json({ error: "This message was just sent. Wait a moment before sending it again." }, { status: 429 });
-  const row = { conversation_id: conversationId(actor.actor.profileId, receiverId), sender_id: actor.actor.profileId, receiver_id: receiverId, sender_name: sender.display_name, sender_avatar: sender.avatar_url, content, media_url: mediaId ? `/api/media/${mediaId}` : null, attachment_type: mediaId ? "IMAGE" : null, plan_id: datingAdId, ...(personalAdId ? { personal_ad_id: personalAdId } : {}), is_disappearing: false, is_opened: false, status: "SENT", is_locked: false, unlock_price: null, is_unlocked: true };
-  const { data, error } = await supabase.from("direct_messages").insert(row).select("id,conversation_id,sender_id,receiver_id,content,media_url,attachment_type,status,created_at").single();
+  const row = { conversation_id: conversationId(actor.actor.profileId, receiverId), sender_id: actor.actor.profileId, receiver_id: receiverId, sender_name: sender.display_name, sender_avatar: sender.avatar_url, content, media_url: mediaId ? `/api/media/${mediaId}` : null, attachment_type: mediaId ? "IMAGE" : null, plan_id: datingAdId, ...(personalAdId ? { personal_ad_id: personalAdId } : {}), is_disappearing: false, view_once: viewOnce, is_opened: false, status: "SENT", is_locked: false, unlock_price: null, is_unlocked: true };
+  const { data, error } = await supabase.from("direct_messages").insert(row).select("id,conversation_id,sender_id,receiver_id,content,media_url,attachment_type,view_once,view_once_opened_at,status,created_at").single();
   if (error || !data) return NextResponse.json({ error: "Message could not be sent" }, { status: 502 });
   const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MESSAGE_SEND", resourceType: "MESSAGE", resourceId: data.id, outcome: "SUCCESS", metadata: { receiverId, datingAdId, personalAdId } });
   if (!audited) return NextResponse.json({ error: "Message sent but audit recording failed; contact support" }, { status: 503 });
