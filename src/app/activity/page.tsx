@@ -3,6 +3,7 @@
 import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import Link from "next/link";
+import { UsersRound } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
 import { PersonTile, type Person } from "@/components/people/PersonTile";
@@ -45,6 +46,7 @@ export default function ActivityPage() {
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">{t("Activity")}</p>
         <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">{t("Who's noticed you")}</h1>
+        <Link href="/connections" className="mt-5 inline-flex min-h-11 items-center gap-2 border border-velora-line px-4 text-sm font-semibold text-velora-ink hover:border-velora-copper"><UsersRound className="h-4 w-4" />{t("Connections & requests")}</Link>
       </header>
       {error && <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-velora-danger">{t(error)}</p>}
       {!data ? (

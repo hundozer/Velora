@@ -12,12 +12,15 @@ const ACTIONS = new Set(["REQUEST", "ACCEPT", "DECLINE", "REMOVE"]);
 export async function GET(req: NextRequest) {
   const auth = await resolveServerActor(req);
   if (auth.status !== "authenticated") return NextResponse.json({ error: "Authentication required" }, { status: auth.status === "unauthenticated" ? 401 : 503 });
+  if (!hasAdultAccess(auth.actor)) return NextResponse.json({ error: "Adult access verification required" }, { status: 403 });
   const targetId = new URL(req.url).searchParams.get("targetProfileId") || "";
   if (!UUID.test(targetId) || targetId === auth.actor.profileId) return NextResponse.json({ error: "Invalid friend target" }, { status: 400 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Friends unavailable" }, { status: 503 });
   const { data, error } = await db.from("friendships").select("requester_id,addressee_id,status")
     .or(`and(requester_id.eq.${auth.actor.profileId},addressee_id.eq.${targetId}),and(requester_id.eq.${targetId},addressee_id.eq.${auth.actor.profileId})`).limit(1).maybeSingle();
   if (error) return NextResponse.json({ error: "Friend status unavailable" }, { status: 502 });
+  const { data: block, error: blockError } = await db.from("user_blocks").select("id").or(`and(blocker_id.eq.${auth.actor.profileId},blocked_profile_id.eq.${targetId}),and(blocker_id.eq.${targetId},blocked_profile_id.eq.${auth.actor.profileId})`).limit(1).maybeSingle();
+  if (blockError || block) return NextResponse.json({ error: "Member unavailable" }, { status: 404 });
   const status = !data ? "NONE" : data.status === "ACCEPTED" ? "FRIENDS" : data.requester_id === auth.actor.profileId ? "OUTGOING" : "INCOMING";
   return NextResponse.json({ status }, { headers: { "Cache-Control": "private, no-store" } });
 }

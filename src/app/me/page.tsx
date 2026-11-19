@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Activity, Bell, Bookmark, ChevronRight, EyeOff, Flame, Hand, Lock, Sparkles, Image as ImageIcon, LogOut, MessageSquare, Settings, Shield, User } from "lucide-react";
+import { Activity, Bell, Bookmark, ChevronRight, EyeOff, Flame, Hand, Lock, Sparkles, Image as ImageIcon, LogOut, MessageSquare, Settings, Shield, User, UsersRound } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "@/context/LanguageContext";
 import { LanguageSwitch } from "@/components/i18n/LanguageSwitch";
@@ -66,6 +66,7 @@ export default function MePage() {
 
       <nav aria-label={t("Account")} className="divide-y divide-ink/5 overflow-hidden rounded-2xl border border-ink/10 bg-ink/[0.02]">
         <Row href="/activity" icon={Activity} label={t("Activity: interest & visitors")} />
+        <Row href="/connections" icon={UsersRound} label={t("Connections & requests")} />
         <Row href={`/profile/${profile?.id || "me"}`} icon={User} label={t("My profile")} />
         <Row href="/notifications" icon={Bell} label={t("Notifications")} detail={notifications.unreadCount > 0 ? <span className="rounded-full bg-velora-gold px-2 py-0.5 text-[11px] font-bold text-velora-bg">{notifications.unreadCount}</span> : null} />
         <Row href="/me/identity" icon={Sparkles} label={t("Orientation & identity")} />

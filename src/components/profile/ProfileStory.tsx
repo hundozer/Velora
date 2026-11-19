@@ -5,7 +5,7 @@ import { tr } from "@/lib/i18n/translate";
 import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowLeft, Heart, MoreHorizontal } from "lucide-react";
+import { ArrowDown, ArrowLeft, Heart, MoreHorizontal, UserRoundPlus, UsersRound, Bookmark } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Portrait, monogram } from "@/components/media/Portrait";
 import { StoryAvatar } from "@/components/stories/StoryAvatar";
@@ -67,6 +67,8 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
   const [albums, setAlbums] = React.useState<Album[]>([]);
   const [interest, setInterest] = React.useState({ interested: false, mutual: false });
   const [favorite, setFavorite] = React.useState(false);
+  const [friendStatus, setFriendStatus] = React.useState<"NONE" | "OUTGOING" | "INCOMING" | "FRIENDS" | null>(null);
+  const [friendBusy, setFriendBusy] = React.useState(false);
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [reportOpen, setReportOpen] = React.useState(false);
   const [notice, setNotice] = React.useState("");
@@ -84,7 +86,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
     (async () => {
       const key = encodeURIComponent(id);
       // Everything the story needs, in parallel; member-only calls simply fail when signed out.
-      const [profileResponse, approachPayload, desiresPayload, photosPayload, videosPayload, albumsPayload, interestPayload, favoritesPayload] = await Promise.all([
+      const [profileResponse, approachPayload, desiresPayload, photosPayload, videosPayload, albumsPayload, interestPayload, favoritesPayload, friendsPayload] = await Promise.all([
         fetch(`/api/profiles/${key}`, { credentials: "same-origin", cache: "no-store" }),
         json<Approach>(`/api/profiles/${key}/approach`),
         json<Desires>(`/api/profiles/${key}/desires`),
@@ -93,6 +95,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
         json<{ albums: Album[] }>(`/api/public/albums?ownerId=${key}&limit=8`),
         json<{ interested: boolean; mutual: boolean }>(`/api/interests?targetProfileId=${key}`),
         json<{ connections: { followed_id: string }[] }>("/api/connections?type=favorite"),
+        json<{ status: "NONE" | "OUTGOING" | "INCOMING" | "FRIENDS" }>(`/api/friends?targetProfileId=${key}`),
         loadAccess(),
       ]);
       let response = profileResponse;
@@ -110,6 +113,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
       setAlbums(albumsPayload?.albums || []);
       if (interestPayload) setInterest(interestPayload);
       setFavorite((favoritesPayload?.connections || []).some((item) => item.followed_id === id));
+      setFriendStatus(friendsPayload?.status ?? null);
       setState("ready");
     })();
     return () => { cancelled = true; };
@@ -123,6 +127,25 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) return setNotice(payload.error || "Interest unavailable");
     setInterest({ interested: Boolean(payload.interested), mutual: Boolean(payload.mutual) });
+  };
+
+  const friendAction = async (action: "REQUEST" | "ACCEPT" | "DECLINE" | "REMOVE") => {
+    if (friendBusy) return;
+    setFriendBusy(true);
+    setNotice("");
+    try {
+      const response = await fetch("/api/friends", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ targetProfileId: id, action }) });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) { setNotice(payload.error || "Connection unavailable"); return; }
+      const latest = await json<{ status: "NONE" | "OUTGOING" | "INCOMING" | "FRIENDS" }>(`/api/friends?targetProfileId=${encodeURIComponent(id)}`);
+      setFriendStatus(latest?.status ?? (action === "REQUEST" ? "OUTGOING" : action === "ACCEPT" ? "FRIENDS" : "NONE"));
+      if (action === "ACCEPT" || action === "REMOVE") {
+        const refreshedApproach = await json<Approach>(`/api/profiles/${encodeURIComponent(id)}/approach`);
+        if (refreshedApproach) setApproach(refreshedApproach);
+      }
+      setNotice(action === "REQUEST" ? "Connection request sent." : action === "ACCEPT" ? "You are now connected." : action === "DECLINE" ? "Connection request dismissed." : "Connection removed.");
+    } catch { setNotice("Connection unavailable. Try again."); }
+    finally { setFriendBusy(false); }
   };
 
   const toggleFavorite = async () => {
@@ -333,10 +356,21 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
                 ) : (
                   <span aria-disabled="true" className="flex min-h-14 flex-1 items-center justify-center rounded-full border border-velora-line text-[16px] text-velora-muted">{t("Not taking first messages")}</span>
                 )}
-                <button type="button" onClick={() => void toggleInterest()} aria-pressed={interest.interested} aria-label={interest.mutual ? t("You're both interested") : interest.interested ? t("Interested — tap to undo") : t("I'm interested")} title={interest.mutual ? t("You're both interested") : t("I'm interested")} className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border ${interest.interested ? "border-velora-copper bg-velora-copper/10 text-velora-copperInk" : "border-velora-line text-velora-copperInk hover:border-velora-copper"}`}>
-                  <Heart className={`h-5 w-5 ${interest.interested ? "fill-current" : ""}`} aria-hidden />
-                </button>
               </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => void toggleInterest()} aria-pressed={interest.interested} className={`flex min-h-11 items-center justify-center gap-2 border px-3 text-[14px] font-semibold transition ${interest.interested ? "border-velora-copper bg-velora-copper/10 text-velora-copperInk" : "border-velora-line text-velora-ink hover:border-velora-copper"}`}><Heart className={`h-4 w-4 ${interest.interested ? "fill-current" : ""}`} aria-hidden />{t(interest.interested ? "Interested" : "I'm interested")}</button>
+                {friendStatus === "FRIENDS" ? (
+                  <Link href="/connections" className="flex min-h-11 items-center justify-center gap-2 border border-velora-copper px-3 text-[14px] font-semibold text-velora-copperInk"><UsersRound className="h-4 w-4" />{t("Connected")}</Link>
+                ) : friendStatus === "OUTGOING" ? (
+                  <button type="button" disabled={friendBusy} onClick={() => void friendAction("REMOVE")} className="min-h-11 border border-velora-line px-3 text-[14px] text-velora-ink2 disabled:opacity-50">{t("Request sent · Cancel")}</button>
+                ) : friendStatus === "INCOMING" ? (
+                  <button type="button" disabled={friendBusy} onClick={() => void friendAction("ACCEPT")} className="min-h-11 bg-velora-copper px-3 text-[14px] font-semibold text-velora-night disabled:opacity-50">{t("Accept connection")}</button>
+                ) : (
+                  <button type="button" disabled={friendBusy || friendStatus === null} onClick={() => void friendAction("REQUEST")} className="flex min-h-11 items-center justify-center gap-2 border border-velora-line px-3 text-[14px] font-semibold text-velora-ink disabled:opacity-50"><UserRoundPlus className="h-4 w-4" />{t("Connect")}</button>
+                )}
+              </div>
+              <button type="button" onClick={() => void toggleFavorite()} aria-pressed={favorite} className="mt-3 inline-flex min-h-11 items-center gap-2 text-[14px] text-velora-ink2"><Bookmark className={`h-4 w-4 ${favorite ? "fill-current" : ""}`} />{t(favorite ? "Saved privately" : "Save privately")}</button>
+              {friendStatus === "INCOMING" && <button type="button" disabled={friendBusy} onClick={() => void friendAction("DECLINE")} className="ml-4 min-h-11 text-[14px] text-velora-muted underline disabled:opacity-50">{t("Not now")}</button>}
               {interest.mutual && <p className="mt-2 text-[14px] text-velora-copperInk">{t("You're both interested.")}</p>}
             </>
           )}
