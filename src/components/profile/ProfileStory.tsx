@@ -42,7 +42,7 @@ const cap = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 const listWords = (words: string[]) => words.length <= 1 ? words.join("") : `${words.slice(0, -1).join(", ")} ${tr("and")} ${words[words.length - 1]}`;
 
 function H2({ children }: { children: React.ReactNode }) {
-  return <h2 className="font-display text-[34px] leading-tight text-velora-ink">{children}</h2>;
+  return <h2 className="intimo-member-subheading text-velora-ink">{children}</h2>;
 }
 
 /**
@@ -219,7 +219,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
   const requestsPref = approach?.boundaries?.PRIVATE_ALBUM_REQUESTS;
 
   return (
-    <article aria-label={t("{name}'s profile", { name: name })}>
+    <article className="intimo-member-page intimo-grain" aria-label={t("{name}'s profile", { name: name })}>
       <div className="relative">
         {profile.avatarUrl ? (
           <>
@@ -235,7 +235,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
         )}
       </div>
 
-      <div className="space-y-10 px-6 pb-10 pt-6 sm:px-10">
+      <div className="space-y-10 px-6 pb-12 pt-9 sm:px-10">
         <header>
           {memberView&&<div className="mb-4"><StoryAvatar ownerId={id} name={name} src={profile.avatarUrl} size={76}/></div>}
           {status && (
@@ -243,7 +243,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
               {profile.presence === "ONLINE" && <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-velora-copper" />}{t(status)}
             </p>
           )}
-          <h1 className="mt-1 font-display text-[clamp(3.25rem,15vw,4.75rem)] leading-[0.95] text-velora-ink">{name}{profile.age && !profile.isCoupleProfile ? `, ${profile.age}` : ""}</h1>
+          <h1 className="mt-2 font-serif text-[clamp(3.8rem,15vw,6.5rem)] font-normal leading-[0.92] tracking-tight text-velora-ink">{name}{profile.age && !profile.isCoupleProfile ? `, ${profile.age}` : ""}</h1>
           {(profile.pronouns || identityLine.length > 0) && (
             <p className="mt-3 text-[15px] leading-relaxed text-velora-ink2">
               {profile.pronouns && <span className="mr-2 rounded-full border border-ink/15 px-2.5 py-0.5 text-[13px] text-velora-ink">{profile.pronouns}</span>}
@@ -251,7 +251,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
             </p>
           )}
           {profile.foundingMember && <div className="mt-3"><FoundingMemberBadge /></div>}
-          {profile.headline && <p className="mt-4 font-display text-[clamp(1.5rem,6.5vw,1.9rem)] italic leading-[1.2] text-velora-ink">&ldquo;{profile.headline}&rdquo;</p>}
+          {profile.headline && <p className="mt-5 font-serif text-[clamp(1.85rem,6.5vw,2.5rem)] italic font-normal leading-[1.15] text-velora-warm">&ldquo;{profile.headline}&rdquo;</p>}
           {profile.bio && <p className="mt-4 whitespace-pre-line text-[17px] leading-[1.6] text-velora-ink2">{profile.bio}</p>}
           {memberView && (profile.lookingFor?.length || profile.languages?.length) ? (
             <p className="mt-4 text-[15px] leading-relaxed text-velora-muted">
@@ -335,11 +335,11 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
         {notice && <p role="status" className="border-l-2 border-velora-copper pl-4 text-[15px] text-velora-ink2">{t(notice)}</p>}
       </div>
 
-      <footer className={`sticky ${variant === "sheet" ? "bottom-0" : "bottom-16 md:bottom-0"} z-30 border-t border-velora-line bg-velora-surface/95 px-6 pb-4 pt-3 backdrop-blur md:bottom-0 sm:px-10`}>
+      <footer className={`sticky ${variant === "sheet" ? "bottom-0" : "bottom-16 md:bottom-0"} z-30 border-t border-velora-line bg-velora-night/95 px-6 pb-4 pt-4 backdrop-blur md:bottom-0 sm:px-10`}>
         <div className="mx-auto max-w-2xl">
           {isOwner ? (
             <div className="flex items-center gap-6">
-              <Link href="/settings" className="flex min-h-14 flex-1 items-center justify-center rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper">{t("Edit profile")}</Link>
+              <Link href="/settings" className="intimo-member-primary min-h-14 flex-1 px-5 text-[15px]">{t("Edit profile")}</Link>
               <Link href="/albums/manage" className="min-h-11 text-[16px] text-velora-ink underline underline-offset-4">{t("Albums")}</Link>
               <Link href="/videos/upload" className="min-h-11 text-[16px] text-velora-ink underline underline-offset-4">{t("Add video")}</Link>
             </div>
@@ -350,7 +350,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
               {approach?.line && <p className="mb-2 text-[14px] text-velora-ink2">{t(approach.line)}</p>}
               <div className="flex items-center gap-3">
                 {approach?.canWrite !== false ? (
-                  <Link href={`/messages?user=${encodeURIComponent(profile.id)}`} className="flex min-h-14 flex-1 items-center justify-center rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper hover:bg-velora-accentHover">
+                  <Link href={`/messages?user=${encodeURIComponent(profile.id)}`} className="intimo-member-primary min-h-14 flex-1 px-5 text-[15px]">
                     {approach?.established ? t("Continue the conversation") : t("Begin a conversation")}
                   </Link>
                 ) : (
@@ -358,15 +358,15 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
                 )}
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => void toggleInterest()} aria-pressed={interest.interested} className={`flex min-h-11 items-center justify-center gap-2 border px-3 text-[14px] font-semibold transition ${interest.interested ? "border-velora-copper bg-velora-copper/10 text-velora-copperInk" : "border-velora-line text-velora-ink hover:border-velora-copper"}`}><Heart className={`h-4 w-4 ${interest.interested ? "fill-current" : ""}`} aria-hidden />{t(interest.interested ? "Interested" : "I'm interested")}</button>
+                <button type="button" onClick={() => void toggleInterest()} aria-pressed={interest.interested} className={`intimo-member-secondary gap-2 px-3 text-[14px] transition ${interest.interested ? "border-velora-warm text-velora-warm" : "hover:border-velora-accent"}`}><Heart className={`h-4 w-4 ${interest.interested ? "fill-current" : ""}`} aria-hidden />{t(interest.interested ? "Interested" : "I'm interested")}</button>
                 {friendStatus === "FRIENDS" ? (
                   <Link href="/connections" className="flex min-h-11 items-center justify-center gap-2 border border-velora-copper px-3 text-[14px] font-semibold text-velora-copperInk"><UsersRound className="h-4 w-4" />{t("Connected")}</Link>
                 ) : friendStatus === "OUTGOING" ? (
                   <button type="button" disabled={friendBusy} onClick={() => void friendAction("REMOVE")} className="min-h-11 border border-velora-line px-3 text-[14px] text-velora-ink2 disabled:opacity-50">{t("Request sent · Cancel")}</button>
                 ) : friendStatus === "INCOMING" ? (
-                  <button type="button" disabled={friendBusy} onClick={() => void friendAction("ACCEPT")} className="min-h-11 bg-velora-copper px-3 text-[14px] font-semibold text-velora-night disabled:opacity-50">{t("Accept connection")}</button>
+                  <button type="button" disabled={friendBusy} onClick={() => void friendAction("ACCEPT")} className="intimo-member-primary px-3 text-[14px] disabled:opacity-50">{t("Accept connection")}</button>
                 ) : (
-                  <button type="button" disabled={friendBusy || friendStatus === null} onClick={() => void friendAction("REQUEST")} className="flex min-h-11 items-center justify-center gap-2 border border-velora-line px-3 text-[14px] font-semibold text-velora-ink disabled:opacity-50"><UserRoundPlus className="h-4 w-4" />{t("Connect")}</button>
+                  <button type="button" disabled={friendBusy || friendStatus === null} onClick={() => void friendAction("REQUEST")} className="intimo-member-secondary gap-2 px-3 text-[14px] disabled:opacity-50"><UserRoundPlus className="h-4 w-4" />{t("Connect")}</button>
                 )}
               </div>
               <button type="button" onClick={() => void toggleFavorite()} aria-pressed={favorite} className="mt-3 inline-flex min-h-11 items-center gap-2 text-[14px] text-velora-ink2"><Bookmark className={`h-4 w-4 ${favorite ? "fill-current" : ""}`} />{t(favorite ? "Saved privately" : "Save privately")}</button>
@@ -393,7 +393,7 @@ function TopBar({ onBack, backLabel, BackIcon, overPhoto = false, menu }: { onBa
         <div className="relative">
           <button type="button" aria-label={t("More")} aria-haspopup="menu" aria-expanded={menu.open} onClick={() => menu.setOpen(!menu.open)} className={`flex h-11 w-11 items-center justify-center ${tone}`}><MoreHorizontal className="h-5 w-5" aria-hidden /></button>
           {menu.open && (
-            <div role="menu" className="absolute right-0 top-11 z-20 w-56 border border-velora-line bg-velora-surface py-2 shadow-card">
+            <div role="menu" className="intimo-member-panel absolute right-0 top-11 z-20 w-56 py-2">
               <button role="menuitem" type="button" onClick={menu.onFavorite} className="block min-h-11 w-full px-4 text-left text-[15px] text-velora-ink hover:bg-velora-sunken">{menu.favorite ? t("Remove from saved") : t("Save profile")}</button>
               <button role="menuitem" type="button" onClick={menu.onReport} className="block min-h-11 w-full px-4 text-left text-[15px] text-velora-ink hover:bg-velora-sunken">{t("Report")}</button>
               <button role="menuitem" type="button" onClick={menu.onBlock} className="block min-h-11 w-full px-4 text-left text-[15px] text-velora-crimson hover:bg-velora-sunken">{t("Block")}</button>
