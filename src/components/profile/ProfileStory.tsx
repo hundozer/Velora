@@ -219,7 +219,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
   const requestsPref = approach?.boundaries?.PRIVATE_ALBUM_REQUESTS;
 
   return (
-    <article className="intimo-member-page intimo-grain" aria-label={t("{name}'s profile", { name: name })}>
+    <article className="intimo-member-page" aria-label={t("{name}'s profile", { name: name })}>
       <div className="relative">
         {profile.avatarUrl ? (
           <>
