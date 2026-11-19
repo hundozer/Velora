@@ -139,6 +139,10 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
       if (!response.ok) { setNotice(payload.error || "Connection unavailable"); return; }
       const latest = await json<{ status: "NONE" | "OUTGOING" | "INCOMING" | "FRIENDS" }>(`/api/friends?targetProfileId=${encodeURIComponent(id)}`);
       setFriendStatus(latest?.status ?? (action === "REQUEST" ? "OUTGOING" : action === "ACCEPT" ? "FRIENDS" : "NONE"));
+      if (action === "ACCEPT" || action === "REMOVE") {
+        const refreshedApproach = await json<Approach>(`/api/profiles/${encodeURIComponent(id)}/approach`);
+        if (refreshedApproach) setApproach(refreshedApproach);
+      }
       setNotice(action === "REQUEST" ? "Connection request sent." : action === "ACCEPT" ? "You are now connected." : action === "DECLINE" ? "Connection request dismissed." : "Connection removed.");
     } catch { setNotice("Connection unavailable. Try again."); }
     finally { setFriendBusy(false); }
