@@ -2550,5 +2550,6 @@
   "Not ready to message someone? Start with a public room.": "Nechcete zatím nikomu psát soukromě? Začněte ve veřejné místnosti.",
   "Choose an approximate area, not your address. You can change it later.": "Vyber přibližnou oblast, ne svou adresu. Později ji můžeš změnit.",
   "Choose an area group": "Vyber skupinu oblastí",
-  "Selected area: {area}": "Vybraná oblast: {area}"
+  "Selected area: {area}": "Vybraná oblast: {area}",
+  "Your profile photo is optional. The separate private age check is required before joining the community.": "Profilová fotografie je dobrovolná. Před vstupem do komunity je nutné samostatné soukromé ověření věku."
 }
