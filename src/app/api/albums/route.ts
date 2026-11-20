@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   const title = typeof body.title === "string" ? body.title.trim() : "";
   const description = typeof body.description === "string" ? body.description.trim() : "";
   const category = typeof body.category === "string" ? body.category.trim() : "";
-  const visibility = ["PUBLIC","MEMBERS_ONLY","FOLLOWERS_ONLY","FRIENDS_ONLY","PRIVATE"].includes(body.visibility) ? body.visibility : "PRIVATE";
+  const visibility = ["PUBLIC","MEMBERS_ONLY","FOLLOWERS_ONLY","FRIENDS_ONLY","PRIVATE","PRIVATE_APPROVED"].includes(body.visibility) ? body.visibility : "PRIVATE";
   const commentPolicy = ["MEMBERS","VERIFIED","FRIENDS","DISABLED"].includes(body.commentPolicy) ? body.commentPolicy : "MEMBERS";
   const reactionsEnabled = body.reactionsEnabled !== false;
   const tags = Array.isArray(body.tags) ? body.tags.filter((tag: unknown): tag is string => typeof tag === "string").map((tag: string) => tag.trim().slice(0, 50)).filter(Boolean).slice(0, 20) : [];
