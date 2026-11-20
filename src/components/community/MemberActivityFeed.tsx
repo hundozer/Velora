@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { FeedInteractions } from "./FeedInteractions";
 import { NewMemberFirstSteps } from "./NewMemberFirstSteps";
+import { SocialPathways } from "./SocialPathways";
 import { BadgeCheck, CalendarHeart, Images, ImageIcon, MessageSquareText, Play, UserPlus, UsersRound, CalendarDays } from "lucide-react";
 
 type FeedItem = {
@@ -79,6 +80,7 @@ export function MemberActivityFeed() {
           <div><p className="text-xs font-semibold uppercase tracking-[0.22em] text-velora-accent">{t("What's happening")}</p><h1 className="mt-2 font-display font-semibold text-ink text-5xl leading-[1.02] sm:text-6xl">{t("Around here")}</h1></div>
           <Link href="/people" className="text-sm font-semibold text-velora-accent hover:text-velora-accent">{t("Find people")}</Link>
         </div>
+        <SocialPathways />
         <NewMemberFirstSteps />
         <section aria-label={t("Activity feed filters")} className="mb-6 overflow-hidden rounded-2xl border border-ink/10 bg-velora-surface">
           <div className="flex border-b border-ink/10 px-3 sm:px-5">
