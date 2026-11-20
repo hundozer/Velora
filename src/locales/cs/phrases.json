@@ -2425,7 +2425,7 @@
   "Connection request sent.": "Žádost o propojení byla odeslána.",
   "You are now connected.": "Teď jste propojeni.",
   "Connection request dismissed.": "Žádost byla zamítnuta.",
-  "Connection removed.": "Spojení bylo odebráno.",
+  "Connection removed.": "Spojení odebráno.",
   "Connection unavailable. Try again.": "Spojení není dostupné. Zkus to znovu.",
   "Connection action failed": "Akce se nezdařila",
   "Connections could not be loaded": "Spojení se nepodařilo načíst",
@@ -2504,5 +2504,8 @@
   "03 / Express": "03 / Vyjádřit se",
   "Share on your terms": "Sdílej podle svých pravidel",
   "Browse approved albums and choose what you want to share.": "Prohlížej schválená alba a rozhodni, co chceš sdílet.",
-  "Explore albums": "Prozkoumat alba"
+  "Explore albums": "Prozkoumat alba",
+  "Request accepted. You are now connected.": "Žádost přijata. Nyní jste propojeni.",
+  "Request declined.": "Žádost zamítnuta.",
+  "Request cancelled.": "Žádost zrušena."
 }
