@@ -153,7 +153,7 @@ export function AlbumManager() {
       </aside>
 
       <section>{active ? <div className="space-y-6">
-        <p role="status" className="rounded-xl border border-ink/10 p-4 text-sm text-ink">{t("{length} photos ·", { length: active.mediaIds.length })}{" "}{active.visibility === "PRIVATE" ? t("Private · only you can see it") : active.visibility === "PRIVATE_APPROVED" ? t("Private · only people you approve can see this album. Never shown in feeds.") : active.moderation_status === "APPROVED" ? t("Published") : t("Waiting for review")}</p>
+        <p role="status" className="rounded-xl border border-ink/10 p-4 text-sm text-ink">{t("{length} photos ·", { length: active.mediaIds.length })}{" "}{active.visibility === "PRIVATE" ? t("Private · only you can see it") : active.visibility === "PRIVATE_APPROVED" ? active.moderation_status === "APPROVED" ? t("Private · only people you approve can see this album. Never shown in feeds.") : t("Private · waiting for review before approved people can see it.") : active.moderation_status === "APPROVED" ? t("Published") : t("Waiting for review")}</p>
         {active.reviewFeedback && active.moderation_status === "REJECTED" && <p role="status" className="rounded-xl border border-velora-warning/40 bg-velora-warning/10 p-4 text-sm text-ink">{t("Review feedback: {reviewFeedback} Edit your album and save it to submit it for another review.", { reviewFeedback: active.reviewFeedback })}</p>}
         <div className="rounded-2xl border border-ink/10 bg-velora-surface p-5">
           <div className="grid gap-4 sm:grid-cols-2">
