@@ -15,7 +15,7 @@ test("mobile PWA header and Stories share one sticky stacking context",()=>{
 });
 
 test("desktop layout remains non-sticky, intro and Everyone destinations remain reachable",()=>{
-  assert.match(s,/md:static md:z-auto/);
+  assert.match(s,/md:static md:top-auto md:z-auto/);
   assert.match(s,/id={`intro-\$\{index\}`}/);
   assert.match(s,/id="everyone-nearby"/);
   assert.match(s,/scrollToId\(index \+ 1 < introductions.length/);
