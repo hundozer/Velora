@@ -33,6 +33,7 @@ declare
   v_room public.rooms%rowtype;
   v_target uuid;
   v_existing public.room_join_requests%rowtype;
+  v_has_request boolean := false;
   v_now timestamptz := now();
 begin
   if p_action not in ('REQUEST','CANCEL','APPROVE','DECLINE') then
@@ -80,16 +81,17 @@ begin
 
   select * into v_existing from public.room_join_requests
     where room_id = p_room_id and requester_id = v_target for update;
+  v_has_request := found;
 
   if p_action = 'REQUEST' then
     if exists (select 1 from public.room_members
       where room_id = p_room_id and profile_id = v_target) then
       raise exception 'Already a member';
     end if;
-    if found and v_existing.status = 'PENDING' then return 'PENDING'; end if;
+    if v_has_request and v_existing.status = 'PENDING' then return 'PENDING'; end if;
     -- Declined members must be explicitly added by owner. Prevent repeated harassment.
-    if found and v_existing.status = 'DECLINED' then raise exception 'Request declined'; end if;
-    if found and v_existing.status = 'CANCELLED'
+    if v_has_request and v_existing.status = 'DECLINED' then raise exception 'Request declined'; end if;
+    if v_has_request and v_existing.status = 'CANCELLED'
       and v_existing.decided_at > v_now - interval '24 hours' then
       raise exception 'Request recently cancelled';
     end if;
@@ -101,7 +103,7 @@ begin
     return 'PENDING';
   end if;
 
-  if not found then raise exception 'Request unavailable'; end if;
+  if not v_has_request then raise exception 'Request unavailable'; end if;
   if p_action = 'CANCEL' then
     if v_existing.status <> 'PENDING' then raise exception 'Request is not pending'; end if;
     update public.room_join_requests set status='CANCELLED', decided_at=v_now, decided_by=null
