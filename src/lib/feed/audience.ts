@@ -10,11 +10,13 @@ export function canShowFeedAudience(
   following: ReadonlySet<string>,
   friends: ReadonlySet<string>,
 ): boolean {
+  // A feed never includes private or unknown visibility, including for its owner.
+  if (!["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY", "FRIENDS_ONLY"].includes(visibility)) return false;
   // The publisher may see their own published work in Newest, but only once
   // the upstream moderation and publication conditions have passed.
   if (ownerId === viewerId) return true;
   if (visibility === "PUBLIC" || visibility === "MEMBERS_ONLY") return true;
   if (visibility === "FOLLOWERS_ONLY") return following.has(ownerId);
   if (visibility === "FRIENDS_ONLY") return friends.has(ownerId);
-  return false; // PRIVATE or any unknown label is never feed content
+  return false; // Defensive default: no implicit audience grant
 }
