@@ -2507,5 +2507,10 @@
   "Explore albums": "Prozkoumat alba",
   "Request accepted. You are now connected.": "Žádost přijata. Nyní jste propojeni.",
   "Request declined.": "Žádost zamítnuta.",
-  "Request cancelled.": "Žádost zrušena."
+  "Request cancelled.": "Žádost zrušena.",
+  "Member added.": "Člen přidán.",
+  "Member removed.": "Člen odebrán.",
+  "Room privacy updated.": "Soukromí místnosti aktualizováno.",
+  "Remove this member from the room?": "Odebrat tohoto člena z místnosti?",
+  "Active adult member not found": "Aktivní ověřený dospělý člen nebyl nalezen"
 }
