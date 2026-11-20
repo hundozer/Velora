@@ -17,6 +17,7 @@ export default function ConnectionsPage() {
   const [loading, setLoading] = React.useState(true);
   const [busy, setBusy] = React.useState<string | null>(null);
   const [error, setError] = React.useState("");
+  const [notice, setNotice] = React.useState("");
   const refresh = React.useCallback(async () => {
     if (!user) return;
     const response = await fetch("/api/friends/list", { credentials: "same-origin", cache: "no-store" });
@@ -28,17 +29,24 @@ export default function ConnectionsPage() {
     if (!user) return;
     let active = true;
     setLoading(true);
-    refresh().catch(error => { if (active) setError(error.message); }).finally(() => { if (active) setLoading(false); });
+    refresh().then(() => {
+      if (!active) return;
+      // The requests tab is always available; a quiet empty state is preferable
+      // to making assumptions about a member\'s preferred relationship view.
+    }).catch(error => { if (active) setError(error.message); }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [refresh, user]);
   const act = async (peerId: string, action: "ACCEPT" | "DECLINE" | "REMOVE") => {
     if (busy) return;
-    setBusy(peerId); setError("");
+    setBusy(peerId); setError(""); setNotice("");
     try {
       const response = await fetch("/api/friends", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ targetProfileId: peerId, action }) });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Connection action failed");
       await refresh();
+      const resultLabel = action === "ACCEPT" ? "Request accepted. You are now connected." : action === "DECLINE" ? "Request declined." : "Connection updated.";
+      setNotice(resultLabel);
+      if (action === "ACCEPT") setFilter("CONNECTED");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Connection action failed"); }
     finally { setBusy(null); }
   };
@@ -56,6 +64,7 @@ export default function ConnectionsPage() {
         {tabs.map(tab => <button role="tab" aria-selected={filter === tab.key} key={tab.key} onClick={() => setFilter(tab.key)} className={`intimo-member-tab min-h-12 flex-1 border-b-2 px-2 font-semibold ${filter === tab.key ? "border-velora-warm text-velora-ink" : "border-transparent text-velora-muted"}`}>{t(tab.label)} <span className="text-xs opacity-60">{connections.filter(item => item.status === tab.key).length || ""}</span></button>)}
       </div>
       {error && <p role="alert" className="mt-5 border-l-2 border-velora-crimson pl-3 text-sm text-velora-ink">{t(error)}</p>}
+      {notice && <p role="status" aria-live="polite" className="mt-5 border-l-2 border-velora-warm pl-3 text-sm text-velora-ink">{t(notice)}</p>}
       {loading ? <p className="mt-8 text-velora-muted">{t("Loading…")}</p> : selected.length === 0 ? (
         <div className="intimo-member-panel mt-9 px-7 py-12">
           <h2 className="intimo-member-subheading">{t(filter === "RECEIVED" ? "No requests waiting." : filter === "SENT" ? "No requests sent." : "Your circle starts here.")}</h2>
@@ -64,21 +73,21 @@ export default function ConnectionsPage() {
         </div>
       ) : (
         <div className="divide-y divide-velora-line">
-          {selected.map(item => <article key={item.peerId} className="flex items-center gap-5 py-6">
+          {selected.map(item => <article key={item.peerId} className="flex flex-wrap items-center gap-4 py-5 sm:flex-nowrap sm:gap-5 sm:py-6">
             <Link href={`/profile/${item.peerId}`} className="intimo-member-portrait h-20 w-16 shrink-0">
               {item.avatarUrl ? <img src={item.avatarUrl} alt="" className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center font-display text-2xl text-velora-ink">{item.name.slice(0,1)}</span>}
             </Link>
             <div className="min-w-0 flex-1">
-              <Link href={`/profile/${item.peerId}`} className="font-serif text-3xl text-velora-ink hover:text-velora-warm">{item.name}</Link>
+              <Link href={`/profile/${item.peerId}`} className="block truncate font-serif text-[clamp(1.5rem,6vw,1.875rem)] text-velora-ink hover:text-velora-warm">{item.name}</Link>
               {item.city && <p className="text-xs text-velora-muted">{item.city}</p>}
               <p className="mt-1 text-xs text-velora-muted">{t(item.status === "RECEIVED" ? "Wants to connect" : item.status === "SENT" ? "Awaiting their answer" : "Connected")}</p>
             </div>
-            <div className="flex flex-wrap justify-end gap-2">
+            <div className="flex w-full flex-wrap justify-end gap-2 sm:w-auto">
               {item.status === "RECEIVED" && <>
-                <button disabled={!!busy} onClick={() => void act(item.peerId, "ACCEPT")} className="intimo-member-primary px-5 text-sm disabled:opacity-50">{t("Accept")}</button>
-                <button disabled={!!busy} onClick={() => void act(item.peerId, "DECLINE")} className="intimo-member-secondary px-4 text-sm disabled:opacity-50">{t("Decline")}</button>
+                <button disabled={!!busy} aria-busy={busy === item.peerId} onClick={() => void act(item.peerId, "ACCEPT")} className="intimo-member-primary px-5 text-sm disabled:opacity-50">{t("Accept")}</button>
+                <button disabled={!!busy} aria-busy={busy === item.peerId} onClick={() => void act(item.peerId, "DECLINE")} className="intimo-member-secondary px-4 text-sm disabled:opacity-50">{t("Decline")}</button>
               </>}
-              {item.status === "SENT" && <button disabled={!!busy} onClick={() => void act(item.peerId, "REMOVE")} className="min-h-11 border border-velora-line px-3 text-sm text-velora-ink disabled:opacity-50">{t("Cancel")}</button>}
+              {item.status === "SENT" && <button disabled={!!busy} aria-busy={busy === item.peerId} onClick={() => void act(item.peerId, "REMOVE")} className="min-h-11 border border-velora-line px-3 text-sm text-velora-ink disabled:opacity-50">{t("Cancel")}</button>}
               {item.status === "CONNECTED" && <><Link href={`/messages?user=${item.peerId}`} className="intimo-member-secondary px-4 text-sm">{t("Message")}</Link><button disabled={!!busy} onClick={() => { if (window.confirm(t("Remove this connection?"))) void act(item.peerId, "REMOVE"); }} className="min-h-11 px-3 text-sm text-velora-muted underline disabled:opacity-50">{t("Remove")}</button></>}
             </div>
           </article>)}
