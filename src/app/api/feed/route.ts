@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { canShowFeedAudience } from "@/lib/feed/audience";
 
 export const dynamic = "force-dynamic";
 
@@ -33,13 +34,13 @@ export async function GET(req: NextRequest) {
   if (!db) return NextResponse.json({ error: "Feed unavailable" }, { status: 503 });
 
   const url = new URL(req.url);
-  const scope = ["newest", "followed", "friends"].includes(url.searchParams.get("scope") || "") ? url.searchParams.get("scope")! : "newest";
+  const scope = ["newest", "circle", "followed", "friends"].includes(url.searchParams.get("scope") || "") ? url.searchParams.get("scope")! : "newest";
   const contentType = ["all", "albums", "photos", "videos", "posts", "dating", "events", "rooms"].includes(url.searchParams.get("type") || "") ? url.searchParams.get("type")! : "all";
 
   const [{ data: blocks, error: blockError }, { data: follows, error: followError }, { data: friendships, error: friendshipError }] = await Promise.all([
     db.from("user_blocks").select("blocker_id,blocked_profile_id").or(`blocker_id.eq.${auth.actor.profileId},blocked_profile_id.eq.${auth.actor.profileId}`),
-    scope === "followed" ? db.from("connections").select("followed_id").eq("follower_id", auth.actor.profileId).eq("connection_type", "follow") : Promise.resolve({ data: [], error: null }),
-    scope === "friends" ? db.from("friendships").select("requester_id,addressee_id").eq("status", "ACCEPTED")
+    (scope === "followed" || scope === "circle" || scope === "friends") ? db.from("connections").select("followed_id").eq("follower_id", auth.actor.profileId).eq("connection_type", "follow") : Promise.resolve({ data: [], error: null }),
+    (scope === "friends" || scope === "circle" || scope === "followed") ? db.from("friendships").select("requester_id,addressee_id").eq("status", "ACCEPTED")
       .or(`requester_id.eq.${auth.actor.profileId},addressee_id.eq.${auth.actor.profileId}`) : Promise.resolve({ data: [], error: null }),
   ]);
   if (blockError || followError || friendshipError) return NextResponse.json({ error: "Feed audience unavailable" }, { status: 503 });
@@ -49,9 +50,14 @@ export async function GET(req: NextRequest) {
     excluded.add(block.blocker_id === auth.actor.profileId ? block.blocked_profile_id : block.blocker_id);
   }
 
+  const following = new Set<string>((follows || []).map(row => row.followed_id).filter(id => !excluded.has(id)));
+  const friends = new Set<string>((friendships || []).map(row =>
+    row.requester_id === auth.actor.profileId ? row.addressee_id : row.requester_id
+  ).filter(id => !excluded.has(id)));
   let audienceIds: string[] | null = null;
-  if (scope === "followed") audienceIds = (follows || []).map((row) => row.followed_id).filter((id) => !excluded.has(id));
-  if (scope === "friends") audienceIds = (friendships || []).map((row) => row.requester_id === auth.actor.profileId ? row.addressee_id : row.requester_id).filter((id) => !excluded.has(id));
+  if (scope === "followed") audienceIds = [...following];
+  if (scope === "friends") audienceIds = [...friends];
+  if (scope === "circle") audienceIds = [...new Set([...following, ...friends])];
   if (audienceIds && audienceIds.length === 0) {
     return NextResponse.json({ items: [], scope, contentType, ranking: "occurred_at_desc_then_id_asc" }, { headers: { "Cache-Control": "private, no-store" } });
   }
@@ -60,18 +66,18 @@ export async function GET(req: NextRequest) {
   let profileQuery = db.from("profiles")
     .select("id,display_name,username,avatar_url,verification_status,verification_level,headline,created_at")
     .eq("account_status", "ACTIVE").eq("discovery_disabled", false)
-    .in("profile_visibility", scope === "friends" ? ["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY"] : ["EVERYONE", "MEMBERS_ONLY"])
+    .in("profile_visibility", scope === "friends" || scope === "circle" ? ["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY"] : ["EVERYONE", "MEMBERS_ONLY"])
     .order("created_at", { ascending: false }).limit(40);
   let adQuery = db.from("dating_ads").select("id,author_id,title,text,category,created_at,expires_at")
     .eq("status", "active").order("created_at", { ascending: false }).limit(40);
   let postQuery = db.from("content_posts").select("id,author_id,title,body,category,visibility,published_at,created_at")
-    .in("visibility", scope === "followed" ? ["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY"] : ["PUBLIC", "MEMBERS_ONLY"])
+    .in("visibility", scope === "newest" ? ["PUBLIC", "MEMBERS_ONLY"] : ["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY", "FRIENDS_ONLY"])
     .eq("moderation_status", "APPROVED").order("published_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }).limit(40);
   let albumQuery = db.from("media_albums").select("id,owner_id,title,description,category,visibility,cover_media_id,published_at,created_at")
-    .in("visibility", scope === "followed" ? ["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY"] : ["PUBLIC", "MEMBERS_ONLY"])
+    .in("visibility", scope === "newest" ? ["PUBLIC", "MEMBERS_ONLY"] : ["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY", "FRIENDS_ONLY"])
     .eq("moderation_status", "APPROVED").order("published_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }).limit(40);
   let mediaQuery = db.from("media_objects").select("id,owner_id,media_type,title,description,category,visibility,published_at,created_at")
-    .in("visibility", scope === "followed" ? ["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY"] : ["PUBLIC", "MEMBERS_ONLY"])
+    .in("visibility", scope === "newest" ? ["PUBLIC", "MEMBERS_ONLY"] : ["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY", "FRIENDS_ONLY"])
     .eq("upload_status", "AVAILABLE").eq("processing_status", "READY").eq("moderation_status", "APPROVED")
     .order("published_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }).limit(40);
   let eventQuery = db.from("scene_events").select("id,title,description,kind,starts_at,ends_at,venue_name,submitted_by,reviewed_at,created_at")
@@ -105,18 +111,26 @@ export async function GET(req: NextRequest) {
   if (profileError || adError || postError || albumError || mediaError || eventError || roomError) return NextResponse.json({ error: "Feed unavailable" }, { status: 502 });
 
   const ownerIds = new Set<string>();
+  // A scoped query is not sufficient authorization: retain only items whose
+  // author relationship satisfies the item's actual declared visibility.
+  const allowed = (visibility: string, authorId: string) =>
+    !excluded.has(authorId) && canShowFeedAudience(visibility, authorId, auth.actor.profileId, following, friends);
+  const visiblePosts = (postRows || []).filter(row => allowed(row.visibility, row.author_id));
+  const visibleAlbums = (albumRows || []).filter(row => allowed(row.visibility, row.owner_id));
+  const visibleMedia = (mediaRows || []).filter(row => allowed(row.visibility, row.owner_id));
+
   for (const row of adRows || []) ownerIds.add(row.author_id);
-  for (const row of postRows || []) ownerIds.add(row.author_id);
-  for (const row of albumRows || []) ownerIds.add(row.owner_id);
-  for (const row of mediaRows || []) ownerIds.add(row.owner_id);
+  for (const row of visiblePosts) ownerIds.add(row.author_id);
+  for (const row of visibleAlbums) ownerIds.add(row.owner_id);
+  for (const row of visibleMedia) ownerIds.add(row.owner_id);
   for (const row of eventRows || []) if (row.submitted_by) ownerIds.add(row.submitted_by);
   for (const row of roomRows || []) if (row.creator_id) ownerIds.add(row.creator_id);
   for (const row of profileRows || []) ownerIds.add(row.id);
   for (const id of excluded) ownerIds.delete(id);
 
   const { data: owners } = ownerIds.size ? await db.from("profiles")
-    .select("id,display_name,username,avatar_url,verification_status,verification_level,account_status,discovery_disabled")
-    .in("id", Array.from(ownerIds)).eq("account_status", "ACTIVE").eq("discovery_disabled", false) : { data: [] };
+    .select("id,display_name,username,avatar_url,verification_status,verification_level,age_verification_status,account_status,discovery_disabled")
+    .in("id", Array.from(ownerIds)).eq("account_status", "ACTIVE").eq("age_verification_status", "AGE_VERIFIED").eq("discovery_disabled", false) : { data: [] };
   const ownerMap = new Map((owners || []).map((owner) => [owner.id, owner]));
   const actorFor = (id: string) => {
     const owner = ownerMap.get(id);
@@ -139,15 +153,15 @@ export async function GET(req: NextRequest) {
     const actor = actorFor(ad.author_id); if (!actor || new Date(ad.expires_at).getTime() <= now) continue;
     items.push({ id: `DATING_AD:${ad.id}`, type: "DATING_AD", actor, title: ad.title, body: ad.text, category: ad.category, href: "/tonight", occurredAt: ad.created_at });
   }
-  for (const post of postRows || []) {
+  for (const post of visiblePosts) {
     const actor = actorFor(post.author_id); if (!actor) continue;
     items.push({ id: `POST:${post.id}`, type: "POST", actor, title: post.title || `${actor.displayName} shared an update`, body: post.body, category: post.category || undefined, href: `/search?q=${encodeURIComponent(post.title || actor.displayName)}`, occurredAt: post.published_at || post.created_at });
   }
-  for (const album of albumRows || []) {
+  for (const album of visibleAlbums) {
     const actor = actorFor(album.owner_id); if (!actor) continue;
     items.push({ id: `ALBUM:${album.id}`, type: "ALBUM", actor, title: album.title, body: album.description || undefined, category: album.category || undefined, mediaUrl: album.cover_media_id ? `/api/media/${album.cover_media_id}` : undefined, href: `/album/${album.id}`, occurredAt: album.published_at || album.created_at });
   }
-  for (const media of mediaRows || []) {
+  for (const media of visibleMedia) {
     const actor = actorFor(media.owner_id); if (!actor || !["IMAGE", "VIDEO"].includes(media.media_type)) continue;
     const type = media.media_type as "IMAGE" | "VIDEO";
     items.push({ id: `${type}:${media.id}`, type, actor, title: media.title || `${actor.displayName} added a new ${type === "IMAGE" ? "photo" : "video"}`, body: media.description || undefined, category: media.category || undefined, mediaUrl: `/api/media/${media.id}`, href: type === "IMAGE" ? "/photos" : "/videos", occurredAt: media.published_at || media.created_at });
