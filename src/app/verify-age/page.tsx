@@ -21,6 +21,7 @@ export default function VerifyAgePage() {
   const [preview, setPreview] = React.useState<string | null>(null);
   const [progress, setProgress] = React.useState<number | null>(null);
   const [error, setError] = React.useState("");
+  const [checkingStatus, setCheckingStatus] = React.useState(false);
 
   const load = React.useCallback(async () => {
     setStatus("loading");
@@ -33,6 +34,13 @@ export default function VerifyAgePage() {
     } catch { setStatus("error"); }
   }, []);
   React.useEffect(() => { void load(); }, [load]);
+  async function refreshStatus() {
+    if (checkingStatus) return;
+    setCheckingStatus(true);
+    setError("");
+    try { await load(); }
+    finally { setCheckingStatus(false); }
+  }
   React.useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
 
   function choose(next: File | null) {
@@ -73,8 +81,14 @@ export default function VerifyAgePage() {
   const shell = (children: React.ReactNode) => <main className="mx-auto max-w-xl space-y-6 px-4 pb-24 pt-8">{children}</main>;
   if (status === "loading") return shell(<p className="text-sm text-velora-textMuted">{t("Loading…")}</p>);
   if (status === "signed-out") return shell(<p className="text-sm text-velora-textSecondary"><Link href="/auth/login?returnTo=%2Fverify-age" className="text-velora-accent underline">{t("Sign in")}</Link>{" "}{t("to complete your age check.")}</p>);
-  if (status === "error" || !check) return shell(<p className="text-sm text-velora-danger">{t("Your age check could not be loaded. Please refresh.")}</p>);
-  if (!check.available) return shell(<p className="text-sm text-velora-textSecondary">{t("The age check is being set up. Please check back soon.")}</p>);
+  if (status === "error" || !check) return shell(<div className="space-y-4">
+    <p role="alert" className="text-sm text-velora-danger">{t("Your age check could not be loaded. Please refresh.")}</p>
+    <button type="button" disabled={checkingStatus} onClick={() => void refreshStatus()} className="min-h-11 rounded-full border border-velora-accent px-5 text-sm font-semibold text-velora-accent">{t("Try again")}</button>
+  </div>);
+  if (!check.available) return shell(<div className="space-y-4">
+    <p role="alert" className="text-sm text-velora-textSecondary">{t("The age check is being set up. Please check back soon.")}</p>
+    <button type="button" disabled={checkingStatus} onClick={() => void refreshStatus()} className="min-h-11 rounded-full border border-velora-accent px-5 text-sm font-semibold text-velora-accent">{t("Check review status")}</button>
+  </div>);
 
   const header = (
     <header className="space-y-2">
@@ -96,8 +110,13 @@ export default function VerifyAgePage() {
     {header}
     <section className="space-y-3 rounded-2xl border border-ink/10 bg-ink/[0.02] p-5">
       <p className="flex items-center gap-2 font-semibold text-velora-textPrimary"><Clock className="h-5 w-5 text-velora-accent" aria-hidden />{t("Thank you. A person at Intimo is reviewing your selfie.")}</p>
-      <p className="text-sm leading-relaxed text-velora-textSecondary">{t("This usually takes less than a day. Meanwhile you can finish your profile; nobody can see it until you're approved.")}</p>
-      <Link href="/me" className="inline-flex min-h-11 items-center rounded-full border border-velora-accent px-6 text-sm font-bold text-velora-accent">{t("Finish my profile")}</Link>
+      <p className="text-sm leading-relaxed text-velora-textSecondary">{t("Your age check is waiting for manual review. You cannot use the community until it is approved. We cannot guarantee an exact review time.")}</p>
+      <p className="text-sm leading-relaxed text-velora-textMuted">{t("You can leave and come back later. Your submitted review remains pending on your account.")}</p>
+      <button type="button" onClick={() => void refreshStatus()} disabled={checkingStatus} aria-busy={checkingStatus} className="inline-flex min-h-11 items-center rounded-full bg-velora-accent px-6 text-sm font-bold text-velora-paper disabled:opacity-50">{checkingStatus ? t("Checking status…") : t("Check review status")}</button>
+      <div className="flex flex-wrap items-center gap-3">
+        <Link href="/me" className="inline-flex min-h-11 items-center rounded-full border border-velora-accent px-6 text-sm font-bold text-velora-accent">{t("Finish my profile")}</Link>
+        <a href="mailto:contact@intimo.live" className="inline-flex min-h-11 items-center text-sm font-semibold text-velora-textSecondary underline underline-offset-4">{t("Contact support")}</a>
+      </div>
     </section>
   </>);
 
