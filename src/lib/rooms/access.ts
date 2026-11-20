@@ -23,6 +23,13 @@ export async function roomAccess(req: NextRequest, id: string) {
     const { data: member, error: memberError } = await auth.db.from("room_members").select("profile_id").eq("room_id", id).eq("profile_id", auth.actor.profileId).maybeSingle();
     if (memberError) return { error: roomReply({ error: "Room unavailable" }, 502) };
     if (!member) return { error: roomReply({ error: "This room is for its approved members" }, 403) };
+    // Membership is revocable by either side blocking the room owner.
+    // This check applies to every read, post and presence action through roomAccess.
+    const { data: block, error: blockError } = await auth.db.from("user_blocks").select("id")
+      .or(`and(blocker_id.eq.${auth.actor.profileId},blocked_profile_id.eq.${room.creator_id}),and(blocker_id.eq.${room.creator_id},blocked_profile_id.eq.${auth.actor.profileId})`)
+      .limit(1).maybeSingle();
+    if (blockError) return { error: roomReply({ error: "Room unavailable" }, 502) };
+    if (block) return { error: roomReply({ error: "This room is for its approved members" }, 403) };
   }
   return { db: auth.db, actor: auth.actor, room, admin };
 }
