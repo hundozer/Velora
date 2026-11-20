@@ -56,19 +56,20 @@ export default function DatingPage() {
     void load();
   }
   const tabs = [{ value: "", label: "Everything" }, ...PERSONAL_CATEGORIES.map(item => ({ value: item.value, label: SHORT[item.value] || item.label }))];
-  const tab = (active: boolean) => `shrink-0 border-b-2 pb-3 pt-1 text-[15px] transition-colors ${active ? "border-velora-accent font-semibold text-velora-ink" : "border-transparent text-velora-muted hover:text-velora-ink"}`;
-  return <main className="intimo-member-page intimo-grain mx-auto min-h-[75vh] max-w-5xl px-5 pb-28 pt-12 sm:px-8 md:pt-16">
+  const tab = (active: boolean) => `shrink-0 snap-start whitespace-nowrap border-b-2 pb-3 pt-1 text-[15px] transition-colors ${active ? "border-velora-accent font-semibold text-velora-ink" : "border-transparent text-velora-muted hover:text-velora-ink"}`;
+  return <main className="intimo-member-page intimo-grain mx-auto min-h-[75vh] max-w-5xl px-4 pb-24 pt-6 sm:px-8 sm:pt-10 md:pt-16">
     <header>
       <p className="text-[13px] font-semibold uppercase tracking-[0.2em] text-velora-muted">{t("Prague · adults only")}</p>
-      <div className="mt-3 flex items-end justify-between gap-4">
-        <h1 className="intimo-member-heading">{t("Dating Ads")}</h1>
+      <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
+        <h1 className="intimo-member-heading text-[clamp(3rem,12vw,5rem)] md:text-[clamp(3.25rem,8vw,6.25rem)]">{t("Dating Ads")}</h1>
         <Link href="/personal-ads/new" className="intimo-member-primary h-11 shrink-0 gap-1.5 px-5 text-[15px]"><Plus aria-hidden className="h-4 w-4" />{t("Post an ad")}</Link>
       </div>
       <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-velora-ink2">{t("Sex, kink, a fuck buddy, or someone to talk dirty with. Say what you want and where your limits are.")}</p>
     </header>
-    <nav aria-label={t("What are you into?")} className="mt-8 border-b border-velora-line">
-      <div className="-mb-px flex gap-6 overflow-x-auto [scrollbar-width:none]">{tabs.map(item => <button key={item.value || "all"} type="button" onClick={() => setCategory(item.value)} aria-pressed={category === item.value} className={tab(category === item.value)}>{t(item.label)}</button>)}</div>
+    <nav aria-label={t("What are you into?")} className="mt-7 min-w-0 border-b border-velora-line">
+      <div className="-mb-px flex max-w-full snap-x snap-proximity gap-5 overflow-x-auto overscroll-x-contain pb-0.5 pr-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{tabs.map(item => <button key={item.value || "all"} type="button" onClick={() => setCategory(item.value)} aria-pressed={category === item.value} className={tab(category === item.value)}>{t(item.label)}</button>)}</div>
     </nav>
+    <p className="mt-1 text-right text-[12px] text-velora-muted md:hidden">{t("Swipe to see more categories →")}</p>
     <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-[14px]">
       <div role="group" aria-label={t("Whose ads")} className="inline-flex rounded-full border border-velora-line p-1">
         <button type="button" onClick={() => setMine(false)} aria-pressed={!mine} className={`rounded-full px-4 py-1.5 ${!mine ? "bg-velora-surface font-semibold text-velora-ink" : "text-velora-muted"}`}>{t("All ads")}</button>

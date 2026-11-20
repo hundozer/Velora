@@ -47,7 +47,7 @@ export const Navbar: React.FC = () => {
   const phoneHidden = Boolean(user) && (pathname.startsWith("/people") || pathname.startsWith("/profile/") || pathname.startsWith("/messages") || pathname.startsWith("/tonight"));
 
   return (
-    <header className={`${phoneHidden ? "hidden md:block" : ""} sticky top-0 z-40 w-full border-b border-velora-line/70 ${user ? "bg-velora-night/95" : "bg-velora-paper/85"} backdrop-blur-xl`}>
+    <header className={`${phoneHidden ? "hidden md:block" : ""} sticky top-[env(safe-area-inset-top)] md:top-0 z-40 w-full border-b border-velora-line/70 ${user ? "bg-velora-night/95" : "bg-velora-paper/85"} backdrop-blur-xl`}>
       <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 lg:h-20 flex items-center justify-between gap-4">
         <Link href="/" aria-label={t("Intimo")} className="shrink-0 text-velora-ink"><Logo className="h-8 w-auto lg:h-9" /></Link>
 

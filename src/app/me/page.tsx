@@ -49,7 +49,7 @@ export default function MePage() {
 
   const name = profile?.displayName || user.username || "Member";
   return (
-    <main className="intimo-member-page intimo-grain mx-auto max-w-2xl space-y-8 px-5 pb-24 pt-10 sm:px-8">
+    <main className="intimo-member-page intimo-grain mx-auto max-w-2xl space-y-6 px-5 pb-24 pt-6 sm:space-y-8 sm:px-8 sm:pt-10">
       <div className="flex items-center gap-4">
         {profile?.id&&<StoryAvatar ownerId={profile.id} name={name} src={profile.avatarUrl} size={64} fallbackHref="/stories"/>}
         {!profile?.id&&<div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-velora-gold/50 bg-velora-card">
@@ -59,7 +59,7 @@ export default function MePage() {
             : <span className="text-xl font-bold text-velora-gold">{name.slice(0, 1).toUpperCase()}</span>}
         </div>}
         <div className="min-w-0">
-          <h1 className="intimo-member-heading truncate">{name}</h1>
+          <h1 className="intimo-member-heading truncate text-[clamp(2.5rem,11vw,4rem)] leading-tight md:text-[clamp(3.25rem,8vw,6.25rem)]">{name}</h1>
           <p className="truncate text-xs text-velora-textMuted">{user.email}</p>
         </div>
       </div>
