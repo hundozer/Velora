@@ -2504,5 +2504,10 @@
   "03 / Express": "03 / Vyjádřit se",
   "Share on your terms": "Sdílej podle svých pravidel",
   "Browse approved albums and choose what you want to share.": "Prohlížej schválená alba a rozhodni, co chceš sdílet.",
-  "Explore albums": "Prozkoumat alba"
+  "Explore albums": "Prozkoumat alba",
+  "Member added.": "Člen přidán.",
+  "Member removed.": "Člen odebrán.",
+  "Room privacy updated.": "Soukromí místnosti aktualizováno.",
+  "Remove this member from the room?": "Odebrat tohoto člena z místnosti?",
+  "Active adult member not found": "Aktivní ověřený dospělý člen nebyl nalezen"
 }
