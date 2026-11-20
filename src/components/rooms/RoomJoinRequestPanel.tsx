@@ -9,6 +9,7 @@ type RequestState = {
   status: "NONE" | "PENDING" | "CANCELLED" | "DECLINED" | "APPROVED" | "MEMBER";
   isOwner: boolean;
   isMember: boolean;
+  retryAfter?: string | null;
 };
 
 export function RoomJoinRequestPanel({ roomId }: { roomId: string }) {
@@ -54,7 +55,7 @@ export function RoomJoinRequestPanel({ roomId }: { roomId: string }) {
       <button disabled={busy} aria-busy={busy} type="button" onClick={() => void act("CANCEL")} className="intimo-member-secondary px-4 text-sm disabled:opacity-50">{t("Cancel request")}</button>
     </div>}
     {state.status === "DECLINED" && <p className="mt-4 text-sm font-semibold text-velora-ink">{t("Your request was declined.")}</p>}
-    {state.status === "CANCELLED" && <p className="mt-4 text-sm text-velora-ink2">{t("Your request was cancelled. You can request again after 24 hours.")}</p>}
+    {state.status === "CANCELLED" && <div className="mt-4 space-y-3"><p className="text-sm text-velora-ink2">{t("Your request was cancelled. You can request again after 24 hours.")}</p>{(!state.retryAfter || Date.parse(state.retryAfter) <= Date.now()) && <button disabled={busy} aria-busy={busy} type="button" onClick={() => void act("REQUEST")} className="intimo-member-primary px-5 disabled:opacity-50">{t("Request again")}</button>}</div>}
     {state.status === "APPROVED" && <Link className="mt-4 inline-flex min-h-11 items-center underline" href={`/rooms/${encodeURIComponent(roomId)}`}>{t("Enter room")}</Link>}
     {error && <p role="alert" className="mt-3 text-sm text-velora-danger">{t(error)}</p>}
     {notice && <p role="status" aria-live="polite" className="mt-3 text-sm text-velora-ink">{t(notice)}</p>}
