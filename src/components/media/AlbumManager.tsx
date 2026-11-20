@@ -117,7 +117,7 @@ export function AlbumManager() {
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) { setError(payload.error || "Album photos could not be saved"); return; }
       await load();
-      setNotice("Photos saved to your album. Album and photos must be approved before anyone else can view them.");
+      setNotice(payload.moderationStatus === "APPROVED" ? "Photos saved. Album is available to permitted viewers." : "Photos saved to your album. Album and photos must be approved before anyone else can view them.");
     } catch {
       setError("Could not save the photos. Check your connection and try again.");
     } finally { setBusy(false); }
