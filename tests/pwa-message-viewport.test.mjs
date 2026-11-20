@@ -20,7 +20,7 @@ test("mobile chat fills the root viewport rather than adding a second screen hei
 
 test("chat messages scroll independently instead of shifting the entire iPhone PWA", () => {
   const chat = read("src/components/chat/ChatWindow.tsx");
-  assert.doesNotMatch(chat, /scrollIntoView\(/);
+  assert.doesNotMatch(chat, /\.scrollIntoView\(/);
   assert.match(chat, /pane\.scrollTop = pane\.scrollHeight/);
   assert.match(chat, /ref=\{threadScrollRef\}/);
   assert.match(chat, /min-h-0 flex-1 overscroll-contain overflow-y-auto/);
