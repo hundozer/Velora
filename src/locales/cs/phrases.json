@@ -2545,5 +2545,7 @@
   "View content": "Zobrazit obsah",
   "Find a conversation": "Najít konverzaci",
   "More than a feed": "Víc než jen příspěvky",
-  "A post is a starting point. Meet people or join a room to keep the conversation going.": "Příspěvkem to začíná. Poznej nové lidi nebo se zapoj do místnosti a pokračuj v rozhovoru."
+  "A post is a starting point. Meet people or join a room to keep the conversation going.": "Příspěvkem to začíná. Poznej nové lidi nebo se zapoj do místnosti a pokračuj v rozhovoru.",
+  "We couldn't confirm your existing profile. Try again.": "Nepodařilo se ověřit váš existující profil. Zkuste to znovu.",
+  "Not ready to message someone? Start with a public room.": "Nechcete zatím nikomu psát soukromě? Začněte ve veřejné místnosti."
 }
