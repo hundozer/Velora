@@ -31,7 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const owner = auth.room.creator_id === me;
   const ownRequest = owner
     ? Promise.resolve({ data: null, error: null })
-    : auth.db.from("room_join_requests").select("status").eq("room_id", params.id).eq("requester_id", me).maybeSingle();
+    : auth.db.from("room_join_requests").select("status,decided_at").eq("room_id", params.id).eq("requester_id", me).maybeSingle();
   const membership = owner
     ? Promise.resolve({ data: { profile_id: me }, error: null })
     : auth.db.from("room_members").select("profile_id").eq("room_id", params.id).eq("profile_id", me).maybeSingle();
@@ -41,7 +41,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     room: auth.room,
     isOwner: owner,
     isMember: !!member.data,
-    status: member.data ? "MEMBER" : request.data?.status || "NONE",
+    status: member.data ? "MEMBER" : request.data?.status === "APPROVED" ? "NONE" : request.data?.status || "NONE",
+    retryAfter: !member.data && request.data?.status === "CANCELLED" && request.data.decided_at
+      ? new Date(new Date(request.data.decided_at).getTime() + 24 * 3600_000).toISOString() : null,
   };
   if (owner) {
     const { data: pending, error } = await auth.db.from("room_join_requests")
