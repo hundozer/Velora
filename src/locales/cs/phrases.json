@@ -2479,5 +2479,15 @@
   "{length} photos attached to this album.": "K tomuto albu jsou připojeny {length} fotky.",
   "Approval pending. Approved viewers cannot see these photos yet.": "Čeká se na schválení. Schválení diváci tyto fotky zatím nevidí.",
   "Approved photos are visible to this album’s permitted viewers.": "Schválené fotky vidí lidé s přístupem k tomuto albu.",
-  "Photos saved. Album is available to permitted viewers.": "Fotky byly uloženy. Album je dostupné lidem s oprávněním."
+  "Photos saved. Album is available to permitted viewers.": "Fotky byly uloženy. Album je dostupné lidem s oprávněním.",
+  "Get discreet notifications": "Dostávej diskrétní oznámení",
+  "Allow notifications": "Povolit oznámení",
+  "Enabling…": "Zapínání…",
+  "Stay in touch with Intimo.": "Zůstaň v kontaktu s Intimem.",
+  "Get a discreet alert when something happens, even when the app is closed.": "Dostávej diskrétní upozornění na novinky, i když je aplikace zavřená.",
+  "New messages and private-photo access updates": "Nové zprávy a změny přístupu k soukromým fotkám",
+  "No names, message text or private details on your lock screen.": "Na zamčené obrazovce se nezobrazí jména, text zpráv ani soukromé detaily.",
+  "You can switch notifications off in Settings whenever you like.": "Oznámení můžeš kdykoli vypnout v nastavení.",
+  "Notifications aren't available yet. Try again in Settings.": "Oznámení zatím nejsou dostupná. Zkus to znovu v nastavení.",
+  "We couldn't enable notifications on this device. Try again or use Settings.": "Na tomto zařízení se nepodařilo zapnout oznámení. Zkus to znovu nebo přejdi do nastavení."
 }
