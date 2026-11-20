@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resolveServerActor } from "@/lib/auth/serverActor";
+import { isAdminActor, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
 
@@ -39,7 +39,29 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       : "Album media could not be updated";
     return NextResponse.json({ error: reason }, { status: 409 });
   }
-  const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorUserId: auth.actor.userId, action: "ALBUM_MEDIA_SET", resourceType: "ALBUM", resourceId: params.id, outcome: "SUCCESS", metadata: { mediaCount: uniqueIds.length, coverMediaId } });
+  // Admin-owned albums can be published as soon as their photos are approved.
+  // The RPC resets moderation to pending after every photo change; perform this
+  // check afterwards and never publish an empty or not-ready album.
+  let adminSelfApproved = false;
+  if (isAdminActor(auth.actor) && uniqueIds.length > 0) {
+    const { data: ready, error: readyError } = await db.from("media_objects")
+      .select("id,visibility,media_type,upload_status,processing_status,moderation_status")
+      .in("id", uniqueIds).eq("owner_id", auth.actor.profileId);
+    if (readyError) return NextResponse.json({ error: "Album photos were saved but approval could not be checked; retry." }, { status: 502 });
+    const allReady = ready?.length === uniqueIds.length && ready.every(photo =>
+      photo.media_type === "IMAGE" && photo.upload_status === "AVAILABLE" &&
+      photo.processing_status === "READY" && photo.moderation_status === "APPROVED" &&
+      (album.visibility !== "PRIVATE_APPROVED" || photo.visibility === "PRIVATE") &&
+      (album.visibility !== "PUBLIC" || photo.visibility === "PUBLIC"));
+    if (allReady) {
+      const { error: approvalError } = await db.from("media_albums")
+        .update({ moderation_status: "APPROVED", published_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq("id", params.id).eq("owner_id", auth.actor.profileId).eq("moderation_status", "PENDING_REVIEW");
+      if (approvalError) return NextResponse.json({ error: "Photos saved, but album approval failed; retry." }, { status: 502 });
+      adminSelfApproved = true;
+    }
+  }
+  const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorUserId: auth.actor.userId, action: "ALBUM_MEDIA_SET", resourceType: "ALBUM", resourceId: params.id, outcome: "SUCCESS", metadata: { mediaCount: uniqueIds.length, coverMediaId, adminSelfApproved } });
   if (!audited) return NextResponse.json({ error: "Album media changed but audit evidence failed", albumId: params.id }, { status: 502 });
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, moderationStatus: adminSelfApproved ? "APPROVED" : "PENDING_REVIEW" });
 }
