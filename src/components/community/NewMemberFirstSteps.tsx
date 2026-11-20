@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Check, Compass, MessageCircle, UserRound } from "lucide-react";
+import { Check, Compass, MessageCircle, UserRound, UsersRound } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 
 type Progress = {
@@ -45,6 +45,12 @@ export function NewMemberFirstSteps() {
           <span className="text-sm font-semibold text-ink">{label}</span>
         </Link>
       ))}
+    </div>
+    <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-ink/10 pt-4">
+      <p className="text-sm text-velora-textSecondary">{t("Not ready to message someone? Start with a public room.")}</p>
+      <Link href="/rooms" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-velora-accent/40 px-4 text-sm font-semibold text-velora-accent hover:bg-velora-accent/10">
+        <UsersRound aria-hidden className="h-4 w-4" />{t("Explore rooms")}
+      </Link>
     </div>
   </section>;
 }
