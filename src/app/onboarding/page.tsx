@@ -47,7 +47,9 @@ function OnboardingForm() {
   const [partnerDateOfBirth, setPartnerDateOfBirth] = useState("");
   const [lookingFor, setLookingFor] = useState<string[]>([]);
   const [areaId, setAreaId] = useState("");
+  const [areaGroup, setAreaGroup] = useState<"prague" | "nearby" | "elsewhere">("prague");
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = React.useRef(false);
   const [error, setError] = useState("");
   const [photoProgress, setPhotoProgress] = useState<number | null>(null);
 
@@ -64,6 +66,8 @@ function OnboardingForm() {
   const partnerValid = !whoIsHereError({ profileType, gender, relationshipStatus, partnerDisplayName, partnerDateOfBirth });
 
   async function createProfile(area: string) {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setAreaId(area);
     setSubmitting(true);
     setError("");
@@ -88,12 +92,20 @@ function OnboardingForm() {
         }),
       });
       const payload = await response.json().catch(() => ({}));
-      // 409: the profile already exists (a retried submit), so carry on.
-      if (!response.ok && response.status !== 409) throw new Error(payload.error || "That didn't work. Try again.");
+      if (response.status === 409 && payload.error === "Profile already exists") {
+        // Only an authenticated read of this account's own profile can confirm
+        // that a resumed onboarding really completed. Other conflicts are errors.
+        const current = await fetch("/api/profile/me", { credentials: "same-origin", cache: "no-store" });
+        if (!current.ok) throw new Error("We couldn't confirm your existing profile. Try again.");
+        window.location.replace("/verify-age");
+        return;
+      }
+      if (!response.ok) throw new Error(payload.error || "That didn't work. Try again.");
       setStep("photo");
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "That didn't work. Try again.");
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   }
@@ -186,23 +198,35 @@ function OnboardingForm() {
     </FlowScreen>
   );
 
+
   if (step === "area") return (
-    <FlowScreen {...screen} title={t("Where are you?")}>
-      {t(errorLine)}
-      {submitting && <p role="status" className="text-lg text-velora-textSecondary">{t("Creating your profile…")}</p>}
-      <div className={`grid grid-cols-2 gap-3 ${submitting ? "pointer-events-none opacity-50" : ""}`}>
-        {AREAS.filter((area) => area.kind === "PRAGUE_DISTRICT").map((area) => (
-          <button key={area.id} type="button" aria-pressed={areaId === area.id} onClick={() => createProfile(area.id)} className={`min-h-20 rounded-3xl border-2 px-4 py-3 text-left transition active:scale-[0.98] ${areaId === area.id ? "border-velora-accent bg-velora-accent/[0.06]" : "border-velora-line bg-velora-surface hover:border-velora-ink/30"}`}>
-            <span className="block text-lg font-semibold text-velora-textPrimary">{t(area.name)}</span>
-            <span className="block truncate text-sm text-velora-textMuted">{t(area.label)}</span>
+    <FlowScreen {...screen} title={t("Where are you?")} action={<BigButton disabled={!areaId || submitting} onClick={() => void createProfile(areaId)}>{submitting ? t("Creating your profile…") : t("Continue")}</BigButton>}>
+      <p className="text-base leading-6 text-velora-textMuted">{t("Choose an approximate area, not your address. You can change it later.")}</p>
+      {errorLine}
+      <div role="group" aria-label={t("Choose an area group")} className="grid grid-cols-3 gap-2 rounded-2xl border border-velora-line bg-velora-surface p-2">
+        {([
+          ["prague", "Prague"],
+          ["nearby", "Near Prague"],
+          ["elsewhere", "Elsewhere"],
+        ] as const).map(([value, label]) => (
+          <button key={value} type="button" disabled={submitting} aria-pressed={areaGroup === value}
+            onClick={() => { setAreaGroup(value); setAreaId(""); setError(""); }}
+            className={`min-h-12 rounded-xl px-2 py-2 text-sm font-semibold transition disabled:opacity-50 ${areaGroup === value ? "bg-velora-accent text-velora-paper" : "text-velora-ink hover:bg-ink/10"}`}>
+            {t(label)}
           </button>
         ))}
       </div>
-      <div className={`space-y-3 pt-3 ${submitting ? "pointer-events-none opacity-50" : ""}`}>
-        {AREAS.filter((area) => area.kind !== "PRAGUE_DISTRICT").map((area) => (
-          <ChoiceCard key={area.id} compact label={t(area.name)} selected={areaId === area.id} onClick={() => createProfile(area.id)} />
+      <div className="grid grid-cols-2 gap-3">
+        {AREAS.filter(area => areaGroup === "prague" ? area.kind === "PRAGUE_DISTRICT" : areaGroup === "nearby" ? area.kind === "NEAR_PRAGUE" : area.kind === "CZECHIA" || area.kind === "ABROAD").map(area => (
+          <button key={area.id} type="button" disabled={submitting} aria-pressed={areaId === area.id}
+            onClick={() => { setAreaId(area.id); setError(""); }}
+            className={`min-h-16 rounded-2xl border-2 px-3 py-3 text-left transition active:scale-[0.98] disabled:opacity-50 ${areaId === area.id ? "border-velora-accent bg-velora-accent/[0.06]" : "border-velora-line bg-velora-surface hover:border-velora-ink/30"}`}>
+            <span className="block text-base font-semibold text-velora-textPrimary">{t(area.name)}</span>
+            {area.label && <span className="block text-xs leading-5 text-velora-textMuted">{t(area.label)}</span>}
+          </button>
         ))}
       </div>
+      {areaId && <p role="status" className="text-sm text-velora-textSecondary">{t("Selected area: {area}", { area: t(AREAS.find(area => area.id === areaId)?.name || "") })}</p>}
     </FlowScreen>
   );
 
@@ -215,7 +239,8 @@ function OnboardingForm() {
         <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={photoProgress !== null} onChange={uploadPhoto} />
       </label>
       <p className="flex items-center gap-2 text-base text-velora-textMuted"><Heart className="h-4 w-4 text-velora-gold" aria-hidden />{t("Members only. Keep it non-explicit.")}</p>
-      {t(errorLine)}
+      <p className="text-sm leading-6 text-velora-textSecondary">{t("Your profile photo is optional. The separate private age check is required before joining the community.")}</p>
+      {errorLine}
       <button type="button" disabled={photoProgress !== null} onClick={() => window.location.replace("/verify-age")} className="w-full py-4 text-lg font-semibold text-velora-textSecondary hover:text-velora-textPrimary">{t("Skip for now")}</button>
     </FlowScreen>
   );
