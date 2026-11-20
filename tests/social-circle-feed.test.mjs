@@ -17,6 +17,7 @@ const empty = new Set(), follow = new Set([publisher]), friends = new Set([publi
 test("private and unknown visibility never enter feed, even for friends and follows", () => {
   for (const visibility of ["PRIVATE", "DRAFT", "UNLISTED", "", "PUBLIC_EVERYWHERE"]) {
     assert.equal(canShowFeedAudience(visibility, publisher, viewer, follow, friends), false);
+    assert.equal(canShowFeedAudience(visibility, publisher, publisher, follow, friends), false);
   }
 });
 test("followers-only access requires an explicit follow", () => {
