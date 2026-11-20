@@ -47,6 +47,7 @@ function OnboardingForm() {
   const [partnerDateOfBirth, setPartnerDateOfBirth] = useState("");
   const [lookingFor, setLookingFor] = useState<string[]>([]);
   const [areaId, setAreaId] = useState("");
+  const [areaGroup, setAreaGroup] = useState<"prague" | "nearby" | "elsewhere">("prague");
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = React.useRef(false);
   const [error, setError] = useState("");
@@ -197,23 +198,35 @@ function OnboardingForm() {
     </FlowScreen>
   );
 
+
   if (step === "area") return (
-    <FlowScreen {...screen} title={t("Where are you?")}>
+    <FlowScreen {...screen} title={t("Where are you?")} action={<BigButton disabled={!areaId || submitting} onClick={() => void createProfile(areaId)}>{submitting ? t("Creating your profile…") : t("Continue")}</BigButton>}>
+      <p className="text-base leading-6 text-velora-textMuted">{t("Choose an approximate area, not your address. You can change it later.")}</p>
       {errorLine}
-      {submitting && <p role="status" className="text-lg text-velora-textSecondary">{t("Creating your profile…")}</p>}
-      <div className={`grid grid-cols-2 gap-3 ${submitting ? "pointer-events-none opacity-50" : ""}`}>
-        {AREAS.filter((area) => area.kind === "PRAGUE_DISTRICT").map((area) => (
-          <button key={area.id} type="button" disabled={submitting} aria-busy={submitting && areaId === area.id} aria-pressed={areaId === area.id} onClick={() => void createProfile(area.id)} className={`min-h-20 rounded-3xl border-2 px-4 py-3 text-left transition active:scale-[0.98] ${areaId === area.id ? "border-velora-accent bg-velora-accent/[0.06]" : "border-velora-line bg-velora-surface hover:border-velora-ink/30"}`}>
-            <span className="block text-lg font-semibold text-velora-textPrimary">{t(area.name)}</span>
-            <span className="block truncate text-sm text-velora-textMuted">{t(area.label)}</span>
+      <div role="group" aria-label={t("Choose an area group")} className="grid grid-cols-3 gap-2 rounded-2xl border border-velora-line bg-velora-surface p-2">
+        {([
+          ["prague", "Prague"],
+          ["nearby", "Near Prague"],
+          ["elsewhere", "Elsewhere"],
+        ] as const).map(([value, label]) => (
+          <button key={value} type="button" disabled={submitting} aria-pressed={areaGroup === value}
+            onClick={() => setAreaGroup(value)}
+            className={`min-h-12 rounded-xl px-2 py-2 text-sm font-semibold transition disabled:opacity-50 ${areaGroup === value ? "bg-velora-accent text-velora-paper" : "text-velora-ink hover:bg-ink/10"}`}>
+            {t(label)}
           </button>
         ))}
       </div>
-      <div className={`space-y-3 pt-3 ${submitting ? "pointer-events-none opacity-50" : ""}`}>
-        {AREAS.filter((area) => area.kind !== "PRAGUE_DISTRICT").map((area) => (
-          <div key={area.id} aria-disabled={submitting}><ChoiceCard compact label={t(area.name)} selected={areaId === area.id} onClick={() => { if (!submittingRef.current) void createProfile(area.id); }} /></div>
+      <div className="grid grid-cols-2 gap-3">
+        {AREAS.filter(area => areaGroup === "prague" ? area.kind === "PRAGUE_DISTRICT" : areaGroup === "nearby" ? area.kind === "NEAR_PRAGUE" : area.kind === "CZECHIA" || area.kind === "ABROAD").map(area => (
+          <button key={area.id} type="button" disabled={submitting} aria-pressed={areaId === area.id}
+            onClick={() => { setAreaId(area.id); setError(""); }}
+            className={`min-h-16 rounded-2xl border-2 px-3 py-3 text-left transition active:scale-[0.98] disabled:opacity-50 ${areaId === area.id ? "border-velora-accent bg-velora-accent/[0.06]" : "border-velora-line bg-velora-surface hover:border-velora-ink/30"}`}>
+            <span className="block text-base font-semibold text-velora-textPrimary">{t(area.name)}</span>
+            {area.label && <span className="block text-xs leading-5 text-velora-textMuted">{t(area.label)}</span>}
+          </button>
         ))}
       </div>
+      {areaId && <p role="status" className="text-sm text-velora-textSecondary">{t("Selected area: {area}", { area: t(AREAS.find(area => area.id === areaId)?.name || "") })}</p>}
     </FlowScreen>
   );
 
