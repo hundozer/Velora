@@ -239,6 +239,7 @@ function OnboardingForm() {
         <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={photoProgress !== null} onChange={uploadPhoto} />
       </label>
       <p className="flex items-center gap-2 text-base text-velora-textMuted"><Heart className="h-4 w-4 text-velora-gold" aria-hidden />{t("Members only. Keep it non-explicit.")}</p>
+      <p className="text-sm leading-6 text-velora-textSecondary">{t("Your profile photo is optional. The separate private age check is required before joining the community.")}</p>
       {t(errorLine)}
       <button type="button" disabled={photoProgress !== null} onClick={() => window.location.replace("/verify-age")} className="w-full py-4 text-lg font-semibold text-velora-textSecondary hover:text-velora-textPrimary">{t("Skip for now")}</button>
     </FlowScreen>
