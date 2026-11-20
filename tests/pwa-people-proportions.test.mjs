@@ -6,7 +6,7 @@ const read = path => readFileSync(new URL("../" + path, import.meta.url), "utf8"
 test("people header and Stories are in separate mobile rows", () => {
   const page = read("src/components/people/MemberPeople.tsx");
   assert.match(page, /<header className=\{\`relative z-20/);
-  assert.match(page, /min-h-\[68px\]/);
+  assert.match(page, /min-h-\[64px\]/);
   assert.match(page, /items-center justify-between gap-3/);
   assert.doesNotMatch(page, /absolute inset-x-0 top-0 md:static/);
   assert.match(page, /relative z-10 mx-auto max-w-2xl/);
