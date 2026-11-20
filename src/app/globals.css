@@ -178,3 +178,33 @@ html[data-discreet="on"] main video:not([data-revealed]) {
 .intimo-member-rule { border-color: rgb(var(--line) / .8); }
 .intimo-member-caption { color: rgb(var(--muted)); font-size: 12px; letter-spacing: .02em; }
 .intimo-member-portrait { overflow: hidden; border-radius: 0; background: rgb(var(--sunken)); }
+
+/*
+ * A phone conversation is one viewport, not a normal scrolling article.
+ * On iPhone standalone PWAs the status bar and home indicator are separate
+ * safe areas; reserve them explicitly. Only the messages pane itself scrolls.
+ * On-screen keyboard changes 100dvh, unlike 100svh/100vh.
+ */
+@media (max-width: 767px) {
+  body:has(.intimo-messages-page) {
+    height: 100dvh;
+    min-height: 0;
+    max-height: 100dvh;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: 0;
+    overflow: hidden;
+  }
+
+  body:has(.intimo-messages-page) > main {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .intimo-messages-page {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
