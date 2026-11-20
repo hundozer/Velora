@@ -48,6 +48,7 @@ function OnboardingForm() {
   const [lookingFor, setLookingFor] = useState<string[]>([]);
   const [areaId, setAreaId] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = React.useRef(false);
   const [error, setError] = useState("");
   const [photoProgress, setPhotoProgress] = useState<number | null>(null);
 
@@ -64,6 +65,8 @@ function OnboardingForm() {
   const partnerValid = !whoIsHereError({ profileType, gender, relationshipStatus, partnerDisplayName, partnerDateOfBirth });
 
   async function createProfile(area: string) {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setAreaId(area);
     setSubmitting(true);
     setError("");
@@ -88,12 +91,20 @@ function OnboardingForm() {
         }),
       });
       const payload = await response.json().catch(() => ({}));
-      // 409: the profile already exists (a retried submit), so carry on.
-      if (!response.ok && response.status !== 409) throw new Error(payload.error || "That didn't work. Try again.");
+      if (response.status === 409 && payload.error === "Profile already exists") {
+        // Only an authenticated read of this account's own profile can confirm
+        // that a resumed onboarding really completed. Other conflicts are errors.
+        const current = await fetch("/api/profile/me", { credentials: "same-origin", cache: "no-store" });
+        if (!current.ok) throw new Error("We couldn't confirm your existing profile. Try again.");
+        window.location.replace("/verify-age");
+        return;
+      }
+      if (!response.ok) throw new Error(payload.error || "That didn't work. Try again.");
       setStep("photo");
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "That didn't work. Try again.");
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   }
@@ -188,11 +199,11 @@ function OnboardingForm() {
 
   if (step === "area") return (
     <FlowScreen {...screen} title={t("Where are you?")}>
-      {t(errorLine)}
+      {errorLine}
       {submitting && <p role="status" className="text-lg text-velora-textSecondary">{t("Creating your profile…")}</p>}
       <div className={`grid grid-cols-2 gap-3 ${submitting ? "pointer-events-none opacity-50" : ""}`}>
         {AREAS.filter((area) => area.kind === "PRAGUE_DISTRICT").map((area) => (
-          <button key={area.id} type="button" aria-pressed={areaId === area.id} onClick={() => createProfile(area.id)} className={`min-h-20 rounded-3xl border-2 px-4 py-3 text-left transition active:scale-[0.98] ${areaId === area.id ? "border-velora-accent bg-velora-accent/[0.06]" : "border-velora-line bg-velora-surface hover:border-velora-ink/30"}`}>
+          <button key={area.id} type="button" disabled={submitting} aria-busy={submitting && areaId === area.id} aria-pressed={areaId === area.id} onClick={() => void createProfile(area.id)} className={`min-h-20 rounded-3xl border-2 px-4 py-3 text-left transition active:scale-[0.98] ${areaId === area.id ? "border-velora-accent bg-velora-accent/[0.06]" : "border-velora-line bg-velora-surface hover:border-velora-ink/30"}`}>
             <span className="block text-lg font-semibold text-velora-textPrimary">{t(area.name)}</span>
             <span className="block truncate text-sm text-velora-textMuted">{t(area.label)}</span>
           </button>
@@ -200,7 +211,7 @@ function OnboardingForm() {
       </div>
       <div className={`space-y-3 pt-3 ${submitting ? "pointer-events-none opacity-50" : ""}`}>
         {AREAS.filter((area) => area.kind !== "PRAGUE_DISTRICT").map((area) => (
-          <ChoiceCard key={area.id} compact label={t(area.name)} selected={areaId === area.id} onClick={() => createProfile(area.id)} />
+          <div key={area.id} aria-disabled={submitting}><ChoiceCard compact label={t(area.name)} selected={areaId === area.id} onClick={() => { if (!submittingRef.current) void createProfile(area.id); }} /></div>
         ))}
       </div>
     </FlowScreen>
