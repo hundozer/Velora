@@ -22,7 +22,7 @@ function feedFixture({authenticated=true, blocked=false}={}) {
       if(key==='then')return(resolve)=>{
         executed.push({table,columns,options,filters});
         const data=table==='user_blocks' ? (blocked?[{blocker_id:'viewer',blocked_profile_id:owner}]:[])
-          :table==='media_objects'?[{id,owner_id:owner,media_type:'IMAGE',title:'Photo',published_at:'2026-11-01T12:00:00Z'}]
+          :table==='media_objects'?[{id,owner_id:owner,media_type:'IMAGE',visibility:'PUBLIC',title:'Photo',published_at:'2026-11-01T12:00:00Z'}]
           :table==='profiles'?[{id:owner,display_name:'Member',account_status:'ACTIVE'}]
           :table==='content_reactions'&& !options?.head?[{target_type:'MEDIA',target_id:id}]:[];
         return resolve({data,error:null,count:2});
@@ -34,6 +34,7 @@ function feedFixture({authenticated=true, blocked=false}={}) {
     '@/lib/auth/serverActor':{resolveServerActor:async()=>authenticated?{status:'authenticated',actor:{profileId:'viewer',userId:'viewer'}}:{status:'unauthenticated'},hasAdultAccess:()=>true},
     '@/lib/security/rateLimiter':{checkRateLimit:async()=>({allowed:true})},
     '@/lib/supabase/server':{getServerSupabase:()=>db},
+    '@/lib/feed/audience':load('src/lib/feed/audience.ts',{}),
   });
   return{api,executed};
 }

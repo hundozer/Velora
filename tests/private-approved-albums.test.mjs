@@ -15,7 +15,11 @@ test("new audience is distinct from owner-only PRIVATE, without migrating old al
 
 test("private albums cannot enter community or public feeds", () => {
   const feed = read("src/app/api/feed/route.ts");
-  assert.match(feed, /\.in\("visibility", scope === "followed" \? \["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY"\] : \["PUBLIC", "MEMBERS_ONLY"\]\)/);
+  assert.match(feed, /scope === "newest" \? \["PUBLIC", "MEMBERS_ONLY"\]/);
+  assert.match(feed, /const visibleAlbums = \(albumRows \|\| \[\]\)\.filter\(row => allowed\(row.visibility, row.owner_id\)\)/);
+  const audience = read("src/lib/feed/audience.ts");
+  assert.match(audience, /if \(visibility === "FRIENDS_ONLY"\) return friends\.has\(ownerId\)/);
+  assert.match(audience, /if \(!\["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY", "FRIENDS_ONLY"\]\.includes\(visibility\)\) return false/);
   assert.doesNotMatch(feed, /PRIVATE_APPROVED/);
   const publicAlbums = read("src/app/api/public/albums/route.ts");
   assert.match(publicAlbums, /\.eq\("visibility", "PUBLIC"\)/);
