@@ -210,7 +210,7 @@ function OnboardingForm() {
           ["elsewhere", "Elsewhere"],
         ] as const).map(([value, label]) => (
           <button key={value} type="button" disabled={submitting} aria-pressed={areaGroup === value}
-            onClick={() => setAreaGroup(value)}
+            onClick={() => { setAreaGroup(value); setAreaId(""); setError(""); }}
             className={`min-h-12 rounded-xl px-2 py-2 text-sm font-semibold transition disabled:opacity-50 ${areaGroup === value ? "bg-velora-accent text-velora-paper" : "text-velora-ink hover:bg-ink/10"}`}>
             {t(label)}
           </button>
