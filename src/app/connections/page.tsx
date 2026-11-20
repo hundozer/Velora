@@ -44,7 +44,8 @@ export default function ConnectionsPage() {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Connection action failed");
       await refresh();
-      const resultLabel = action === "ACCEPT" ? "Request accepted. You are now connected." : action === "DECLINE" ? "Request declined." : "Connection updated.";
+      const priorStatus = connections.find(item => item.peerId === peerId)?.status;
+      const resultLabel = action === "ACCEPT" ? "Request accepted. You are now connected." : action === "DECLINE" ? "Request declined." : priorStatus === "SENT" ? "Request cancelled." : "Connection removed.";
       setNotice(resultLabel);
       if (action === "ACCEPT") setFilter("CONNECTED");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Connection action failed"); }
