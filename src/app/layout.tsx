@@ -11,6 +11,7 @@ import { MobileNavigation } from "@/components/layout/MobileNavigation";
 import { AgeVerificationModal } from "@/components/common/AgeVerificationModal";
 import { AgeCheckGate } from "@/components/auth/AgeCheckGate";
 import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration";
+import { MobileInstallBanner } from "@/components/pwa/MobileInstallBanner";
 import { DiscreetMode } from "@/components/privacy/DiscreetMode";
 import { serverLang, serverT } from "@/lib/i18n/server";
 import { COMING_SOON } from "@/lib/comingSoon.mjs";
@@ -73,6 +74,7 @@ export default function RootLayout({
         <LanguageProvider initialLanguage={lang}>
           <AuthProvider>
             <Navbar />
+            <MobileInstallBanner />
             <AgeVerificationModal />
             <main className="flex-1 w-full"><AgeCheckGate>{children}</AgeCheckGate></main>
             <MobileNavigation />
