@@ -2536,5 +2536,6 @@
   "Too many room requests": "Příliš mnoho žádostí do místností",
   "Invalid membership request": "Neplatná žádost o členství",
   "This room is open to everyone": "Tato místnost je otevřená všem",
-  "Request again": "Požádat znovu"
+  "Request again": "Požádat znovu",
+  "Approve": "Schválit"
 }
