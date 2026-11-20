@@ -23,6 +23,7 @@ export const Footer: React.FC = () => {
   const pathname = usePathname();
   const { user } = useAuth();
   if (isFlowPath(pathname)) return null;
+  if (pathname.startsWith("/messages")) return null;
   const links = COMING_SOON && !user ? LINKS.filter(([, href]) => href.startsWith("/legal/")) : LINKS;
   return (
     <footer className="mt-10 w-full border-t border-velora-line">

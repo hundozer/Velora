@@ -116,9 +116,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const [attachOpen, setAttachOpen] = useState(false);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
-  const threadEnd = React.useRef<HTMLDivElement>(null);
-
-  useEffect(() => { threadEnd.current?.scrollIntoView({ block: "end" }); }, [messages.length, loadedThread]);
+  const threadScrollRef = React.useRef<HTMLDivElement>(null);
+  // Only scroll the message pane, never the document. scrollIntoView would pull
+  // the entire PWA page down and leave a large blank area above the chat header.
+  useEffect(() => {
+    const pane = threadScrollRef.current;
+    if (pane) pane.scrollTop = pane.scrollHeight;
+  }, [messages.length, loadedThread]);
 
   const loadOlder = async () => {
     if (!nextCursor || loadingOlder) return;
@@ -216,7 +220,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const status = participant.isOnline ? "Here now" : null;
 
   return (
-    <div className="grid h-[calc(100svh-4rem)] grid-cols-1 text-left md:h-[calc(100vh-7rem)] md:grid-cols-[340px_minmax(0,1fr)] md:gap-0 md:overflow-hidden md:rounded-[28px] md:border md:border-velora-line md:bg-velora-surface">
+    <div className="grid h-full min-h-0 grid-cols-1 text-left md:h-[calc(100vh-7rem)] md:grid-cols-[340px_minmax(0,1fr)] md:gap-0 md:overflow-hidden md:rounded-[28px] md:border md:border-velora-line md:bg-velora-surface">
       {/* Conversations */}
       <section aria-label={t("Conversations")} className={`${phonePane === "list" ? "flex" : "hidden"} min-h-0 flex-col bg-velora-surface md:flex md:border-r md:border-velora-line`}>
         <div className="px-5 pb-3 pt-5">
@@ -261,7 +265,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
       {/* Thread */}
       <section aria-label={t("Conversation with {name}", { name: name })} className={`${phonePane === "thread" ? "flex" : "hidden"} min-h-0 flex-col bg-velora-surface md:flex`}>
-        <header className="flex items-center gap-3 border-b border-velora-line px-3 py-2 md:px-6">
+        <header className="flex shrink-0 items-center gap-2.5 border-b border-velora-line px-3 py-2.5 md:gap-3 md:px-6">
           <button type="button" onClick={onBackToList} aria-label={t("Back to conversations")} className="flex h-11 w-11 items-center justify-center text-velora-ink md:hidden"><ArrowLeft className="h-5 w-5" aria-hidden /></button>
           <StoryAvatar ownerId={participantId} src={participant.avatarUrl} name={name} size={46}/>
           <Link href={`/profile/${participantId}`} className="flex min-w-0 flex-1 items-center gap-3">
@@ -282,7 +286,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           </div>
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-8">
+        <div ref={threadScrollRef} className="min-h-0 flex-1 overscroll-contain overflow-y-auto px-4 py-4 md:px-8 md:py-5">
           {context.plan && (
             <blockquote className="mb-5 border-l-2 border-velora-copper pl-4">
               <p className="text-[14px] text-velora-ink2">{t("Replying to {her} invitation", { her })}{planWindow(context.plan) ? ` · ${planWindow(context.plan).replace(" until ", ` ${t("until")} `)}` : ""}</p>
@@ -314,11 +318,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               );
             })}
           </ol>
-          <div ref={threadEnd} />
+
         </div>
 
         {/* Photos are private chat media (P1-10): served only to the two participants. */}
-        <div className="border-t border-velora-line bg-velora-surface px-4 pb-3 pt-3 md:px-8">
+        <div className="shrink-0 border-t border-velora-line bg-velora-surface px-3 pb-2 pt-2 md:px-8 md:pb-3 md:pt-3">
           {openers.length > 0 && (
             <div className="mb-3">
               <div className="flex items-baseline justify-between">
@@ -344,12 +348,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               <label className="mt-3 flex items-center gap-3 text-[15px] text-velora-ink"><input type="checkbox" checked={photoViewOnce} onChange={event=>setPhotoViewOnce(event.target.checked)} className="h-5 w-5 accent-velora-ink"/>{t("View once — photo opens once for the recipient")}</label>
             </div>
           )}
-          <div className="flex items-end gap-2">
+          <div className="flex min-w-0 items-end gap-2">
             <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" aria-label={t("Choose a photo to send")} tabIndex={-1} className="sr-only" onChange={(event) => void sendPhoto(event.target.files?.[0])} />
             <button type="button" onClick={() => setAttachOpen(!attachOpen)} disabled={uploadingPhoto !== null} aria-expanded={attachOpen} aria-label={t("Send a photo")} className="flex h-12 w-11 shrink-0 items-center justify-center text-velora-ink disabled:opacity-50">
               {uploadingPhoto !== null ? <span className="text-[13px]">{uploadingPhoto}%</span> : <Plus className="h-5 w-5" aria-hidden />}
             </button>
-            <label className="flex min-h-12 flex-1 items-center rounded-[24px] border border-velora-ink/60 bg-velora-surface px-4 focus-within:border-velora-ink">
+            <label className="flex min-h-12 min-w-0 flex-1 items-center rounded-[24px] border border-velora-ink/60 bg-velora-surface px-4 focus-within:border-velora-ink">
               <span className="sr-only">{t("Message {name}", { name })}</span>
               <textarea
                 ref={inputRef}

@@ -115,7 +115,7 @@ function MessagesContent() {
   }
 
   return (
-    <div className="intimo-member-page mx-auto max-w-6xl md:px-6 md:py-8">
+    <div data-intimo-messages-page className="intimo-member-page intimo-messages-page mx-auto min-h-0 max-w-6xl md:px-6 md:py-8">
       <ChatWindow
         conversations={conversations}
         activeConversation={activeConv}
