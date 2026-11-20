@@ -218,3 +218,35 @@ html[data-discreet="on"] main video:not([data-revealed]) {
     display: none;
   }
 }
+
+/* iOS standalone PWA: the translucent system status bar overlays the WebView.
+ * Give all screens one consistent safe-area origin and paint a solid backdrop
+ * over content scrolling beneath the clock and signal icons. The bottom
+ * navigation already owns the lower safe area. */
+@media (max-width: 767px) {
+  body {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top, 0px);
+    background: rgb(var(--paper));
+    z-index: 60;
+    pointer-events: none;
+  }
+
+  /* Profile, Dating and Tonight pages scroll beneath the system status bar,
+   * never through it. Scroll-linked controls remain reachable above the tabs. */
+  html {
+    scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
+  }
+
+  body:has(.intimo-messages-page) {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
