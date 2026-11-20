@@ -197,8 +197,8 @@ export function MemberPeople() {
       {/* Keep the logo, view tabs and Stories together during iPhone PWA scrolling.
           A single sticky stacking context prevents Stories becoming orphaned while
           the header scrolls off, as observed in the mobile screen recording. */}
-      <div data-people-mobile-header className={`sticky top-0 z-30 w-full md:static md:z-auto ${darkHeader ? "bg-velora-night" : "bg-velora-paper"}`}>
-      <header className={`relative z-20 mx-auto flex min-h-[68px] ${showIntroductions ? "max-w-5xl" : "max-w-2xl"} items-center justify-between gap-3 px-4 py-3 sm:px-8 md:pt-6 ${darkHeader ? "bg-velora-night text-velora-onPhoto md:bg-transparent" : "bg-velora-paper text-velora-ink"}`}>
+      <div data-people-mobile-header className={`sticky top-0 z-30 w-full pt-[env(safe-area-inset-top)] md:static md:z-auto md:pt-0 ${darkHeader ? "bg-velora-night" : "bg-velora-paper"}`}>
+      <header className={`relative z-20 mx-auto flex min-h-[64px] ${showIntroductions ? "max-w-5xl" : "max-w-2xl"} items-center justify-between gap-3 px-4 py-3 sm:px-8 md:pt-6 ${darkHeader ? "bg-velora-night text-velora-onPhoto md:bg-transparent" : "bg-velora-paper text-velora-ink"}`}>
         <Link href="/" className={`md:invisible ${darkHeader ? "text-velora-onPhoto md:text-velora-ink" : "text-velora-ink"}`} aria-label={t("Intimo")}><Logo className="h-7 w-auto" /></Link>
         <ModeSwitch view={view} onChange={switchView} dark={darkHeader} />
       </header>
@@ -208,15 +208,15 @@ export function MemberPeople() {
       {showIntroductions && introductions && (
         <div ref={spreads} className="mx-auto max-w-5xl md:space-y-6 md:px-8 md:pt-4">
           {introductions.map((person, index) => (
-            <div key={person.id} id={`intro-${index}`} className="scroll-mt-[125px] md:scroll-mt-4">
+            <div key={person.id} id={`intro-${index}`} className="scroll-mt-[calc(8rem+env(safe-area-inset-top))] md:scroll-mt-4">
               <IntroductionSpread person={person} priority={index === 0} next={introductions[index + 1] ?? null} onNext={() => scrollToId(index + 1 < introductions.length ? `intro-${index + 1}` : "everyone-nearby")} />
             </div>
           ))}
         </div>
       )}
 
-      <section id="everyone-nearby" aria-label={t("Everyone nearby")} className="mx-auto max-w-2xl scroll-mt-[125px] md:scroll-mt-4 border-t border-velora-line/50 px-5 pt-10 sm:px-8 md:pt-14">
-        {showIntroductions && <h1 className="intimo-member-heading mb-7">{t("Everyone nearby")}</h1>}
+      <section id="everyone-nearby" aria-label={t("Everyone nearby")} className="mx-auto max-w-2xl scroll-mt-[calc(8rem+env(safe-area-inset-top))] md:scroll-mt-4 border-t border-velora-line/50 px-5 pt-10 sm:px-8 md:pt-14">
+        {showIntroductions && <h1 className="intimo-member-heading mb-7 text-[clamp(2.75rem,11vw,4.75rem)] leading-[1.05] md:text-[clamp(3.25rem,8vw,6.25rem)]">{t("Everyone nearby")}</h1>}
         {!showIntroductions && <h1 className="sr-only">{t("People")}</h1>}
         <FilterSentence filters={filters} onOpen={(section) => setSheet({ open: true, section })} onSearch={onSearch} />
 
