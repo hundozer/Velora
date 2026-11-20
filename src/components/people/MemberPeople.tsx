@@ -194,11 +194,11 @@ export function MemberPeople() {
 
   return (
     <div className="intimo-member-page min-h-screen pb-24 md:pb-16">
-      <header className={`z-20 mx-auto flex ${showIntroductions ? "max-w-5xl" : "max-w-2xl"} items-center justify-between px-5 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-8 ${darkHeader ? "absolute inset-x-0 top-0 md:static md:pt-6" : "pt-4 md:pt-8"}`}>
+      <header className={`relative z-20 mx-auto flex min-h-[68px] ${showIntroductions ? "max-w-5xl" : "max-w-2xl"} items-center justify-between gap-3 px-4 py-3 sm:px-8 md:pt-6 ${darkHeader ? "bg-velora-night text-velora-onPhoto md:bg-transparent" : "bg-velora-paper text-velora-ink"}`}>
         <Link href="/" className={`md:invisible ${darkHeader ? "text-velora-onPhoto md:text-velora-ink" : "text-velora-ink"}`} aria-label={t("Intimo")}><Logo className="h-7 w-auto" /></Link>
         <ModeSwitch view={view} onChange={switchView} dark={darkHeader} />
       </header>
-      <div className={`mx-auto max-w-2xl px-5 py-3 text-sm sm:px-8 ${showIntroductions?"relative z-20 mt-16 text-velora-onPhoto md:mt-0 md:text-velora-ink":"text-velora-ink"}`}><Link href="/stories" className="inline-flex min-h-11 items-center border-b border-velora-warm pb-1 text-[13px] font-semibold tracking-wide text-velora-ink hover:text-velora-warm">{t("Stories · see what people are sharing")}</Link></div>
+      <div className={`relative z-10 mx-auto max-w-2xl px-4 pb-3 pt-1 sm:px-8 md:py-3 ${showIntroductions ? "bg-velora-night text-velora-onPhoto md:bg-transparent" : "text-velora-ink"}`}><Link href="/stories" className={`inline-flex min-h-11 items-center border-b border-velora-warm text-[13px] font-semibold tracking-wide hover:text-velora-warm ${showIntroductions ? "text-velora-onPhoto md:text-velora-ink" : "text-velora-ink"}`}>{t("Stories · see what people are sharing")}</Link></div>
 
       {showIntroductions && introductions && (
         <div ref={spreads} className="mx-auto max-w-5xl md:space-y-6 md:px-8 md:pt-4">

@@ -24,7 +24,7 @@ export function IntroductionSpread({ person, next, priority = false, onNext }: {
   const hello = person.isCoupleProfile ? t("Write to them") : t("Say hello");
 
   return (
-    <article aria-label={t("Introduction: {displayName}", { displayName: person.displayName })} className="relative isolate flex min-h-[calc(100svh-4rem-env(safe-area-inset-bottom))] flex-col justify-end overflow-hidden bg-velora-night text-velora-onPhoto md:min-h-[min(82vh,760px)] md:rounded-[28px]">
+    <article aria-label={t("Introduction: {displayName}", { displayName: person.displayName })} className="relative isolate flex min-h-[clamp(440px,68svh,680px)] flex-col justify-end overflow-hidden bg-velora-night text-velora-onPhoto md:min-h-[min(82vh,760px)] md:rounded-[28px]">
       {hasPhoto ? (
         <>
           <Portrait src={person.avatarUrl} name={person.displayName} priority={priority} dominantColor="#191c20" sizes="(min-width: 768px) 50vw, 100vw" className="absolute inset-0 -z-10 h-full w-full md:left-auto md:w-1/2" monogramClassName="text-[10rem]" />
@@ -40,7 +40,7 @@ export function IntroductionSpread({ person, next, priority = false, onNext }: {
         </div>
       )}
 
-      <div className="px-6 pb-8 pt-28 sm:px-10 md:max-w-[52%] md:pb-14 md:pl-14">
+      <div className="px-5 pb-7 pt-12 sm:px-10 md:max-w-[52%] md:pb-14 md:pl-14 md:pt-28">
         <div className="mb-5"><StoryAvatar ownerId={person.id} name={person.displayName} src={person.avatarUrl} size={64}/></div>
         {hasPhoto || !words ? (
           <>
@@ -50,7 +50,7 @@ export function IntroductionSpread({ person, next, priority = false, onNext }: {
                 {t(status)}
               </p>
             )}
-            <h2 className="mt-1 break-words font-display text-[clamp(4.5rem,24vw,7rem)] leading-[0.92] tracking-[-0.01em]">{person.displayName}</h2>
+            <h2 className="mt-2 break-words font-display text-[clamp(3.25rem,15vw,5.75rem)] leading-[0.98] tracking-[-0.01em] md:text-[clamp(4.5rem,8vw,7rem)]">{person.displayName}</h2>
             {words && <p className="mt-5 max-w-md font-display text-[clamp(1.4rem,6vw,1.75rem)] italic leading-[1.2] text-velora-onPhoto/95">&ldquo;{words}&rdquo;</p>}
           </>
         ) : (
@@ -62,7 +62,7 @@ export function IntroductionSpread({ person, next, priority = false, onNext }: {
           </>
         )}
         {person.foundingMember && <div className="mt-4"><FoundingMemberBadge onPhoto /></div>}
-        <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 text-[15px]">
+        <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[15px] md:mt-7 md:gap-x-6">
           <Link href={`/messages?user=${person.id}`} className="group inline-flex min-h-11 items-center gap-3 font-semibold text-velora-onPhoto">
             {hello}<span aria-hidden data-rule className="h-px w-8 bg-velora-onPhoto/70 transition-all group-hover:w-12" />
           </Link>
