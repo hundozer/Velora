@@ -6,10 +6,10 @@ import ts from "typescript";
 const source = readFileSync(new URL("../src/lib/rooms/access.ts", import.meta.url), "utf8");
 const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
 const memberId = "78100500-0000-4000-8000-000000000001";
-function helper({ signedIn = true, adult = true, admin = false, owner = false, approved = false, expired = false, locked = true } = {}) {
+function helper({ signedIn = true, adult = true, admin = false, owner = false, approved = false, blocked = false, expired = false, locked = true } = {}) {
   const calls = [];
   const room = { id: "private", title: "Private room", description: "Test", creator_id: owner ? memberId : "other", builtin: false, locked, expires_at: expired ? "2020-01-01T00:00:00Z" : null };
-  const db = { from(table) { calls.push(table); return { select() { return this; }, eq() { return this; }, maybeSingle: async () => ({ data: table === "rooms" ? room : approved ? { profile_id: memberId } : null, error: null }) }; } };
+  const db = { from(table) { calls.push(table); return { select() { return this; }, eq() { return this; }, or() { return this; }, limit() { return this; }, maybeSingle: async () => ({ data: table === "rooms" ? room : table === "room_members" ? approved ? { profile_id: memberId } : null : table === "user_blocks" && blocked ? { id: "block" } : null, error: null }) }; } };
   const mod = { exports: {} };
   new Function("require", "module", "exports", code)(name => ({
     "next/server": { NextResponse: { json: (body, { status = 200 } = {}) => Response.json(body, { status }) } },
@@ -28,6 +28,12 @@ test("locked room checks approved membership; creator and Intimo admin always en
     const route = helper(options); const r = await route.roomAccess({}, "private"); assert.equal(!("error" in r), allowed);
     assert.equal(route.calls.includes("room_members"), !options.owner && !options.admin);
   }
+});
+test("blocking room owner revokes approved member access on each room request", async () => {
+  const route = helper({ approved: true, blocked: true });
+  const result = await route.roomAccess({}, "private");
+  assert.equal(result.error.status, 403);
+  assert.deepEqual(route.calls, ["rooms", "room_members", "user_blocks"]);
 });
 test("expiry stops entry for owner and Intimo admin", async () => {
   for (const options of [{ owner: true, expired: true }, { admin: true, expired: true }]) assert.equal((await helper(options).roomAccess({}, "private")).error.status, 404);

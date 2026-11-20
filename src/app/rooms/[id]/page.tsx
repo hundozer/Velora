@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { RoomDirectMessage } from "@/components/rooms/RoomDirectMessage";
+import { RoomJoinRequestPanel } from "@/components/rooms/RoomJoinRequestPanel";
 
 type Message = { id: string; senderId: string; senderName: string; body: string; createdAt: string };
 type Member = { id: string; username: string; avatarUrl: string | null };
@@ -22,6 +23,7 @@ export default function RoomsPage() {
   const [error, setError] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [loaded, setLoaded] = React.useState(false);
+  const [accessDenied, setAccessDenied] = React.useState(false);
   const [reportId, setReportId] = React.useState<string | null>(null);
   const [reportReason, setReportReason] = React.useState("");
   const [members, setMembers] = React.useState<Member[]>([]);
@@ -29,7 +31,7 @@ export default function RoomsPage() {
   const [privatePeer, setPrivatePeer] = React.useState<Member | null>(null);
   const [presenceError, setPresenceError] = React.useState("");
   const load = React.useCallback(async () => {
-    try { const response = await fetch(endpoint, { cache: "no-store" }); const payload = await response.json(); if (!response.ok) throw Error(payload.error); setMessages(payload.messages || []); setRoom(payload.room || null); setError(""); }
+    try { const response = await fetch(endpoint, { cache: "no-store" }); const payload = await response.json(); if (!response.ok) { if (response.status === 403) { setAccessDenied(true); setMessages([]); setRoom(null); setError(""); return; } throw Error(payload.error); } setAccessDenied(false); setMessages(payload.messages || []); setRoom(payload.room || null); setError(""); }
     catch { setError("The room could not be loaded. Try again shortly."); }
     finally { setLoaded(true); }
   }, [endpoint]);
@@ -77,7 +79,8 @@ export default function RoomsPage() {
     <p className="mt-4 max-w-xl text-velora-ink2">{t(room?.description) || (id === "prague" ? t("The city-wide conversation. Say hello, talk about the scene, or find company.") : "")}</p>
     {room?.locked && <p className="mt-3 text-sm text-velora-muted">{t("Only approved members can read and post here.")}</p>}
     {room?.creator_id === profile?.id && <Link href={`/rooms/${encodeURIComponent(id)}/settings`} className="mt-3 inline-block text-velora-accent underline">{t("Manage room and members")}</Link>}
-    {!user ? <p className="mt-6 text-velora-textSecondary">{t("Rooms are for members.")}{" "}<Link href="/login" className="inline-flex min-h-11 items-center text-velora-accent underline">{t("Sign in")}</Link>{" "}<Link href="/register" className="inline-flex min-h-11 items-center text-velora-accent underline">{t("How to join")}</Link></p> : <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]"><div className="min-w-0">
+    {user && <RoomJoinRequestPanel roomId={id} />}
+    {!user ? <p className="mt-6 text-velora-textSecondary">{t("Rooms are for members.")}{" "}<Link href="/login" className="inline-flex min-h-11 items-center text-velora-accent underline">{t("Sign in")}</Link>{" "}<Link href="/register" className="inline-flex min-h-11 items-center text-velora-accent underline">{t("How to join")}</Link></p> : accessDenied ? null : <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]"><div className="min-w-0">
       {error && <p role="status" className="mt-5 text-velora-accent">{t(error)}</p>}
       <section aria-label={t("Room conversation")} className="space-y-4">
         {loaded && !messages.length && !error && <p className="rounded-2xl border border-velora-line p-6 text-velora-ink2">{t("It's quiet here. Start the conversation.")}</p>}
