@@ -7,6 +7,8 @@ import Link from "next/link";
 import { FeedInteractions } from "./FeedInteractions";
 import { NewMemberFirstSteps } from "./NewMemberFirstSteps";
 import { SocialPathways } from "./SocialPathways";
+import { FeedCardActions, FeedConversationDiscovery } from "./FeedConversationActions";
+import { useAuth } from "@/context/AuthContext";
 import { BadgeCheck, CalendarHeart, Images, ImageIcon, MessageSquareText, Play, UserPlus, UsersRound, CalendarDays } from "lucide-react";
 
 type FeedItem = {
@@ -57,6 +59,7 @@ function Avatar({ item }: { item: FeedItem }) {
 
 export function MemberActivityFeed() {
   const { t } = useTranslation();
+  const { profile } = useAuth();
   const [scope, setScope] = React.useState("newest");
   const [contentType, setContentType] = React.useState("all");
   const [items, setItems] = React.useState<FeedItem[]>([]);
@@ -90,6 +93,7 @@ export function MemberActivityFeed() {
             {[['all','All'],['albums','Albums'],['photos','Photos'],['videos','Videos'],['posts','Text posts'],['dating','Dating'],['events','Events'],['rooms','Rooms']].map(([value, label]) => <button key={value} type="button" onClick={() => setContentType(value)} aria-pressed={contentType === value} className={`min-h-10 shrink-0 rounded-full px-4 text-sm font-semibold transition ${contentType === value ? 'bg-velora-accent text-velora-paper' : 'bg-ink/5 text-ink hover:bg-ink/10 hover:text-ink'}`}>{t(label)}</button>)}
           </div>
         </section>
+        <FeedConversationDiscovery />
         {loading ? <div className="space-y-4" aria-label={t("Loading activity")}>{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-56 animate-pulse rounded-2xl border border-ink/10 bg-ink/5" />)}</div>
           : error ? <div className="rounded-2xl border border-rose-300/25 bg-rose-300/10 p-6 text-rose-100">{t("Activity could not be loaded. Please refresh and try again.")}</div>
           : items.length === 0 ? <div className="rounded-2xl border border-ink/10 bg-velora-surface p-10 text-center"><h2 className="text-xl font-semibold text-ink">{t("Nothing here yet")}</h2><p className="mt-2 text-velora-textSecondary">{scope === 'circle' ? t("Follow members or make connections to see their public and permitted updates together.") : scope === 'followed' ? t("Follow members to see what they share here.") : scope === 'friends' ? t("Activity from mutually accepted friends will appear here.") : t("New community activity will appear here.")}</p><Link href={scope === "circle" || scope === "friends" ? "/connections" : "/people"} className="mt-5 inline-flex min-h-11 items-center rounded-lg bg-velora-accent px-5 py-3 font-bold text-velora-paper">{t(scope === "circle" || scope === "friends" ? "Your connections" : "Meet people")}</Link></div>
@@ -99,6 +103,7 @@ export function MemberActivityFeed() {
               {item.mediaUrl && <Link href={item.href} className="relative block aspect-[16/10] bg-black"><Image unoptimized src={mediaPreviewUrl(item.mediaUrl, 1080)} alt={t(item.title)} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" />{item.type === "VIDEO" && <span className="absolute inset-0 flex items-center justify-center"><span className="flex h-16 w-16 items-center justify-center rounded-full bg-black/65 text-white backdrop-blur"><Play className="h-7 w-7 fill-current" /></span></span>}</Link>}
               <Link href={item.href} className="block p-5 pt-4 hover:bg-ink/[0.02]"><div className="flex items-start justify-between gap-4"><h2 className="text-xl font-semibold text-ink">{t(item.title)}</h2>{item.category && <span className="shrink-0 rounded-full border border-ink/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink">{item.category}</span>}</div>{item.body && <p className="mt-2 line-clamp-3 text-sm leading-6 text-ink">{t(item.body)}</p>}</Link>
               {item.type !== "PROFILE" && item.type !== "EVENT" && item.type !== "ROOM" && <FeedInteractions initialSummary={item.reactionSummary} feedId={item.id} targetType={item.type === "IMAGE" || item.type === "VIDEO" ? "MEDIA" : item.type} targetId={item.id.split(":")[1]} />}
+              <FeedCardActions type={item.type} href={item.href} actorId={item.actor.id} selfId={profile?.id} />
             </article>
           ); })}</div>}
       </div>
