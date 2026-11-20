@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resolveServerActor } from "@/lib/auth/serverActor";
+import { isAdminActor, resolveServerActor } from "@/lib/auth/serverActor";
 import { hasSetupAccess } from "@/lib/auth/ageCheck.mjs";
 import { deleteStoredObject, getPresignedDownloadUrl, getStoredObject, inspectStoredObject, putStoredObject } from "@/lib/storage/r2";
 import { processMediaVariants } from "@/lib/media/variants.mjs";
@@ -20,11 +20,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!(await checkRateLimit(`media-complete:${actor.actor.userId}`, 30, 60)).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   const supabase = getServerSupabase();
   if (!supabase) return NextResponse.json({ error: "Media service unavailable" }, { status: 503 });
-  const { data: media, error } = await supabase.from("media_objects").select("id,owner_id,object_key,mime_type,byte_size,upload_status").eq("id", params.id).eq("owner_id", actor.actor.profileId).single();
+  const { data: media, error } = await supabase.from("media_objects").select("id,owner_id,object_key,mime_type,byte_size,upload_status,category").eq("id", params.id).eq("owner_id", actor.actor.profileId).single();
   if (error || !media) return NextResponse.json({ error: "Media not found" }, { status: 404 });
   if (media.upload_status === "AVAILABLE") return NextResponse.json({ success: true });
   if (media.upload_status !== "PENDING") return NextResponse.json({ error: "Media cannot be finalized" }, { status: 409 });
   try {
+    // Only authenticated, active admins can self-publish regular media. Age-check
+    // evidence, chat attachments and stories keep their specialized workflows.
+    const adminPhoto = isAdminActor(actor.actor) && media.mime_type.startsWith("image/") && !["AGE_CHECK", "MESSAGE", "STORY"].includes(media.category || "");
+    const now = new Date().toISOString();
+    const photoDecision = adminPhoto ? { moderation_status: "APPROVED", published_at: now } : { moderation_status: "PENDING_REVIEW", published_at: null };
     const stored = await inspectStoredObject(media.object_key);
     if (!stored || stored.byteSize !== Number(media.byte_size) || stored.mimeType.toLowerCase() !== String(media.mime_type).toLowerCase()) {
       const { error: quarantineError } = await supabase.from("media_objects").update({ upload_status: "QUARANTINED", updated_at: new Date().toISOString() }).eq("id", media.id).eq("owner_id", actor.actor.profileId);
@@ -48,10 +53,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     } else {
       const { error: updateError } = await supabase.from("media_objects").update({ upload_status: "AVAILABLE", updated_at: new Date().toISOString() }).eq("id", media.id).eq("owner_id", actor.actor.profileId).eq("upload_status", "PENDING");
       if (updateError) return NextResponse.json({ error: "Upload could not be finalized" }, { status: 502 });
-      const { error: processingError } = await supabase.from("media_objects").update({ processing_status: "READY", moderation_status: "PENDING_REVIEW" }).eq("id", media.id).eq("owner_id", actor.actor.profileId);
+      const { error: processingError } = await supabase.from("media_objects").update({ processing_status: "READY", ...photoDecision }).eq("id", media.id).eq("owner_id", actor.actor.profileId);
       if (processingError) return NextResponse.json({ error: "Media processing state could not be initialized" }, { status: 502 });
     }
-    const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MEDIA_UPLOAD_COMPLETED", resourceType: "MEDIA", resourceId: media.id, outcome: "SUCCESS", metadata: { mimeType: media.mime_type, byteSize: media.byte_size } });
+    const audited = await appendDurableAudit(supabase, { actorProfileId: actor.actor.profileId, actorUserId: actor.actor.userId, action: "MEDIA_UPLOAD_COMPLETED", resourceType: "MEDIA", resourceId: media.id, outcome: "SUCCESS", metadata: { mimeType: media.mime_type, byteSize: media.byte_size, adminSelfApproved: adminPhoto } });
     if (!audited) return NextResponse.json({ error: "Upload finalized but audit recording failed; contact support" }, { status: 503 });
     // Resized copies for fast photography. Best effort: on failure or timeout the original
     // is served as before and scripts/backfill-media-variants.mjs can retry.
