@@ -19,7 +19,7 @@ test("private albums cannot enter community or public feeds", () => {
   assert.match(feed, /const visibleAlbums = \(albumRows \|\| \[\]\)\.filter\(row => allowed\(row.visibility, row.owner_id\)\)/);
   const audience = read("src/lib/feed/audience.ts");
   assert.match(audience, /if \(visibility === "FRIENDS_ONLY"\) return friends\.has\(ownerId\)/);
-  assert.match(audience, /return false; \/\/ PRIVATE or any unknown label/);
+  assert.match(audience, /if \(!\["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY", "FRIENDS_ONLY"\]\.includes\(visibility\)\) return false/);
   assert.doesNotMatch(feed, /PRIVATE_APPROVED/);
   const publicAlbums = read("src/app/api/public/albums/route.ts");
   assert.match(publicAlbums, /\.eq\("visibility", "PUBLIC"\)/);
