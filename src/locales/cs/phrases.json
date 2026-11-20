@@ -2464,5 +2464,10 @@
   "Open your browser menu (three dots).": "Otevři nabídku prohlížeče (tři tečky).",
   "Choose Install app or Add to Home screen.": "Vyber Nainstalovat aplikaci nebo Přidat na plochu.",
   "Confirm, then open Intimo from your home screen.": "Potvrď instalaci a otevři Intimo z plochy.",
-  "The app opens full-screen. Your private information is not stored for offline viewing.": "Aplikace se otevře na celou obrazovku. Tvé soukromé údaje se neukládají pro prohlížení offline."
+  "The app opens full-screen. Your private information is not stored for offline viewing.": "Aplikace se otevře na celou obrazovku. Tvé soukromé údaje se neukládají pro prohlížení offline.",
+  "Private — approved people": "Soukromé — schválení lidé",
+  "Private · only people you approve can see this album. Never shown in feeds.": "Soukromé · toto album uvidí jen lidé, kterým schválíš přístup. Nikdy se neobjeví ve feedu.",
+  "Private — approved people uses your existing private-photo permissions. No feed posts or public album previews.": "Soukromé — schválení lidé používá tvoje stávající oprávnění k soukromým fotkám. Žádné příspěvky ve feedu ani veřejné náhledy alba.",
+  "Only approved private photos can be included. Revoke someone’s private-photo access to hide this album from them immediately.": "Do alba můžeš přidat jen schválené soukromé fotky. Když někomu odebereš přístup k soukromým fotkám, album se mu okamžitě skryje.",
+  "Approved-viewer albums can only contain your private photos.": "Alba pro schválené lidi mohou obsahovat jen tvoje soukromé fotky."
 }
