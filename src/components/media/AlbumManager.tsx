@@ -48,6 +48,7 @@ export function AlbumManager() {
   const [selected, setSelected] = React.useState<string | null>(null);
   const [error, setError] = React.useState("");
   const [notice, setNotice] = React.useState("");
+  const [lastSaveAction, setLastSaveAction] = React.useState<"album" | "photos" | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [progress, setProgress] = React.useState(0);
   const [rightsConfirmed, setRightsConfirmed] = React.useState(false);
@@ -67,6 +68,7 @@ export function AlbumManager() {
 
   React.useEffect(() => { load().catch((cause) => setError(cause.message)); }, [load]);
   const active = albums.find((album) => album.id === selected) || null;
+  const unapprovedPhotos = active?.mediaIds.filter((id) => media.find((item) => item.id === id)?.moderation_status !== "APPROVED").length ?? 0;
 
   function patchActive(patch: Partial<Album>) {
     if (!active) return;
@@ -86,11 +88,18 @@ export function AlbumManager() {
   }
 
   async function updateAlbum(album: Album) {
-    setBusy(true); setError(""); setNotice("");
-    const response = await fetch(`/api/albums/${album.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...album, commentPolicy: album.comment_policy, reactionsEnabled: album.reactions_enabled }) });
-    const payload = await response.json().catch(() => ({})); setBusy(false);
-    if (!response.ok) { setError(payload.error || "Album update failed"); return; }
-    await load(); setNotice(payload.album?.moderation_status === "APPROVED" ? "Album saved. Still published." : "Album saved. Review pending.");
+    setBusy(true); setError(""); setNotice(""); setLastSaveAction("album");
+    try {
+      const response = await fetch(`/api/albums/${album.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...album, commentPolicy: album.comment_policy, reactionsEnabled: album.reactions_enabled }) });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) { setError(payload.error || "Album update failed"); return; }
+      await load();
+      setNotice(payload.album?.moderation_status === "APPROVED"
+        ? "Album details saved. This album is approved."
+        : "Album details saved. Your album is waiting for moderation approval.");
+    } catch {
+      setError("Could not save the album. Check your connection and try again.");
+    } finally { setBusy(false); }
   }
 
   async function removeAlbum(album: Album) {
@@ -101,12 +110,17 @@ export function AlbumManager() {
   }
 
   async function savePhotos(album: Album) {
-    setBusy(true); setError(""); setNotice("");
-    const coverMediaId = album.cover_media_id && album.mediaIds.includes(album.cover_media_id) ? album.cover_media_id : album.mediaIds[0] || null;
-    const response = await fetch(`/api/albums/${album.id}/media`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mediaIds: album.mediaIds, coverMediaId }) });
-    const payload = await response.json().catch(() => ({})); setBusy(false);
-    if (!response.ok) { setError(payload.error || "Album photos could not be saved"); return; }
-    await load(); setNotice("Photos saved. Review pending.");
+    setBusy(true); setError(""); setNotice(""); setLastSaveAction("photos");
+    try {
+      const coverMediaId = album.cover_media_id && album.mediaIds.includes(album.cover_media_id) ? album.cover_media_id : album.mediaIds[0] || null;
+      const response = await fetch(`/api/albums/${album.id}/media`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mediaIds: album.mediaIds, coverMediaId }) });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) { setError(payload.error || "Album photos could not be saved"); return; }
+      await load();
+      setNotice(payload.moderationStatus === "APPROVED" ? "Photos saved. Album is available to permitted viewers." : "Photos saved to your album. Album and photos must be approved before anyone else can view them.");
+    } catch {
+      setError("Could not save the photos. Check your connection and try again.");
+    } finally { setBusy(false); }
   }
 
   async function upload(file?: File) {
@@ -167,7 +181,10 @@ export function AlbumManager() {
           </div>
           <fieldset className="mt-5"><legend className="text-sm font-semibold text-ink">{t("What appears in this album?")}</legend><div className="mt-3 flex flex-wrap gap-2">{TOPICS.map((topic) => { const selectedTopic = active.tags.includes(topic); return <button type="button" key={topic} onClick={() => patchActive({ tags: selectedTopic ? active.tags.filter((item) => item !== topic) : [...active.tags, topic].slice(0, 20) })} className={`rounded-full border px-3 py-2 text-sm ${selectedTopic ? "border-velora-accent bg-velora-accent text-velora-paper" : "border-ink/15 text-ink"}`}>{topic}</button>; })}</div></fieldset>
           <label className="mt-5 flex min-h-11 items-center gap-3 text-sm text-ink"><input type="checkbox" checked={active.reactions_enabled !== false} onChange={(event) => patchActive({ reactions_enabled: event.target.checked })} />{" "}{t("Allow likes")}</label>
-          <div className="mt-4 flex flex-wrap gap-3"><button disabled={busy} onClick={() => updateAlbum(active)} className="min-h-11 rounded-xl bg-velora-accent px-5 font-bold text-velora-paper">{t("Save album")}</button><button disabled={busy} onClick={() => removeAlbum(active)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-red-400/50 px-5 text-velora-danger"><Trash2 className="h-4 w-4" />{t("Remove album")}</button></div>
+          <div className="mt-4 flex flex-wrap gap-3"><button disabled={busy} onClick={() => updateAlbum(active)} className="min-h-11 rounded-xl bg-velora-accent px-5 font-bold text-velora-paper">{busy && lastSaveAction === "album" ? t("Saving…") : t("Save album")}</button><button disabled={busy} onClick={() => removeAlbum(active)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-red-400/50 px-5 text-velora-danger"><Trash2 className="h-4 w-4" />{t("Remove album")}</button></div>
+          {lastSaveAction === "album" && (error || notice) && (
+            <p role={error ? "alert" : "status"} aria-live="polite" className={`mt-3 rounded-xl border p-3 text-sm ${error ? "border-velora-danger/50 text-velora-danger" : "border-velora-accent/40 text-velora-ink"}`}>{t(error || notice)}</p>
+          )}
         </div>
 
         <div className="space-y-5">
@@ -176,7 +193,13 @@ export function AlbumManager() {
             <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-semibold text-ink">{t("Photos")}</h2><p className="text-sm text-velora-textSecondary">{t("Select photos, then choose a cover.")}</p></div><label className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 font-semibold ${rightsConfirmed ? "cursor-pointer border-velora-accent text-ink" : "cursor-not-allowed border-ink/10 text-velora-textMuted"}`}><Upload className="h-4 w-4" />{busy && progress ? `${progress}%` : t("Upload photos")}<input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/heic" className="sr-only" disabled={busy || !rightsConfirmed || active.mediaIds.length >= 30} onChange={(event) => upload(event.target.files?.[0])} /></label></div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{media.map((item) => { const included = active.mediaIds.includes(item.id); const cover = active.cover_media_id === item.id; return <article key={item.id} className={`rounded-xl border p-3 ${included ? "border-velora-accent" : "border-ink/10"}`}><img src={item.url} alt="" className="aspect-square w-full rounded-lg object-cover" />{item.reviewFeedback && <p className="mt-3 text-xs text-velora-warning">{t("Review feedback: {reviewFeedback} Replace this photo or exclude it from the album, then save the photos for another review.", { reviewFeedback: item.reviewFeedback })}</p>}<label className="mt-3 flex min-h-11 items-center gap-2 text-sm text-ink"><input type="checkbox" checked={included} onChange={(event) => patchActive({ mediaIds: event.target.checked ? [...active.mediaIds, item.id].slice(0, 30) : active.mediaIds.filter((id) => id !== item.id), cover_media_id: !event.target.checked && cover ? null : active.cover_media_id })} />{t("Include")}</label>{included && <><button type="button" onClick={() => patchActive({ cover_media_id: item.id })} className={`mb-2 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border ${cover ? "border-velora-accent bg-velora-accent/10 text-velora-accent" : "border-ink/15 text-ink"}`}><Star className={`h-4 w-4 ${cover ? "fill-current" : ""}`} />{cover ? t("Album cover") : t("Make cover")}</button><div className="flex gap-2"><button aria-label={t("Move photo earlier")} onClick={() => move(item.id, -1)} className="min-h-10 flex-1 rounded-lg border border-ink/15"><ArrowUp className="mx-auto h-4 w-4" /></button><button aria-label={t("Move photo later")} onClick={() => move(item.id, 1)} className="min-h-10 flex-1 rounded-lg border border-ink/15"><ArrowDown className="mx-auto h-4 w-4" /></button></div></>}</article>; })}</div>
             {!media.length && <div className="rounded-xl border border-dashed border-ink/15 p-10 text-center"><Images className="mx-auto h-8 w-8 text-velora-textMuted" /><p className="mt-3 text-ink">{t("Your photo library is empty.")}</p></div>}
-            <button disabled={busy} onClick={() => savePhotos(active)} className="min-h-11 rounded-xl bg-velora-accent px-5 font-bold text-velora-paper">{t("Save photos")}</button>
+            <div className="space-y-2">
+              <p className="text-sm text-velora-ink2" role="status">{t("{length} photos attached to this album.", { length: active.mediaIds.length })}{" "}{active.moderation_status !== "APPROVED" || unapprovedPhotos > 0 ? t("Approval pending. Approved viewers cannot see these photos yet.") : t("Approved photos are visible to this album’s permitted viewers.")}</p>
+              <button disabled={busy} onClick={() => savePhotos(active)} className="min-h-11 rounded-xl bg-velora-accent px-5 font-bold text-velora-paper">{busy && lastSaveAction === "photos" ? t("Saving…") : t("Save photos")}</button>
+              {lastSaveAction === "photos" && (error || notice) && (
+                <p role={error ? "alert" : "status"} aria-live="polite" className={`rounded-xl border p-3 text-sm ${error ? "border-velora-danger/50 text-velora-danger" : "border-velora-accent/40 text-velora-ink"}`}>{t(error || notice)}</p>
+              )}
+            </div>
           </div>
         </div>
       </div> : <div className="rounded-xl border border-dashed border-ink/15 p-12 text-center"><Images className="mx-auto h-8 w-8 text-velora-textMuted" /><p className="mt-3 text-ink">{t("Choose an album or create a new one.")}</p></div>}</section>

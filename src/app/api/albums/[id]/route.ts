@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
+import { hasAdultAccess, isAdminActor, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
 import { grantIsActive } from "@/lib/privateAccess.mjs";
@@ -62,7 +62,27 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (lookupError) return NextResponse.json({ error: "Album lookup failed" }, { status: 502 });
   if (!before) return NextResponse.json({ error: "Album not found" }, { status: 404 });
   const contentUnchanged = before.title === title && (before.description || "") === description && (before.category || "") === category && JSON.stringify(before.tags || []) === JSON.stringify(tags);
-  const keepApproved = before.moderation_status === "APPROVED" && contentUnchanged;
+  // Administrators do not need a second moderator for their own albums, but
+  // an empty album or photos still processing/awaiting approval remain private.
+  let adminEligible = false;
+  if (isAdminActor(auth.actor)) {
+    const { data: links, error: linkError } = await db.from("media_album_items").select("media_id").eq("album_id", params.id);
+    if (linkError) return NextResponse.json({ error: "Album photos could not be checked" }, { status: 502 });
+    const ids = (links || []).map(row => row.media_id);
+    if (ids.length) {
+      const { data: photos, error: photoError } = await db.from("media_objects")
+        .select("id,visibility,media_type,category,upload_status,processing_status,moderation_status")
+        .in("id", ids).eq("owner_id", auth.actor.profileId);
+      if (photoError) return NextResponse.json({ error: "Album photos could not be checked" }, { status: 502 });
+      adminEligible = photos?.length === ids.length && photos.every(photo =>
+        photo.media_type === "IMAGE" && !["MESSAGE","STORY","AGE_CHECK"].includes(photo.category || "") &&
+        photo.upload_status === "AVAILABLE" && photo.processing_status === "READY" &&
+        photo.moderation_status === "APPROVED" &&
+        (visibility !== "PRIVATE_APPROVED" || photo.visibility === "PRIVATE") &&
+        (visibility !== "PUBLIC" || photo.visibility === "PUBLIC"));
+    }
+  }
+  const keepApproved = adminEligible || (before.moderation_status === "APPROVED" && contentUnchanged);
   if (keepApproved && visibility !== before.visibility) {
     const { data: links, error: linksError } = await db.from("media_album_items").select("media_id").eq("album_id", params.id);
     if (linksError) return NextResponse.json({ error: "Album photos could not be checked" }, { status: 502 });
@@ -75,9 +95,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       return NextResponse.json({ error: "The included photos need the same audience and approval before this album can change audience." }, { status: 409 });
     }
   }
-  const { data, error } = await db.from("media_albums").update({ title, description: description || null, category: category || null, tags, visibility, comment_policy: commentPolicy, reactions_enabled: reactionsEnabled, moderation_status: keepApproved ? "APPROVED" : "PENDING_REVIEW", published_at: keepApproved ? before.published_at : null, updated_at: new Date().toISOString() }).eq("id", params.id).eq("owner_id", auth.actor.profileId).eq("moderation_status", before.moderation_status).select("id,title,description,category,tags,visibility,comment_policy,reactions_enabled,moderation_status,cover_media_id,updated_at").maybeSingle();
+  const { data, error } = await db.from("media_albums").update({ title, description: description || null, category: category || null, tags, visibility, comment_policy: commentPolicy, reactions_enabled: reactionsEnabled, moderation_status: keepApproved ? "APPROVED" : "PENDING_REVIEW", published_at: keepApproved ? (before.published_at || new Date().toISOString()) : null, updated_at: new Date().toISOString() }).eq("id", params.id).eq("owner_id", auth.actor.profileId).eq("moderation_status", before.moderation_status).select("id,title,description,category,tags,visibility,comment_policy,reactions_enabled,moderation_status,cover_media_id,updated_at").maybeSingle();
   if (error) return NextResponse.json({ error: "Album update failed" }, { status: 502 }); if (!data) return NextResponse.json({ error: "Album not found" }, { status: 404 });
-  const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorUserId: auth.actor.userId, action: "ALBUM_UPDATE", resourceType: "ALBUM", resourceId: data.id, outcome: "SUCCESS", metadata: { visibility } });
+  const audited = await appendDurableAudit(db, { actorProfileId: auth.actor.profileId, actorUserId: auth.actor.userId, action: "ALBUM_UPDATE", resourceType: "ALBUM", resourceId: data.id, outcome: "SUCCESS", metadata: { visibility, adminSelfApproved: adminEligible } });
   if (!audited) return NextResponse.json({ error: "Album was updated but audit evidence failed", albumId: data.id }, { status: 502 });
   return NextResponse.json({ album: data });
 }

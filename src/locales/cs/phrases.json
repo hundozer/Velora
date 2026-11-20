@@ -1624,7 +1624,7 @@
   "Saved items unavailable": "Uložené položky nejsou dostupné",
   "Saved. Members see your visible desires on your profile.": "Uloženo. Členové uvidí tvoje viditelné touhy na profilu.",
   "Saved. These apply right away.": "Uloženo. Platí to hned.",
-  "Saving…": "Ukládám…",
+  "Saving…": "Ukládání…",
   "Say hello": "Pozdravit",
   "Say what is off-limits (3–500 characters).": "Napiš, co je mimo hru (3–500 znaků).",
   "Say what turns you on. Say what's off limits. Singles, couples, queer and kink-curious adults are welcome.": "Řekni, co tě vzrušuje. Řekni, co je mimo hru. Vítáni jsou nezadaní, páry, queer i dospělí zvědaví na kink.",
@@ -2470,5 +2470,14 @@
   "Private — approved people uses your existing private-photo permissions. No feed posts or public album previews.": "Soukromé — schválení lidé používá tvoje stávající oprávnění k soukromým fotkám. Žádné příspěvky ve feedu ani veřejné náhledy alba.",
   "Only approved private photos can be included. Revoke someone’s private-photo access to hide this album from them immediately.": "Do alba můžeš přidat jen schválené soukromé fotky. Když někomu odebereš přístup k soukromým fotkám, album se mu okamžitě skryje.",
   "Approved-viewer albums can only contain your private photos.": "Alba pro schválené lidi mohou obsahovat jen tvoje soukromé fotky.",
-  "Private · waiting for review before approved people can see it.": "Soukromé · album čeká na schválení, než ho uvidí lidé s povoleným přístupem."
+  "Private · waiting for review before approved people can see it.": "Soukromé · album čeká na schválení, než ho uvidí lidé s povoleným přístupem.",
+  "Album details saved. This album is approved.": "Údaje alba byly uloženy. Album je schválené.",
+  "Album details saved. Your album is waiting for moderation approval.": "Údaje alba byly uloženy. Album čeká na schválení moderátorem.",
+  "Could not save the album. Check your connection and try again.": "Album se nepodařilo uložit. Zkontroluj připojení a zkus to znovu.",
+  "Photos saved to your album. Album and photos must be approved before anyone else can view them.": "Fotky jsou uložené v albu. Než je uvidí ostatní, musí být schválené fotky i album.",
+  "Could not save the photos. Check your connection and try again.": "Fotky se nepodařilo uložit. Zkontroluj připojení a zkus to znovu.",
+  "{length} photos attached to this album.": "K tomuto albu jsou připojeny {length} fotky.",
+  "Approval pending. Approved viewers cannot see these photos yet.": "Čeká se na schválení. Schválení diváci tyto fotky zatím nevidí.",
+  "Approved photos are visible to this album’s permitted viewers.": "Schválené fotky vidí lidé s přístupem k tomuto albu.",
+  "Photos saved. Album is available to permitted viewers.": "Fotky byly uloženy. Album je dostupné lidem s oprávněním."
 }
