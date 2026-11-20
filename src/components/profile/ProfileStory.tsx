@@ -65,6 +65,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
   const [privateMedia, setPrivateMedia] = React.useState<{ id: string; url: string }[]>([]);
   const [media, setMedia] = React.useState<Media[]>([]);
   const [albums, setAlbums] = React.useState<Album[]>([]);
+  const [privateAlbums, setPrivateAlbums] = React.useState<Album[]>([]);
   const [interest, setInterest] = React.useState({ interested: false, mutual: false });
   const [favorite, setFavorite] = React.useState(false);
   const [friendStatus, setFriendStatus] = React.useState<"NONE" | "OUTGOING" | "INCOMING" | "FRIENDS" | null>(null);
@@ -77,7 +78,16 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
   const loadAccess = React.useCallback(async () => {
     const next = await json<Access>(`/api/private-access?ownerId=${encodeURIComponent(id)}`);
     setAccess(next);
-    if (next?.active) setPrivateMedia((await json<{ media: { id: string; url: string }[] }>(`/api/private-access/media?ownerId=${encodeURIComponent(id)}`))?.media || []);
+    if (next?.active || next?.isOwner) {
+      const privateContent = await json<{ media: { id: string; url: string }[]; albums: Album[] }>(
+        `/api/private-access/media?ownerId=${encodeURIComponent(id)}`);
+      setPrivateMedia(privateContent?.media || []);
+      setPrivateAlbums(privateContent?.albums || []);
+    } else {
+      // Revoke cached private URLs and metadata immediately when access is lost.
+      setPrivateMedia([]);
+      setPrivateAlbums([]);
+    }
   }, [id]);
 
   React.useEffect(() => {
@@ -325,10 +335,10 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
 
         {memberView && <ProfilePlans profileId={profile.id} />}
 
-        {albums.length > 0 && (
+        {(albums.length > 0 || privateAlbums.length > 0) && (
           <section aria-label={t("Albums")}>
             <H2>{t("Albums")}</H2>
-            <div className="mt-4 grid grid-cols-2 gap-3">{albums.map((album) => <Link key={album.id} href={`/album/${album.id}`} className="overflow-hidden rounded-xl border border-velora-line bg-velora-surface"><div className="aspect-[4/3] bg-velora-sunken">{album.coverUrl && <Portrait src={album.coverUrl} name={album.title} sizes="(min-width: 768px) 220px, 45vw" className="h-full w-full" />}</div><span className="block p-3 font-semibold text-velora-ink">{t(album.title)}</span></Link>)}</div>
+            <div className="mt-4 grid grid-cols-2 gap-3">{[...albums, ...privateAlbums].map((album) => <Link key={album.id} href={`/album/${album.id}`} className="overflow-hidden rounded-xl border border-velora-line bg-velora-surface"><div className="aspect-[4/3] bg-velora-sunken">{album.coverUrl && <Portrait src={album.coverUrl} name={album.title} sizes="(min-width: 768px) 220px, 45vw" className="h-full w-full" />}</div><span className="block p-3 font-semibold text-velora-ink">{t(album.title)}</span></Link>)}</div>
           </section>
         )}
         {media.some((item) => item.type === "VIDEO") && <section aria-label={t("Videos")}><H2>{t("Videos")}</H2><div className="mt-4 grid grid-cols-2 gap-3">{media.filter((item) => item.type === "VIDEO").map((item) => <div key={item.id} className="overflow-hidden rounded-xl border border-velora-line bg-velora-surface"><video src={item.mediaUrl} controls preload="none" playsInline className="aspect-video w-full bg-black object-contain" aria-label={t(item.title)} /><p className="p-3 font-semibold text-velora-ink">{t(item.title)}</p></div>)}</div></section>}
