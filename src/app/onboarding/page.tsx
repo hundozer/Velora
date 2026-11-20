@@ -3,6 +3,7 @@
 import { useTranslation } from "@/context/LanguageContext";
 import React, { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Camera, Heart, User, Users } from "lucide-react";
 import { BigButton, BigInput, ChoiceCard, FlowScreen } from "@/components/flow/Flow";
 import { requestParticipantDeclaration, uploadFileToR2 } from "@/lib/storage/clientUpload";
@@ -37,6 +38,7 @@ function birthdayError(value: string, who: "you" | "partner") {
 function OnboardingForm() {
   const { t } = useTranslation();
   const inviteToken = useSearchParams().get("invite") || "";
+  const validInviteLink = /^[a-zA-Z0-9_-]{43}$/.test(inviteToken);
   const [step, setStep] = useState<StepId>("kind");
   const [profileType, setProfileType] = useState<ProfileKind>("");
   const [gender, setGender] = useState("");
@@ -141,6 +143,20 @@ function OnboardingForm() {
   }
 
   const errorLine = error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-5 py-4 text-base text-velora-danger">{t(error)}</p> : null;
+
+  // Do not collect DOB, identity or intimate preferences when we have no
+  // invitation credential to finish registration. No token or draft is stored
+  // in browser storage; the original email link is the safe resume path.
+  if (!validInviteLink) return (
+    <main className="mx-auto flex min-h-[75dvh] max-w-xl flex-col justify-center space-y-5 px-5 py-10">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-velora-accent">{t("Finish joining Intimo")}</p>
+      <h1 className="font-display text-4xl text-velora-ink sm:text-5xl">{t("Open your invitation to continue")}</h1>
+      <p className="text-base leading-7 text-velora-textSecondary">{t("Your profile isn't finished yet. Open the original invitation link in your email to continue securely. You may need to enter your answers again.")}</p>
+      <p className="text-sm text-velora-textMuted">{t("Intimo doesn't keep unfinished personal answers on this device.")}</p>
+      <Link href="/register" className="inline-flex min-h-12 items-center justify-center rounded-full bg-velora-accent px-6 text-sm font-semibold text-velora-paper">{t("How invitations work")}</Link>
+      <Link href="/login" className="inline-flex min-h-11 items-center justify-center text-sm font-semibold text-velora-textSecondary underline underline-offset-4">{t("Back to sign in")}</Link>
+    </main>
+  );
 
   if (step === "kind") return (
     <FlowScreen {...screen} title={t("Who's coming in?")}>
