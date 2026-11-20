@@ -208,3 +208,13 @@ html[data-discreet="on"] main video:not([data-revealed]) {
     overflow: hidden;
   }
 }
+
+/* When the iPhone keyboard opens, prioritize the composer over bottom tabs. */
+@media (max-width: 767px) {
+  body:has(.intimo-messages-page textarea:focus) > main {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  body:has(.intimo-messages-page textarea:focus) > nav[aria-label] {
+    display: none;
+  }
+}
