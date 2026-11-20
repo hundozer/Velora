@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
+import { grantIsActive } from "@/lib/privateAccess.mjs";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -21,6 +22,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const { data: follow } = await db.from("connections").select("id").eq("follower_id", auth.actor.profileId).eq("followed_id", album.owner_id).eq("connection_type", "follow").maybeSingle();
     allowed = Boolean(follow);
   }
+  if (!allowed && album.visibility === "PRIVATE_APPROVED") {
+    const { data: grant, error: grantError } = await db.from("album_access_grants")
+      .select("status,grant_type,expires_at")
+      .eq("owner_id", album.owner_id).eq("viewer_id", auth.actor.profileId).maybeSingle();
+    if (grantError) return NextResponse.json({ error: "Album not found" }, { status: 404 });
+    allowed = grantIsActive(grant);
+  }
   if (!allowed && album.visibility === "FRIENDS_ONLY") {
     const { data: friendship } = await db.from("friendships").select("id").eq("status", "ACCEPTED").or(`and(requester_id.eq.${auth.actor.profileId},addressee_id.eq.${album.owner_id}),and(requester_id.eq.${album.owner_id},addressee_id.eq.${auth.actor.profileId})`).limit(1).maybeSingle();
     allowed = Boolean(friendship);
@@ -30,7 +38,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!owner || (!isOwner && (owner.account_status !== "ACTIVE" || owner.age_verification_status !== "AGE_VERIFIED" || owner.discovery_disabled))) return NextResponse.json({ error: "Album not found" }, { status: 404 });
   const { data: links } = await db.from("media_album_items").select("media_id,sort_order").eq("album_id", album.id).order("sort_order", { ascending: true });
   const mediaIds = (links || []).map((link) => link.media_id);
-  const { data: media } = mediaIds.length ? await db.from("media_objects").select("id,title,description,visibility,upload_status,processing_status,moderation_status").in("id", mediaIds).eq("owner_id", album.owner_id).or("category.is.null,category.neq.STORY") : { data: [] };
+  let mediaQuery = db.from("media_objects").select("id,title,description,visibility,upload_status,processing_status,moderation_status").in("id", mediaIds).eq("owner_id", album.owner_id).or("category.is.null,and(category.neq.STORY,category.neq.MESSAGE,category.neq.AGE_CHECK)");
+  if (album.visibility === "PRIVATE_APPROVED") mediaQuery = mediaQuery.eq("visibility", "PRIVATE");
+  const { data: media, error: mediaError } = mediaIds.length ? await mediaQuery : { data: [], error: null };
+  if (mediaError) return NextResponse.json({ error: "Album unavailable" }, { status: 503 });
   const mediaMap = new Map((media || []).filter((item) => item.upload_status === "AVAILABLE" && item.processing_status === "READY" && item.moderation_status === "APPROVED").map((item) => [item.id, item]));
   const photos = (links || []).flatMap((link) => { const item = mediaMap.get(link.media_id); return item ? [{ id: item.id, title: item.title || "Album photo", description: item.description, url: `/api/media/${item.id}` }] : []; });
   return NextResponse.json({ album: { id: album.id, title: album.title, description: album.description, category: album.category, tags: album.tags, commentPolicy: album.comment_policy, reactionsEnabled: album.reactions_enabled, owner: { id: owner.id, displayName: owner.display_name || owner.username || "Intimo member", verified: owner.verification_status === "VERIFIED" || ["LEVEL_3_PROFILE_BIOMETRIC", "LEVEL_4_CREATOR"].includes(owner.verification_level || "") }, photos } }, { headers: { "Cache-Control": "private, no-store" } });
@@ -41,7 +52,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (!UUID.test(params.id)) return NextResponse.json({ error: "Album not found" }, { status: 404 });
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const title = typeof body.title === "string" ? body.title.trim() : ""; const description = typeof body.description === "string" ? body.description.trim() : ""; const category = typeof body.category === "string" ? body.category.trim() : "";
-  const visibility = ["PUBLIC","MEMBERS_ONLY","FOLLOWERS_ONLY","FRIENDS_ONLY","PRIVATE"].includes(body.visibility) ? body.visibility : "PRIVATE";
+  const visibility = ["PUBLIC","MEMBERS_ONLY","FOLLOWERS_ONLY","FRIENDS_ONLY","PRIVATE","PRIVATE_APPROVED"].includes(body.visibility) ? body.visibility : "PRIVATE";
   const commentPolicy = ["MEMBERS","VERIFIED","FRIENDS","DISABLED"].includes(body.commentPolicy) ? body.commentPolicy : "MEMBERS";
   const reactionsEnabled = body.reactionsEnabled !== false;
   const tags = Array.isArray(body.tags) ? body.tags.filter((tag: unknown): tag is string => typeof tag === "string").map((tag: string) => tag.trim().slice(0,50)).filter(Boolean).slice(0,20) : [];
@@ -59,7 +70,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (!ids.length) return NextResponse.json({ error: "Add photos before changing the audience" }, { status: 409 });
     const { data: photos, error: photosError } = await db.from("media_objects").select("id,visibility,upload_status,processing_status,moderation_status").in("id", ids).eq("owner_id", auth.actor.profileId);
     if (photosError) return NextResponse.json({ error: "Album photos could not be checked" }, { status: 502 });
-    const required = visibility === "FRIENDS_ONLY" ? null : visibility;
+    const required = visibility === "FRIENDS_ONLY" ? null : visibility === "PRIVATE_APPROVED" ? "PRIVATE" : visibility;
     if (!required || photos?.length !== ids.length || photos.some(photo => photo.visibility !== required || photo.upload_status !== "AVAILABLE" || photo.processing_status !== "READY" || photo.moderation_status !== "APPROVED")) {
       return NextResponse.json({ error: "The included photos need the same audience and approval before this album can change audience." }, { status: 409 });
     }

@@ -27,5 +27,24 @@ export async function GET(req: NextRequest) {
   }
   const { data, error } = await db.from("media_objects").select("id,title,created_at").eq("owner_id", ownerId).eq("visibility", "PRIVATE").eq("upload_status", "AVAILABLE").eq("moderation_status", "APPROVED").or("category.is.null,and(category.neq.MESSAGE,category.neq.STORY,category.neq.AGE_CHECK)").order("created_at", { ascending: false }).limit(60);
   if (error) return NextResponse.json({ error: "Private photos lookup failed" }, { status: 502 });
-  return NextResponse.json({ media: (data || []).map((row) => ({ id: row.id, title: row.title || "", url: `/api/media/${row.id}` })) }, { headers: { "Cache-Control": "private, no-store" } });
+  // Only the owner and members with a current private-photo grant reach this
+  // branch. Do not enumerate album names/covers to other visitors or feeds.
+  const { data: albums, error: albumError } = await db.from("media_albums")
+    .select("id,title,cover_media_id,updated_at")
+    .eq("owner_id", ownerId).eq("visibility", "PRIVATE_APPROVED")
+    .eq("moderation_status", "APPROVED").order("updated_at", { ascending: false }).limit(30);
+  if (albumError) return NextResponse.json({ error: "Private albums unavailable" }, { status: 503 });
+  const coverIds = [...new Set((albums || []).map(album => album.cover_media_id).filter((id): id is string => Boolean(id)))];
+  const { data: covers, error: coverError } = coverIds.length
+    ? await db.from("media_objects").select("id").in("id", coverIds).eq("owner_id", ownerId)
+        .eq("visibility", "PRIVATE").eq("media_type", "IMAGE")
+        .eq("upload_status", "AVAILABLE").eq("processing_status", "READY").eq("moderation_status", "APPROVED")
+    : { data: [], error: null };
+  if (coverError) return NextResponse.json({ error: "Private albums unavailable" }, { status: 503 });
+  const safeCovers = new Set((covers || []).map(cover => cover.id));
+  return NextResponse.json({
+    media: (data || []).map((row) => ({ id: row.id, title: row.title || "", url: `/api/media/${row.id}` })),
+    albums: (albums || []).map(album => ({ id: album.id, title: album.title,
+      coverUrl: album.cover_media_id && safeCovers.has(album.cover_media_id) ? `/api/media/${album.cover_media_id}` : null }))
+  }, { headers: { "Cache-Control": "private, no-store" } });
 }

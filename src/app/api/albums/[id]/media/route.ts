@@ -17,6 +17,21 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     if (storyError) return NextResponse.json({ error: "Photo lookup failed" }, { status: 502 });
     if (stories?.length) return NextResponse.json({ error: "Story photos cannot be added to albums" }, { status: 409 });
   }
+  // Approved-viewer albums may contain only PRIVATE photos. Reject mixed/public
+  // photos rather than accidentally making the album cover or originals public.
+  const { data: album, error: albumError } = await db.from("media_albums")
+    .select("visibility").eq("id", params.id).eq("owner_id", auth.actor.profileId).maybeSingle();
+  if (albumError || !album) return NextResponse.json({ error: "Album not found" }, { status: 404 });
+  if (album.visibility === "PRIVATE_APPROVED" && uniqueIds.length) {
+    const { data: photos, error: photosError } = await db.from("media_objects")
+      .select("id,visibility,media_type,category").in("id", uniqueIds).eq("owner_id", auth.actor.profileId);
+    if (photosError) return NextResponse.json({ error: "Photo lookup failed" }, { status: 502 });
+    if (photos?.length !== uniqueIds.length || photos.some(photo =>
+      photo.visibility !== "PRIVATE" || photo.media_type !== "IMAGE" ||
+      ["MESSAGE","STORY","AGE_CHECK"].includes(photo.category || ""))) {
+      return NextResponse.json({ error: "Approved-viewer albums can only contain your private photos." }, { status: 409 });
+    }
+  }
   const { error } = await db.rpc("intimo_set_album_media", { p_album_id: params.id, p_owner_id: auth.actor.profileId, p_media_ids: uniqueIds, p_cover_media_id: coverMediaId });
   if (error) {
     const reason = /invalid_album_media/.test(error.message) ? "One of these photos hasn't finished uploading or was removed. Refresh and try again."

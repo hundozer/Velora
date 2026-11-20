@@ -13,6 +13,7 @@ const VISIBILITY = [
   ["MEMBERS_ONLY", "Intimo members"],
   ["FOLLOWERS_ONLY", "Followers"],
   ["FRIENDS_ONLY", "Friends"],
+  ["PRIVATE_APPROVED", "Private — approved people"],
   ["PRIVATE", "Only me"],
 ] as const;
 const COMMENT_POLICIES = [
@@ -142,7 +143,7 @@ export function AlbumManager() {
         <form onSubmit={create} className="space-y-3 rounded-2xl border border-ink/10 bg-velora-surface p-5">
           <h2 className="text-xl font-semibold text-ink">{t("New album")}</h2>
           <input name="title" required maxLength={160} placeholder={t("Album title")} className={field} />
-          <label className="block text-sm font-semibold text-ink">{t("Who can see it?")}<select name="visibility" defaultValue="PRIVATE" className={field}>{VISIBILITY.map(([value, label]) => <option key={value} value={value}>{t(label)}</option>)}</select></label>
+          <label className="block text-sm font-semibold text-ink">{t("Who can see it?")}<select name="visibility" defaultValue="PRIVATE" className={field}>{VISIBILITY.map(([value, label]) => <option key={value} value={value}>{t(label)}</option>)}</select></label><p className="text-xs leading-relaxed text-velora-textSecondary">{t("Private — approved people uses your existing private-photo permissions. No feed posts or public album previews.")}</p>
           <details className="space-y-3"><summary className="cursor-pointer text-sm text-velora-textSecondary">{t("More options")}</summary><textarea name="description" maxLength={4000} placeholder={t("Description")} className={`${field} mt-3 min-h-20 py-3`} /><select name="category" defaultValue="" className={`${field} mt-3`}><option value="">{t("Choose a category")}</option>{CATEGORIES.map((item) => <option key={item} value={item}>{t(item)}</option>)}</select>
           <select name="commentPolicy" defaultValue="MEMBERS" className={field}>{COMMENT_POLICIES.map(([value, label]) => <option key={value} value={value}>{t("Comments: {label}", { label: t(label) })}</option>)}</select>
           <label className="flex min-h-11 items-center gap-3 text-sm text-ink"><input type="checkbox" name="reactionsEnabled" defaultChecked />{" "}{t("Allow likes")}</label></details>
@@ -152,7 +153,7 @@ export function AlbumManager() {
       </aside>
 
       <section>{active ? <div className="space-y-6">
-        <p role="status" className="rounded-xl border border-ink/10 p-4 text-sm text-ink">{t("{length} photos ·", { length: active.mediaIds.length })}{" "}{active.visibility === "PRIVATE" ? t("Private · only you can see it") : active.moderation_status === "APPROVED" ? t("Published") : t("Waiting for review")}</p>
+        <p role="status" className="rounded-xl border border-ink/10 p-4 text-sm text-ink">{t("{length} photos ·", { length: active.mediaIds.length })}{" "}{active.visibility === "PRIVATE" ? t("Private · only you can see it") : active.visibility === "PRIVATE_APPROVED" ? active.moderation_status === "APPROVED" ? t("Private · only people you approve can see this album. Never shown in feeds.") : t("Private · waiting for review before approved people can see it.") : active.moderation_status === "APPROVED" ? t("Published") : t("Waiting for review")}</p>
         {active.reviewFeedback && active.moderation_status === "REJECTED" && <p role="status" className="rounded-xl border border-velora-warning/40 bg-velora-warning/10 p-4 text-sm text-ink">{t("Review feedback: {reviewFeedback} Edit your album and save it to submit it for another review.", { reviewFeedback: active.reviewFeedback })}</p>}
         <div className="rounded-2xl border border-ink/10 bg-velora-surface p-5">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -161,7 +162,7 @@ export function AlbumManager() {
           </div>
           <label className="mt-4 block text-sm text-ink">{t("Description")}<textarea value={active.description || ""} maxLength={4000} onChange={(event) => patchActive({ description: event.target.value })} className={`${field} mt-1 min-h-24 py-3`} /></label>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <label className="text-sm text-ink">{t("Who can see it?")}<select value={active.visibility} onChange={(event) => patchActive({ visibility: event.target.value })} className={`${field} mt-1`}>{VISIBILITY.map(([value, label]) => <option key={value} value={value}>{t(label)}</option>)}</select></label>
+            <label className="text-sm text-ink">{t("Who can see it?")}<select value={active.visibility} onChange={(event) => patchActive({ visibility: event.target.value })} className={`${field} mt-1`}>{VISIBILITY.map(([value, label]) => <option key={value} value={value}>{t(label)}</option>)}</select></label>{active.visibility === "PRIVATE_APPROVED" && <p className="mt-2 text-xs text-velora-textSecondary">{t("Only approved private photos can be included. Revoke someone’s private-photo access to hide this album from them immediately.")}</p>}
             <label className="text-sm text-ink">{t("Who can comment?")}<select value={active.comment_policy || "MEMBERS"} onChange={(event) => patchActive({ comment_policy: event.target.value })} className={`${field} mt-1`}>{COMMENT_POLICIES.map(([value, label]) => <option key={value} value={value}>{t(label)}</option>)}</select></label>
           </div>
           <fieldset className="mt-5"><legend className="text-sm font-semibold text-ink">{t("What appears in this album?")}</legend><div className="mt-3 flex flex-wrap gap-2">{TOPICS.map((topic) => { const selectedTopic = active.tags.includes(topic); return <button type="button" key={topic} onClick={() => patchActive({ tags: selectedTopic ? active.tags.filter((item) => item !== topic) : [...active.tags, topic].slice(0, 20) })} className={`rounded-full border px-3 py-2 text-sm ${selectedTopic ? "border-velora-accent bg-velora-accent text-velora-paper" : "border-ink/15 text-ink"}`}>{topic}</button>; })}</div></fieldset>
