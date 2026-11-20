@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
 
   const audienceAt = performance.now();
   let profileQuery = db.from("profiles")
-    .select("id,display_name,username,avatar_url,verification_status,verification_level,headline,created_at")
+    .select("id,display_name,username,avatar_url,verification_status,verification_level,profile_visibility,headline,created_at")
     .eq("account_status", "ACTIVE").eq("discovery_disabled", false)
     .in("profile_visibility", scope === "friends" || scope === "circle" ? ["EVERYONE", "MEMBERS_ONLY", "FRIENDS_ONLY"] : ["EVERYONE", "MEMBERS_ONLY"])
     .order("created_at", { ascending: false }).limit(40);
@@ -145,6 +145,7 @@ export async function GET(req: NextRequest) {
 
   const items: FeedItem[] = [];
   for (const profile of profileRows || []) {
+    if (profile.profile_visibility === "FRIENDS_ONLY" && !friends.has(profile.id) && profile.id !== auth.actor.profileId) continue;
     const actor = actorFor(profile.id); if (!actor) continue;
     items.push({ id: `PROFILE:${profile.id}`, type: "PROFILE", actor, title: `${actor.displayName} joined Intimo`, body: profile.headline || undefined, href: `/profile/${profile.id}`, occurredAt: profile.created_at });
   }
