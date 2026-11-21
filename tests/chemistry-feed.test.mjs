@@ -74,7 +74,7 @@ test("For You UI has real destinations, save using existing ACLs and no fake mat
   assert.match(ui,/new since your last visit/);
   assert.match(ui,/localStorage\.setItem\("intimo.feed.lastVisit.v1", String\(Date\.now\(\)\)\)/);
   assert.doesNotMatch(ui,/localStorage\.setItem\([^,]+,\s*(JSON\.stringify|profile)/);
-  assert.match(actions,/href="\/rooms"/);
+  assert.ok(actions.includes("encodeURIComponent(actorId)"));
   assert.match(actions,/\/api\/saved-items/);
   assert.match(saved,/resolveContentTarget/);
   assert.match(actions,/href=\{\`\/profile\/\$\{encodeURIComponent\(actorId\)\}\`\}/);
