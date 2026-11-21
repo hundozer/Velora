@@ -1,5 +1,6 @@
 import { getServerSupabase } from "@/lib/supabase/server";
 import type { ServerActor } from "@/lib/auth/serverActor";
+import { canViewAlbum, canViewLinkedMedia } from "@/lib/albums/access";
 
 export const CONTENT_TARGET_TYPES = ["PROFILE", "MEDIA", "POST", "DATING_AD", "ALBUM"] as const;
 export type ContentTargetType = (typeof CONTENT_TARGET_TYPES)[number];
@@ -32,8 +33,24 @@ export async function resolveContentTarget(actor: ServerActor, targetType: Conte
     const { data: block, error: blockError } = await db.from("user_blocks").select("id").or(`and(blocker_id.eq.${actor.profileId},blocked_profile_id.eq.${target.ownerId}),and(blocker_id.eq.${target.ownerId},blocked_profile_id.eq.${actor.profileId})`).limit(1).maybeSingle();
     if (blockError || block) return { allowed: false as const, status: 404, error: "Content not found" };
   }
-  let allowed = isOwner || (target.available && ["PUBLIC", "MEMBERS_ONLY"].includes(target.visibility));
-  if (!allowed && target.available && target.visibility === "FOLLOWERS_ONLY") {
+  if (targetType === "ALBUM" && !isOwner) {
+    const allowed = target.available && await canViewAlbum(db, {
+      id: target.id, owner_id: target.ownerId,
+      visibility: target.visibility, moderation_status: "APPROVED",
+    }, actor.profileId);
+    return allowed ? { allowed: true as const, db, target, isOwner } :
+      { allowed: false as const, status: 404, error: "Content not found" };
+  }
+  let albumLinked = false;
+  if (targetType === "MEDIA" && !isOwner) {
+    const access = await canViewLinkedMedia(db, target.id, target.ownerId, actor.profileId);
+    if (access.linked && !access.allowed)
+      return { allowed: false as const, status: 404, error: "Content not found" };
+    albumLinked = access.linked && access.allowed;
+  }
+  let allowed = isOwner || (target.available && (albumLinked ||
+    ["PUBLIC", "MEMBERS_ONLY"].includes(target.visibility)));
+  if (!allowed && !albumLinked && target.available && target.visibility === "FOLLOWERS_ONLY") {
     const { data: follow } = await db.from("connections").select("id").eq("follower_id", actor.profileId).eq("followed_id", target.ownerId).eq("connection_type", "follow").maybeSingle();
     allowed = Boolean(follow);
   }
