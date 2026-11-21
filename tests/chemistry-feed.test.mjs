@@ -77,7 +77,7 @@ test("For You UI has real destinations, save using existing ACLs and no fake mat
   assert.ok(actions.includes("encodeURIComponent(actorId)"));
   assert.match(actions,/\/api\/saved-items/);
   assert.match(saved,/resolveContentTarget/);
-  assert.match(actions,/href=\{\`\/profile\/\$\{encodeURIComponent\(actorId\)\}\`\}/);
+  assert.match(actions,/href="\/rooms"/);
   assert.doesNotMatch(ui+actions,/compatibilityScore|percentMatch|AI matches/);
 });
 
