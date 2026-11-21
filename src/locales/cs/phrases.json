@@ -2560,5 +2560,19 @@
   "You can leave and come back later. Your submitted review remains pending on your account.": "Můžeš stránku opustit a vrátit se později. Odeslaná žádost o ověření zůstane u tvého účtu ve stavu čekání.",
   "Check review status": "Zkontrolovat stav ověření",
   "Checking status…": "Kontroluji stav…",
-  "Try again": "Zkusit znovu"
+  "Try again": "Zkusit znovu",
+  "Restore saved answers": "Obnovit uložené odpovědi",
+  "Save and continue later": "Uložit a pokračovat později",
+  "Delete saved answers": "Smazat uložené odpovědi",
+  "Your saved answers have been restored. Review them before continuing.": "Uložené odpovědi byly obnoveny. Před pokračováním je zkontroluj.",
+  "Saved privately for 7 days. Use your invitation link to return.": "Soukromě uloženo na 7 dní. K návratu použij odkaz z pozvánky.",
+  "Saved answers deleted.": "Uložené odpovědi byly smazány.",
+  "Draft could not be deleted": "Uložené odpovědi se nepodařilo smazat",
+  "Draft could not be saved": "Odpovědi se nepodařilo uložit",
+  "Draft saving unavailable": "Ukládání rozepsaných odpovědí není dostupné",
+  "Saved draft could not be opened. You can start again.": "Uložené odpovědi se nepodařilo otevřít. Můžeš začít znovu.",
+  "Too many saves. Try again later.": "Příliš mnoho pokusů o uložení. Zkus to později.",
+  "Optional: encrypt these answers for 7 days so you can resume from your invitation link.": "Volitelné: zašifrovat odpovědi na 7 dní, abys mohl(a) pokračovat z odkazu v pozvánce.",
+  "Save or restore answers": "Uložit nebo obnovit odpovědi",
+  "I explicitly agree to save my unfinished profile answers, including sensitive personal preferences, in encrypted form for up to 7 days. I can delete them at any time.": "Výslovně souhlasím s uložením nedokončených profilových odpovědí, včetně citlivých osobních preferencí, v šifrované podobě až na 7 dní. Mohu je kdykoli smazat."
 }
