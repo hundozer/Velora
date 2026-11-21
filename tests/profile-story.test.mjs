@@ -59,7 +59,7 @@ test("the profile opens as a sheet over People and still loads on its own", asyn
   const story = await read("src/components/profile/ProfileStory.tsx");
   // One parallel round of requests instead of a waterfall.
   assert.match(story, /await Promise\.all\(\[\s*fetch\(`\/api\/profiles\/\$\{key\}`/);
-  for (const words of ["Begin a conversation", "Back to People", "Photographs", "boundaries", "(you too)", "You can ask again in a few days.", "kept private."]) assert.ok(story.includes(words), words);
+  for (const words of ["Begin a conversation", "Back to People", "Photographs", "boundaries", "(you too)", "Albums", "setPrivateAlbums"]) assert.ok(story.includes(words), words);
   assert.doesNotMatch(story, /declined/i, "cooldown copy stays neutral");
   assert.doesNotMatch(story, /rounded-full border px-3 py-1/, "no chips");
 });
