@@ -1,4 +1,3 @@
-import { grantIsActive } from "@/lib/privateAccess.mjs";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 type Db = NonNullable<ReturnType<typeof getServerSupabase>>;
