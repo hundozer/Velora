@@ -35,6 +35,7 @@ function feedFixture({authenticated=true, blocked=false}={}) {
     '@/lib/security/rateLimiter':{checkRateLimit:async()=>({allowed:true})},
     '@/lib/supabase/server':{getServerSupabase:()=>db},
     '@/lib/feed/audience':load('src/lib/feed/audience.ts',{}),
+    '@/lib/feed/chemistry.mjs':{rankChemistryFeed:items=>items},
   });
   return{api,executed};
 }
