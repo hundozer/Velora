@@ -28,21 +28,19 @@ test("re-requests: no duplicates, cooldown after a decline", () => {
   assert.equal(canRequest({ status: "REVOKED" }, now).ok, true);
 });
 
-test("every private media read re-checks the grant and blocks", async () => {
-  const media = await read("src/app/api/media/[id]/route.ts");
-  assert.match(media, /if \(!allowed && media\.visibility === "PRIVATE" && !isChatImage\) \{[\s\S]*album_access_grants[\s\S]*allowed = grantIsActive\(grant\);/);
-  assert.match(media, /deliverMedia/);
-  const list = await read("src/app/api/private-access/media/route.ts");
-  assert.match(list, /if \(!grantIsActive\(grant\)\) return NextResponse\.json\(\{ error: "No access" \}, \{ status: 403 \}\);/);
-  assert.match(list, /url: `\/api\/media\/\$\{row\.id\}`/);
-});
 
-test("requests respect the owner's boundary and only the owner can decide", async () => {
-  const route = await read("src/app/api/private-access/route.ts");
-  assert.match(route, /resolveBoundaries\(boundaryRows\)\.PRIVATE_ALBUM_REQUESTS/);
-  assert.match(route, /establishedDecision\(preference, Boolean\(repliedBefore\)\)/);
-  assert.match(route, /rpc\("intimo_decide_private_access", \{ p_owner: actor.profileId, p_viewer: viewerId, p_decision: body.decision \}\)/);
-  const sql = await read("supabase/migrations/20261025000000_private_access.sql");
-  assert.match(sql, /revoke all on public\.album_access_grants from anon, authenticated;/);
-  assert.match(sql, /check \(grant_type is distinct from 'ONCE' or expires_at is not null\)/);
+test("legacy owner-wide grants do not authorize album photos", async () => {
+  const media = await read("src/app/api/media/[id]/route.ts");
+  assert.match(media, /canViewLinkedMedia/);
+  assert.match(media, /albumAccess.linked && !albumAccess.allowed/);
+  assert.doesNotMatch(media, /album_access_grants|grantIsActive/);
+  const listing = await read("src/app/api/private-access/media/route.ts");
+  assert.match(listing, /album_viewer_grants/);
+  assert.doesNotMatch(listing, /album_access_grants/);
+  const api = await read("src/app/api/private-access/route.ts");
+  assert.match(api, /status:410/);
+  const scoped = await read("src/app/api/albums/[id]/access/route.ts");
+  assert.match(scoped, /album_viewer_grants/);
+  assert.match(scoped, /viewer_id/);
+  assert.match(scoped, /album_id/);
 });
