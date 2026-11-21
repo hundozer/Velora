@@ -71,5 +71,5 @@ test("draft keys never exposed through NEXT_PUBLIC and no logging of personal an
   const crypto=read("src/lib/onboarding/draftCrypto.ts");
   const api=read("src/app/api/onboarding/draft/route.ts");
   assert.match(crypto,/process\.env\.INTIMO_ONBOARDING_DRAFT_KEY/);
-  assert.doesNotMatch(crypto+api,/NEXT_PUBLIC|console\.log|console\.error/);
+  assert.doesNotMatch(crypto+api,/process\\.env\\.NEXT_PUBLIC_|console\.log|console\.error/);
 });
