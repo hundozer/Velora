@@ -117,7 +117,16 @@ export async function GET(req: NextRequest) {
     !excluded.has(authorId) && canShowFeedAudience(visibility, authorId, auth.actor.profileId, following, friends);
   const visiblePosts = (postRows || []).filter(row => allowed(row.visibility, row.author_id));
   const visibleAlbums = (albumRows || []).filter(row => allowed(row.visibility, row.owner_id));
-  const visibleMedia = (mediaRows || []).filter(row => allowed(row.visibility, row.owner_id));
+  // Media attached to albums is discovered via the album card only. Otherwise
+  // a historical PUBLIC media flag can expose a Private/Only-me album title.
+  const candidateMedia=(mediaRows||[]).filter(row=>allowed(row.visibility,row.owner_id));
+  const {data:linkedRows,error:linkedError}=candidateMedia.length
+    ? await db.from("media_album_items").select("media_id")
+      .in("media_id",candidateMedia.map(row=>row.id))
+    : {data:[],error:null};
+  if(linkedError)return NextResponse.json({error:"Feed unavailable"},{status:502});
+  const linkedIds=new Set((linkedRows||[]).map(link=>link.media_id));
+  const visibleMedia = candidateMedia.filter(row=>!linkedIds.has(row.id));
 
   for (const row of adRows || []) ownerIds.add(row.author_id);
   for (const row of visiblePosts) ownerIds.add(row.author_id);
