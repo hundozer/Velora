@@ -121,13 +121,16 @@ function OnboardingForm() {
   const next = () => { setError(""); setStep(steps[index + 1]); };
   const back = index > 0 && step !== "photo" ? () => { setError(""); setStep(steps[index - 1]); } : undefined;
   const screen = { step: index + 1, total: steps.length, onBack: back,
-    utility: draftAvailable && step !== "photo" ? <div className="flex flex-wrap items-center justify-end gap-2 text-xs">
-      {savedDraft && <button type="button" disabled={draftBusy} onClick={restoreDraft} className="min-h-11 rounded-full border border-velora-accent px-3 font-semibold text-velora-accent">{t("Restore saved answers")}</button>}
-      <button type="button" disabled={draftBusy} onClick={() => void saveDraft()} className="min-h-11 rounded-full border border-velora-line px-3 font-semibold text-velora-textSecondary">{draftBusy ? t("Saving…") : t("Save and continue later")}</button>
-      <button type="button" disabled={draftBusy} onClick={() => void deleteDraft()} className="min-h-11 px-2 font-semibold text-velora-textMuted underline">{t("Delete saved answers")}</button>
-      <p className="w-full text-right text-xs leading-5 text-velora-textMuted">{t("Optional: encrypt these answers for 7 days so you can resume from your invitation link.")}</p>
-      {draftNotice && <span role="status" className="w-full text-right text-velora-textSecondary">{t(draftNotice)}</span>}
-    </div> : null,
+    utility: draftAvailable && step !== "photo" ? <details className="relative w-full text-right text-xs">
+      <summary className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-velora-line px-4 font-semibold text-velora-textSecondary">{t("Save or restore answers")}</summary>
+      <div className="mt-2 flex flex-wrap justify-end gap-2 rounded-2xl border border-velora-line bg-velora-surface p-3">
+        {savedDraft && <button type="button" disabled={draftBusy} onClick={restoreDraft} className="min-h-11 rounded-full border border-velora-accent px-3 font-semibold text-velora-accent">{t("Restore saved answers")}</button>}
+        <button type="button" disabled={draftBusy} onClick={() => void saveDraft()} className="min-h-11 rounded-full bg-velora-accent px-3 font-semibold text-velora-paper">{draftBusy ? t("Saving…") : t("Save and continue later")}</button>
+        <button type="button" disabled={draftBusy} onClick={() => void deleteDraft()} className="min-h-11 px-2 font-semibold text-velora-textMuted underline">{t("Delete saved answers")}</button>
+        <p className="w-full text-right text-xs leading-5 text-velora-textMuted">{t("Optional: encrypt these answers for 7 days so you can resume from your invitation link.")}</p>
+        {draftNotice && <span role="status" className="w-full text-right text-velora-textSecondary">{t(draftNotice)}</span>}
+      </div>
+    </details> : null,
   };
 
   const nameValid = displayName.trim().length >= 2 && displayName.trim().length <= 80;
