@@ -19,6 +19,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!db) return NextResponse.json({ error: "Public media unavailable" }, { status: 503 });
   const { data: media } = await db.from("media_objects").select("id,owner_id,object_key,content_rating,mime_type").eq("id", params.id).eq("visibility", "PUBLIC").eq("upload_status", "AVAILABLE").eq("processing_status", "READY").eq("moderation_status", "APPROVED").maybeSingle();
   if (!media) return NextResponse.json({ error: "Media not found" }, { status: 404 });
+  // Album-linked files are never available through the standalone/public
+  // media endpoint. The album-specific authenticated endpoint checks access.
+  const { data: linked, error: linkError } = await db.from("media_album_items")
+    .select("album_id").eq("media_id", media.id).limit(1);
+  if (linkError || (linked?.length ?? 0) > 0)
+    return NextResponse.json({ error: "Media not found" }, { status: 404 });
+
   if (media.mime_type.startsWith("video/") && !media.object_key.startsWith(`variants/${media.id}/safe.`)) return NextResponse.json({ error: "Media not found" }, { status: 404 });
   const actor = await resolveServerActor(req);
   if (media.content_rating !== "NON_EXPLICIT") {
