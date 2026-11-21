@@ -14,7 +14,8 @@ test("feed offers a direct room and member discovery path rather than another me
   assert.match(actions, /isRoom \? "Enter conversation"/);
   assert.match(actions, /href=\{href\}/);
   assert.match(actions, /\/messages\?user=\$\{encodeURIComponent\(actorId\)\}/);
-  assert.doesNotMatch(actions, /fetch\(|supabase|localStorage|grantAccess/);
+  assert.match(actions, /\/api\/saved-items/);
+  assert.doesNotMatch(actions, /supabase|localStorage|grantAccess/);
 });
 
 test("feed cannot prompt someone to message themselves or an unowned room event", () => {
