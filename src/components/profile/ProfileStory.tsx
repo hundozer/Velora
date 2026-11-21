@@ -19,7 +19,6 @@ import { possessive, statusLine, subject } from "@/lib/peopleCopy.mjs";
 import type { BoundarySentence } from "@/lib/approach.mjs";
 
 const LOOKING_FOR_LABELS = new Map(LOOKING_FOR.map((item) => [item.value, item.label]));
-const NUMBER_WORDS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
 
 type Profile = {
   id: string; displayName: string; age?: number; gender?: string; headline?: string; bio?: string; isCoupleProfile?: boolean; verified?: boolean; foundingMember?: boolean;
@@ -30,7 +29,6 @@ type Profile = {
 };
 type Approach = { isOwner: boolean; sentences: BoundarySentence[]; canWrite: boolean; line: string | null; established: boolean; boundaries: Record<string, string> };
 type Desires = { desires: { desire_id: string; state: string }[]; shared: string[] };
-type Access = { isOwner: boolean; privateCount: number; status?: string | null; active?: boolean; grantType?: string | null; expiresAt?: string | null; canRequest?: boolean };
 type Media = { id: string; type: "IMAGE" | "VIDEO"; title: string; mediaUrl: string };
 type Album = { id: string; title: string; coverUrl?: string | null };
 
@@ -61,8 +59,6 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
   const [isOwner, setIsOwner] = React.useState(false);
   const [approach, setApproach] = React.useState<Approach | null>(null);
   const [desires, setDesires] = React.useState<Desires | null>(null);
-  const [access, setAccess] = React.useState<Access | null>(null);
-  const [privateMedia, setPrivateMedia] = React.useState<{ id: string; url: string }[]>([]);
   const [media, setMedia] = React.useState<Media[]>([]);
   const [albums, setAlbums] = React.useState<Album[]>([]);
   const [privateAlbums, setPrivateAlbums] = React.useState<Album[]>([]);
@@ -73,21 +69,13 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [reportOpen, setReportOpen] = React.useState(false);
   const [notice, setNotice] = React.useState("");
-  const [requesting, setRequesting] = React.useState(false);
 
   const loadAccess = React.useCallback(async () => {
-    const next = await json<Access>(`/api/private-access?ownerId=${encodeURIComponent(id)}`);
-    setAccess(next);
-    if (next?.active || next?.isOwner) {
-      const privateContent = await json<{ media: { id: string; url: string }[]; albums: Album[] }>(
-        `/api/private-access/media?ownerId=${encodeURIComponent(id)}`);
-      setPrivateMedia(privateContent?.media || []);
-      setPrivateAlbums(privateContent?.albums || []);
-    } else {
-      // Revoke cached private URLs and metadata immediately when access is lost.
-      setPrivateMedia([]);
-      setPrivateAlbums([]);
-    }
+    // Album-specific grants only: old global photo approvals do not grant
+    // access to arbitrary private media or another hidden album.
+    const privateContent = await json<{ media: { id: string; url: string }[]; albums: Album[] }>(
+      `/api/private-access/media?ownerId=${encodeURIComponent(id)}`);
+    setPrivateAlbums(privateContent?.albums || []);
   }, [id]);
 
   React.useEffect(() => {
@@ -175,15 +163,6 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
     window.location.assign("/people");
   };
 
-  const requestPhotos = async () => {
-    setRequesting(true);
-    setNotice("");
-    const response = await fetch("/api/private-access", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ownerId: id }) });
-    const payload = await response.json().catch(() => ({}));
-    setRequesting(false);
-    if (!response.ok) return setNotice(payload.error || "Your request could not be sent.");
-    void loadAccess();
-  };
 
   const backLabel = variant === "sheet" ? "Back to People" : "People";
   const BackIcon = variant === "sheet" ? ArrowDown : ArrowLeft;
@@ -226,7 +205,6 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
   const tags = memberView ? [...(profile.interests || []), ...(profile.hobbies || []), ...(profile.lifestyleTags || [])].slice(0, 16) : [];
   const label = (desireId: string) => { const found = desireById(desireId)?.label; return found ? t(found).toLowerCase() : desireId; };
   const name = profile.displayName;
-  const requestsPref = approach?.boundaries?.PRIVATE_ALBUM_REQUESTS;
 
   return (
     <article className="intimo-member-page" aria-label={t("{name}'s profile", { name: name })}>
@@ -308,7 +286,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
           </section>
         )}
 
-        {(media.some((item) => item.type === "IMAGE") || (access && access.privateCount > 0)) && (
+        {media.some((item) => item.type === "IMAGE") && (
           <section aria-label={t("Photographs")}>
             <H2>{t("Photographs")}</H2>
             <div className="mt-4 grid grid-cols-3 gap-2">
@@ -320,16 +298,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
                   {memberView && !isOwner && <LikeButton mediaId={item.id} className="absolute bottom-2 right-2" />}
                 </div>
               ))}
-              {access?.active
-                ? privateMedia.map((item) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img key={item.id} src={item.url} alt="" className="aspect-[4/5] w-full object-cover" onContextMenu={(event) => event.preventDefault()} draggable={false} />
-                ))
-                : access && access.privateCount > 0 && !access.isOwner && Array.from({ length: Math.min(access.privateCount, 2) }, (_, index) => (
-                  <div key={index} className="flex aspect-[4/5] items-center justify-center bg-velora-sunken text-[14px] text-velora-ink2">{index === 0 ? t("Private") : ""}</div>
-                ))}
             </div>
-            <PrivatePhotoWords access={access} name={name} she={she} requestsPreference={requestsPref} established={Boolean(approach?.established)} requesting={requesting} onRequest={requestPhotos} />
           </section>
         )}
 
@@ -411,29 +380,6 @@ function TopBar({ onBack, backLabel, BackIcon, overPhoto = false, menu }: { onBa
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-/** The words under Photographs: every private-photo state, phrased neutrally. */
-function PrivatePhotoWords({ access, name, she, requestsPreference, established, requesting, onRequest }: {
-  access: Access | null; name: string; she: string; requestsPreference?: string; established: boolean; requesting: boolean; onRequest: () => void;
-}) {
-  const { t } = useTranslation();
-  if (!access || access.privateCount === 0) return null;
-  const count = `${NUMBER_WORDS[access.privateCount] ?? "Some"} private photograph${access.privateCount === 1 ? "" : "s"}`;
-  const stops = she === "they" ? "they stop" : `${she} stops`;
-  const choose = she === "they" ? "they choose" : `${she} chooses`;
-  if (access.isOwner) return <p className="mt-3 text-[15px] text-velora-ink2">{t("{count}, seen only by people you approve.", { count })}{" "}<Link href="/me/private-photos" className="font-semibold text-velora-ink underline underline-offset-4">{t("Manage access")}</Link></p>;
-  if (access.active) return <p className="mt-3 text-[15px] text-velora-ink2">{access.grantType === "ONCE" && access.expiresAt ? t("Shared with you until {toLocaleString}.", { toLocaleString: new Date(access.expiresAt).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" }) }) : t("Shared with you until {stops}.", { stops: stops })}{" "}{t("Please don't save or share them.")}</p>;
-  if (access.status === "REQUESTED") return <p className="mt-3 text-[15px] text-velora-ink2">{t("{count}. You asked to see them — {name} will decide.", { count, name })}</p>;
-  if (requestsPreference === "NOT_INTERESTED") return <p className="mt-3 text-[15px] text-velora-ink2">{t("{count}, kept private.", { count })}</p>;
-  if (requestsPreference === "ASK_FIRST" && !established) return <p className="mt-3 text-[15px] text-velora-ink2">{t("{count}. {name} takes requests once you're talking — {choose} 24 hours, until {stops}, or not now.", { count, name, choose, stops })}</p>;
-  if (!access.canRequest) return <p className="mt-3 text-[15px] text-velora-ink2">{t("{count}. You can ask again in a few days.", { count })}</p>;
-  return (
-    <div className="mt-3">
-      <p className="text-[15px] text-velora-ink2">{t("{count}. If you ask, {name} chooses: 24 hours, until {stops}, or not now.", { count, name, stops })}</p>
-      <button type="button" onClick={onRequest} disabled={requesting} className="mt-2 inline-flex min-h-11 items-center text-[16px] font-semibold text-velora-ink underline underline-offset-4 disabled:opacity-50">{t("Ask to see them")}</button>
     </div>
   );
 }
