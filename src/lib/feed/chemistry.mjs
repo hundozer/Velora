@@ -1,6 +1,6 @@
 // Explainable, privacy-preserving feed ranking. All inputs have already passed
 // the canonical feed's age, block, moderation and item visibility gates.
-// We NEVER use declared desires, orientation or private profile preferences.
+// We do not process sensitive profile attributes or inferred compatibility.
 export const EXPLANATIONS = Object.freeze({
   friend: "You're connected",
   follow: "You follow this member",
