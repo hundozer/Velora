@@ -3,6 +3,7 @@ import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { canShowFeedAudience } from "@/lib/feed/audience";
+import { rankChemistryFeed } from "@/lib/feed/chemistry.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ type FeedItem = {
   href: string;
   occurredAt: string;
   reactionSummary?: { count: number; liked: boolean };
+  why?: string;
 };
 
 export async function GET(req: NextRequest) {
@@ -34,13 +36,13 @@ export async function GET(req: NextRequest) {
   if (!db) return NextResponse.json({ error: "Feed unavailable" }, { status: 503 });
 
   const url = new URL(req.url);
-  const scope = ["newest", "circle", "followed", "friends"].includes(url.searchParams.get("scope") || "") ? url.searchParams.get("scope")! : "newest";
+  const scope = ["for_you", "newest", "circle", "followed", "friends"].includes(url.searchParams.get("scope") || "") ? url.searchParams.get("scope")! : "for_you";
   const contentType = ["all", "albums", "photos", "videos", "posts", "dating", "events", "rooms"].includes(url.searchParams.get("type") || "") ? url.searchParams.get("type")! : "all";
 
   const [{ data: blocks, error: blockError }, { data: follows, error: followError }, { data: friendships, error: friendshipError }] = await Promise.all([
     db.from("user_blocks").select("blocker_id,blocked_profile_id").or(`blocker_id.eq.${auth.actor.profileId},blocked_profile_id.eq.${auth.actor.profileId}`),
-    (scope === "followed" || scope === "circle" || scope === "friends") ? db.from("connections").select("followed_id").eq("follower_id", auth.actor.profileId).eq("connection_type", "follow") : Promise.resolve({ data: [], error: null }),
-    (scope === "friends" || scope === "circle" || scope === "followed") ? db.from("friendships").select("requester_id,addressee_id").eq("status", "ACCEPTED")
+    (scope === "for_you" || scope === "followed" || scope === "circle" || scope === "friends") ? db.from("connections").select("followed_id").eq("follower_id", auth.actor.profileId).eq("connection_type", "follow") : Promise.resolve({ data: [], error: null }),
+    (scope === "for_you" || scope === "friends" || scope === "circle" || scope === "followed") ? db.from("friendships").select("requester_id,addressee_id").eq("status", "ACCEPTED")
       .or(`requester_id.eq.${auth.actor.profileId},addressee_id.eq.${auth.actor.profileId}`) : Promise.resolve({ data: [], error: null }),
   ]);
   if (blockError || followError || friendshipError) return NextResponse.json({ error: "Feed audience unavailable" }, { status: 503 });
@@ -71,13 +73,13 @@ export async function GET(req: NextRequest) {
   let adQuery = db.from("dating_ads").select("id,author_id,title,text,category,created_at,expires_at")
     .eq("status", "active").order("created_at", { ascending: false }).limit(40);
   let postQuery = db.from("content_posts").select("id,author_id,title,body,category,visibility,published_at,created_at")
-    .in("visibility", scope === "newest" ? ["PUBLIC", "MEMBERS_ONLY"] : ["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY", "FRIENDS_ONLY"])
+    .in("visibility", (scope === "newest" || scope === "for_you") ? ["PUBLIC", "MEMBERS_ONLY"] : ["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY", "FRIENDS_ONLY"])
     .eq("moderation_status", "APPROVED").order("published_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }).limit(40);
   let albumQuery = db.from("media_albums").select("id,owner_id,title,description,category,visibility,cover_media_id,published_at,created_at")
-    .in("visibility", scope === "newest" ? ["PUBLIC", "MEMBERS_ONLY"] : ["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY", "FRIENDS_ONLY"])
+    .in("visibility", (scope === "newest" || scope === "for_you") ? ["PUBLIC", "MEMBERS_ONLY"] : ["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY", "FRIENDS_ONLY"])
     .eq("moderation_status", "APPROVED").order("published_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }).limit(40);
   let mediaQuery = db.from("media_objects").select("id,owner_id,media_type,title,description,category,visibility,published_at,created_at")
-    .in("visibility", scope === "newest" ? ["PUBLIC", "MEMBERS_ONLY"] : ["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY", "FRIENDS_ONLY"])
+    .in("visibility", (scope === "newest" || scope === "for_you") ? ["PUBLIC", "MEMBERS_ONLY"] : ["PUBLIC", "MEMBERS_ONLY", "FOLLOWERS_ONLY", "FRIENDS_ONLY"])
     .eq("upload_status", "AVAILABLE").eq("processing_status", "READY").eq("moderation_status", "APPROVED")
     .order("published_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }).limit(40);
   let eventQuery = db.from("scene_events").select("id,title,description,kind,starts_at,ends_at,venue_name,submitted_by,reviewed_at,created_at")
@@ -192,7 +194,11 @@ export async function GET(req: NextRequest) {
   const filtered = contentType === "all" ? items : items.filter((item) => permittedTypes[contentType]?.includes(item.type));
   filtered.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || a.id.localeCompare(b.id));
   const contentAt = performance.now();
-  const page = filtered.slice(0, 60);
+  // Personalized ordering applies ONLY after the same item-by-item access
+  // filters as chronological Newest. It never unlocks friend-only content.
+  const page: FeedItem[] = scope === "for_you"
+    ? rankChemistryFeed(filtered, {following, friends}, Date.now(), 60)
+    : filtered.slice(0, 60);
   // Only summarize already-authorized feed targets. No client-supplied IDs and
   // no additional identity/visibility requests for each rendered card.
   const targets = page.filter(item => !["PROFILE", "EVENT", "ROOM"].includes(item.type));
@@ -214,7 +220,7 @@ export async function GET(req: NextRequest) {
       }));
     }
   }
-  return NextResponse.json({ items: page, scope, contentType, ranking: "occurred_at_desc_then_id_asc" }, { headers: {
+  return NextResponse.json({ items: page, scope, contentType, ranking: scope === "for_you" ? "explainable_freshness_relationship_diversity_v1" : "occurred_at_desc_then_id_asc" }, { headers: {
     "Cache-Control": "private, no-store",
     "Server-Timing": `auth;dur=${(authorizedAt - startedAt).toFixed(1)}, audience;dur=${(audienceAt - authorizedAt).toFixed(1)}, content;dur=${(contentAt - audienceAt).toFixed(1)}, reactions;dur=${(performance.now() - contentAt).toFixed(1)}`,
   } });
