@@ -57,6 +57,7 @@ function OnboardingForm() {
   const [draftAvailable, setDraftAvailable] = useState(false);
   const [savedDraft, setSavedDraft] = useState<Record<string, unknown> | null>(null);
   const [draftBusy, setDraftBusy] = useState(false);
+  const [draftConsent, setDraftConsent] = useState(false);
   const [draftNotice, setDraftNotice] = useState("");
 
   React.useEffect(() => { window.scrollTo(0, 0); }, [step]);
@@ -91,7 +92,7 @@ function OnboardingForm() {
     setDraftNotice("Your saved answers have been restored. Review them before continuing.");
   }
   async function saveDraft() {
-    if (draftBusy) return;
+    if (draftBusy || !draftConsent) return;
     setDraftBusy(true); setDraftNotice("");
     try {
       const draft = { step, profileType, gender, relationshipStatus, displayName, dateOfBirth,
@@ -101,6 +102,7 @@ function OnboardingForm() {
         body: JSON.stringify({ saveConsent: true, draft }) });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || "Draft could not be saved");
+      setDraftConsent(false);
       setDraftNotice("Saved privately for 7 days. Use your invitation link to return.");
     } catch (cause) { setDraftNotice(cause instanceof Error ? cause.message : "Draft could not be saved"); }
     finally { setDraftBusy(false); }
@@ -125,7 +127,11 @@ function OnboardingForm() {
       <summary className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-velora-line px-4 font-semibold text-velora-textSecondary">{t("Save or restore answers")}</summary>
       <div className="mt-2 flex flex-wrap justify-end gap-2 rounded-2xl border border-velora-line bg-velora-surface p-3">
         {savedDraft && <button type="button" disabled={draftBusy} onClick={restoreDraft} className="min-h-11 rounded-full border border-velora-accent px-3 font-semibold text-velora-accent">{t("Restore saved answers")}</button>}
-        <button type="button" disabled={draftBusy} onClick={() => void saveDraft()} className="min-h-11 rounded-full bg-velora-accent px-3 font-semibold text-velora-paper">{draftBusy ? t("Saving…") : t("Save and continue later")}</button>
+        <label className="flex w-full items-start gap-2 text-left text-xs leading-5 text-velora-textSecondary">
+          <input type="checkbox" checked={draftConsent} onChange={event => setDraftConsent(event.target.checked)} className="mt-1 h-4 w-4 shrink-0 accent-velora-accent" />
+          <span>{t("I explicitly agree to save my unfinished profile answers, including sensitive personal preferences, in encrypted form for up to 7 days. I can delete them at any time.")}</span>
+        </label>
+        <button type="button" disabled={draftBusy || !draftConsent} onClick={() => void saveDraft()} className="min-h-11 rounded-full bg-velora-accent px-3 font-semibold text-velora-paper">{draftBusy ? t("Saving…") : t("Save and continue later")}</button>
         <button type="button" disabled={draftBusy} onClick={() => void deleteDraft()} className="min-h-11 px-2 font-semibold text-velora-textMuted underline">{t("Delete saved answers")}</button>
         <p className="w-full text-right text-xs leading-5 text-velora-textMuted">{t("Optional: encrypt these answers for 7 days so you can resume from your invitation link.")}</p>
         {draftNotice && <span role="status" className="w-full text-right text-velora-textSecondary">{t(draftNotice)}</span>}
