@@ -2573,5 +2573,6 @@
   "Saved draft could not be opened. You can start again.": "Uložené odpovědi se nepodařilo otevřít. Můžeš začít znovu.",
   "Too many saves. Try again later.": "Příliš mnoho pokusů o uložení. Zkus to později.",
   "Optional: encrypt these answers for 7 days so you can resume from your invitation link.": "Volitelné: zašifrovat odpovědi na 7 dní, abys mohl(a) pokračovat z odkazu v pozvánce.",
-  "Save or restore answers": "Uložit nebo obnovit odpovědi"
+  "Save or restore answers": "Uložit nebo obnovit odpovědi",
+  "I explicitly agree to save my unfinished profile answers, including sensitive personal preferences, in encrypted form for up to 7 days. I can delete them at any time.": "Výslovně souhlasím s uložením nedokončených profilových odpovědí, včetně citlivých osobních preferencí, v šifrované podobě až na 7 dní. Mohu je kdykoli smazat."
 }
