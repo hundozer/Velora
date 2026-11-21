@@ -86,7 +86,7 @@ function mediaRoute({ grant, deliver }) {
     "@/lib/storage/r2": {}, "@/lib/auth/durableAudit": {},
     "@/lib/media/variants.mjs": { parseRequestedWidth: () => null, pickVariantWidth: () => null },
     "@/lib/security/rateLimiter": { checkRateLimit: async () => ({ allowed: true }) },
-    "@/lib/privateAccess.mjs": { grantIsActive },
+    "@/lib/albums/access": { canViewLinkedMedia: async () => ({ linked: true, allowed: grantIsActive(grant()) }) },
     "@/lib/media/delivery": { deliverMedia: deliver },
   });
 }

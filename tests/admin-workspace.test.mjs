@@ -36,6 +36,7 @@ test('owner responses expose requested changes without leaking internal moderati
       '@/lib/supabase/server': { getServerSupabase: () => db },
       '@/lib/security/rateLimiter': {},
       '@/lib/auth/durableAudit': {},
+      '@/lib/albums/access': { CHOOSABLE_ALBUM_VISIBILITIES: ["MEMBERS_ONLY","PRIVATE_APPROVED","PRIVATE"], LEGACY_ALBUM_VISIBILITIES: ["PUBLIC","FRIENDS_ONLY","FOLLOWERS_ONLY"] },
     });
     const response = await route.GET({ url: `https://example.test/api/${kind}` });
     const body = await response.json(); const returned = body[kind];

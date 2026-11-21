@@ -702,7 +702,7 @@ test("albums use canonical media objects with owner, moderation, public privacy,
   assert.match(owner, /owner_id: auth\.actor\.profileId/);
   assert.match(assignment, /p_owner_id: auth\.actor\.profileId/);
   assert.match(publicAlbum, /eq\("moderation_status","APPROVED"\)/);
-  assert.match(publicAlbum, /eq\("visibility","PUBLIC"\)/);
+  assert.match(publicAlbum, /in\("visibility",\["PUBLIC","MEMBERS_ONLY"\]\)/);
   assert.match(admin, /requireAdminPermission\(req,"content:moderate"\)/);
   assert.match(admin, /Every photo in a public album must be public, ready, and approved first/);
 });

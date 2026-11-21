@@ -17,7 +17,7 @@ test("chat photos are only the sender's own MESSAGE uploads, and explicit ones r
 test("chat photos are served only to the recipient of that message, never publicly", async () => {
   const media = await read("src/app/api/media/[id]/route.ts");
   assert.match(media, /\.eq\("media_url", `\/api\/media\/\$\{media\.id\}`\)\.eq\("sender_id", media\.owner_id\)\.eq\("receiver_id", actor\.actor\.profileId\)/);
-  assert.match(media, /\(!isChatImage && \(media\.visibility === "PUBLIC" \|\| media\.visibility === "MEMBERS_ONLY"\)\)/);
+  assert.match(media, /!albumAccess.linked && !isChatImage/);
   assert.match(media, /deliverMedia/);
   const chat = await read("src/components/chat/ChatWindow.tsx");
   assert.match(chat, /uploadFileToR2\(file, "photos", setUploadingPhoto, declaration, "PRIVATE"/);
@@ -25,7 +25,7 @@ test("chat photos are served only to the recipient of that message, never public
 });
 
 test("chat photos stay out of galleries and the proactive review queue", async () => {
-  assert.match(await read("src/app/api/private-access/media/route.ts"), /category\.neq\.MESSAGE/);
+  assert.match(await read("src/app/api/private-access/media/route.ts"), /album_viewer_grants/);
   assert.match(await read("src/app/api/admin/media/route.ts"), /category\.neq\.MESSAGE/);
   assert.match(await read("src/components/media/AlbumManager.tsx"), /item\.category !== "MESSAGE"/);
 });

@@ -5,17 +5,17 @@ import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
 import { ArrowDown, ArrowUp, Check, Images, Plus, Star, Trash2, Upload } from "lucide-react";
 import { requestParticipantDeclaration, uploadFileToR2 } from "@/lib/storage/clientUpload";
+import { AlbumViewerAccess } from "./AlbumViewerAccess";
 
 const CATEGORIES = ["Woman", "Man", "Couple: woman & man", "Couple: two women", "Couple: two men", "Group", "Art and details"];
 const TOPICS = ["Soft erotica", "Couples", "Solo", "Bisexual", "Gay", "Lesbian", "BDSM & kink", "Bondage", "Roleplay", "Fetish", "Lingerie", "Mature", "Outdoor", "Exhibitionism", "Toys", "Massage", "Artistic", "Vacation"];
 const VISIBILITY = [
-  ["PUBLIC", "Everyone"],
-  ["MEMBERS_ONLY", "Intimo members"],
-  ["FOLLOWERS_ONLY", "Followers"],
-  ["FRIENDS_ONLY", "Friends"],
-  ["PRIVATE_APPROVED", "Private — approved people"],
+  ["MEMBERS_ONLY", "Community"],
+  ["PRIVATE_APPROVED", "Private"],
   ["PRIVATE", "Only me"],
 ] as const;
+const LEGACY_VISIBILITIES = ["FOLLOWERS_ONLY", "FRIENDS_ONLY", "PUBLIC"];
+
 const COMMENT_POLICIES = [
   ["MEMBERS", "Any member"],
   ["VERIFIED", "Verified members"],
@@ -30,6 +30,7 @@ type Album = {
   category?: string | null;
   tags: string[];
   visibility: string;
+  legacyVisibility?: string | null;
   comment_policy: string;
   reactions_enabled: boolean;
   moderation_status: string;
@@ -60,7 +61,9 @@ export function AlbumManager() {
     const mediaPayload = await mediaResponse.json().catch(() => ({}));
     if (!albumResponse.ok) throw new Error(albumPayload.error || "Albums unavailable");
     if (!mediaResponse.ok) throw new Error(mediaPayload.error || "Photos unavailable");
-    setAlbums(albumPayload.albums || []);
+    setAlbums((albumPayload.albums || []).map((album: Album) => ({ ...album,
+      legacyVisibility: LEGACY_VISIBILITIES.includes(album.visibility) ? album.visibility : null,
+    })));
     // Only finished uploads can go into an album; abandoned or failed uploads stay out of the picker.
     setMedia((mediaPayload.media || []).filter((item: Media & { category?: string | null }) => item.upload_status === "AVAILABLE" && item.category !== "MESSAGE"));
     setSelected((current) => current && albumPayload.albums?.some((album: Album) => album.id === current) ? current : albumPayload.albums?.[0]?.id || null);
@@ -88,9 +91,11 @@ export function AlbumManager() {
   }
 
   async function updateAlbum(album: Album) {
+    if (LEGACY_VISIBILITIES.includes(album.visibility)) { setError("Choose Community, Private or Only me to replace the old audience rule."); return; }
+    if (album.legacyVisibility && !window.confirm(t("This album uses an older audience rule. Changing it will replace that restriction. Continue?"))) return;
     setBusy(true); setError(""); setNotice(""); setLastSaveAction("album");
     try {
-      const response = await fetch(`/api/albums/${album.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...album, commentPolicy: album.comment_policy, reactionsEnabled: album.reactions_enabled }) });
+      const response = await fetch(`/api/albums/${album.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...album, commentPolicy: album.comment_policy, reactionsEnabled: album.reactions_enabled, confirmAudienceChange: Boolean(album.legacyVisibility) }) });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) { setError(payload.error || "Album update failed"); return; }
       await load();
@@ -129,7 +134,7 @@ export function AlbumManager() {
     setBusy(true); setError(""); setNotice("");
     try {
       const declaration = await requestParticipantDeclaration();
-      const result = await uploadFileToR2(file, "photos", setProgress, declaration, active.visibility === "PUBLIC" ? "PUBLIC" : "PRIVATE");
+      const result = await uploadFileToR2(file, "photos", setProgress, declaration, active.visibility === "MEMBERS_ONLY" ? "MEMBERS_ONLY" : "PRIVATE");
       await load();
       await savePhotos({ ...active, mediaIds: [...active.mediaIds, result.mediaId], cover_media_id: active.cover_media_id || result.mediaId });
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Upload failed"); }
@@ -157,13 +162,13 @@ export function AlbumManager() {
         <form onSubmit={create} className="space-y-3 rounded-2xl border border-ink/10 bg-velora-surface p-5">
           <h2 className="text-xl font-semibold text-ink">{t("New album")}</h2>
           <input name="title" required maxLength={160} placeholder={t("Album title")} className={field} />
-          <label className="block text-sm font-semibold text-ink">{t("Who can see it?")}<select name="visibility" defaultValue="PRIVATE" className={field}>{VISIBILITY.map(([value, label]) => <option key={value} value={value}>{t(label)}</option>)}</select></label><p className="text-xs leading-relaxed text-velora-textSecondary">{t("Private — approved people uses your existing private-photo permissions. No feed posts or public album previews.")}</p>
+          <label className="block text-sm font-semibold text-ink">{t("Who can see it?")}<select name="visibility" defaultValue="PRIVATE" className={field}>{VISIBILITY.map(([value, label]) => <option key={value} value={value}>{t(label)}</option>)}</select></label><p className="text-xs leading-relaxed text-velora-textSecondary">{t("Private albums use album-specific approvals. Only me is visible to nobody else.")}</p>
           <details className="space-y-3"><summary className="cursor-pointer text-sm text-velora-textSecondary">{t("More options")}</summary><textarea name="description" maxLength={4000} placeholder={t("Description")} className={`${field} mt-3 min-h-20 py-3`} /><select name="category" defaultValue="" className={`${field} mt-3`}><option value="">{t("Choose a category")}</option>{CATEGORIES.map((item) => <option key={item} value={item}>{t(item)}</option>)}</select>
           <select name="commentPolicy" defaultValue="MEMBERS" className={field}>{COMMENT_POLICIES.map(([value, label]) => <option key={value} value={value}>{t("Comments: {label}", { label: t(label) })}</option>)}</select>
           <label className="flex min-h-11 items-center gap-3 text-sm text-ink"><input type="checkbox" name="reactionsEnabled" defaultChecked />{" "}{t("Allow likes")}</label></details>
           <button disabled={busy} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-velora-accent font-bold text-velora-paper"><Plus className="h-4 w-4" />{t("Create album")}</button>
         </form>
-        <div className="space-y-2">{albums.map((album) => <button key={album.id} onClick={() => setSelected(album.id)} className={`w-full rounded-xl border p-4 text-left ${selected === album.id ? "border-velora-accent bg-velora-accent/10" : "border-ink/10 bg-velora-surface"}`}><strong className="block text-ink">{t(album.title)}</strong><span className="mt-1 block text-xs text-velora-textSecondary">{t("{length} photos ·", { length: album.mediaIds.length })}{" "}{VISIBILITY.find(([value]) => value === album.visibility)?.[1] || album.visibility}</span></button>)}</div>
+        <div className="space-y-2">{albums.map((album) => <button key={album.id} onClick={() => setSelected(album.id)} className={`w-full rounded-xl border p-4 text-left ${selected === album.id ? "border-velora-accent bg-velora-accent/10" : "border-ink/10 bg-velora-surface"}`}><strong className="block text-ink">{t(album.title)}</strong><span className="mt-1 block text-xs text-velora-textSecondary">{t("{length} photos ·", { length: album.mediaIds.length })}{" "}{t(VISIBILITY.find(([value]) => value === album.visibility)?.[1] || "Legacy restricted")}</span></button>)}</div>
       </aside>
 
       <section>{active ? <div className="space-y-6">
@@ -176,7 +181,10 @@ export function AlbumManager() {
           </div>
           <label className="mt-4 block text-sm text-ink">{t("Description")}<textarea value={active.description || ""} maxLength={4000} onChange={(event) => patchActive({ description: event.target.value })} className={`${field} mt-1 min-h-24 py-3`} /></label>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <label className="text-sm text-ink">{t("Who can see it?")}<select value={active.visibility} onChange={(event) => patchActive({ visibility: event.target.value })} className={`${field} mt-1`}>{VISIBILITY.map(([value, label]) => <option key={value} value={value}>{t(label)}</option>)}</select></label>{active.visibility === "PRIVATE_APPROVED" && <p className="mt-2 text-xs text-velora-textSecondary">{t("Only approved private photos can be included. Revoke someone’s private-photo access to hide this album from them immediately.")}</p>}
+            <label className="text-sm text-ink">{t("Who can see it?")}<select value={active.visibility} onChange={(event) => patchActive({ visibility: event.target.value })} className={`${field} mt-1`}>
+                {LEGACY_VISIBILITIES.includes(active.visibility) && <option value={active.visibility} disabled>{t("Legacy restricted — choose a new audience")}</option>}
+                {VISIBILITY.map(([value, label]) => <option key={value} value={value}>{t(label)}</option>)}
+              </select></label>{active.visibility === "PRIVATE_APPROVED" && <p className="mt-2 text-xs text-velora-textSecondary">{t("Only approved people for this album can see the photos. Removing someone revokes access immediately.")}</p>}
             <label className="text-sm text-ink">{t("Who can comment?")}<select value={active.comment_policy || "MEMBERS"} onChange={(event) => patchActive({ comment_policy: event.target.value })} className={`${field} mt-1`}>{COMMENT_POLICIES.map(([value, label]) => <option key={value} value={value}>{t(label)}</option>)}</select></label>
           </div>
           <fieldset className="mt-5"><legend className="text-sm font-semibold text-ink">{t("What appears in this album?")}</legend><div className="mt-3 flex flex-wrap gap-2">{TOPICS.map((topic) => { const selectedTopic = active.tags.includes(topic); return <button type="button" key={topic} onClick={() => patchActive({ tags: selectedTopic ? active.tags.filter((item) => item !== topic) : [...active.tags, topic].slice(0, 20) })} className={`rounded-full border px-3 py-2 text-sm ${selectedTopic ? "border-velora-accent bg-velora-accent text-velora-paper" : "border-ink/15 text-ink"}`}>{topic}</button>; })}</div></fieldset>
@@ -187,6 +195,7 @@ export function AlbumManager() {
           )}
         </div>
 
+        {active.visibility === "PRIVATE_APPROVED" && <AlbumViewerAccess albumId={active.id} />}
         <div className="space-y-5">
           <div className="space-y-4">
             <label className="flex items-start gap-3 rounded-xl border border-velora-accent/25 bg-velora-accent/5 p-4 text-sm text-ink"><input type="checkbox" className="mt-1" checked={rightsConfirmed} onChange={(event) => setRightsConfirmed(event.target.checked)} />{t("I own these photos and everyone shown is an adult who agreed to be photographed and shared.")}</label>

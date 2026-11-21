@@ -40,7 +40,16 @@ export async function GET(req: NextRequest) {
   if (ownerId) query = query.eq("owner_id", ownerId);
   const { data: rows, error, count } = await query;
   if (error) return NextResponse.json({ error: "Public media lookup failed" }, { status: 502 });
-  const ownerIds = Array.from(new Set((rows || []).map((row) => row.owner_id)));
+  // A media object attached to any album has independent album ACLs.
+  // Never leak its title, tags or thumbnail through the public media catalog.
+  const mediaIds=(rows||[]).map(row=>row.id);
+  const {data:albumLinks,error:linkError}=mediaIds.length
+    ? await db.from("media_album_items").select("media_id").in("media_id",mediaIds)
+    : {data:[],error:null};
+  if(linkError)return NextResponse.json({error:"Public media unavailable"},{status:503});
+  const linked=new Set((albumLinks||[]).map(link=>link.media_id));
+  const standalone=(rows||[]).filter(row=>!linked.has(row.id));
+  const ownerIds = Array.from(new Set(standalone.map((row) => row.owner_id)));
   const { data: owners } = ownerIds.length ? await db.from("profiles")
     .select("id,display_name,username,verification_status,verification_level")
     .in("id", ownerIds)
@@ -50,7 +59,7 @@ export async function GET(req: NextRequest) {
     .eq("age_verification_status", "AGE_VERIFIED")
     .eq("discovery_disabled", false) : { data: [] };
   const ownerMap = new Map((owners || []).map((owner) => [owner.id, owner]));
-  const media = (rows || []).flatMap((row) => {
+  const media = standalone.flatMap((row) => {
     const owner = ownerMap.get(row.owner_id);
     if (!owner) return [];
     return [{

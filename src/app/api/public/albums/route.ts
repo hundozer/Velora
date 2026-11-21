@@ -1,24 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { closedSiteRefusal } from "@/lib/publicAccess";
+import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 
 export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const closed = await closedSiteRefusal(req); if (closed) return closed;
+  const auth = await resolveServerActor(req);
+  if(auth.status!=="authenticated" || !hasAdultAccess(auth.actor)) return NextResponse.json({error:"Member access required"},{status:403});
   const url = new URL(req.url); const page = Math.min(Math.max(Number(url.searchParams.get("page")) || 1, 1), 500); const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 18, 1), 36); const offset = (page - 1) * limit; const ownerId = url.searchParams.get("ownerId");
   if (ownerId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(ownerId)) return NextResponse.json({ error: "Invalid owner" }, { status: 400 });
   const client = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   if (!(await checkRateLimit(`public-albums:${client.slice(0,80)}`, 90, 60)).allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   const db = getServerSupabase(); if (!db) return NextResponse.json({ error: "Albums unavailable" }, { status: 503 });
-  let query = db.from("media_albums").select("id,owner_id,title,description,category,tags,cover_media_id,published_at,created_at", { count: "exact" }).eq("visibility", "PUBLIC").eq("moderation_status", "APPROVED").order("published_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }).order("id", { ascending: true }).range(offset, offset + limit - 1);
+  let query = db.from("media_albums").select("id,owner_id,title,description,category,tags,cover_media_id,published_at,created_at", { count: "exact" }).in("visibility", ["PUBLIC","MEMBERS_ONLY"]).eq("moderation_status", "APPROVED").order("published_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }).order("id", { ascending: true }).range(offset, offset + limit - 1);
   if (ownerId) query = query.eq("owner_id", ownerId);
   const { data: albums, error, count } = await query;
   if (error) return NextResponse.json({ error: "Album lookup failed" }, { status: 502 });
-  const ownerIds = [...new Set((albums || []).map((album) => album.owner_id))];
-  const { data: owners } = ownerIds.length ? await db.from("profiles").select("id,display_name,username,verification_status,verification_level").in("id",ownerIds).eq("profile_visibility","EVERYONE").eq("public_profile_visibility",true).eq("account_status","ACTIVE").eq("age_verification_status","AGE_VERIFIED").eq("discovery_disabled",false) : { data: [] };
+  const {data:blocks,error:blockError}=await db.from("user_blocks")
+    .select("blocker_id,blocked_profile_id")
+    .or(`blocker_id.eq.${auth.actor.profileId},blocked_profile_id.eq.${auth.actor.profileId}`);
+  if(blockError)return NextResponse.json({error:"Albums unavailable"},{status:503});
+  const hidden=new Set((blocks||[]).map(b=>b.blocker_id===auth.actor.profileId?b.blocked_profile_id:b.blocker_id));
+  const allowedAlbums=(albums||[]).filter(album=>!hidden.has(album.owner_id));
+  const ownerIds = [...new Set(allowedAlbums.map((album) => album.owner_id))];
+  const { data: owners } = ownerIds.length ? await db.from("profiles").select("id,display_name,username,verification_status,verification_level").in("id",ownerIds).eq("account_status","ACTIVE").eq("age_verification_status","AGE_VERIFIED").eq("discovery_disabled",false) : { data: [] };
   const ownerMap = new Map((owners || []).map((owner) => [owner.id,owner])); const albumIds = (albums || []).map((album) => album.id);
   const { data: items } = albumIds.length ? await db.from("media_album_items").select("album_id,media_id").in("album_id",albumIds) : { data: [] };
-  const visible = (albums || []).flatMap((album) => { const owner = ownerMap.get(album.owner_id); if (!owner) return []; const mediaIds = (items || []).filter((item) => item.album_id === album.id).map((item) => item.media_id); return [{ id: album.id,title:album.title,description:album.description,category:album.category,tags:Array.isArray(album.tags)?album.tags.slice(0,20):[],coverUrl:album.cover_media_id?`/api/public/media/${album.cover_media_id}`:null,photoCount:mediaIds.length,owner:{id:owner.id,displayName:owner.display_name||owner.username||"Intimo member",verified:owner.verification_status==="VERIFIED"||["LEVEL_3_PROFILE_BIOMETRIC","LEVEL_4_CREATOR"].includes(owner.verification_level||"")},publishedAt:album.published_at||album.created_at}]; });
-  return NextResponse.json({ albums: visible, pagination: { page,limit,total:count||0,hasMore:offset+(albums || []).length<(count||0) }, ranking:"published_at_desc_created_at_desc_id_asc" }, { headers: { "Cache-Control":"public, max-age=30, stale-while-revalidate=120" } });
+  const visible = allowedAlbums.flatMap((album) => { const owner = ownerMap.get(album.owner_id); if (!owner) return []; const mediaIds = (items || []).filter((item) => item.album_id === album.id).map((item) => item.media_id); return [{ id: album.id,title:album.title,description:album.description,category:album.category,tags:Array.isArray(album.tags)?album.tags.slice(0,20):[],coverUrl:album.cover_media_id?`/api/media/${album.cover_media_id}`:null,photoCount:mediaIds.length,owner:{id:owner.id,displayName:owner.display_name||owner.username||"Intimo member",verified:owner.verification_status==="VERIFIED"||["LEVEL_3_PROFILE_BIOMETRIC","LEVEL_4_CREATOR"].includes(owner.verification_level||"")},publishedAt:album.published_at||album.created_at}]; });
+  return NextResponse.json({ albums: visible, pagination: { page,limit,total:count||0,hasMore:offset+(albums || []).length<(count||0) }, ranking:"published_at_desc_created_at_desc_id_asc" }, { headers: { "Cache-Control":"private, no-store" } });
 }

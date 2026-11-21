@@ -44,8 +44,17 @@ export async function GET(req: NextRequest) {
   ]);
 
   if (profileResult.error || mediaResult.error || albumResult.error || adResult.error) return NextResponse.json({ error: "Search lookup failed" }, { status: 502 });
+  // Album-linked originals never appear as independent media search results.
+  // This avoids disclosing restricted album captions through old PUBLIC flags.
+  const ids=(mediaResult.data||[]).map(row=>row.id);
+  const {data:linkedMedia,error:linkError}=ids.length
+    ? await db.from("media_album_items").select("media_id").in("media_id",ids)
+    : {data:[],error:null};
+  if(linkError)return NextResponse.json({error:"Search unavailable"},{status:502});
+  const linkedIds=new Set((linkedMedia||[]).map(row=>row.media_id));
+  const standaloneMedia=(mediaResult.data||[]).filter(row=>!linkedIds.has(row.id));
   const ownerIds = Array.from(new Set([
-    ...(mediaResult.data || []).map((row) => row.owner_id),
+    ...standaloneMedia.map((row) => row.owner_id),
     ...(albumResult.data || []).map((row) => row.owner_id),
     ...(adResult.data || []).map((row) => row.author_id),
     ...(postResult.data || []).map((row) => row.author_id),
@@ -57,7 +66,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     query: q,
     people: (profileResult.data || []).filter((row) => !blocked.has(row.id)).map((row) => ({ id: row.id, displayName: row.display_name || row.username || "Intimo member", avatarUrl: row.avatar_url, age: row.age, location: [row.city, row.country].filter(Boolean).join(", "), headline: row.headline, profileType: row.is_couple_profile ? "COUPLE" : "INDIVIDUAL", verified: row.verification_status === "VERIFIED" || ["LEVEL_3_PROFILE_BIOMETRIC", "LEVEL_4_CREATOR"].includes(row.verification_level || "") })),
-    media: (mediaResult.data || []).filter((row) => owners.has(row.owner_id)).map((row) => ({ id: row.id, type: row.media_type, title: row.title || (row.media_type === "VIDEO" ? "Untitled video" : "Untitled photo"), description: row.description, category: row.category, ownerId: row.owner_id, ownerName: author(row.owner_id), mediaUrl: `/api/media/${row.id}`, publishedAt: row.published_at || row.created_at })),
+    media: standaloneMedia.filter((row) => owners.has(row.owner_id)).map((row) => ({ id: row.id, type: row.media_type, title: row.title || (row.media_type === "VIDEO" ? "Untitled video" : "Untitled photo"), description: row.description, category: row.category, ownerId: row.owner_id, ownerName: author(row.owner_id), mediaUrl: `/api/media/${row.id}`, publishedAt: row.published_at || row.created_at })),
     albums: (albumResult.data || []).filter((row) => owners.has(row.owner_id)).map((row) => ({ id: row.id, title: row.title, description: row.description, category: row.category, ownerId: row.owner_id, ownerName: author(row.owner_id), publishedAt: row.published_at || row.created_at })),
     datingAds: (adResult.data || []).filter((row) => owners.has(row.author_id) && new Date(row.expires_at).getTime() > Date.now()).map((row) => ({ id: row.id, title: row.title, category: row.category, authorId: row.author_id, authorName: author(row.author_id), location: [row.region, row.country].filter(Boolean).join(", "), ageRange: `${row.min_age}–${row.max_age}`, createdAt: row.created_at })),
     posts: postResult.error ? [] : (postResult.data || []).filter((row) => owners.has(row.author_id)).map((row) => ({ id: row.id, type: row.post_type, title: row.title, excerpt: String(row.body || "").slice(0, 240), category: row.category, authorId: row.author_id, authorName: author(row.author_id), publishedAt: row.published_at || row.created_at })),

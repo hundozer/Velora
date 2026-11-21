@@ -7,7 +7,7 @@ import { parseRequestedWidth, pickVariantWidth } from "@/lib/media/variants.mjs"
 import { checkRateLimit } from "@/lib/security/rateLimiter";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
 import { deliverMedia } from "@/lib/media/delivery";
-import { grantIsActive } from "@/lib/privateAccess.mjs";
+import { canViewLinkedMedia } from "@/lib/albums/access";
 
 export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -70,33 +70,29 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ error: "Media not found" }, { status: 404 });
     }
   }
-  let allowed = isOwner || chatParticipant || (!isChatImage && (media.visibility === "PUBLIC" || media.visibility === "MEMBERS_ONLY"));
-  if (!allowed && media.visibility === "FOLLOWERS_ONLY") {
-    const { data: follow } = await supabase.from("connections").select("id").eq("follower_id", actor.actor.profileId).eq("followed_id", media.owner_id).eq("connection_type", "follow").maybeSingle();
-    allowed = Boolean(follow);
+  // Album association takes precedence over an individual media visibility flag.
+  // "Only me" can never be bypassed by an old owner-wide grant or a public media flag.
+  const albumAccess = isOwner || isChatImage
+    ? { linked: false, allowed: false }
+    : await canViewLinkedMedia(supabase, media.id, media.owner_id, actor.actor.profileId);
+  if (albumAccess.linked && !albumAccess.allowed)
+    return NextResponse.json({ error: "Media not found" }, { status: 404 });
+  let allowed = isOwner || chatParticipant || (albumAccess.linked && albumAccess.allowed)
+    || (!albumAccess.linked && !isChatImage && (media.visibility === "PUBLIC" || media.visibility === "MEMBERS_ONLY"));
+  if (!allowed && !albumAccess.linked && media.visibility === "FOLLOWERS_ONLY") {
+    const { data: follow, error: followError } = await supabase.from("connections").select("id")
+      .eq("follower_id", actor.actor.profileId).eq("followed_id", media.owner_id)
+      .eq("connection_type", "follow").maybeSingle();
+    allowed = !followError && Boolean(follow);
   }
-  if (!allowed && media.visibility === "APPROVED_USERS_ONLY") {
-    const { data: approved } = await supabase.from("connections").select("id").eq("follower_id", media.owner_id).eq("followed_id", actor.actor.profileId).eq("connection_type", "favorite").maybeSingle();
-    allowed = Boolean(approved);
+  if (!allowed && !albumAccess.linked && media.visibility === "APPROVED_USERS_ONLY") {
+    const { data: approved, error: approvedError } = await supabase.from("connections").select("id")
+      .eq("follower_id", media.owner_id).eq("followed_id", actor.actor.profileId)
+      .eq("connection_type", "favorite").maybeSingle();
+    allowed = !approvedError && Boolean(approved);
   }
-  if (!allowed && media.visibility === "PRIVATE" && !isChatImage) {
-    // Private Album Handshake (P1-06): checked on every read, so revoking is immediate.
-    const { data: grant, error: grantError } = await supabase.from("album_access_grants").select("status,grant_type,expires_at").eq("owner_id", media.owner_id).eq("viewer_id", actor.actor.profileId).maybeSingle();
-    if (grantError) return NextResponse.json({ error: "Media not found" }, { status: 404 });
-    allowed = grantIsActive(grant);
-    if (!allowed) {
-      // An approved member album can contain photos uploaded while it was private.
-      // The album, link and owner are checked on every read; private standalone photos stay private.
-      const { data: links, error: linkError } = await supabase.from("media_album_items").select("album_id").eq("media_id", media.id).limit(30);
-      if (linkError) return NextResponse.json({ error: "Media not found" }, { status: 404 });
-      const ids = (links || []).map(link => link.album_id);
-      if (ids.length) {
-        const { data: albums, error: albumError } = await supabase.from("media_albums").select("id").in("id", ids).eq("owner_id", media.owner_id).eq("visibility", "MEMBERS_ONLY").eq("moderation_status", "APPROVED").limit(1);
-        if (albumError) return NextResponse.json({ error: "Media not found" }, { status: 404 });
-        allowed = Boolean(albums?.length);
-      }
-    }
-  }
+  // PRIVATE standalone media is owner-only. Older owner-wide photo grants
+  // cannot grant blanket access to photos from another album.
   if (!allowed) return NextResponse.json({ error: "Media not found" }, { status: 404 });
   // Authorisation is complete. Pick a resized variant when one exists (variants are read
   // separately so this route keeps working before the variants migration is applied).
