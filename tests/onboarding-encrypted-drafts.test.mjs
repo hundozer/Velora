@@ -57,6 +57,9 @@ test("draft API is unprovisioned verified owner only, no direct browser role acc
 test("draft UI requires explicit save, restores without local storage and preserves invitation checks", () => {
   const page = read("src/app/onboarding/page.tsx");
   assert.match(page,/saveConsent: true, draft/);
+  assert.match(page,/checked=\{draftConsent\}/);
+  assert.match(page,/disabled=\{draftBusy \|\| !draftConsent\}/);
+  assert.match(page,/including sensitive personal preferences/);
   assert.match(page,/Restore saved answers/);
   assert.match(page,/Delete saved answers/);
   assert.match(page,/fetch\("\/api\/onboarding\/draft"/);
