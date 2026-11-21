@@ -2551,5 +2551,14 @@
   "Choose an approximate area, not your address. You can change it later.": "Vyber přibližnou oblast, ne svou adresu. Později ji můžeš změnit.",
   "Choose an area group": "Vyber skupinu oblastí",
   "Selected area: {area}": "Vybraná oblast: {area}",
-  "Your profile photo is optional. The separate private age check is required before joining the community.": "Profilová fotografie je dobrovolná. Před vstupem do komunity je nutné samostatné soukromé ověření věku."
+  "Your profile photo is optional. The separate private age check is required before joining the community.": "Profilová fotografie je dobrovolná. Před vstupem do komunity je nutné samostatné soukromé ověření věku.",
+  "Finish joining Intimo": "Dokončit vstup do Intima",
+  "Open your invitation to continue": "Otevři pozvánku a pokračuj",
+  "Your profile isn't finished yet. Open the original invitation link in your email to continue securely. You may need to enter your answers again.": "Tvůj profil ještě není dokončený. Pro bezpečné pokračování otevři původní odkaz z pozvánky v e-mailu. Možná bude potřeba vyplnit odpovědi znovu.",
+  "Intimo doesn't keep unfinished personal answers on this device.": "Intimo na tomto zařízení neukládá nedokončené osobní odpovědi.",
+  "Your age check is waiting for manual review. You cannot use the community until it is approved. We cannot guarantee an exact review time.": "Ověření věku čeká na ruční kontrolu. Dokud nebude schváleno, nemůžeš komunitu používat. Přesnou dobu vyřízení nemůžeme zaručit.",
+  "You can leave and come back later. Your submitted review remains pending on your account.": "Můžeš stránku opustit a vrátit se později. Odeslaná žádost o ověření zůstane u tvého účtu ve stavu čekání.",
+  "Check review status": "Zkontrolovat stav ověření",
+  "Checking status…": "Kontroluji stav…",
+  "Try again": "Zkusit znovu"
 }
