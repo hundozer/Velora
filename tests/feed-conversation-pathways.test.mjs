@@ -8,7 +8,7 @@ test("feed offers a direct room and member discovery path rather than another me
   const feed = read("src/components/community/MemberActivityFeed.tsx");
   const actions = read("src/components/community/FeedConversationActions.tsx");
   assert.match(feed, /<FeedConversationDiscovery \/>/);
-  assert.match(feed, /<FeedCardActions type=\{item\.type\} href=\{item\.href\} actorId=\{item\.actor\.id\} selfId=\{profile\?\.id\} \/>/);
+  assert.match(feed, /<FeedCardActions type=\{item\.type\} href=\{item\.href\} actorId=\{item\.actor\.id\} selfId=\{profile\?\.id\} targetId=\{item\.id\.split\(":"\)\[1\]\} \/>/);
   assert.match(actions, /href="\/rooms"/);
   assert.match(actions, /href="\/people"/);
   assert.match(actions, /isRoom \? "Enter conversation"/);
