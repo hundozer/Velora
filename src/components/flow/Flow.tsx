@@ -61,7 +61,7 @@ export function ChoiceCard({ label, icon, selected, onClick, compact = false }: 
 
 export function BigButton({ children, disabled, onClick, type = "button" }: { children: React.ReactNode; disabled?: boolean; onClick?: () => void; type?: "button" | "submit" }) {
   return (
-    <button type={type} disabled={disabled} onClick={onClick} className="flex min-h-16 w-full items-center justify-center rounded-xl bg-velora-accent px-8 text-lg font-semibold text-velora-paper transition hover:bg-velora-accentHover active:scale-[0.98] disabled:opacity-35">
+    <button type={type} disabled={disabled} onClick={onClick} className="flex min-h-16 w-full items-center justify-center rounded-full bg-velora-warm px-8 text-lg font-semibold text-velora-paper transition hover:bg-velora-warmHover active:scale-[0.98] disabled:opacity-35">
       {children}
     </button>
   );

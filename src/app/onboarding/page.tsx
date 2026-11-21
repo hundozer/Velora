@@ -131,7 +131,7 @@ function OnboardingForm() {
           <input type="checkbox" checked={draftConsent} onChange={event => setDraftConsent(event.target.checked)} className="mt-1 h-4 w-4 shrink-0 accent-velora-accent" />
           <span>{t("I explicitly agree to save my unfinished profile answers, including sensitive personal preferences, in encrypted form for up to 7 days. I can delete them at any time.")}</span>
         </label>
-        <button type="button" disabled={draftBusy || !draftConsent} onClick={() => void saveDraft()} className="min-h-11 rounded-full bg-velora-accent px-3 font-semibold text-velora-paper">{draftBusy ? t("Saving…") : t("Save and continue later")}</button>
+        <button type="button" disabled={draftBusy || !draftConsent} onClick={() => void saveDraft()} className="min-h-11 rounded-full bg-velora-warm px-3 font-semibold text-velora-paper">{draftBusy ? t("Saving…") : t("Save and continue later")}</button>
         <button type="button" disabled={draftBusy} onClick={() => void deleteDraft()} className="min-h-11 px-2 font-semibold text-velora-textMuted underline">{t("Delete saved answers")}</button>
         <p className="w-full text-right text-xs leading-5 text-velora-textMuted">{t("Optional: encrypt these answers for 7 days so you can resume from your invitation link.")}</p>
         {draftNotice && <span role="status" className="w-full text-right text-velora-textSecondary">{t(draftNotice)}</span>}
@@ -230,7 +230,7 @@ function OnboardingForm() {
       <h1 className="font-display text-4xl text-velora-ink sm:text-5xl">{t("Open your invitation to continue")}</h1>
       <p className="text-base leading-7 text-velora-textSecondary">{t("Your profile isn't finished yet. Open the original invitation link in your email to continue securely. You may need to enter your answers again.")}</p>
       <p className="text-sm text-velora-textMuted">{t("Intimo doesn't keep unfinished personal answers on this device.")}</p>
-      <Link href="/register" className="inline-flex min-h-12 items-center justify-center rounded-full bg-velora-accent px-6 text-sm font-semibold text-velora-paper">{t("How invitations work")}</Link>
+      <Link href="/register" className="inline-flex min-h-12 items-center justify-center rounded-full bg-velora-warm px-6 text-sm font-semibold text-velora-paper">{t("How invitations work")}</Link>
       <Link href="/login" className="inline-flex min-h-11 items-center justify-center text-sm font-semibold text-velora-textSecondary underline underline-offset-4">{t("Back to sign in")}</Link>
     </main>
   );

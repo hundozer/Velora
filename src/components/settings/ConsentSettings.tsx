@@ -115,7 +115,7 @@ export function ConsentSettings() {
                   <input type="checkbox" checked={agreed} onChange={(event) => setAgreed(event.target.checked)} className="mt-0.5 h-4 w-4 accent-velora-accent" />
                   <span>{t("I agree to the wording above.")}</span>
                 </label>
-                <button type="button" disabled={!agreed || busy === type} onClick={() => void change(type, true)} className="min-h-9 rounded-full bg-velora-accent px-4 text-xs font-bold text-velora-paper disabled:opacity-50">{busy === type ? t("One moment…") : t("Give consent")}</button>
+                <button type="button" disabled={!agreed || busy === type} onClick={() => void change(type, true)} className="min-h-9 rounded-full bg-velora-warm px-4 text-xs font-semibold text-velora-paper disabled:opacity-50">{busy === type ? t("One moment…") : t("Give consent")}</button>
               </div>
             )}
           </article>

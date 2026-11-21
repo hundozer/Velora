@@ -72,7 +72,7 @@ export function FoundingMemberInvites() {
           className="block min-h-12 w-full rounded-xl border border-velora-line bg-velora-surface px-4 text-ink outline-none focus:ring-2 focus:ring-velora-gold" />
       </label>
       <button type="submit" disabled={sending || !email.trim() || !permissionConfirmed || status.remaining === 0}
-        className="inline-flex min-h-12 items-center justify-center gap-2 self-end rounded-xl bg-velora-accent px-5 font-semibold text-velora-paper disabled:cursor-not-allowed disabled:opacity-40">
+        className="inline-flex min-h-12 items-center justify-center gap-2 self-end rounded-full bg-velora-warm px-5 font-semibold text-velora-paper disabled:cursor-not-allowed disabled:opacity-40">
         <Send className="h-4 w-4" aria-hidden />{sending ? t("Sending…") : t("Send invitation")}
       </button>
       <label className="flex items-start gap-2 text-sm text-velora-textSecondary sm:col-span-2">

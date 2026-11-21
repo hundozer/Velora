@@ -41,7 +41,7 @@ export function AlbumViewerAccess({albumId}:{albumId:string}){
     <form onSubmit={e=>{e.preventDefault();void action("POST",{username:username.trim()})}} className="mt-4 flex flex-wrap gap-2">
       <input aria-label={t("Exact username")} value={username} maxLength={60} onChange={e=>setUsername(e.target.value)}
         placeholder={t("Exact username")} className="min-h-11 min-w-0 flex-1 rounded-xl border border-ink/15 bg-velora-surface px-3 text-ink" />
-      <button disabled={busy||username.trim().length<2} type="submit" className="min-h-11 rounded-xl bg-velora-accent px-4 font-semibold text-velora-paper disabled:opacity-50">{t("Approve person")}</button>
+      <button disabled={busy||username.trim().length<2} type="submit" className="min-h-11 rounded-full bg-velora-warm px-4 font-semibold text-velora-paper disabled:opacity-50">{t("Approve person")}</button>
     </form>
     {viewers.length===0?<p className="mt-4 text-sm text-velora-textSecondary">{t("Nobody has access yet.")}</p>:
       <ul className="mt-4 divide-y divide-ink/10">{viewers.map(viewer=><li key={viewer.id} className="flex flex-wrap items-center justify-between gap-2 py-3">

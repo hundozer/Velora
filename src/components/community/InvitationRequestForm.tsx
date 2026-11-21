@@ -42,7 +42,7 @@ export function InvitationRequestForm() {
   }
 
   if (state === "sent") return <div role="status" className="rounded-2xl border border-velora-line bg-velora-surface p-7 sm:p-9">
-    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-velora-accent text-velora-paper"><Check className="h-6 w-6" aria-hidden /></span>
+    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-velora-warm text-velora-paper"><Check className="h-6 w-6" aria-hidden /></span>
     <h3 className="mt-5 font-display text-3xl">{t("Thank you. We've got your request.")}</h3>
     <p className="mt-3 leading-relaxed text-velora-ink2">{t("We read every request personally. If it's a good fit, your personal invitation will arrive by email.")}</p>
   </div>;
@@ -68,7 +68,7 @@ export function InvitationRequestForm() {
       <span>{t("I'm 18 or older, and Intimo may email me about this request. My email is used for nothing else.")}</span>
     </label>
     {error && <p role="alert" className="mt-4 text-sm font-semibold text-velora-danger">{error}</p>}
-    <button type="submit" disabled={state === "sending"} className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-velora-accent px-6 text-base font-bold text-velora-paper transition-opacity hover:opacity-90 disabled:opacity-60 sm:w-auto">
+    <button type="submit" disabled={state === "sending"} className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-velora-warm px-6 text-base font-semibold text-velora-paper transition-opacity hover:opacity-90 disabled:opacity-60 sm:w-auto">
       {state === "sending" ? t("Sending…") : t("Request my invitation")}{state !== "sending" && <ArrowUpRight className="h-5 w-5" aria-hidden />}
     </button>
   </form>;

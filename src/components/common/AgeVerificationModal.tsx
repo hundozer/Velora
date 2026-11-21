@@ -51,7 +51,7 @@ export const AgeVerificationModal: React.FC = () => {
         <h1 id="age-gate-title" className="mt-6 font-display text-6xl leading-[1.02] text-velora-ink">{t("Are you 18 or older?")}</h1>
         <p className="mt-4 text-lg text-velora-textSecondary">{t("Intimo is for consenting adults. What you see here stays here.")}</p>
         <div className="mt-10 space-y-3">
-          <button type="button" autoFocus disabled={submitting} onClick={confirm} className="flex min-h-20 w-full items-center justify-center rounded-3xl bg-velora-accent px-6 text-xl font-semibold text-velora-paper transition active:scale-[0.98] disabled:opacity-60">
+          <button type="button" autoFocus disabled={submitting} onClick={confirm} className="flex min-h-20 w-full items-center justify-center rounded-3xl bg-velora-warm px-6 text-xl font-semibold text-velora-paper transition active:scale-[0.98] disabled:opacity-60">
             {submitting ? t("One moment…") : t("Yes, I'm 18+")}
           </button>
           <a href="https://www.google.com" className="flex min-h-20 w-full items-center justify-center rounded-3xl border border-velora-line bg-velora-surface px-6 text-xl font-semibold text-velora-ink2 transition hover:border-velora-ink/30">{t("No, take me out")}</a>

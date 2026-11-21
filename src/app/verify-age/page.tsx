@@ -102,7 +102,7 @@ export default function VerifyAgePage() {
     <section className="rounded-2xl border border-emerald-400/25 bg-emerald-400/10 p-5">
       <p className="flex items-center gap-2 font-semibold text-velora-textPrimary"><ShieldCheck className="h-5 w-5 text-velora-success" aria-hidden />{t("You're in. Your age check is approved.")}</p>
       {/* A full page load, so the app picks up the approval instead of the status it loaded earlier. */}
-      <a href="/dashboard" className="mt-4 inline-flex min-h-11 items-center rounded-full bg-velora-accent px-6 text-sm font-bold text-velora-paper">{t("Go to Intimo")}</a>
+      <a href="/dashboard" className="mt-4 inline-flex min-h-11 items-center rounded-full bg-velora-warm px-6 text-sm font-semibold text-velora-paper">{t("Go to Intimo")}</a>
     </section>
   </>);
 
@@ -112,7 +112,7 @@ export default function VerifyAgePage() {
       <p className="flex items-center gap-2 font-semibold text-velora-textPrimary"><Clock className="h-5 w-5 text-velora-accent" aria-hidden />{t("Thank you. A person at Intimo is reviewing your selfie.")}</p>
       <p className="text-sm leading-relaxed text-velora-textSecondary">{t("Your age check is waiting for manual review. You cannot use the community until it is approved. We cannot guarantee an exact review time.")}</p>
       <p className="text-sm leading-relaxed text-velora-textMuted">{t("You can leave and come back later. Your submitted review remains pending on your account.")}</p>
-      <button type="button" onClick={() => void refreshStatus()} disabled={checkingStatus} aria-busy={checkingStatus} className="inline-flex min-h-11 items-center rounded-full bg-velora-accent px-6 text-sm font-bold text-velora-paper disabled:opacity-50">{checkingStatus ? t("Checking status…") : t("Check review status")}</button>
+      <button type="button" onClick={() => void refreshStatus()} disabled={checkingStatus} aria-busy={checkingStatus} className="inline-flex min-h-11 items-center rounded-full bg-velora-warm px-6 text-sm font-semibold text-velora-paper disabled:opacity-50">{checkingStatus ? t("Checking status…") : t("Check review status")}</button>
       <div className="flex flex-wrap items-center gap-3">
         <Link href="/me" className="inline-flex min-h-11 items-center rounded-full border border-velora-accent px-6 text-sm font-bold text-velora-accent">{t("Finish my profile")}</Link>
         <a href="mailto:contact@intimo.live" className="inline-flex min-h-11 items-center text-sm font-semibold text-velora-textSecondary underline underline-offset-4">{t("Contact support")}</a>
@@ -153,7 +153,7 @@ export default function VerifyAgePage() {
       {/* eslint-disable-next-line @next/next/no-img-element -- a local blob preview, never optimised */}
       {preview && <img src={preview} alt={t("Your selfie, not sent yet")} className="mx-auto max-h-80 rounded-xl object-contain" />}
       {error && <p role="alert" className="text-sm text-velora-danger">{t(error)}</p>}
-      <button type="button" onClick={() => void submit()} disabled={!file || progress !== null} className="min-h-12 w-full rounded-full bg-velora-accent px-6 text-sm font-bold text-velora-paper disabled:opacity-50">
+      <button type="button" onClick={() => void submit()} disabled={!file || progress !== null} className="min-h-12 w-full rounded-full bg-velora-warm px-6 text-sm font-semibold text-velora-paper disabled:opacity-50">
         {progress !== null ? t("Sending… {progress}%", { progress }) : t("Send for review")}
       </button>
       <p className="text-xs leading-relaxed text-velora-textMuted">{t("Only our review team sees this photo. We normally delete it after approval, or 30 days after a refusal or retry request. A legal hold may require longer retention.")}</p>

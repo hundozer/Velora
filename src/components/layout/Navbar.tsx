@@ -167,13 +167,13 @@ export const Navbar: React.FC = () => {
                     href="/settings"
                     className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl"
                   >
-                    <Settings className="w-4 h-4 text-velora-textMuted" />{t("Account Settings")}</Link>
+                    <Settings className="w-4 h-4 text-velora-textMuted" />{t("Account settings")}</Link>
 
                   <button
                     onClick={() => signOut("/")}
                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-danger hover:bg-red-500/10 rounded-xl mt-1 border-t border-ink/5"
                   >
-                    <LogOut className="w-4 h-4" />{t("Sign Out")}</button>
+                    <LogOut className="w-4 h-4" />{t("Log out")}</button>
                 </div>
               )}
             </div>
@@ -188,7 +188,7 @@ export const Navbar: React.FC = () => {
               </a>
               <a
                 href={COMING_SOON ? "/#request-invitation" : "/register"}
-                className="hidden whitespace-nowrap rounded-full bg-velora-accent px-5 py-2.5 text-[15px] font-semibold text-velora-paper transition hover:bg-velora-accentHover min-[440px]:inline-block"
+                className="hidden whitespace-nowrap rounded-full border border-velora-ink/30 px-5 py-2.5 text-[15px] font-semibold text-velora-ink transition hover:border-velora-ink min-[440px]:inline-block"
               >{t("Invitation only")}</a>
             </div>
           )}

@@ -105,7 +105,7 @@ export default function BoundariesPage() {
           <p className={`flex-1 text-xs ${message?.kind === "error" ? "text-velora-danger" : "text-velora-textSecondary"}`} role={message ? "status" : undefined}>
             {message ? t(message.text) : dirty ? t("Unsaved changes") : t("Up to date")}
           </p>
-          <button type="button" onClick={save} disabled={saving || !dirty} className="min-h-11 rounded-full bg-gold-gradient px-6 text-sm font-bold text-velora-bg disabled:opacity-50">
+          <button type="button" onClick={save} disabled={saving || !dirty} className="min-h-11 rounded-full bg-velora-warm px-6 text-sm font-semibold text-velora-bg disabled:opacity-50">
             {saving ? t("Saving…") : t("Save")}
           </button>
         </div>

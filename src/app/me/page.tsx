@@ -41,7 +41,7 @@ export default function MePage() {
         <p className="text-sm text-velora-textSecondary">{t("Sign in to see your profile, messages and settings.")}</p>
         <div className="flex justify-center gap-3">
           <button onClick={() => signIn()} className="min-h-11 rounded-full border border-velora-gold/40 px-5 text-sm font-bold text-velora-gold">{t("Sign in")}</button>
-          <button onClick={() => signIn("signup")} className="min-h-11 rounded-full bg-gold-gradient px-5 text-sm font-bold text-velora-bg">{t("Join with an invitation")}</button>
+          <button onClick={() => signIn("signup")} className="min-h-11 rounded-full bg-velora-warm px-5 text-sm font-semibold text-velora-bg">{t("Join with an invitation")}</button>
         </div>
       </main>
     );
@@ -68,7 +68,7 @@ export default function MePage() {
         <Row href="/activity" icon={Activity} label={t("Activity: interest & visitors")} />
         <Row href="/connections" icon={UsersRound} label={t("Connections & requests")} />
         <Row href={`/profile/${profile?.id || "me"}`} icon={User} label={t("My profile")} />
-        <Row href="/notifications" icon={Bell} label={t("Notifications")} detail={notifications.unreadCount > 0 ? <span className="rounded-full bg-velora-gold px-2 py-0.5 text-[11px] font-bold text-velora-bg">{notifications.unreadCount}</span> : null} />
+        <Row href="/notifications" icon={Bell} label={t("Notifications")} detail={notifications.unreadCount > 0 ? <span className="rounded-full bg-velora-warm px-2 py-0.5 text-[11px] font-semibold text-velora-bg">{notifications.unreadCount}</span> : null} />
         <Row href="/me/identity" icon={Sparkles} label={t("Orientation & identity")} />
         <Row href="/me/desires" icon={Flame} label={t("My desires")} />
         <Row href="/me/boundaries" icon={Hand} label={t("My boundaries")} />

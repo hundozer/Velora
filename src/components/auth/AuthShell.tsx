@@ -35,7 +35,7 @@ export function AuthMessage({ tone, children }: { tone: "error" | "info"; childr
   );
 }
 
-export const submitClass = "flex min-h-16 w-full items-center justify-center rounded-xl bg-velora-accent px-8 text-lg font-semibold text-velora-paper transition hover:bg-velora-accentHover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-35";
+export const submitClass = "flex min-h-16 w-full items-center justify-center rounded-full bg-velora-warm px-8 text-lg font-semibold text-velora-paper transition hover:bg-velora-warmHover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-35";
 
 /** Supabase error messages are user-safe but terse; map the common ones. */
 export function friendlyAuthError(message: string | undefined): string {

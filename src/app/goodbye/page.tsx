@@ -2,66 +2,28 @@
 
 import { useTranslation } from "@/context/LanguageContext";
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Heart, Compass, ShieldAlert } from "lucide-react";
+import { HandUnderline } from "@/components/brand/HandDrawn";
 
+/** After account deletion. Brand: flat print look, serif voice, no promises (docs/brand/BRAND.md). */
 export default function GoodbyePage() {
   const { t } = useTranslation();
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-16 text-left relative overflow-hidden bg-intimo-bg">
-      {/* Background Decorative Blobs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-velora-gold/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-red-500/5 rounded-full blur-3xl" />
+    <div className="intimo-grain flex min-h-[80vh] items-center justify-center px-5 py-16">
+      <div className="w-full max-w-lg">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-velora-muted">{t("We have your deletion request.")}</p>
+        <h1 className="mt-5 font-serif text-[clamp(2.75rem,8vw,4rem)] leading-[0.95] text-velora-ink">{t("Sorry to see you go.")}</h1>
+        <HandUnderline className="mt-3 w-[200px]" />
+        <p className="mt-6 text-[17px] leading-relaxed text-velora-ink2">{t("Thank you for being here. Whatever you found, we hope it was worth it.")}</p>
 
-      <Card variant="goldBorder" className="w-full max-w-lg p-8 relative z-10 space-y-6 text-center bg-velora-card/60 backdrop-blur-md shadow-2xl">
-        {/* Golden Broken Heart Render Image */}
-        <div className="relative w-48 h-48 mx-auto rounded-full overflow-hidden border border-velora-gold/30 shadow-2xl bg-black flex items-center justify-center group">
-          <Image
-            src="/goodbye.jpg" 
-            alt={t("Goodbye")} 
-            width={192}
-            height={192}
-            className="w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 ease-out scale-105 group-hover:scale-100"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        </div>
+        <ul className="mt-8 space-y-4 border-t border-velora-line pt-6 text-sm leading-relaxed text-velora-muted">
+          <li>{t("Your login has been removed and your profile deactivated. Profile data, messages, and media follow the documented deletion/anonymization workflow and any legitimate safety or legal retention duties.")}</li>
+          <li>{t("Permanent erasure is not immediate. Deactivated accounts become eligible for the deletion/anonymization workflow after 30 days, subject to applicable retention duties.")}</li>
+        </ul>
 
-        <div className="space-y-3">
-          <span className="text-[10px] font-bold text-velora-danger uppercase tracking-widest bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20 inline-block animate-pulse">{t("Deletion Request Accepted")}</span>
-          <h2 className="text-3xl font-display font-bold text-velora-textPrimary tracking-wide">{t("We're Sad to See You Go! 💔")}</h2>
-          <p className="text-xs text-velora-textSecondary leading-relaxed max-w-sm mx-auto">{t("Was it something we said? Or did you finally find \"The One\"? Either way, we hope your journey was absolutely spectacular.")}</p>
-        </div>
-
-        {/* Informative details */}
-        <div className="p-4 rounded-xl bg-ink/5 border border-ink/10 text-left text-xs text-velora-textMuted space-y-2 leading-relaxed font-mono">
-          <div className="flex items-start gap-2 text-[11px]">
-            <Heart className="w-4 h-4 text-velora-gold shrink-0 mt-0.5" />
-            <span>{t("Your login has been removed and your profile deactivated. Profile data, messages, and media follow the documented deletion/anonymization workflow and any legitimate safety or legal retention duties.")}</span>
-          </div>
-          <div className="flex items-start gap-2 text-[11px]">
-            <ShieldAlert className="w-4 h-4 text-velora-accent shrink-0 mt-0.5" />
-            <span>{t("Permanent erasure is not immediate. Deactivated accounts become eligible for the deletion/anonymization workflow after 30 days, subject to applicable retention duties.")}</span>
-          </div>
-        </div>
-
-        {/* Action Triggers */}
-        <div className="pt-2 space-y-3">
-          {/* Intimo is invitation-only: coming back needs a new invitation from a member. */}
-          <p className="text-xs leading-relaxed text-velora-textSecondary">{t("Want to come back one day? Ask a member to send you a new invitation.")}</p>
-
-          <Link href="/" className="block">
-            <Button
-              variant="glass"
-              size="md"
-              className="w-full text-xs border-ink/10 hover:border-velora-gold/30 flex items-center justify-center gap-2"
-            >
-              <Compass className="w-4 h-4 text-velora-gold" />{t("Return to Landing Page")}</Button>
-          </Link>
-        </div>
-      </Card>
+        <p className="mt-8 text-sm text-velora-ink2">{t("Want to come back one day? Ask a member to send you a new invitation.")}</p>
+        <Link href="/" className="mt-5 inline-flex min-h-12 items-center rounded-full border border-velora-ink/30 px-6 text-sm font-semibold text-velora-ink transition hover:border-velora-ink">{t("Back to the front page")}</Link>
+      </div>
     </div>
   );
 }

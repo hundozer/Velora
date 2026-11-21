@@ -90,6 +90,9 @@ Values match `src/app/globals.css`; use the CSS variables / Tailwind `velora-*` 
   Roman for the statement, *italic* for the turn (“Není pro každého. *Možná pro tebe.*”).
 - **Plus Jakarta Sans** — everything practical: navigation, body text, buttons, forms, labels, numbers.
 - Small labels: Plus Jakarta Sans, uppercase, 11–12 px, `0.24em` tracking, `--muted`.
+- Weights: serif always Regular (400); sans up to SemiBold (600). No Bold or ExtraBold headings.
+- In code, `font-display` is the serif headline style (forced to 400); `font-display uppercase`
+  falls back to the sans label style.
 - The name is never typed as a heading in either font — use the logo (section 1).
 
 ## 4. Texture and illustration
@@ -110,9 +113,30 @@ Values match `src/app/globals.css`; use the CSS variables / Tailwind `velora-*` 
 - Lines we use: *Není pro každého. Možná pro tebe.* · *No is a full sentence.* ·
   *We ask before we stick.* · *Blessed are those who ask.* · *Ask first.*
 - Czech first for Prague, English for expats.
+- Sentence case for everything except names of policies and places (“Delete account”, not
+  “Delete Account”). No exclamation marks, no emoji in UI text.
+- Thank people plainly: “Thank you.” / “Díky.” Confirmations are short: “Saved.”, “Sent for review.”
 - Never show member counts or invent activity; never promise what the product doesn't do.
 
-## 6. Social media
+## 6. Interface
+
+How the boards translate to screens. The member pages use the `intimo-member-*` classes in
+`src/app/globals.css`; everything else follows the same rules with Tailwind tokens.
+
+| Element | Rule |
+|---|---|
+| Main action | Pill (`rounded-full`), Ember fill, graphite text, SemiBold. One per view. |
+| Other actions | Pill, transparent, `--ink` at 30 % border; text links underlined. |
+| Header invite button | The outline pill, so the page's own main action stays the one warm moment. |
+| Selected state (chips, toggles, tabs) | Ice fill or an Ember underline on tabs — a mark, not an action. |
+| Small marks | Ice: trust dots, unread rings, progress, focus rings, your own chat bubbles. |
+| Surfaces | Flat: `--surface` panels or cream paper cards. No drop shadows, no gradients, no glow. |
+| Headlines | Serif 400; the turn of a two-part headline in italic Ember. |
+| Texture | `intimo-grain` on large pages, `HandUnderline` under one hero headline. |
+
+Admin tools are English-only and exempt from the one-warm-moment rule.
+
+## 7. Social media
 
 - Six posts, one voice: a print, a line, a note, a city, an event, a quote. Same margins, the
   serif for the line, one warm detail, the end card with the brand line and `intimo.live`.

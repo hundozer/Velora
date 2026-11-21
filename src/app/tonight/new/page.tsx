@@ -154,7 +154,7 @@ export default function NewInvitationPage() {
 
         {eventId && <label className="mt-6 flex items-start gap-3 rounded-lg border border-velora-control p-4 text-sm"><input type="checkbox" checked={publishEventInvitation} onChange={event => setPublishEventInvitation(event.target.checked)} className="mt-1"/><span>{t("Post this invitation to adult members. It appears in Plans and on my profile.")}</span></label>}
         {error && <p role="alert" className="mt-6 border-l-2 border-velora-crimson pl-4 text-[15px] text-velora-crimson">{t(error)}</p>}
-        <button type="submit" disabled={!valid || submitting} className="mt-8 min-h-14 w-full rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper disabled:opacity-40">{submitting ? t("Sending…") : t("Publish invitation")}</button>
+        <button type="submit" disabled={!valid || submitting} className="mt-8 min-h-14 w-full rounded-full bg-velora-warm text-[16px] font-semibold text-velora-paper disabled:opacity-40">{submitting ? t("Sending…") : t("Publish invitation")}</button>
         {!valid && !timeProblem && <p className="mt-2 text-center text-[14px] text-velora-muted">{t("Say what you'd like to do and add a few words.")}</p>}
       </form>
 
@@ -182,7 +182,7 @@ export default function NewInvitationPage() {
         </div>
       </Sheet>
 
-      <Sheet open={sheet === "welcome"} onClose={() => setSheet(null)} label={t("Who may reply")} footer={<button type="button" onClick={() => setSheet(null)} className="min-h-14 w-full rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper">{t("Done")}</button>}>
+      <Sheet open={sheet === "welcome"} onClose={() => setSheet(null)} label={t("Who may reply")} footer={<button type="button" onClick={() => setSheet(null)} className="min-h-14 w-full rounded-full bg-velora-warm text-[16px] font-semibold text-velora-paper">{t("Done")}</button>}>
         <h2 className="font-display text-[40px] leading-none text-velora-ink">{t("I'd welcome")}</h2>
         <p className="mt-2 text-[14px] text-velora-muted">{t("Choose none for everyone. Only people who fit can reply — it's checked when they send.")}</p>
         <div className="mt-4">

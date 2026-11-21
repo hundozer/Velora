@@ -27,7 +27,7 @@
   "auth": {
     "login": "Sign In",
     "register": "Join Intimo",
-    "logout": "Sign Out"
+    "logout": "Log out"
   },
   "common": {
     "verified": "Verified Member",

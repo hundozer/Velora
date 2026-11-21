@@ -18,14 +18,15 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyles =
-    "inline-flex items-center justify-center font-medium transition-all duration-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-velora-gold/50 disabled:opacity-50 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center font-medium transition-colors duration-200 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-velora-accent disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variants = {
-    gold: "bg-gold-gradient text-velora-bg hover:brightness-110 shadow-gold-glow border border-velora-amber/40 active:scale-[0.98]",
+    // Brand (docs/brand/BRAND.md §6): "gold" is the main action — Ember pill, one per view.
+    gold: "bg-velora-warm text-velora-paper hover:bg-velora-warmHover border border-velora-warm font-semibold",
     glass:
-      "bg-ink/5 text-velora-textPrimary hover:bg-ink/10 border border-ink/10 backdrop-blur-md hover:border-velora-gold/40 active:scale-[0.98]",
+      "bg-transparent text-velora-ink border border-velora-ink/30 hover:border-velora-ink",
     outline:
-      "bg-transparent text-velora-gold border border-velora-gold/50 hover:bg-velora-gold/10 hover:border-velora-gold active:scale-[0.98]",
+      "bg-transparent text-velora-ink border border-velora-ink/30 hover:border-velora-ink",
     danger:
       "bg-velora-crimson text-velora-paper hover:brightness-110 border border-velora-crimson/30 active:scale-[0.98]",
     ghost:
@@ -33,9 +34,9 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const sizes = {
-    sm: "px-3 py-1.5 text-xs tracking-wider uppercase font-semibold",
-    md: "px-5 py-2.5 text-sm tracking-wide font-medium",
-    lg: "px-7 py-3.5 text-base tracking-wide font-semibold",
+    sm: "px-3.5 py-1.5 text-xs font-semibold",
+    md: "px-5 py-2.5 text-sm font-semibold",
+    lg: "px-7 py-3.5 text-base font-semibold",
   };
 
   return (

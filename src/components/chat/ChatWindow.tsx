@@ -365,7 +365,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 className="max-h-32 w-full resize-none bg-transparent py-3 text-[16px] text-velora-ink placeholder:text-velora-muted focus:outline-none"
               />
             </label>
-            <button type="button" onClick={() => void handleSendMessage()} disabled={sending || !inputMessage.trim()} aria-label={t("Send")} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-velora-accent text-velora-paper disabled:opacity-40">
+            <button type="button" onClick={() => void handleSendMessage()} disabled={sending || !inputMessage.trim()} aria-label={t("Send")} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-velora-warm text-velora-paper disabled:opacity-40">
               <ArrowRight className="h-5 w-5" aria-hidden />
             </button>
           </div>

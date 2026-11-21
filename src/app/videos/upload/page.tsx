@@ -40,6 +40,6 @@ export default function VideoUploadPage() {
       <fieldset><legend className="font-semibold">{t("Content")}</legend><div className="mt-2 flex gap-5"><label><input type="radio" checked={rating === "EXPLICIT"} onChange={() => setRating("EXPLICIT")} />{" "}{t("Explicit")}</label><label><input type="radio" checked={rating === "NON_EXPLICIT"} onChange={() => setRating("NON_EXPLICIT")} />{" "}{t("Non-explicit")}</label></div></fieldset>
       <p className="text-sm text-velora-ink2">{t("Visible to others only after moderation. You must have the consent of everyone identifiable in the video.")}</p>
       {error && <p role="alert" className="text-velora-danger">{t(error)}</p>}{busy && <p role="status">{t("Uploading {progress}%", { progress })}</p>}
-      <button disabled={busy || !file || !title.trim()} className="min-h-11 rounded-full bg-velora-accent px-6 font-semibold text-velora-paper disabled:opacity-40">{t("Upload video")}</button>
+      <button disabled={busy || !file || !title.trim()} className="min-h-11 rounded-full bg-velora-warm px-6 font-semibold text-velora-paper disabled:opacity-40">{t("Upload video")}</button>
     </form>}</main>;
 }

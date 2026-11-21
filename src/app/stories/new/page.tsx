@@ -55,7 +55,7 @@ export default function NewStory(){
    <p className="text-sm text-velora-muted">{t("Expiry stops viewing; storage cleanup follows our retention process. People can still save what they see.")}</p>
    {error&&<p role="alert">{t(error)}</p>}
    {uploaded&&<button type="button" disabled={busy} onClick={discard} className="min-h-11 underline">{t("Discard uploaded photo")}</button>}
-   <button type="submit" disabled={busy||!planReady||!file||!consent||(audience==="SELECTED"&&!selected.length)} className="min-h-12 w-full rounded-full bg-velora-accent px-6 font-semibold text-velora-paper disabled:opacity-40">{busy?t("Publishing…"):t("Publish story")}</button>
+   <button type="submit" disabled={busy||!planReady||!file||!consent||(audience==="SELECTED"&&!selected.length)} className="min-h-12 w-full rounded-full bg-velora-warm px-6 font-semibold text-velora-paper disabled:opacity-40">{busy?t("Publishing…"):t("Publish story")}</button>
   </form>
  </main>;
 }

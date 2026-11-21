@@ -28,7 +28,7 @@ export default function ScenePage() {
     const response = await fetch("/api/scene", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : "" }) });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) return setMessage({ ok: false, text: payload.error || "Your suggestion could not be sent." });
-    setMessage({ ok: true, text: "Thanks! We'll check it and publish it if it fits." });
+    setMessage({ ok: true, text: "Thank you. We'll check it and publish it if it fits." });
     setForm({ title: "", kind: "", startsAt: "", venueName: "", areaId: "", organiser: "", description: "", url: "" });
     setSuggesting(false);
   }
@@ -59,7 +59,7 @@ export default function ScenePage() {
           <AreaSelect className={field} value={form.areaId} onChange={(areaId) => setForm({ ...form, areaId })} />
           <input className={field} placeholder="https:// link to the organiser's page" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} />
           <textarea className={`${field} min-h-20`} placeholder={t("Short description (optional)")} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={600} />
-          <div className="flex gap-3"><button type="button" onClick={() => setSuggesting(false)} className="min-h-11 flex-1 rounded-full border border-ink/15 text-sm text-velora-textSecondary">{t("Cancel")}</button><button type="submit" className="min-h-11 flex-1 rounded-full bg-gold-gradient text-sm font-bold text-velora-bg">{t("Send for review")}</button></div>
+          <div className="flex gap-3"><button type="button" onClick={() => setSuggesting(false)} className="min-h-11 flex-1 rounded-full border border-ink/15 text-sm text-velora-textSecondary">{t("Cancel")}</button><button type="submit" className="min-h-11 flex-1 rounded-full bg-velora-warm text-sm font-semibold text-velora-bg">{t("Send for review")}</button></div>
         </form>
       )}
 

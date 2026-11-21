@@ -17,16 +17,16 @@ export const Card: React.FC<CardProps> = ({
   children,
   ...props
 }) => {
-  const baseStyles = "rounded-2xl overflow-hidden transition-all duration-300 relative";
+  const baseStyles = "rounded-2xl overflow-hidden transition-colors duration-200 relative";
 
   const variants = {
     glass: "glass-panel",
     solid: "bg-velora-card border border-velora-border",
-    goldBorder: "glass-panel-gold shadow-gold-glow",
+    goldBorder: "glass-panel-gold",
   };
 
   const hoverStyles = hoverEffect
-    ? "hover:-translate-y-1 hover:border-velora-gold/40 hover:shadow-lg hover:shadow-black/60"
+    ? "hover:border-velora-ink/40" // flat print look: no lift, no shadow (BRAND.md §6)
     : "";
 
   return (

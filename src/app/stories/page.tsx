@@ -20,7 +20,7 @@ export default function StoriesPage(){
   const r=await fetch(`/api/stories/${id}`,{method:"DELETE"});const d=await r.json();if(!r.ok)throw new Error(d.error);window.dispatchEvent(new Event("stories-changed"));await load();
  }catch(e){setError(e instanceof Error?e.message:"Deletion failed");await load();}}
  return <main className="mx-auto max-w-2xl px-5 py-8">
-  <header className="flex flex-wrap items-center justify-between gap-4"><h1 className="font-display text-5xl">{t("Stories")}</h1><Link href="/stories/new" className="rounded-full bg-velora-accent px-5 py-3 font-semibold text-velora-paper">{t("Add a story")}</Link></header>
+  <header className="flex flex-wrap items-center justify-between gap-4"><h1 className="font-display text-5xl">{t("Stories")}</h1><Link href="/stories/new" className="rounded-full bg-velora-warm px-5 py-3 font-semibold text-velora-paper">{t("Add a story")}</Link></header>
   <p className="mt-4 text-velora-ink2">{t("A glimpse of your day. Photo stories disappear from view after 24 hours. Your audience, your choice.")}</p>
   {error&&<p role="alert" className="mt-5">{t(error)} <button type="button" onClick={load} className="underline">{t("Retry")}</button></p>}
   {loading?<p role="status" className="mt-8">{t("Loading…")}</p>:<>

@@ -39,7 +39,7 @@ export default function DashboardPage() {
           <div className="h-full rounded-full bg-gold-gradient" style={{ width: `${completion}%` }} />
         </div>
         {completion < 100 && (
-          <Link href={`/profile/${profile?.id || "me"}`} className="mt-5 inline-flex items-center gap-2 rounded-full bg-gold-gradient px-5 py-3 text-sm font-bold text-velora-bg">
+          <Link href={`/profile/${profile?.id || "me"}`} className="mt-5 inline-flex items-center gap-2 rounded-full bg-velora-warm px-5 py-3 text-sm font-semibold text-velora-bg">
             <UserRound className="h-4 w-4" />{" "}{t("Complete my profile")}</Link>
         )}
       </section>

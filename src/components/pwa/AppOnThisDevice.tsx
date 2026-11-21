@@ -74,7 +74,7 @@ export function AppOnThisDevice() {
       {installed ? (
         <p className="text-xs text-velora-textSecondary">{t("Installed. It opens like an app and shows only “Intimo” on your home screen.")}</p>
       ) : installPrompt ? (
-        <button type="button" onClick={install} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-gold-gradient px-4 text-xs font-bold text-velora-bg"><Download className="h-4 w-4" aria-hidden />{t("Add to home screen")}</button>
+        <button type="button" onClick={install} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-velora-warm px-4 text-xs font-semibold text-velora-bg"><Download className="h-4 w-4" aria-hidden />{t("Add to home screen")}</button>
       ) : isIos ? (
         <p className="text-xs text-velora-textSecondary">{t("On iPhone: tap Share, then “Add to Home Screen”. The icon shows only “Intimo”.")}</p>
       ) : (

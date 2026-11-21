@@ -73,9 +73,10 @@ const config: Config = {
         "glass-gradient": "none",
       },
       boxShadow: {
-        "gold-glow": "0 6px 20px -12px rgb(var(--accent) / 0.25)",
-        glass: "0 1px 2px rgb(0 0 0 / 0.12), 0 12px 40px -18px rgb(0 0 0 / 0.35)",
-        card: "0 1px 2px rgb(0 0 0 / 0.12), 0 18px 50px -24px rgb(0 0 0 / 0.4)",
+        // Flat print look (BRAND.md §4): no drop shadows. Names kept for existing markup.
+        "gold-glow": "none",
+        glass: "none",
+        card: "none",
       },
       borderRadius: {
         card: "1.75rem",

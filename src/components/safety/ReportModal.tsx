@@ -57,9 +57,9 @@ export const ReportModal: React.FC<ReportModalProps> = ({
       {submitted ? (
         <div className="text-center space-y-4 py-6 text-left">
           <CheckCircle2 className="w-12 h-12 text-velora-success mx-auto" />
-          <h3 className="text-lg font-display font-bold text-velora-textPrimary text-center">{t("Report Submitted & Logged")}</h3>
+          <h3 className="text-lg font-display font-bold text-velora-textPrimary text-center">{t("Thank you for telling us.")}</h3>
           <p className="text-xs text-velora-textMuted leading-relaxed glass-panel p-4 rounded-2xl">{t("Your report regarding")}{" "}<strong>@{targetUsername}</strong>{" "}{t("has been logged for review. Reference: {value}. Critical safety reports are escalated automatically; response times depend on risk and available evidence.", { value: referenceId || t("available in your report history") })}</p>
-          <Button variant="gold" size="sm" className="w-full font-bold uppercase" onClick={resetAndClose}>{t("Close Window")}</Button>
+          <Button variant="gold" size="sm" className="w-full font-bold uppercase" onClick={resetAndClose}>{t("Close")}</Button>
         </div>
       ) : (
         <div className="space-y-6 text-left">
@@ -72,7 +72,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
           </div>
 
           <div className="space-y-2">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">{t("Select Primary Violation Reason")}</label>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">{t("What is wrong?")}</label>
             <select
               value={reason}
               onChange={(e) => setReason(e.target.value)}
@@ -96,7 +96,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
           </div>
 
           <div className="space-y-2">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">{t("Explanation & Evidence Details")}</label>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary">{t("What happened?")}</label>
             <textarea
               rows={3}
               value={details}
@@ -116,7 +116,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               className="w-2/3 text-xs font-bold uppercase tracking-wider"
               onClick={handleSubmit}
               disabled={details.trim().length < 10}
-            >{t("Submit Moderation Report")}</Button>
+            >{t("Send report")}</Button>
           </div>
         </div>
       )}

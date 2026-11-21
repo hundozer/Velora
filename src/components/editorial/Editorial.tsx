@@ -110,7 +110,7 @@ export function OversizedChoiceCard({ href, eyebrow, title, body, visual, cta }:
 }
 
 export function PrimaryAction({ href, children }: { href: string; children: React.ReactNode }) {
-  return <a href={href} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-velora-accent px-8 text-base font-semibold text-velora-paper transition hover:bg-velora-accentHover">{children}</a>;
+  return <a href={href} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-velora-warm px-8 text-base font-semibold text-velora-paper transition hover:bg-velora-warmHover">{children}</a>;
 }
 
 export function SecondaryAction({ href, children }: { href: string; children: React.ReactNode }) {
@@ -121,7 +121,7 @@ export function SecondaryAction({ href, children }: { href: string; children: Re
 export function ContextualCTA({ title, body, action }: { title: React.ReactNode; body?: React.ReactNode; action: React.ReactNode }) {
   const { t } = useTranslation();
   return (
-    <div className="rounded-card bg-velora-accent px-7 py-14 text-center text-velora-paper sm:px-16 sm:py-20">
+    <div className="rounded-card bg-velora-warm px-7 py-14 text-center text-velora-paper sm:px-16 sm:py-20">
       <h2 className="mx-auto max-w-2xl font-display text-5xl leading-[1.02] sm:text-6xl">{t(title)}</h2>
       {body && <p className="mx-auto mt-5 max-w-lg text-lg text-velora-paper/75">{t(body)}</p>}
       <div className="mt-9 flex justify-center">{action}</div>

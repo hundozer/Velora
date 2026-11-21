@@ -55,7 +55,7 @@ export function ReportsAndDecisions() {
       <p className="text-[11px] text-velora-textMuted">{t("At least 20 characters. You can appeal each decision once; a person reviews it.")}</p>
       <div className="flex gap-2">
         <button type="button" className="min-h-10 rounded-full border border-ink/15 px-4 text-xs" onClick={() => { setAppealing(null); setReason(""); }}>{t("Cancel")}</button>
-        <button type="button" disabled={sending || reason.trim().length < 20} onClick={() => void submit()} className="min-h-10 rounded-full bg-velora-accent px-4 text-xs font-bold text-velora-paper disabled:opacity-50">{sending ? t("Sending…") : t("Send appeal")}</button>
+        <button type="button" disabled={sending || reason.trim().length < 20} onClick={() => void submit()} className="min-h-10 rounded-full bg-velora-warm px-4 text-xs font-semibold text-velora-paper disabled:opacity-50">{sending ? t("Sending…") : t("Send appeal")}</button>
       </div>
     </div>
   );
