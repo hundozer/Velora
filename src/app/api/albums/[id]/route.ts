@@ -37,7 +37,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (!UUID.test(params.id)) return NextResponse.json({ error: "Album not found" }, { status: 404 });
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const title = typeof body.title === "string" ? body.title.trim() : ""; const description = typeof body.description === "string" ? body.description.trim() : ""; const category = typeof body.category === "string" ? body.category.trim() : "";
-  const visibility = CHOOSABLE_ALBUM_VISIBILITIES.includes(body.visibility) ? body.visibility : "PRIVATE";
+  const visibility = (CHOOSABLE_ALBUM_VISIBILITIES as readonly string[]).includes(body.visibility) ? body.visibility : "PRIVATE";
   const commentPolicy = ["MEMBERS","VERIFIED","FRIENDS","DISABLED"].includes(body.commentPolicy) ? body.commentPolicy : "MEMBERS";
   const reactionsEnabled = body.reactionsEnabled !== false;
   const tags = Array.isArray(body.tags) ? body.tags.filter((tag: unknown): tag is string => typeof tag === "string").map((tag: string) => tag.trim().slice(0,50)).filter(Boolean).slice(0,20) : [];
@@ -48,7 +48,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (!before) return NextResponse.json({ error: "Album not found" }, { status: 404 });
   // Legacy restrictions are preserved until an intentional owner migration.
   // No implicit conversion from Friends/Followers to Community or Private.
-  if (LEGACY_ALBUM_VISIBILITIES.includes(before.visibility) && !body.confirmAudienceChange)
+  if ((LEGACY_ALBUM_VISIBILITIES as readonly string[]).includes(before.visibility) && !body.confirmAudienceChange)
     return NextResponse.json({ error: "Confirm a new audience for this legacy album before saving." }, { status: 409 });
   const contentUnchanged = before.title === title && (before.description || "") === description && (before.category || "") === category && JSON.stringify(before.tags || []) === JSON.stringify(tags);
   // Administrators do not need a second moderator for their own albums, but
