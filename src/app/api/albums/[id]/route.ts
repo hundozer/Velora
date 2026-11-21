@@ -37,7 +37,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (!UUID.test(params.id)) return NextResponse.json({ error: "Album not found" }, { status: 404 });
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const title = typeof body.title === "string" ? body.title.trim() : ""; const description = typeof body.description === "string" ? body.description.trim() : ""; const category = typeof body.category === "string" ? body.category.trim() : "";
-  const visibility = (CHOOSABLE_ALBUM_VISIBILITIES as readonly string[]).includes(body.visibility) ? body.visibility : "PRIVATE";
+  if (!(CHOOSABLE_ALBUM_VISIBILITIES as readonly string[]).includes(body.visibility)) return NextResponse.json({ error: "Choose Community, Private or Only me" }, { status: 400 });
+  const visibility: string = body.visibility;
   const commentPolicy = ["MEMBERS","VERIFIED","FRIENDS","DISABLED"].includes(body.commentPolicy) ? body.commentPolicy : "MEMBERS";
   const reactionsEnabled = body.reactionsEnabled !== false;
   const tags = Array.isArray(body.tags) ? body.tags.filter((tag: unknown): tag is string => typeof tag === "string").map((tag: string) => tag.trim().slice(0,50)).filter(Boolean).slice(0,20) : [];
@@ -71,7 +72,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         (visibility !== "MEMBERS_ONLY" || ["MEMBERS_ONLY", "PRIVATE"].includes(photo.visibility)));
     }
   }
-  const keepApproved = adminEligible || (before.moderation_status === "APPROVED" && contentUnchanged);
+  const keepApproved = adminEligible || (before.moderation_status === "APPROVED" && contentUnchanged && visibility === before.visibility);
   if (keepApproved && visibility !== before.visibility) {
     const { data: links, error: linksError } = await db.from("media_album_items").select("media_id").eq("album_id", params.id);
     if (linksError) return NextResponse.json({ error: "Album photos could not be checked" }, { status: 502 });
