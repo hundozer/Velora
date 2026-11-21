@@ -54,14 +54,80 @@ function OnboardingForm() {
   const submittingRef = React.useRef(false);
   const [error, setError] = useState("");
   const [photoProgress, setPhotoProgress] = useState<number | null>(null);
+  const [draftAvailable, setDraftAvailable] = useState(false);
+  const [savedDraft, setSavedDraft] = useState<Record<string, unknown> | null>(null);
+  const [draftBusy, setDraftBusy] = useState(false);
+  const [draftNotice, setDraftNotice] = useState("");
 
   React.useEffect(() => { window.scrollTo(0, 0); }, [step]);
+  React.useEffect(() => {
+    if (!validInviteLink) return;
+    const controller = new AbortController();
+    fetch("/api/onboarding/draft", { credentials: "same-origin", cache: "no-store", signal: controller.signal })
+      .then(async response => response.ok ? response.json() : null)
+      .then(data => {
+        if (controller.signal.aborted || !data) return;
+        setDraftAvailable(true);
+        if (data.draft) setSavedDraft(data.draft);
+      }).catch(() => { /* Draft saving is optional; never block standard onboarding. */ });
+    return () => controller.abort();
+  }, [validInviteLink]);
+  function restoreDraft() {
+    if (!savedDraft) return;
+    const d = savedDraft;
+    const val = (key: string) => typeof d[key] === "string" ? d[key] as string : "";
+    const kind = val("profileType") === "COUPLE" ? "COUPLE" : val("profileType") === "SINGLE" ? "SINGLE" : "";
+    setProfileType(kind); setGender(val("gender")); setRelationshipStatus(val("relationshipStatus"));
+    setDisplayName(val("displayName")); setDateOfBirth(val("dateOfBirth"));
+    setPartnerDisplayName(val("partnerDisplayName")); setPartnerDateOfBirth(val("partnerDateOfBirth"));
+    setLookingFor(Array.isArray(d.lookingFor) ? d.lookingFor.filter((v): v is string => typeof v === "string") : []);
+    setAreaId(val("areaId"));
+    const area = AREAS.find(a => a.id === val("areaId"));
+    if (area) setAreaGroup(area.kind === "PRAGUE_DISTRICT" ? "prague" : area.kind === "NEAR_PRAGUE" ? "nearby" : "elsewhere");
+    const candidate = val("step");
+    setStep((candidate && ["kind", "identity", "relationship", "name", "birthday", "partner", "looking", "area"].includes(candidate))
+      ? candidate as StepId : "kind");
+    setSavedDraft(null);
+    setDraftNotice("Your saved answers have been restored. Review them before continuing.");
+  }
+  async function saveDraft() {
+    if (draftBusy) return;
+    setDraftBusy(true); setDraftNotice("");
+    try {
+      const draft = { step, profileType, gender, relationshipStatus, displayName, dateOfBirth,
+        partnerDisplayName, partnerDateOfBirth, lookingFor, areaId };
+      const response = await fetch("/api/onboarding/draft", { method: "PUT",
+        credentials: "same-origin", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ saveConsent: true, draft }) });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error || "Draft could not be saved");
+      setDraftNotice("Saved privately for 7 days. Use your invitation link to return.");
+    } catch (cause) { setDraftNotice(cause instanceof Error ? cause.message : "Draft could not be saved"); }
+    finally { setDraftBusy(false); }
+  }
+  async function deleteDraft() {
+    if (draftBusy) return;
+    setDraftBusy(true); setDraftNotice("");
+    try {
+      const response = await fetch("/api/onboarding/draft", { method: "DELETE", credentials: "same-origin" });
+      if (!response.ok) throw new Error("Draft could not be deleted");
+      setSavedDraft(null); setDraftNotice("Saved answers deleted.");
+    } catch { setDraftNotice("Draft could not be deleted"); }
+    finally { setDraftBusy(false); }
+  }
 
   const steps = stepsFor(profileType);
   const index = steps.indexOf(step);
   const next = () => { setError(""); setStep(steps[index + 1]); };
   const back = index > 0 && step !== "photo" ? () => { setError(""); setStep(steps[index - 1]); } : undefined;
-  const screen = { step: index + 1, total: steps.length, onBack: back };
+  const screen = { step: index + 1, total: steps.length, onBack: back,
+    utility: draftAvailable && step !== "photo" ? <div className="flex flex-wrap items-center justify-end gap-2 text-xs">
+      {savedDraft && <button type="button" disabled={draftBusy} onClick={restoreDraft} className="min-h-11 rounded-full border border-velora-accent px-3 font-semibold text-velora-accent">{t("Restore saved answers")}</button>}
+      <button type="button" disabled={draftBusy} onClick={() => void saveDraft()} className="min-h-11 rounded-full border border-velora-line px-3 font-semibold text-velora-textSecondary">{draftBusy ? t("Saving…") : t("Save and continue later")}</button>
+      <button type="button" disabled={draftBusy} onClick={() => void deleteDraft()} className="min-h-11 px-2 font-semibold text-velora-textMuted underline">{t("Delete saved answers")}</button>
+      {draftNotice && <span role="status" className="w-full text-right text-velora-textSecondary">{t(draftNotice)}</span>}
+    </div> : null,
+  };
 
   const nameValid = displayName.trim().length >= 2 && displayName.trim().length <= 80;
   const basicsValid = onboardingBasicsAreValid(displayName, dateOfBirth);
@@ -103,6 +169,7 @@ function OnboardingForm() {
         return;
       }
       if (!response.ok) throw new Error(payload.error || "That didn't work. Try again.");
+      void fetch("/api/onboarding/draft", { method: "DELETE", credentials: "same-origin" }).catch(() => undefined);
       setStep("photo");
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "That didn't work. Try again.");
