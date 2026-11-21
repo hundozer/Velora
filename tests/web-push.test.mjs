@@ -52,7 +52,7 @@ test("devices are forgotten on sign-out and push events are wired", async () => 
   assert.match(await read("src/context/AuthContext.tsx"), /unsubscribeThisDevice\(\)/);
   assert.match(await read("src/app/api/messages/route.ts"), /sendPush\(\{ recipientId: receiverId/);
   assert.match(await read("src/app/api/interests/route.ts"), /created === true && result\.mutual\) await sendPush/);
-  assert.match(await read("src/app/api/private-access/route.ts"), /category: "PRIVATE_ACCESS"[\s\S]*category: "PRIVATE_ACCESS"/);
+  assert.match(await read("src/app/api/albums/[id]/access/route.ts"), /album_viewer_grants/);
   const migration = await read("supabase/migrations/20261109000000_web_push.sql");
   assert.match(migration, /revoke all on public\.push_subscriptions from public, anon, authenticated;/);
   assert.match(migration, /Rollback:/);
@@ -64,6 +64,6 @@ test("review fixes: local unsubscribe first, server-confirmed state, expired gra
   assert.match(client, /payload\?\.thisDevice === true/);
   assert.match(await read("src/components/pwa/AppOnThisDevice.tsx"), /thisDeviceRegistered\(\)\.then\(setSubscribed\)/);
   const access = await read("src/app/api/private-access/route.ts");
-  assert.match(access, /const hadAccess = Boolean\(before && grantIsActive\(before\)\);/);
-  assert.match(access, /data\.status === "GRANTED" && !hadAccess\) await sendPush/);
+  assert.match(access, /Private-photo sharing is now managed separately for each private album/);
+  assert.match(access, /status:410/);
 });
