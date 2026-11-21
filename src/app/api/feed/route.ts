@@ -207,7 +207,7 @@ export async function GET(req: NextRequest) {
   // Personalized ordering applies ONLY after the same item-by-item access
   // filters as chronological Newest. It never unlocks friend-only content.
   const page: FeedItem[] = scope === "for_you"
-    ? rankChemistryFeed(filtered, {following, friends}, Date.now(), 60)
+    ? rankChemistryFeed(filtered.filter(item => item.type !== "PROFILE" || item.actor.id !== auth.actor.profileId), {following, friends}, Date.now(), 60)
     : filtered.slice(0, 60);
   // Only summarize already-authorized feed targets. No client-supplied IDs and
   // no additional identity/visibility requests for each rendered card.
