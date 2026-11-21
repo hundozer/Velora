@@ -91,6 +91,7 @@ export function AlbumManager() {
   }
 
   async function updateAlbum(album: Album) {
+    if (LEGACY_VISIBILITIES.includes(album.visibility)) { setError("Choose Community, Private or Only me to replace the old audience rule."); return; }
     if (album.legacyVisibility && !window.confirm(t("This album uses an older audience rule. Changing it will replace that restriction. Continue?"))) return;
     setBusy(true); setError(""); setNotice(""); setLastSaveAction("album");
     try {
