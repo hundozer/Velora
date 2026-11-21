@@ -22,6 +22,7 @@ type FeedItem = {
   href: string;
   occurredAt: string;
   reactionSummary?: { count: number; liked: boolean };
+  why?: string;
 };
 
 const typeDetails = {
@@ -60,22 +61,46 @@ function Avatar({ item }: { item: FeedItem }) {
 export function MemberActivityFeed() {
   const { t } = useTranslation();
   const { profile } = useAuth();
-  const [scope, setScope] = React.useState("newest");
+  const [scope, setScope] = React.useState("for_you");
   const [contentType, setContentType] = React.useState("all");
   const [items, setItems] = React.useState<FeedItem[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(false);
+  // Local device stores only a visit timestamp, never member IDs, preferences,
+  // intimate interests or content data. An unavailable localStorage is harmless.
+  const [lastVisit, setLastVisit] = React.useState<number | null>(null);
+  const firstSuccessfulLoad = React.useRef(false);
+  React.useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem("intimo.feed.lastVisit.v1");
+      const parsed = stored ? Number(stored) : NaN;
+      if (Number.isFinite(parsed) && parsed > 0 && parsed <= Date.now() && Date.now() - parsed <= 30 * 86400000)
+        setLastVisit(parsed);
+    } catch { /* private browsing is supported without persistence */ }
+  }, []);
   React.useEffect(() => {
     const controller = new AbortController();
     setLoading(true); setError(false);
     fetch(`/api/feed?scope=${encodeURIComponent(scope)}&type=${encodeURIComponent(contentType)}`, { credentials: "same-origin", cache: "no-store", signal: controller.signal })
       .then(async (response) => { if (!response.ok) throw new Error("Feed unavailable"); return response.json(); })
-      .then((payload) => setItems(Array.isArray(payload.items) ? payload.items : []))
+      .then((payload) => {
+        const feedItems = Array.isArray(payload.items) ? payload.items : [];
+        setItems(feedItems);
+        if (!firstSuccessfulLoad.current) {
+          firstSuccessfulLoad.current = true;
+          try { window.localStorage.setItem("intimo.feed.lastVisit.v1", String(Date.now())); }
+          catch { /* feed remains functional without storage */ }
+        }
+      })
       .catch((cause) => { if (cause.name !== "AbortError") setError(true); })
       .finally(() => setLoading(false));
     return () => controller.abort();
   }, [scope, contentType]);
 
+  const newlyShared = lastVisit === null ? 0 : items.filter(item => {
+    const when = Date.parse(item.occurredAt);
+    return Number.isFinite(when) && when > lastVisit;
+  }).length;
   return (
     <main className="min-h-screen bg-velora-surface px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-3xl">
@@ -87,19 +112,30 @@ export function MemberActivityFeed() {
         <NewMemberFirstSteps />
         <section aria-label={t("Activity feed filters")} className="mb-6 overflow-hidden rounded-2xl border border-ink/10 bg-velora-surface">
           <div className="flex gap-1 overflow-x-auto border-b border-ink/10 px-2 sm:px-5">
-            {[['newest','Newest'],['circle','Your circle'],['followed','Followed'],['friends','Friends']].map(([value, label]) => <button key={value} type="button" onClick={() => setScope(value)} aria-pressed={scope === value} className={`relative min-h-12 shrink-0 px-3 text-sm font-semibold transition sm:min-h-14 sm:px-5 ${scope === value ? 'text-ink' : 'text-velora-textSecondary hover:text-ink'}`}>{t(label)}{scope === value && <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-velora-accent" />}</button>)}
+            {[['for_you','For You'],['newest','Newest'],['circle','Your circle'],['followed','Followed'],['friends','Friends']].map(([value, label]) => <button key={value} type="button" onClick={() => setScope(value)} aria-pressed={scope === value} className={`relative min-h-12 shrink-0 px-3 text-sm font-semibold transition sm:min-h-14 sm:px-5 ${scope === value ? 'text-ink' : 'text-velora-textSecondary hover:text-ink'}`}>{t(label)}{scope === value && <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-velora-accent" />}</button>)}
           </div>
           <div className="flex gap-2 overflow-x-auto p-3 sm:p-4">
             {[['all','All'],['albums','Albums'],['photos','Photos'],['videos','Videos'],['posts','Text posts'],['dating','Dating'],['events','Events'],['rooms','Rooms']].map(([value, label]) => <button key={value} type="button" onClick={() => setContentType(value)} aria-pressed={contentType === value} className={`min-h-10 shrink-0 rounded-full px-4 text-sm font-semibold transition ${contentType === value ? 'bg-velora-accent text-velora-paper' : 'bg-ink/5 text-ink hover:bg-ink/10 hover:text-ink'}`}>{t(label)}</button>)}
           </div>
         </section>
+        {scope === "for_you" && <section className="mb-5 space-y-2" aria-label={t("Your Chemistry Feed")}>
+          <h2 className="font-display text-2xl font-semibold text-ink">{t("Your Chemistry Feed")}</h2>
+          <p className="text-sm leading-6 text-velora-textSecondary">{t("Fresh members, open conversations and community content. Your follows and friendships help order what you see; private interests are never used.")}</p>
+          {!loading && !error && newlyShared > 0 &&
+            <p role="status" className="inline-flex rounded-full border border-velora-accent/30 bg-velora-accent/10 px-3 py-2 text-sm font-semibold text-velora-accent">
+              {newlyShared} {t("new since your last visit")}
+            </p>}
+        </section>}
         <FeedConversationDiscovery />
         {loading ? <div className="space-y-4" aria-label={t("Loading activity")}>{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-56 animate-pulse rounded-2xl border border-ink/10 bg-ink/5" />)}</div>
           : error ? <div className="rounded-2xl border border-rose-300/25 bg-rose-300/10 p-6 text-rose-100">{t("Activity could not be loaded. Please refresh and try again.")}</div>
-          : items.length === 0 ? <div className="rounded-2xl border border-ink/10 bg-velora-surface p-10 text-center"><h2 className="text-xl font-semibold text-ink">{t("Nothing here yet")}</h2><p className="mt-2 text-velora-textSecondary">{scope === 'circle' ? t("Follow members or make connections to see their public and permitted updates together.") : scope === 'followed' ? t("Follow members to see what they share here.") : scope === 'friends' ? t("Activity from mutually accepted friends will appear here.") : t("New community activity will appear here.")}</p><Link href={scope === "circle" || scope === "friends" ? "/connections" : "/people"} className="mt-5 inline-flex min-h-11 items-center rounded-lg bg-velora-accent px-5 py-3 font-bold text-velora-paper">{t(scope === "circle" || scope === "friends" ? "Your connections" : "Meet people")}</Link></div>
+          : items.length === 0 ? <div className="rounded-2xl border border-ink/10 bg-velora-surface p-10 text-center"><h2 className="text-xl font-semibold text-ink">{t("Nothing here yet")}</h2><p className="mt-2 text-velora-textSecondary">{scope === 'for_you' ? t("Your feed will fill up as members share. Explore People and Rooms to get started.") : scope === 'circle' ? t("Follow members or make connections to see their public and permitted updates together.") : scope === 'followed' ? t("Follow members to see what they share here.") : scope === 'friends' ? t("Activity from mutually accepted friends will appear here.") : t("New community activity will appear here.")}</p><Link href={scope === "circle" || scope === "friends" ? "/connections" : "/people"} className="mt-5 inline-flex min-h-11 items-center rounded-lg bg-velora-accent px-5 py-3 font-bold text-velora-paper">{t(scope === "circle" || scope === "friends" ? "Your connections" : "Meet people")}</Link></div>
           : <div className="space-y-5">{items.map((item) => { const details = typeDetails[item.type]; const Icon = details.icon; return (
             <article id={`feed-${item.id}`} key={item.id} className="overflow-hidden rounded-2xl border border-ink/10 bg-velora-surface shadow-xl shadow-black/10">
               <div className="flex items-center gap-3 p-5">{item.actor.id ? <Link href={`/profile/${item.actor.id}`}><Avatar item={item} /></Link> : <Avatar item={item} />}<div className="min-w-0 flex-1"><div className="flex items-center gap-1.5">{item.actor.id ? <Link href={`/profile/${item.actor.id}`} className="truncate font-semibold text-ink hover:text-velora-accent">{item.actor.displayName}</Link> : <span className="font-semibold text-ink">{item.actor.displayName}</span>}{item.actor.verified && <BadgeCheck className="h-4 w-4 text-velora-success" aria-label={t("Verified member")} />}</div><div className={`mt-1 flex items-center gap-1.5 text-xs ${details.color}`}><Icon className="h-3.5 w-3.5" />{t(details.label)}<span className="text-velora-textMuted">·</span><time className="text-velora-textSecondary" dateTime={item.occurredAt}>{relativeTime(item.occurredAt)}</time></div></div></div>
+              {scope === "for_you" && item.why && <p className="mx-5 mb-2 inline-flex items-center rounded-full border border-velora-accent/20 px-3 py-1.5 text-xs font-semibold text-velora-accent">
+                {t("Why you're seeing this")}: {t(item.why)}
+              </p>}
               {item.mediaUrl && <Link href={item.href} className="relative block aspect-[16/10] bg-black"><Image unoptimized src={mediaPreviewUrl(item.mediaUrl, 1080)} alt={t(item.title)} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" />{item.type === "VIDEO" && <span className="absolute inset-0 flex items-center justify-center"><span className="flex h-16 w-16 items-center justify-center rounded-full bg-black/65 text-white backdrop-blur"><Play className="h-7 w-7 fill-current" /></span></span>}</Link>}
               <Link href={item.href} className="block p-5 pt-4 hover:bg-ink/[0.02]"><div className="flex items-start justify-between gap-4"><h2 className="text-xl font-semibold text-ink">{t(item.title)}</h2>{item.category && <span className="shrink-0 rounded-full border border-ink/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink">{item.category}</span>}</div>{item.body && <p className="mt-2 line-clamp-3 text-sm leading-6 text-ink">{t(item.body)}</p>}</Link>
               {item.type !== "PROFILE" && item.type !== "EVENT" && item.type !== "ROOM" && <FeedInteractions initialSummary={item.reactionSummary} feedId={item.id} targetType={item.type === "IMAGE" || item.type === "VIDEO" ? "MEDIA" : item.type} targetId={item.id.split(":")[1]} />}
