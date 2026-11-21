@@ -39,7 +39,7 @@ test("feed API filters audience at author level and before building cards", () =
   assert.match(api, /new Set\(\[\.\.\.following, \.\.\.friends\]\)/);
   assert.match(api, /const visiblePosts = \(postRows \|\| \[\]\)\.filter\(row => allowed/);
   assert.match(api, /const visibleAlbums = \(albumRows \|\| \[\]\)\.filter\(row => allowed/);
-  assert.match(api, /const visibleMedia = candidateMedia\.filter\(row => !linkedIds\.has/);
+  assert.match(api, /const visibleMedia = candidateMedia\.filter\(row=>!linkedIds\.has/);
   assert.match(api, /profile\.profile_visibility === "FRIENDS_ONLY" && !friends\.has\(profile\.id\)/);
   assert.match(api, /\.eq\("age_verification_status", "AGE_VERIFIED"\)/);
   assert.match(api, /\.eq\("locked", false\)/);
