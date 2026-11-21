@@ -139,7 +139,7 @@ export function MemberActivityFeed() {
               {item.mediaUrl && <Link href={item.href} className="relative block aspect-[16/10] bg-black"><Image unoptimized src={mediaPreviewUrl(item.mediaUrl, 1080)} alt={t(item.title)} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" />{item.type === "VIDEO" && <span className="absolute inset-0 flex items-center justify-center"><span className="flex h-16 w-16 items-center justify-center rounded-full bg-black/65 text-white backdrop-blur"><Play className="h-7 w-7 fill-current" /></span></span>}</Link>}
               <Link href={item.href} className="block p-5 pt-4 hover:bg-ink/[0.02]"><div className="flex items-start justify-between gap-4"><h2 className="text-xl font-semibold text-ink">{t(item.title)}</h2>{item.category && <span className="shrink-0 rounded-full border border-ink/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink">{item.category}</span>}</div>{item.body && <p className="mt-2 line-clamp-3 text-sm leading-6 text-ink">{t(item.body)}</p>}</Link>
               {item.type !== "PROFILE" && item.type !== "EVENT" && item.type !== "ROOM" && <FeedInteractions initialSummary={item.reactionSummary} feedId={item.id} targetType={item.type === "IMAGE" || item.type === "VIDEO" ? "MEDIA" : item.type} targetId={item.id.split(":")[1]} />}
-              <FeedCardActions type={item.type} href={item.href} actorId={item.actor.id} selfId={profile?.id} />
+              <FeedCardActions type={item.type} href={item.href} actorId={item.actor.id} selfId={profile?.id} targetId={item.id.split(":")[1]} />
             </article>
           ); })}</div>}
       </div>
