@@ -125,6 +125,7 @@ function OnboardingForm() {
       {savedDraft && <button type="button" disabled={draftBusy} onClick={restoreDraft} className="min-h-11 rounded-full border border-velora-accent px-3 font-semibold text-velora-accent">{t("Restore saved answers")}</button>}
       <button type="button" disabled={draftBusy} onClick={() => void saveDraft()} className="min-h-11 rounded-full border border-velora-line px-3 font-semibold text-velora-textSecondary">{draftBusy ? t("Saving…") : t("Save and continue later")}</button>
       <button type="button" disabled={draftBusy} onClick={() => void deleteDraft()} className="min-h-11 px-2 font-semibold text-velora-textMuted underline">{t("Delete saved answers")}</button>
+      <p className="w-full text-right text-xs leading-5 text-velora-textMuted">{t("Optional: encrypt these answers for 7 days so you can resume from your invitation link.")}</p>
       {draftNotice && <span role="status" className="w-full text-right text-velora-textSecondary">{t(draftNotice)}</span>}
     </div> : null,
   };
