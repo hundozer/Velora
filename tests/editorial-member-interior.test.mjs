@@ -31,7 +31,7 @@ test("member profile keeps consent-first interactions and messaging", async () =
   assert.match(story, /friendAction\("REQUEST"\)/);
   assert.match(story, /toggleInterest/);
   assert.match(story, /toggleFavorite/);
-  assert.match(story, /requestPhotos/);
+  assert.match(story, /setPrivateAlbums/);\n  assert.doesNotMatch(story, /requestPhotos/);
   assert.match(story, /intimo-member-primary/);
 });
 
