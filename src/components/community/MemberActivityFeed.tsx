@@ -97,10 +97,11 @@ export function MemberActivityFeed() {
     return () => controller.abort();
   }, [scope, contentType]);
 
-  const newlyShared = lastVisit === null ? 0 : items.filter(item => {
+  const newItems = lastVisit === null ? [] : items.filter(item => {
     const when = Date.parse(item.occurredAt);
     return Number.isFinite(when) && when > lastVisit;
-  }).length;
+  });
+  const newlyShared = newItems.length;
   return (
     <main className="min-h-screen bg-velora-surface px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-3xl">
@@ -122,9 +123,18 @@ export function MemberActivityFeed() {
           <h2 className="font-display text-2xl font-semibold text-ink">{t("Your Chemistry Feed")}</h2>
           <p className="text-sm leading-6 text-velora-textSecondary">{t("Fresh members, open conversations and community content. Your follows and friendships help order what you see; private interests are never used.")}</p>
           {!loading && !error && newlyShared > 0 &&
-            <p role="status" className="inline-flex rounded-full border border-velora-accent/30 bg-velora-accent/10 px-3 py-2 text-sm font-semibold text-velora-accent">
-              {newlyShared} {t("new since your last visit")}
-            </p>}
+            <div className="rounded-2xl border border-velora-accent/30 bg-velora-accent/5 p-4">
+              <h3 className="text-base font-semibold text-ink">{t("New since your last visit")}</h3>
+              <p role="status" className="mt-1 text-xs text-velora-textSecondary">{newlyShared} {t("new since your last visit")}</p>
+              <ul className="mt-3 space-y-1">
+                {newItems.slice(0, 3).map(item => <li key={item.id}>
+                  <Link href={item.href} className="inline-flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-sm font-medium text-ink hover:bg-ink/5">
+                    <span className="min-w-0 flex-1 truncate">{item.title}</span>
+                    <span className="shrink-0 text-xs text-velora-accent">{t(typeDetails[item.type].label)}</span>
+                  </Link>
+                </li>)}
+              </ul>
+            </div>}
         </section>}
         <FeedConversationDiscovery />
         {loading ? <div className="space-y-4" aria-label={t("Loading activity")}>{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-56 animate-pulse rounded-2xl border border-ink/10 bg-ink/5" />)}</div>
