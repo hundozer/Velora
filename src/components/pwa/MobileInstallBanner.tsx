@@ -72,13 +72,13 @@ export function MobileInstallBanner() {
             <p className="text-sm font-semibold leading-tight text-velora-onPhoto">{t("Intimo on your phone")}</p>
             <p className="mt-1 text-xs leading-snug text-velora-onPhoto/70">{t("Add it to your home screen. Free and discreet.")}</p>
           </div>
-          <button type="button" disabled={busy} onClick={() => void install()} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1 rounded-xl bg-velora-accent px-3 text-xs font-bold text-velora-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-velora-accent disabled:opacity-50">
+          <button type="button" disabled={busy} onClick={() => void install()} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1 rounded-full bg-velora-warm px-3 text-xs font-semibold text-velora-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-velora-accent disabled:opacity-50">
             <Download size={15} aria-hidden />{t("Install")}
           </button>
           <button type="button" onClick={dismiss} aria-label={t("Dismiss install banner")} className="flex h-11 w-8 shrink-0 items-center justify-center text-velora-onPhoto/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent"><X size={20} aria-hidden /></button>
         </div>
       </aside>
-      <Sheet open={guide} onClose={() => setGuide(false)} label={t("Install Intimo on your phone")} footer={<button type="button" onClick={() => setGuide(false)} className="min-h-12 w-full rounded-xl bg-velora-accent px-5 font-semibold text-velora-paper">{t("Got it")}</button>}>
+      <Sheet open={guide} onClose={() => setGuide(false)} label={t("Install Intimo on your phone")} footer={<button type="button" onClick={() => setGuide(false)} className="min-h-12 w-full rounded-full bg-velora-warm px-5 font-semibold text-velora-paper">{t("Got it")}</button>}>
         <div className="flex items-center gap-3">
           <Image src="/icons/icon-192.png" width={56} height={56} alt="" className="h-14 w-14 rounded-xl" />
           <div>

@@ -102,7 +102,7 @@ export function FilterSheet({ open, section, initial, sharedDesires, onClose, on
     <Sheet open={open} onClose={onClose} label={t("Who to show")} footer={
       <div className="flex items-center gap-6">
         <button type="button" onClick={() => setDraft({ ...DEFAULT_FILTERS, q: draft.q })} className="min-h-11 text-[16px] text-velora-ink underline underline-offset-4">{t("Reset")}</button>
-        <button type="button" onClick={() => onApply({ ...draft, maxAge: Math.max(draft.minAge, draft.maxAge) })} className="min-h-14 flex-1 rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper hover:bg-velora-accentHover">{t("Show people")}</button>
+        <button type="button" onClick={() => onApply({ ...draft, maxAge: Math.max(draft.minAge, draft.maxAge) })} className="min-h-14 flex-1 rounded-full bg-velora-warm text-[16px] font-semibold text-velora-paper hover:bg-velora-warmHover">{t("Show people")}</button>
       </div>
     }>
       <h2 id="filter-who" className="font-display text-[40px] leading-none text-velora-ink">{t("Show me")}</h2>

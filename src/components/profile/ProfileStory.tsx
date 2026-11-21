@@ -323,7 +323,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
               <Link href="/videos/upload" className="min-h-11 text-[16px] text-velora-ink underline underline-offset-4">{t("Add video")}</Link>
             </div>
           ) : !authenticated || !memberView ? (
-            <button type="button" onClick={() => signIn()} className="flex min-h-14 w-full items-center justify-center rounded-full bg-velora-accent text-[16px] font-semibold text-velora-paper">{t("Sign in to connect")}</button>
+            <button type="button" onClick={() => signIn()} className="flex min-h-14 w-full items-center justify-center rounded-full bg-velora-warm text-[16px] font-semibold text-velora-paper">{t("Sign in to connect")}</button>
           ) : (
             <>
               {approach?.line && <p className="mb-2 text-[14px] text-velora-ink2">{t(approach.line)}</p>}

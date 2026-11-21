@@ -40,7 +40,7 @@ function settings(fetch) {
     ? node.map(text).join("") : text(node.props?.children);
   const find = (predicate) => nodes(render()).find(predicate);
   const button = (label) => find((node) => node.type === "Button" && text(node).trim() === label);
-  const modal = () => find((node) => node.type === "Modal" && node.props.title === "Confirm Account Deletion");
+  const modal = () => find((node) => node.type === "Modal" && node.props.title === "Delete my account");
   return { location, render, find, button, modal };
 }
 
@@ -58,12 +58,12 @@ for (const failure of ["http", "network"]) {
       }
       return new Promise((resolve) => { accept = () => resolve({ ok: true }); });
     });
-    ui.button("Delete Account").props.onClick();
-    await ui.button("Confirm Deletion Request").props.onClick();
+    ui.button("Delete account").props.onClick();
+    await ui.button("Confirm deletion").props.onClick();
     assert.equal(ui.location.href, "/settings");
     assert.equal(ui.modal().props.isOpen, true);
     assert.ok(ui.find((node) => node.props?.role === "alert"));
-    const pending = ui.button("Confirm Deletion Request").props.onClick();
+    const pending = ui.button("Confirm deletion").props.onClick();
     assert.equal(ui.button("Submitting…").props.disabled, true);
     assert.equal(ui.button("Cancel").props.disabled, true);
     assert.equal(ui.modal().props.showCloseButton, false);

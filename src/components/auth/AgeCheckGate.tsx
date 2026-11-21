@@ -25,7 +25,7 @@ export function AgeCheckGate({ children }: { children: React.ReactNode }) {
       <h1 className="font-display text-4xl font-bold leading-tight text-velora-textPrimary">{pending ? t("Your age check is being reviewed") : t("One last step before you're in")}</h1>
       <p className="text-sm leading-relaxed text-velora-textSecondary">{pending ? t("A person at Intimo is looking at your selfie. You'll see everything as soon as it's approved. Meanwhile, finish your profile.") : t("We check every person to make sure everyone here is an adult. It takes a minute, and only our team sees your selfie. Until we approve it, your profile stays private.")}</p>
       <div className="flex flex-wrap justify-center gap-3">
-        <Link href="/verify-age" className="inline-flex min-h-11 items-center rounded-full bg-velora-accent px-6 text-sm font-bold text-velora-paper">{pending ? t("See my age check") : t("Start my age check")}</Link>
+        <Link href="/verify-age" className="inline-flex min-h-11 items-center rounded-full bg-velora-warm px-6 text-sm font-semibold text-velora-paper">{pending ? t("See my age check") : t("Start my age check")}</Link>
         <Link href="/me" className="inline-flex min-h-11 items-center rounded-full border border-ink/15 px-6 text-sm font-semibold text-velora-textPrimary">{t("Finish my profile")}</Link>
       </div>
     </section>

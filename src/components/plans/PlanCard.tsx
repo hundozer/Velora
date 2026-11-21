@@ -42,7 +42,7 @@ export function PlanCard({ plan, onEnd, onReport, showTitle = true }: { showTitl
           <>{plan.live && <Link href={sharePlanHref(plan)} className="inline-flex min-h-11 items-center text-velora-accent underline">{t("Share to your Story")}</Link>}{plan.live && onEnd && <button type="button" onClick={() => onEnd(plan.id)} className="min-h-11 text-[15px] text-velora-ink underline underline-offset-4">{t("End it now")}</button>}</>
         ) : (
           <>
-            {plan.canReply !== false && <Link href={replyHref(plan)} className="inline-flex min-h-11 items-center rounded-full bg-velora-accent px-5 text-[15px] font-semibold text-velora-paper">{t("Reply to {authorName}", { authorName: plan.authorName })}</Link>}
+            {plan.canReply !== false && <Link href={replyHref(plan)} className="inline-flex min-h-11 items-center rounded-full bg-velora-warm px-5 text-[15px] font-semibold text-velora-paper">{t("Reply to {authorName}", { authorName: plan.authorName })}</Link>}
             {onReport && <button type="button" onClick={() => onReport(plan)} className="min-h-11 text-[14px] text-velora-muted underline underline-offset-4">{t("Report this plan")}</button>}
           </>
         )}

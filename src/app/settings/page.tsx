@@ -271,12 +271,12 @@ export default function SettingsPage() {
           className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow shrink-0"
           onClick={handleSave}
         >
-          <CheckCircle2 className="w-4 h-4" />{" "}{t("Save Settings")}</Button>
+          <CheckCircle2 className="w-4 h-4" />{" "}{t("Save settings")}</Button>
       </div>
 
       {saveSuccess && (
         <div className="p-4 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl text-xs text-velora-success font-semibold flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4" />{" "}{t("Settings updated successfully!")}</div>
+          <CheckCircle2 className="w-4 h-4" />{" "}{t("Saved.")}</div>
       )}
       {settingsError && <div role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-xs text-velora-danger">{settingsError}</div>}
 
@@ -299,7 +299,7 @@ export default function SettingsPage() {
                   type="button"
                   onClick={() => !mediaUpload && avatarInputRef.current?.click()}
                   className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
-                  title={t("Upload New Avatar")}
+                  title={t("New profile photo")}
                 >
                   <Camera className="w-5 h-5 text-velora-gold" />
                 </button>
@@ -308,7 +308,7 @@ export default function SettingsPage() {
                 <p className="text-xs font-bold text-ink">{t("Profile Picture / Avatar")}</p>
                 <p className="text-[10px] text-velora-textMuted mb-2">{t("JPEG, PNG or WebP · non-explicit · max 15 MB")}</p>
                 <Button variant="glass" size="sm" disabled={Boolean(mediaUpload)} onClick={() => avatarInputRef.current?.click()} className="text-[11px] gap-1.5">
-                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUpload?.kind === "avatar" ? t("Uploading {progress}%", { progress: mediaUpload.progress }) : t("Upload New Avatar")}
+                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUpload?.kind === "avatar" ? t("Uploading {progress}%", { progress: mediaUpload.progress }) : t("New profile photo")}
                 </Button>
               </div>
             </div>
@@ -321,7 +321,7 @@ export default function SettingsPage() {
                   type="button"
                   onClick={() => !mediaUpload && coverInputRef.current?.click()}
                   className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
-                  title={t("Upload New Cover Banner")}
+                  title={t("New cover photo")}
                 >
                   <Camera className="w-5 h-5 text-velora-gold" />
                 </button>
@@ -330,7 +330,7 @@ export default function SettingsPage() {
                 <p className="text-xs font-bold text-ink">{t("Cover Banner Image")}</p>
                 <p className="text-[10px] text-velora-textMuted mb-2">{t("JPEG, PNG or WebP · non-explicit · max 15 MB")}</p>
                 <Button variant="glass" size="sm" disabled={Boolean(mediaUpload)} onClick={() => coverInputRef.current?.click()} className="text-[11px] gap-1.5">
-                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUpload?.kind === "cover" ? t("Uploading {progress}%", { progress: mediaUpload.progress }) : t("Upload New Banner")}
+                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUpload?.kind === "cover" ? t("Uploading {progress}%", { progress: mediaUpload.progress }) : t("New cover photo")}
                 </Button>
               </div>
             </div>
@@ -446,7 +446,7 @@ export default function SettingsPage() {
               className="text-xs font-bold border-emerald-500/40 text-velora-success shrink-0 gap-2"
               onClick={handleExportGdprData}
             >
-              <Download className="w-4 h-4" />{" "}{t("Download Data Archive")}</Button>
+              <Download className="w-4 h-4" />{" "}{t("Download my data")}</Button>
           </div>
 
           <div className="space-y-3 rounded-2xl border border-ink/10 p-4">
@@ -461,7 +461,7 @@ export default function SettingsPage() {
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl border border-velora-gold/30">
             <div>
-              <h4 className="text-xs font-bold text-velora-gold">{t("Log Out of Intimo Account")}</h4>
+              <h4 className="text-xs font-bold text-velora-gold">{t("Log out of Intimo")}</h4>
               <p className="text-[11px] text-velora-textMuted mt-0.5">{t("Sign out of your active session on this device.")}</p>
             </div>
             <Button
@@ -470,7 +470,7 @@ export default function SettingsPage() {
               className="text-xs font-bold shrink-0 gap-2 shadow-gold-glow"
               onClick={() => logout()}
             >
-              <LogOut className="w-4 h-4" />{" "}{t("Log Out")}</Button>
+              <LogOut className="w-4 h-4" />{" "}{t("Log out")}</Button>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl border border-red-500/30">
@@ -484,13 +484,13 @@ export default function SettingsPage() {
               className="text-xs font-bold shrink-0 gap-2"
               onClick={() => { setDeleteError(""); setDeleteModalOpen(true); }}
             >
-              <Trash2 className="w-4 h-4" />{" "}{t("Delete Account")}</Button>
+              <Trash2 className="w-4 h-4" />{" "}{t("Delete account")}</Button>
           </div>
         </div>
       </Card>
 
       {/* Account Deletion Confirmation Modal */}
-      <Modal isOpen={deleteModalOpen} onClose={() => { if (!deletePending) setDeleteModalOpen(false); }} showCloseButton={!deletePending} title={t("Confirm Account Deletion")}>
+      <Modal isOpen={deleteModalOpen} onClose={() => { if (!deletePending) setDeleteModalOpen(false); }} showCloseButton={!deletePending} title={t("Delete my account")}>
         <div className="max-h-[65dvh] space-y-4 overflow-y-auto overscroll-contain pr-2 text-left">
           <div className="p-4 bg-red-500/10 border border-red-500/40 rounded-2xl flex items-center gap-3">
             <AlertTriangle className="w-6 h-6 text-velora-danger shrink-0" />
@@ -518,7 +518,7 @@ export default function SettingsPage() {
           <div className="flex gap-3 pt-2">
             <Button variant="ghost" className="w-1/2 text-xs" disabled={deletePending || hidePending} onClick={() => setDeleteModalOpen(false)}>{t("Cancel")}</Button>
             <Button variant="danger" className="w-1/2 text-xs font-bold uppercase tracking-wider" disabled={deletePending || hidePending} onClick={handleDeleteAccount}>
-              {deletePending ? t("Submitting…") : t("Confirm Deletion Request")}
+              {deletePending ? t("Submitting…") : t("Confirm deletion")}
             </Button>
           </div>
         </div>

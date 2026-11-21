@@ -18,7 +18,7 @@ export function SocialPathways() {
     <section aria-labelledby="social-pathways-heading" className="mb-7">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="social-pathways-heading" className="font-display text-2xl text-velora-ink sm:text-3xl">{t("Your Intimo")}</h2>
-        <p className="text-xs text-velora-muted">{t("Connect · Belong · Express")}</p>
+        <p className="text-xs text-velora-muted">{t("People · Rooms · Albums")}</p>
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         {pathways.map(({ key, eyebrow, title, description, href, action, Icon }) => (

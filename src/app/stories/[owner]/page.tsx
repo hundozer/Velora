@@ -48,7 +48,7 @@ export default function StoryViewer({params}:{params:{owner:string}}){
    </div>
    {error&&<p role="alert" className="mt-3">{t(error)}</p>}
    <p className="mt-4 whitespace-pre-wrap break-words text-lg">{t(story.caption)}</p>
-   {story.planId&&<Link href={`/tonight/invitation/${story.planId}`} className="mt-4 inline-flex min-h-12 items-center rounded-full bg-velora-accent px-6 font-semibold text-velora-paper">{t("Open invitation")}</Link>}
+   {story.planId&&<Link href={`/tonight/invitation/${story.planId}`} className="mt-4 inline-flex min-h-12 items-center rounded-full bg-velora-warm px-6 font-semibold text-velora-paper">{t("Open invitation")}</Link>}
    <nav aria-label={t("Story navigation")} className="mt-4 flex justify-between">
     <button type="button" disabled={index===0} onClick={()=>setIndex(i=>i-1)} className="min-h-12 px-4 disabled:opacity-40">{t("Previous")}</button>
     <button type="button" disabled={index>=stories.length-1} onClick={()=>setIndex(i=>i+1)} className="min-h-12 px-4 disabled:opacity-40">{t("Next")}</button>

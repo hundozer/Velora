@@ -136,7 +136,7 @@ export function PublicPeopleBrowse() {
           </div>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
-            <button type="button" onClick={startSearch} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-velora-accent px-6 text-sm font-extrabold text-velora-paper shadow-lg shadow-velora-accent/20 transition hover:bg-velora-accent active:scale-[0.99]"><Search className="h-4 w-4" />{t("Start search")}</button>
+            <button type="button" onClick={startSearch} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-velora-warm px-6 text-sm font-semibold text-velora-paper shadow-lg shadow-velora-accent/20 transition hover:bg-velora-warmHover active:scale-[0.99]"><Search className="h-4 w-4" />{t("Start search")}</button>
             <Link href="/auth/login?returnTo=%2Fpeople" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-ink/15 bg-ink/[0.03] px-6 text-sm font-bold text-ink transition hover:border-velora-accent/50 hover:bg-velora-accent/10 hover:text-velora-accent"><SlidersHorizontal className="h-4 w-4" />{t("Sign in for filters")}</Link>
           </div>
         </div>

@@ -44,7 +44,7 @@ export function GetOnMobileSection() {
         {device.installed ? (
           <p className="mt-8 inline-flex min-h-14 items-center gap-2 rounded-xl border border-velora-line px-6 font-semibold text-velora-ink"><CircleCheck className="h-5 w-5 text-velora-accent" aria-hidden />{t("You're already using the app on this phone.")}</p>
         ) : (
-          <button type="button" onClick={() => setOpen(true)} className="mt-8 inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-velora-accent px-8 text-base font-semibold text-velora-paper transition hover:bg-velora-accentHover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-velora-accent">
+          <button type="button" onClick={() => setOpen(true)} className="mt-8 inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-velora-warm px-8 text-base font-semibold text-velora-paper transition hover:bg-velora-warmHover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-velora-accent">
             <Smartphone className="h-5 w-5 shrink-0" aria-hidden />{t("Get it on your phone")}
           </button>
         )}
@@ -75,7 +75,7 @@ function InstallGuide({ open, onClose, device, installPrompt, onInstalled }: { o
       <button type="button" onClick={() => (index === 0 ? setPhone(null) : setIndex(index - 1))} className="inline-flex min-h-12 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-velora-ink2 hover:text-velora-ink">
         <ChevronLeft className="h-4 w-4" aria-hidden />{t("Back")}
       </button>
-      <button type="button" onClick={() => (last ? close() : setIndex(index + 1))} className="inline-flex min-h-12 flex-1 items-center justify-center rounded-xl bg-velora-accent px-6 text-base font-semibold text-velora-paper hover:bg-velora-accentHover sm:flex-none">
+      <button type="button" onClick={() => (last ? close() : setIndex(index + 1))} className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full bg-velora-warm px-6 text-base font-semibold text-velora-paper hover:bg-velora-warmHover sm:flex-none">
         {last ? t("Done") : t("Next")}
       </button>
     </div>
@@ -121,7 +121,7 @@ function ChoosePhone({ device, onChoose }: { device: Device; onChoose: (phone: P
                 <span className="block text-lg font-semibold text-velora-ink">{option.name}</span>
                 <span className="block text-sm text-velora-muted">{t(option.hint)}</span>
               </span>
-              {thisOne && <span className="shrink-0 rounded-full bg-velora-accent px-3 py-1 text-xs font-bold text-velora-paper">{t("This phone")}</span>}
+              {thisOne && <span className="shrink-0 rounded-full bg-velora-warm px-3 py-1 text-xs font-semibold text-velora-paper">{t("This phone")}</span>}
             </button>
           );
         })}
@@ -163,7 +163,7 @@ function StepView({ step, phone, device, installPrompt, onInstalled }: { step: I
       <div className="mt-4 flex justify-center rounded-2xl bg-velora-night py-4"><CompactArt><StepArt step={step} phone={phone} /></CompactArt></div>
       {needsLink && <CopyLink />}
       {step === "android-one-tap" && (installPrompt ? (
-        <button type="button" onClick={async () => { await installPrompt.prompt(); const choice = await installPrompt.userChoice; if (choice.outcome === "accepted") onInstalled(); }} className="mt-4 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-velora-accent px-6 text-base font-semibold text-velora-paper hover:bg-velora-accentHover">
+        <button type="button" onClick={async () => { await installPrompt.prompt(); const choice = await installPrompt.userChoice; if (choice.outcome === "accepted") onInstalled(); }} className="mt-4 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-velora-warm px-6 text-base font-semibold text-velora-paper hover:bg-velora-warmHover">
           <Download className="h-5 w-5" aria-hidden />{t("Install Intimo")}
         </button>
       ) : (

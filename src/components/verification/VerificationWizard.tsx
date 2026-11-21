@@ -55,9 +55,9 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
       {submitted ? (
         <div className="text-center space-y-4 py-6 text-left">
           <CheckCircle2 className="w-12 h-12 text-velora-success mx-auto" />
-          <h3 className="text-xl font-display font-bold text-velora-textPrimary text-center">{t("Verification Submitted")}</h3>
+          <h3 className="text-xl font-display font-bold text-velora-textPrimary text-center">{t("Sent for review.")}</h3>
           <p className="text-xs text-velora-textMuted leading-relaxed glass-panel p-4 rounded-2xl">{t("Your photo verification selfie has been submitted for manual review. No government identity document is required for this badge.")}</p>
-          <Button variant="gold" size="sm" className="w-full font-bold uppercase" onClick={handleReset}>{t("Close Window")}</Button>
+          <Button variant="gold" size="sm" className="w-full font-bold uppercase" onClick={handleReset}>{t("Close")}</Button>
         </div>
       ) : (
         <div className="space-y-6 text-left">
@@ -138,7 +138,7 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
                 <div className="p-4 glass-panel rounded-2xl border border-dashed border-ink/20 text-center space-y-2">
                   <Upload className="w-5 h-5 text-velora-gold mx-auto" />
                   <p className="text-xs font-bold text-velora-textPrimary">{t("Upload verification selfie")}</p>
-                  <Button variant="glass" size="sm" className="text-[10px] border-ink/10">{t("Select Selfie Image")}</Button>
+                  <Button variant="glass" size="sm" className="text-[10px] border-ink/10">{t("Choose a selfie")}</Button>
                 </div>
               </div>
             </div>
@@ -146,7 +146,7 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
 
           <div className="flex gap-3 pt-2">
             <Button variant="ghost" className="w-1/3 text-xs" onClick={handleReset}>{t("Cancel")}</Button>
-            <Button variant="gold" className="w-2/3 text-xs font-bold uppercase tracking-wider" onClick={handleNext}>{t("Submit Verification Request")}</Button>
+            <Button variant="gold" className="w-2/3 text-xs font-bold uppercase tracking-wider" onClick={handleNext}>{t("Send for review")}</Button>
           </div>
         </div>
       )}

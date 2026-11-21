@@ -29,7 +29,7 @@
   --success: 162 218 187;
   --warning: 244 205 140;
   --signal: 208 188 244;
-  --font-display: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-display: 'Instrument Serif', Georgia, serif; /* the voice: headlines (BRAND.md §3) */
   --font-sans: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, sans-serif;
   color-scheme: dark;
 }
@@ -42,7 +42,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.font-display { font-weight: 700; letter-spacing: -0.04em; }
+.font-display { font-weight: 400 !important; letter-spacing: -0.01em; }
+/* Small uppercase section labels stay practical: Plus Jakarta Sans, tracked out (BRAND.md §3). */
+.font-display.uppercase { font-family: var(--font-sans); font-weight: 600 !important; letter-spacing: 0.24em; font-size: 11px; color: rgb(var(--muted)); }
 /* Keep explicitly requested serif passages separate from the app's headings. */
 .font-serif { font-weight: 400 !important; letter-spacing: -0.01em; }
 
@@ -104,7 +106,7 @@ html[data-discreet="on"] main video:not([data-revealed]) {
   font-family: var(--font-sans);
   color: rgb(var(--muted));
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: .24em;
   text-transform: uppercase;
 }
@@ -141,11 +143,11 @@ html[data-discreet="on"] main video:not([data-revealed]) {
   align-items: center;
   justify-content: center;
   min-height: 44px;
-  border-radius: 0;
+  border-radius: 9999px;
   border: 1px solid rgb(var(--warm));
   background: rgb(var(--warm));
-  color: rgb(var(--night));
-  font-weight: 700;
+  color: rgb(var(--paper));
+  font-weight: 600;
   transition: background-color .18s ease, border-color .18s ease;
 }
 .intimo-member-primary:hover:not(:disabled) {
@@ -157,13 +159,13 @@ html[data-discreet="on"] main video:not([data-revealed]) {
   align-items: center;
   justify-content: center;
   min-height: 44px;
-  border-radius: 0;
-  border: 1px solid rgb(var(--line));
+  border-radius: 9999px;
+  border: 1px solid rgb(var(--ink) / .3);
   background: transparent;
   color: rgb(var(--ink));
   font-weight: 600;
 }
-.intimo-member-secondary:hover:not(:disabled) { border-color: rgb(var(--accent)); }
+.intimo-member-secondary:hover:not(:disabled) { border-color: rgb(var(--ink)); }
 .intimo-member-tab {
   border-bottom: 2px solid transparent;
   border-radius: 0;

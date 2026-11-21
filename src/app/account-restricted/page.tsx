@@ -13,7 +13,7 @@ export default function AccountRestrictedPage() {
         <h1 className="font-display font-semibold text-ink text-5xl leading-[1.02] sm:text-6xl">{t("Account access is limited")}</h1>
         <p className="mx-auto mt-4 max-w-xl text-ink">{t("This account cannot currently use member features. Contact Intimo support if you believe this is a mistake.")}</p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-          <Link className="rounded-full bg-gold-gradient px-5 py-2.5 text-sm font-medium text-velora-bg" href="mailto:contact@intimo.live">{t("Contact support")}</Link>
+          <Link className="rounded-full bg-velora-warm px-5 py-2.5 text-sm font-medium text-velora-bg" href="mailto:contact@intimo.live">{t("Contact support")}</Link>
           <Link className="rounded-full border border-ink/15 px-5 py-2.5 text-sm font-medium text-ink hover:bg-ink/10" href="/auth/logout?returnTo=%2F">{t("Sign out")}</Link>
         </div>
       </Card>

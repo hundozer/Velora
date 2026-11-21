@@ -45,7 +45,7 @@ export function FeedCardActions({ type, href, actorId, selfId, targetId }: {
   }
 
   return <nav aria-label={t("Activity actions")} className="flex flex-wrap items-center gap-2 border-t border-ink/10 px-4 py-3 sm:px-5">
-    <Link href={href} className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-velora-accent px-4 text-sm font-semibold text-velora-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-velora-accent">
+    <Link href={href} className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-velora-warm px-4 text-sm font-semibold text-velora-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-velora-accent">
       {isRoom && <UsersRound aria-hidden className="h-4 w-4" />}{t(primaryLabel)}<ArrowUpRight aria-hidden className="h-4 w-4" />
     </Link>
     {showMember && <Link href={`/profile/${encodeURIComponent(actorId)}`} className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-ink underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent">{t("View member")}</Link>}
@@ -67,7 +67,7 @@ export function FeedConversationDiscovery() {
       <p className="mt-1 max-w-lg text-sm leading-6 text-velora-textSecondary">{t("A post is a starting point. Meet people or join a room to keep the conversation going.")}</p>
     </div>
     <div className="flex w-full flex-wrap gap-2 sm:w-auto">
-      <Link href="/rooms" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-velora-accent px-4 text-sm font-semibold text-velora-paper"><UsersRound aria-hidden className="h-4 w-4" />{t("Explore rooms")}</Link>
+      <Link href="/rooms" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-velora-warm px-4 text-sm font-semibold text-velora-paper"><UsersRound aria-hidden className="h-4 w-4" />{t("Explore rooms")}</Link>
       <Link href="/people" className="inline-flex min-h-11 items-center rounded-full border border-ink/20 px-4 text-sm font-semibold text-ink">{t("Find people")}</Link>
     </div>
   </aside>;
