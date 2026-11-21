@@ -37,7 +37,7 @@ function route({ ownerStatus = "ACTIVE", blockError = null, category = null, del
     "@/lib/storage/r2": {},
     "@/lib/media/variants.mjs": { parseRequestedWidth: () => null },
     "@/lib/security/rateLimiter": { checkRateLimit: async () => ({ allowed: true }) },
-    "@/lib/auth/durableAudit": {}, "@/lib/privateAccess.mjs": {},
+    "@/lib/auth/durableAudit": {}, "@/lib/albums/access": { canViewLinkedMedia: async () => ({ linked: false, allowed: false }) },
     "@/lib/media/delivery": { deliverMedia: deliver },
     "@/lib/auth/ageCheck.mjs": ageCheck,
   });
