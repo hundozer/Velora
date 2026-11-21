@@ -2592,5 +2592,19 @@
   "Album access revoked.": "Přístup k albu byl odebrán.",
   "Could not update access": "Přístup se nepodařilo změnit",
   "Could not load approved people": "Seznam schválených osob se nepodařilo načíst",
-  "Enter an exact member username": "Zadej přesné uživatelské jméno"
+  "Enter an exact member username": "Zadej přesné uživatelské jméno",
+  "For You": "Pro tebe",
+  "Your Chemistry Feed": "Tvůj Chemistry Feed",
+  "Fresh members, open conversations and community content. Your follows and friendships help order what you see; private interests are never used.": "Noví členové, otevřené konverzace a komunitní obsah. Pořadí zohledňuje sledované lidi a přátele, nikdy ne soukromé preference.",
+  "Why you're seeing this": "Proč to vidíš",
+  "You're connected": "Jste propojení",
+  "You follow this member": "Sleduješ tohoto člena",
+  "A conversation you can join": "Konverzace, ke které se můžeš přidat",
+  "Fresh community album": "Nové komunitní album",
+  "New to Intimo": "Nový člen Intima",
+  "Recently shared": "Nedávno sdíleno",
+  "new since your last visit": "nových od poslední návštěvy",
+  "Your feed will fill up as members share. Explore People and Rooms to get started.": "Nový obsah se tu objeví, až členové začnou sdílet. Začni mezi lidmi nebo v místnostech.",
+  "Couldn't update saved items": "Uložené položky se nepodařilo změnit",
+  "New since your last visit": "Nové od poslední návštěvy"
 }
