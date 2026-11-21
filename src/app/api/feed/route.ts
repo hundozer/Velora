@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
   if (!db) return NextResponse.json({ error: "Feed unavailable" }, { status: 503 });
 
   const url = new URL(req.url);
-  const scope = ["for_you", "newest", "circle", "followed", "friends"].includes(url.searchParams.get("scope") || "") ? url.searchParams.get("scope")! : "for_you";
+  const scope = ["for_you", "newest", "circle", "followed", "friends"].includes(url.searchParams.get("scope") || "") ? url.searchParams.get("scope")! : "newest";
   const contentType = ["all", "albums", "photos", "videos", "posts", "dating", "events", "rooms"].includes(url.searchParams.get("type") || "") ? url.searchParams.get("type")! : "all";
 
   const [{ data: blocks, error: blockError }, { data: follows, error: followError }, { data: friendships, error: friendshipError }] = await Promise.all([
