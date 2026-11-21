@@ -18,10 +18,16 @@ export async function GET(req: NextRequest) {
   if (ownerId) query = query.eq("owner_id", ownerId);
   const { data: albums, error, count } = await query;
   if (error) return NextResponse.json({ error: "Album lookup failed" }, { status: 502 });
-  const ownerIds = [...new Set((albums || []).map((album) => album.owner_id))];
+  const {data:blocks,error:blockError}=await db.from("user_blocks")
+    .select("blocker_id,blocked_profile_id")
+    .or(`blocker_id.eq.${auth.actor.profileId},blocked_profile_id.eq.${auth.actor.profileId}`);
+  if(blockError)return NextResponse.json({error:"Albums unavailable"},{status:503});
+  const hidden=new Set((blocks||[]).map(b=>b.blocker_id===auth.actor.profileId?b.blocked_profile_id:b.blocker_id));
+  const allowedAlbums=(albums||[]).filter(album=>!hidden.has(album.owner_id));
+  const ownerIds = [...new Set(allowedAlbums.map((album) => album.owner_id))];
   const { data: owners } = ownerIds.length ? await db.from("profiles").select("id,display_name,username,verification_status,verification_level").in("id",ownerIds).eq("account_status","ACTIVE").eq("age_verification_status","AGE_VERIFIED").eq("discovery_disabled",false) : { data: [] };
   const ownerMap = new Map((owners || []).map((owner) => [owner.id,owner])); const albumIds = (albums || []).map((album) => album.id);
   const { data: items } = albumIds.length ? await db.from("media_album_items").select("album_id,media_id").in("album_id",albumIds) : { data: [] };
-  const visible = (albums || []).flatMap((album) => { const owner = ownerMap.get(album.owner_id); if (!owner) return []; const mediaIds = (items || []).filter((item) => item.album_id === album.id).map((item) => item.media_id); return [{ id: album.id,title:album.title,description:album.description,category:album.category,tags:Array.isArray(album.tags)?album.tags.slice(0,20):[],coverUrl:album.cover_media_id?`/api/media/${album.cover_media_id}`:null,photoCount:mediaIds.length,owner:{id:owner.id,displayName:owner.display_name||owner.username||"Intimo member",verified:owner.verification_status==="VERIFIED"||["LEVEL_3_PROFILE_BIOMETRIC","LEVEL_4_CREATOR"].includes(owner.verification_level||"")},publishedAt:album.published_at||album.created_at}]; });
+  const visible = allowedAlbums.flatMap((album) => { const owner = ownerMap.get(album.owner_id); if (!owner) return []; const mediaIds = (items || []).filter((item) => item.album_id === album.id).map((item) => item.media_id); return [{ id: album.id,title:album.title,description:album.description,category:album.category,tags:Array.isArray(album.tags)?album.tags.slice(0,20):[],coverUrl:album.cover_media_id?`/api/media/${album.cover_media_id}`:null,photoCount:mediaIds.length,owner:{id:owner.id,displayName:owner.display_name||owner.username||"Intimo member",verified:owner.verification_status==="VERIFIED"||["LEVEL_3_PROFILE_BIOMETRIC","LEVEL_4_CREATOR"].includes(owner.verification_level||"")},publishedAt:album.published_at||album.created_at}]; });
   return NextResponse.json({ albums: visible, pagination: { page,limit,total:count||0,hasMore:offset+(albums || []).length<(count||0) }, ranking:"published_at_desc_created_at_desc_id_asc" }, { headers: { "Cache-Control":"private, no-store" } });
 }
