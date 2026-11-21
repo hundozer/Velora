@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { grantIsActive } from "@/lib/privateAccess.mjs";
 
 // Lists an owner's private photos for a viewer with an active grant (P1-06).
 // Each URL is the authenticated /api/media/{id} route, which re-checks the grant
