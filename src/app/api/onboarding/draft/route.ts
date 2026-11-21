@@ -42,7 +42,7 @@ function normalize(value: unknown): Fields | null {
   };
 }
 
-async function access() {
+async function access(allowCompleted = false) {
   const identity = await getVerifiedIdentity();
   if (!identity?.emailVerified) return { error: json({ error: "Verified sign-in required" }, 401) };
   if (!draftsEnabled()) return { error: json({ error: "Draft saving unavailable" }, 503) };
@@ -52,7 +52,7 @@ async function access() {
   // cannot read or overwrite drafts belonging to another account.
   const { data: profile, error } = await db.from("profiles").select("id").eq("auth_id", identity.sub).maybeSingle();
   if (error) return { error: json({ error: "Draft lookup unavailable" }, 502) };
-  if (profile) return { error: json({ error: "Onboarding already completed" }, 409) };
+  if (profile && !allowCompleted) return { error: json({ error: "Onboarding already completed" }, 409) };
   return { db, subject: identity.sub };
 }
 
@@ -76,6 +76,8 @@ export async function PUT(req: NextRequest) {
   if ("error" in ctx) return ctx.error;
   if (!(await checkRateLimit(`onboarding-draft:${ctx.subject}`, 30, 3600)).allowed)
     return json({ error: "Too many saves. Try again later." }, 429);
+  const origin = req.headers.get("origin");
+  if (origin && origin !== new URL(req.url).origin) return json({ error: "Invalid origin" }, 403);
   const length = Number(req.headers.get("content-length") || 0);
   if (!Number.isFinite(length) || length > 4096) return json({ error: "Draft is too large" }, 413);
   let body: unknown;
@@ -95,7 +97,8 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE() {
-  const ctx = await access();
+  // Delete the draft after successful profile creation as well.
+  const ctx = await access(true);
   if ("error" in ctx) return ctx.error;
   const { error } = await ctx.db.from("onboarding_drafts").delete().eq("user_id", ctx.subject);
   if (error) return json({ error: "Draft could not be deleted" }, 502);
