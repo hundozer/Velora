@@ -8,13 +8,14 @@ import { ArrowLeft, Check } from "lucide-react";
  * One-question-per-screen flow chrome: a thin progress bar, a back arrow,
  * a big question and an optional sticky action at the bottom.
  */
-export function FlowScreen({ step, total, onBack, title, children, action }: {
+export function FlowScreen({ step, total, onBack, title, children, action, utility }: {
   step: number;
   total: number;
   onBack?: () => void;
   title: string;
   children: React.ReactNode;
   action?: React.ReactNode;
+  utility?: React.ReactNode;
 }) {
   const { t } = useTranslation();
   return (
@@ -27,6 +28,7 @@ export function FlowScreen({ step, total, onBack, title, children, action }: {
           <div className="h-full rounded-full bg-velora-accent transition-all duration-300" style={{ width: `${(step / total) * 100}%` }} />
         </div>
       </div>
+      {utility && <div className="mt-3 flex flex-wrap items-center justify-end gap-2">{utility}</div>}
       <h1 className="mt-8 font-display text-5xl leading-[1.02] text-velora-ink sm:text-6xl">{t(title)}</h1>
       <div className="mt-8 flex-1 space-y-3">{children}</div>
       {action && <div className="sticky bottom-0 -mx-5 mt-6 bg-gradient-to-t from-velora-bg via-velora-bg to-transparent px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-6">{action}</div>}
