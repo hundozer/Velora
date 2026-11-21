@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { hasAdultAccess, isAdminActor, resolveServerActor } from "@/lib/auth/serverActor";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { appendDurableAudit } from "@/lib/auth/durableAudit";
-import { grantIsActive } from "@/lib/privateAccess.mjs";
+import { canViewAlbum, CHOOSABLE_ALBUM_VISIBILITIES, LEGACY_ALBUM_VISIBILITIES } from "@/lib/albums/access";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -17,22 +17,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const isOwner = album.owner_id === auth.actor.profileId;
   const { data: block, error: blockError } = isOwner ? { data: null, error: null } : await db.from("user_blocks").select("id").or(`and(blocker_id.eq.${auth.actor.profileId},blocked_profile_id.eq.${album.owner_id}),and(blocker_id.eq.${album.owner_id},blocked_profile_id.eq.${auth.actor.profileId})`).limit(1).maybeSingle();
   if (blockError || block) return NextResponse.json({ error: "Album not found" }, { status: 404 });
-  let allowed = isOwner || ["PUBLIC", "MEMBERS_ONLY"].includes(album.visibility);
-  if (!allowed && album.visibility === "FOLLOWERS_ONLY") {
-    const { data: follow } = await db.from("connections").select("id").eq("follower_id", auth.actor.profileId).eq("followed_id", album.owner_id).eq("connection_type", "follow").maybeSingle();
-    allowed = Boolean(follow);
-  }
-  if (!allowed && album.visibility === "PRIVATE_APPROVED") {
-    const { data: grant, error: grantError } = await db.from("album_access_grants")
-      .select("status,grant_type,expires_at")
-      .eq("owner_id", album.owner_id).eq("viewer_id", auth.actor.profileId).maybeSingle();
-    if (grantError) return NextResponse.json({ error: "Album not found" }, { status: 404 });
-    allowed = grantIsActive(grant);
-  }
-  if (!allowed && album.visibility === "FRIENDS_ONLY") {
-    const { data: friendship } = await db.from("friendships").select("id").eq("status", "ACCEPTED").or(`and(requester_id.eq.${auth.actor.profileId},addressee_id.eq.${album.owner_id}),and(requester_id.eq.${album.owner_id},addressee_id.eq.${auth.actor.profileId})`).limit(1).maybeSingle();
-    allowed = Boolean(friendship);
-  }
+  const allowed = await canViewAlbum(db, album, auth.actor.profileId);
   if (!allowed) return NextResponse.json({ error: "Album not found" }, { status: 404 });
   const { data: owner } = await db.from("profiles").select("id,display_name,username,verification_status,verification_level,account_status,age_verification_status,discovery_disabled").eq("id", album.owner_id).maybeSingle();
   if (!owner || (!isOwner && (owner.account_status !== "ACTIVE" || owner.age_verification_status !== "AGE_VERIFIED" || owner.discovery_disabled))) return NextResponse.json({ error: "Album not found" }, { status: 404 });
@@ -52,7 +37,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (!UUID.test(params.id)) return NextResponse.json({ error: "Album not found" }, { status: 404 });
   let body: any; try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
   const title = typeof body.title === "string" ? body.title.trim() : ""; const description = typeof body.description === "string" ? body.description.trim() : ""; const category = typeof body.category === "string" ? body.category.trim() : "";
-  const visibility = ["PUBLIC","MEMBERS_ONLY","FOLLOWERS_ONLY","FRIENDS_ONLY","PRIVATE","PRIVATE_APPROVED"].includes(body.visibility) ? body.visibility : "PRIVATE";
+  const visibility = CHOOSABLE_ALBUM_VISIBILITIES.includes(body.visibility) ? body.visibility : "PRIVATE";
   const commentPolicy = ["MEMBERS","VERIFIED","FRIENDS","DISABLED"].includes(body.commentPolicy) ? body.commentPolicy : "MEMBERS";
   const reactionsEnabled = body.reactionsEnabled !== false;
   const tags = Array.isArray(body.tags) ? body.tags.filter((tag: unknown): tag is string => typeof tag === "string").map((tag: string) => tag.trim().slice(0,50)).filter(Boolean).slice(0,20) : [];
@@ -61,6 +46,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const { data: before, error: lookupError } = await db.from("media_albums").select("id,title,description,category,tags,visibility,moderation_status,published_at").eq("id", params.id).eq("owner_id", auth.actor.profileId).neq("moderation_status", "REMOVED").maybeSingle();
   if (lookupError) return NextResponse.json({ error: "Album lookup failed" }, { status: 502 });
   if (!before) return NextResponse.json({ error: "Album not found" }, { status: 404 });
+  // Legacy restrictions are preserved until an intentional owner migration.
+  // No implicit conversion from Friends/Followers to Community or Private.
+  if (LEGACY_ALBUM_VISIBILITIES.includes(before.visibility) && !body.confirmAudienceChange)
+    return NextResponse.json({ error: "Confirm a new audience for this legacy album before saving." }, { status: 409 });
   const contentUnchanged = before.title === title && (before.description || "") === description && (before.category || "") === category && JSON.stringify(before.tags || []) === JSON.stringify(tags);
   // Administrators do not need a second moderator for their own albums, but
   // an empty album or photos still processing/awaiting approval remain private.
@@ -78,8 +67,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         photo.media_type === "IMAGE" && !["MESSAGE","STORY","AGE_CHECK"].includes(photo.category || "") &&
         photo.upload_status === "AVAILABLE" && photo.processing_status === "READY" &&
         photo.moderation_status === "APPROVED" &&
-        (visibility !== "PRIVATE_APPROVED" || photo.visibility === "PRIVATE") &&
-        (visibility !== "PUBLIC" || photo.visibility === "PUBLIC"));
+        (visibility !== "PRIVATE_APPROVED" && visibility !== "PRIVATE" || photo.visibility === "PRIVATE") &&
+        (visibility !== "MEMBERS_ONLY" || ["MEMBERS_ONLY", "PRIVATE"].includes(photo.visibility)));
     }
   }
   const keepApproved = adminEligible || (before.moderation_status === "APPROVED" && contentUnchanged);
@@ -90,9 +79,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (!ids.length) return NextResponse.json({ error: "Add photos before changing the audience" }, { status: 409 });
     const { data: photos, error: photosError } = await db.from("media_objects").select("id,visibility,upload_status,processing_status,moderation_status").in("id", ids).eq("owner_id", auth.actor.profileId);
     if (photosError) return NextResponse.json({ error: "Album photos could not be checked" }, { status: 502 });
-    const required = visibility === "FRIENDS_ONLY" ? null : visibility === "PRIVATE_APPROVED" ? "PRIVATE" : visibility;
-    if (!required || photos?.length !== ids.length || photos.some(photo => photo.visibility !== required || photo.upload_status !== "AVAILABLE" || photo.processing_status !== "READY" || photo.moderation_status !== "APPROVED")) {
-      return NextResponse.json({ error: "The included photos need the same audience and approval before this album can change audience." }, { status: 409 });
+    if (photos?.length !== ids.length || photos.some(photo =>
+      !["PRIVATE", "MEMBERS_ONLY"].includes(photo.visibility) ||
+      photo.upload_status !== "AVAILABLE" || photo.processing_status !== "READY" ||
+      photo.moderation_status !== "APPROVED")) {
+      return NextResponse.json({ error: "The included photos must be approved before changing album visibility." }, { status: 409 });
     }
   }
   const { data, error } = await db.from("media_albums").update({ title, description: description || null, category: category || null, tags, visibility, comment_policy: commentPolicy, reactions_enabled: reactionsEnabled, moderation_status: keepApproved ? "APPROVED" : "PENDING_REVIEW", published_at: keepApproved ? (before.published_at || new Date().toISOString()) : null, updated_at: new Date().toISOString() }).eq("id", params.id).eq("owner_id", auth.actor.profileId).eq("moderation_status", before.moderation_status).select("id,title,description,category,tags,visibility,comment_policy,reactions_enabled,moderation_status,cover_media_id,updated_at").maybeSingle();
