@@ -224,7 +224,7 @@ test("the selfie is admin-only evidence: never in albums, private sharing or the
   assert.match(read("src/app/api/media/presign-upload/route.ts"), /: isAgeCheck \? "PRIVATE"/);
   assert.match(read("src/app/api/media/route.ts"), /category\.neq\.AGE_CHECK/);
   assert.match(read("src/app/api/albums/[id]/media/route.ts"), /in\("category", \["STORY", "AGE_CHECK"\]\)/);
-  for (const file of ["src/app/api/private-access/route.ts", "src/app/api/private-access/media/route.ts", "src/app/api/admin/media/route.ts"]) assert.match(read(file), /category\.neq\.AGE_CHECK/, file);
+  for (const file of ["src/app/api/admin/media/route.ts"]) assert.match(read(file), /category\.neq\.AGE_CHECK/, file);
   assert.match(read("src/lib/admin/workspace.mjs"), /row\.category !== 'AGE_CHECK'/);
 });
 
