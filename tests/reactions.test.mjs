@@ -37,7 +37,8 @@ test("feed interactions cover album and notify the owner without bypassing acces
 test("feed only promotes published events and open active member rooms", () => {
   const api = readFileSync(new URL("../src/app/api/feed/route.ts", import.meta.url), "utf8");
   assert.match(api, /\.eq\("status", "PUBLISHED"\)/);
-  assert.match(api, /\.eq\("builtin", false\)\.eq\("locked", false\)/);
+  assert.match(api, /\.eq\("locked", false\)/);
+  assert.match(api, /if \(scope !== "for_you"\) roomQuery = roomQuery\.eq\("builtin", false\)/);
   assert.match(api, /expires_at\.is\.null,expires_at\.gt/);
   assert.match(api, /href: `\/scene\?event=\$\{event\.id\}`/);
   assert.match(api, /href: `\/rooms\/\$\{room\.id\}`/);
