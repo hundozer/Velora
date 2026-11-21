@@ -13,3 +13,11 @@ create index onboarding_drafts_expiry_idx on public.onboarding_drafts(expires_at
 alter table public.onboarding_drafts enable row level security;
 revoke all on public.onboarding_drafts from public, anon, authenticated;
 grant select, insert, update, delete on public.onboarding_drafts to service_role;
+
+-- Physical deletion is scheduled daily; expired drafts are already unavailable
+-- immediately at read time. The job removes ciphertext within 24h of expiry.
+select cron.schedule(
+  'intimo-onboarding-drafts-purge',
+  '15 3 * * *',
+  $job$delete from public.onboarding_drafts where expires_at <= now()$job$
+);
