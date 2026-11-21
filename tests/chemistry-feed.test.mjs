@@ -59,7 +59,7 @@ test("For You scope retains Newest visibility whitelist and all moderation, age,
   assert.match(api,/hasAdultAccess\(auth.actor\)/);
   assert.match(api,/\.eq\("moderation_status", "APPROVED"\)/);
   assert.match(api,/\.eq\("locked", false\)/);
-  assert.match(api,/rankChemistryFeed\(filtered, \{following, friends\}/);
+  assert.match(api,/rankChemistryFeed\(filtered\.filter\(item => item\.type !== "PROFILE"/);
   assert.match(audience,/return false/);
   assert.doesNotMatch(api,/\.select\([^)]*looking_for/);
 });
