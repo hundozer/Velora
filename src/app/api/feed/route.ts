@@ -87,9 +87,13 @@ export async function GET(req: NextRequest) {
     .or(`ends_at.gt.${new Date().toISOString()},and(ends_at.is.null,starts_at.gt.${new Date(Date.now() - 6 * 3_600_000).toISOString()})`)
     .order("created_at", { ascending: false }).limit(40);
   let roomQuery = db.from("rooms").select("id,title,description,creator_id,locked,expires_at,created_at")
-    .eq("builtin", false).eq("locked", false)
+    .eq("locked", false)
     .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
     .order("created_at", { ascending: false }).limit(40);
+  // For You has a real starting point even when nobody has created a room:
+  // curated, unlocked rooms are discoverable, but other feed scopes retain
+  // their original member-created-room selection.
+  if (scope !== "for_you") roomQuery = roomQuery.eq("builtin", false);
   if (audienceIds) {
     profileQuery = profileQuery.in("id", audienceIds);
     adQuery = adQuery.in("author_id", audienceIds);
@@ -185,9 +189,15 @@ export async function GET(req: NextRequest) {
     items.push({ id: `EVENT:${event.id}`, type: "EVENT", actor, title: event.title, body: [event.venue_name, new Date(event.starts_at).toLocaleString("en-GB", { timeZone: "Europe/Prague", dateStyle: "medium", timeStyle: "short" }), event.description].filter(Boolean).join(" · "), category: event.kind, href: `/scene?event=${event.id}`, occurredAt: event.reviewed_at || event.created_at });
   }
   for (const room of roomRows || []) {
-    if (!room.creator_id || excluded.has(room.creator_id)) continue;
-    const actor = actorFor(room.creator_id) || { id: "", displayName: "Intimo member", verified: false };
-    items.push({ id: `ROOM:${room.id}`, type: "ROOM", actor, title: `${actor.displayName} started ${room.title}`, body: room.description, href: `/rooms/${room.id}`, occurredAt: room.created_at });
+    if (room.creator_id && excluded.has(room.creator_id)) continue;
+    // Curated rooms do not have a creator. Show them as Intimo rather than
+    // hiding the most useful first-visit conversations.
+    if (!room.creator_id && scope !== "for_you") continue;
+    const actor = room.creator_id ? actorFor(room.creator_id) : { id: "", displayName: "Intimo", verified: false };
+    if (!actor) continue;
+    items.push({ id: `ROOM:${room.id}`, type: "ROOM", actor,
+      title: room.creator_id ? `${actor.displayName} started ${room.title}` : room.title,
+      body: room.description, href: `/rooms/${room.id}`, occurredAt: room.created_at });
   }
 
   const permittedTypes: Record<string, FeedItem["type"][]> = { albums: ["ALBUM"], photos: ["IMAGE"], videos: ["VIDEO"], posts: ["POST"], dating: ["DATING_AD"], events: ["EVENT"], rooms: ["ROOM"] };
