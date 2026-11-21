@@ -52,6 +52,12 @@ jobs:
           psql -h localhost -U postgres -d intimo_guests_test -f tests/sql/guest-list-disposable.sql
         env:
           PGPASSWORD: disposable-test-only
+      - name: Verify three-option album audiences, scoped grants and revocation in PostgreSQL
+        run: |
+          createdb -h localhost -U postgres intimo_album_scope_test
+          psql -h localhost -U postgres -d intimo_album_scope_test -f tests/sql/album-three-audiences.sql
+        env:
+          PGPASSWORD: disposable-test-only
       - name: Verify Prague Room role boundary
         run: |
           createdb -h localhost -U postgres intimo_room_test
