@@ -22,7 +22,7 @@ test("public endpoint is rate limited, validates, and never reveals existing mem
   assert.match(route, /if \(existing\?\.length\) return received\(\);/);
   assert.match(route, /error\?\.code === "23505"\) return received\(\)/, "duplicate open request does not alert twice");
   const lib = read("src/lib/invitations/requests.ts");
-  assert.match(lib, /process\.env\.INVITATION_REQUEST_ALERT_EMAIL \|\| "admin@intimo\.live"/);
+  assert.match(lib, /process\.env\.INVITATION_REQUEST_ALERT_EMAIL \|\| "registration@intimo\.live"/);
   assert.match(lib, /setTimeout\(\(\) => resolve\(null\), 4000\)/);
   assert.match(lib, /b\.adultConfirmed !== true/);
   assert.match(lib, /intent\.length < 10 \|\| intent\.length > 500/);
@@ -67,4 +67,23 @@ test("new invitation requests receive a branded acknowledgment but existing requ
   assert.match(lib, /If your request is approved/);
   assert.match(lib, /Pokud ti pozvánku schválíme/);
   assert.doesNotMatch(lib.slice(lib.indexOf("export function invitationRequestReceiptEmail")), /we will email you after review|ozveme se ti po posouzení/i);
+});
+
+test("new admin alerts use Intimo 2026 brand and registration inbox", () => {
+  const lib = read("src/lib/invitations/requests.ts");
+  assert.match(lib, /INVITATION_REQUEST_ALERT_EMAIL \\|\\| "registration@intimo\\.live"/);
+  assert.match(lib, /export function adminInvitationRequestEmail/);
+  const alert = lib.slice(lib.indexOf("export function adminInvitationRequestEmail"), lib.indexOf("/** The personal invitation"));
+  assert.match(alert, /intimo-logo-dark@3x\\.png/);
+  assert.match(alert, /#191C20/);
+  assert.match(alert, /#252B31/);
+  assert.match(alert, /#A8D5EF/);
+  assert.match(alert, /#E0704F/);
+  assert.match(alert, /Instrument Serif/);
+  assert.match(alert, /Plus Jakarta Sans/);
+  assert.match(alert, /escapeHtml\\(request\\.email\\)/);
+  assert.match(alert, /escapeHtml\\(request\\.intent\\)/);
+  assert.match(alert, /admin\\/invitations\\?request=/);
+  assert.match(alert, /sendEmail\\(\\{ to: INVITATION_REQUEST_ALERT_TO, subject, html \\}\\)/);
+  assert.doesNotMatch(alert, /Approve or reject|background:#1f6f9c/);
 });
