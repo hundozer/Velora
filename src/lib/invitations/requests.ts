@@ -112,11 +112,11 @@ export function invitationRequestReceiptEmail(language: "en" | "cs") {
         footer: "You received this email because you requested an invitation at intimo.live. Intimo is for adults aged 18+.",
         tagline: "Boundaries first. Then chemistry.",
       };
-  const html = \`<!doctype html>
-<html lang="\${cs ? "cs" : "en"}">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>\${copy.subject}</title></head>
+  const html = `<!doctype html>
+<html lang="${cs ? "cs" : "en"}">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${copy.subject}</title></head>
 <body style="margin:0;padding:0;background-color:#191C20;color:#F1E8DC;font-family:'Plus Jakarta Sans',Arial,Helvetica,sans-serif;">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">\${copy.preheader}</div>
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${copy.preheader}</div>
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#191C20;border-collapse:collapse;">
 <tr><td align="center" style="padding:38px 16px 48px;">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:560px;border-collapse:collapse;">
@@ -126,19 +126,19 @@ export function invitationRequestReceiptEmail(language: "en" | "cs") {
 </a></td></tr>
 <tr><td style="background-color:#252B31;border:1px solid #46525E;padding:44px 34px 38px;">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-<tr><td style="font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#A8D5EF;padding-bottom:24px;">\${copy.kicker}</td></tr>
-<tr><td style="font-family:'Instrument Serif',Georgia,'Times New Roman',serif;font-size:46px;line-height:1.05;font-weight:400;letter-spacing:-1px;color:#F1E8DC;padding:0 0 28px;">\${copy.line1}<br><span style="font-style:italic;color:#E0704F;">\${copy.line2}</span></td></tr>
-<tr><td style="font-size:16px;line-height:1.7;color:#F1E8DC;padding:0 0 12px;">\${copy.greeting}</td></tr>
-<tr><td style="font-size:15px;line-height:1.8;color:#CFC7BC;padding:0 0 14px;">\${copy.body}</td></tr>
-<tr><td style="font-size:15px;line-height:1.8;color:#CFC7BC;padding:0 0 30px;">\${copy.detail}</td></tr>
-<tr><td style="padding:0 0 24px;"><a href="https://intimo.live" style="display:inline-block;background-color:#E0704F;color:#191C20;border-radius:999px;text-decoration:none;font-size:14px;font-weight:600;padding:15px 26px;">\${copy.button}</a></td></tr>
-<tr><td style="border-top:1px solid #46525E;padding-top:20px;font-size:13px;line-height:1.6;color:#A9A39E;">\${copy.note}</td></tr>
+<tr><td style="font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#A8D5EF;padding-bottom:24px;">${copy.kicker}</td></tr>
+<tr><td style="font-family:'Instrument Serif',Georgia,'Times New Roman',serif;font-size:46px;line-height:1.05;font-weight:400;letter-spacing:-1px;color:#F1E8DC;padding:0 0 28px;">${copy.line1}<br><span style="font-style:italic;color:#E0704F;">${copy.line2}</span></td></tr>
+<tr><td style="font-size:16px;line-height:1.7;color:#F1E8DC;padding:0 0 12px;">${copy.greeting}</td></tr>
+<tr><td style="font-size:15px;line-height:1.8;color:#CFC7BC;padding:0 0 14px;">${copy.body}</td></tr>
+<tr><td style="font-size:15px;line-height:1.8;color:#CFC7BC;padding:0 0 30px;">${copy.detail}</td></tr>
+<tr><td style="padding:0 0 24px;"><a href="https://intimo.live" style="display:inline-block;background-color:#E0704F;color:#191C20;border-radius:999px;text-decoration:none;font-size:14px;font-weight:600;padding:15px 26px;">${copy.button}</a></td></tr>
+<tr><td style="border-top:1px solid #46525E;padding-top:20px;font-size:13px;line-height:1.6;color:#A9A39E;">${copy.note}</td></tr>
 </table></td></tr>
-<tr><td style="padding:26px 3px 10px;font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:20px;color:#F1E8DC;">\${copy.tagline}</td></tr>
-<tr><td style="font-size:11px;line-height:1.65;color:#A9A39E;padding:0 3px;">\${copy.footer}</td></tr>
+<tr><td style="padding:26px 3px 10px;font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:20px;color:#F1E8DC;">${copy.tagline}</td></tr>
+<tr><td style="font-size:11px;line-height:1.65;color:#A9A39E;padding:0 3px;">${copy.footer}</td></tr>
 <tr><td style="padding:17px 3px 0;font-size:11px;"><a href="https://intimo.live" style="color:#A8D5EF;text-decoration:underline;">intimo.live</a></td></tr>
 </table></td></tr></table>
-</body></html>\`;
+</body></html>`;
   return { subject: copy.subject, html };
 }
 
