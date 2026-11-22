@@ -23,9 +23,36 @@ export function isAdminRole(role: string): role is AdminRole { return ADMIN_ROLE
 export function hasAdminPermission(actor: ServerActor, permission: AdminPermission): boolean {
   return actor.adminAuthorized && isAdminRole(actor.role) && ADMIN_ROLE_PERMISSIONS[actor.role].includes(permission);
 }
+/**
+ * Temporary emergency exception for exactly one verified, active SUPER_ADMIN.
+ * A hard <=24h window is enforced on every request; the absence of any
+ * variable, an invalid timestamp, or an expired window fails closed.
+ * Never permit this for other admins or unverified accounts.
+ */
+export function temporaryOwnerMfaException(actor: ServerActor, now = Date.now()): boolean {
+  const profileId = process.env.INTIMO_TEMP_MFA_BYPASS_PROFILE_ID;
+  const starts = Date.parse(process.env.INTIMO_TEMP_MFA_BYPASS_STARTS_AT || "");
+  const expires = Date.parse(process.env.INTIMO_TEMP_MFA_BYPASS_EXPIRES_AT || "");
+  return Boolean(
+    process.env.NODE_ENV === "production" &&
+    profileId &&
+    actor.profileId === profileId &&
+    actor.adminAuthorized &&
+    actor.role === "SUPER_ADMIN" &&
+    actor.accountStatus === "ACTIVE" &&
+    actor.emailVerified &&
+    Number.isFinite(starts) &&
+    Number.isFinite(expires) &&
+    expires > starts &&
+    expires - starts <= 24 * 60 * 60 * 1000 &&
+    now >= starts &&
+    now < expires
+  );
+}
+
 export function adminMfaSatisfied(actor: ServerActor): boolean {
   if (process.env.NODE_ENV !== "production" && process.env.INTIMO_ADMIN_MFA_REQUIRED !== "true") return true;
-  return actor.mfaAuthenticated;
+  return actor.mfaAuthenticated || temporaryOwnerMfaException(actor);
 }
 export function adminSessionFresh(actor: ServerActor, maxAgeSeconds = 30 * 60): boolean {
   return typeof actor.authenticatedAt === "number" && Math.floor(Date.now() / 1000) - actor.authenticatedAt <= maxAgeSeconds;
