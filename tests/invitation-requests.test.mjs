@@ -83,3 +83,17 @@ test("new admin alerts use Intimo 2026 brand and registration inbox", () => {
   assert.ok(!alert.includes("Approve or reject"));
   assert.ok(!alert.includes("background:#1f6f9c"));
 });
+
+test("admin invitation alerts are always English even for Czech applicants", () => {
+  const lib = read("src/lib/invitations/requests.ts");
+  const alert = lib.slice(lib.indexOf("export function adminInvitationRequestEmail"), lib.indexOf("/** The personal invitation"));
+  assert.ok(alert.includes('html lang="en"'), "HTML language fixed to English");
+  assert.ok(alert.includes('const subject = `Intimo · New request'));
+  for (const label of ["New invitation request", "Applicant", "Review application", "Internal administrator notification", "Boundaries first. Then chemistry."]) {
+    assert.ok(alert.includes(label), "Missing English admin label: " + label);
+  }
+  assert.ok(alert.includes('request.language === "cs" ? "Czech" : "English"'), "Show applicant's form language as metadata, in English");
+  assert.ok(alert.includes("escapeHtml(request.intent)"), "Preserve and escape applicant's original message");
+  assert.ok(!alert.includes("Nová žádost") && !alert.includes("Posoudit žádost"), "No Czech admin labels");
+  assert.ok(lib.includes('export function invitationRequestReceiptEmail(language: "en" | "cs")'), "Applicant-facing language choice unchanged");
+});
