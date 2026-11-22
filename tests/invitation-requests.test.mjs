@@ -71,19 +71,15 @@ test("new invitation requests receive a branded acknowledgment but existing requ
 
 test("new admin alerts use Intimo 2026 brand and registration inbox", () => {
   const lib = read("src/lib/invitations/requests.ts");
-  assert.match(lib, /INVITATION_REQUEST_ALERT_EMAIL \\|\\| "registration@intimo\\.live"/);
-  assert.match(lib, /export function adminInvitationRequestEmail/);
+  assert.ok(lib.includes('process.env.INVITATION_REQUEST_ALERT_EMAIL || "registration@intimo.live"'));
+  assert.ok(lib.includes("export function adminInvitationRequestEmail"));
   const alert = lib.slice(lib.indexOf("export function adminInvitationRequestEmail"), lib.indexOf("/** The personal invitation"));
-  assert.match(alert, /intimo-logo-dark@3x\\.png/);
-  assert.match(alert, /#191C20/);
-  assert.match(alert, /#252B31/);
-  assert.match(alert, /#A8D5EF/);
-  assert.match(alert, /#E0704F/);
-  assert.match(alert, /Instrument Serif/);
-  assert.match(alert, /Plus Jakarta Sans/);
-  assert.match(alert, /escapeHtml\\(request\\.email\\)/);
-  assert.match(alert, /escapeHtml\\(request\\.intent\\)/);
-  assert.match(alert, /admin\\/invitations\\?request=/);
-  assert.match(alert, /sendEmail\\(\\{ to: INVITATION_REQUEST_ALERT_TO, subject, html \\}\\)/);
-  assert.doesNotMatch(alert, /Approve or reject|background:#1f6f9c/);
+  for (const token of [
+    "intimo-logo-dark@3x.png", "#191C20", "#252B31", "#A8D5EF", "#E0704F",
+    "Instrument Serif", "Plus Jakarta Sans", "escapeHtml(request.email)",
+    "escapeHtml(request.intent)", "admin/invitations?request=",
+    "to: INVITATION_REQUEST_ALERT_TO, subject, html"
+  ]) assert.ok(alert.includes(token), `Missing from admin email: ${token}`);
+  assert.ok(!alert.includes("Approve or reject"));
+  assert.ok(!alert.includes("background:#1f6f9c"));
 });
