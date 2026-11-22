@@ -22,7 +22,7 @@ test("public endpoint is rate limited, validates, and never reveals existing mem
   assert.match(route, /if \(existing\?\.length\) return received\(\);/);
   assert.match(route, /error\?\.code === "23505"\) return received\(\)/, "duplicate open request does not alert twice");
   const lib = read("src/lib/invitations/requests.ts");
-  assert.match(lib, /process\.env\.INVITATION_REQUEST_ALERT_EMAIL \|\| "admin@intimo\.live"/);
+  assert.match(lib, /process\.env\.INVITATION_REQUEST_ALERT_EMAIL \|\| "registration@intimo\.live"/);
   assert.match(lib, /setTimeout\(\(\) => resolve\(null\), 4000\)/);
   assert.match(lib, /b\.adultConfirmed !== true/);
   assert.match(lib, /intent\.length < 10 \|\| intent\.length > 500/);
@@ -67,4 +67,19 @@ test("new invitation requests receive a branded acknowledgment but existing requ
   assert.match(lib, /If your request is approved/);
   assert.match(lib, /Pokud ti pozvánku schválíme/);
   assert.doesNotMatch(lib.slice(lib.indexOf("export function invitationRequestReceiptEmail")), /we will email you after review|ozveme se ti po posouzení/i);
+});
+
+test("new admin alerts use Intimo 2026 brand and registration inbox", () => {
+  const lib = read("src/lib/invitations/requests.ts");
+  assert.ok(lib.includes('process.env.INVITATION_REQUEST_ALERT_EMAIL || "registration@intimo.live"'));
+  assert.ok(lib.includes("export function adminInvitationRequestEmail"));
+  const alert = lib.slice(lib.indexOf("export function adminInvitationRequestEmail"), lib.indexOf("/** The personal invitation"));
+  for (const token of [
+    "intimo-logo-dark@3x.png", "#191C20", "#252B31", "#A8D5EF", "#E0704F",
+    "Instrument Serif", "Plus Jakarta Sans", "escapeHtml(request.email)",
+    "escapeHtml(request.intent)", "admin/invitations?request=",
+    "to: INVITATION_REQUEST_ALERT_TO, subject, html"
+  ]) assert.ok(alert.includes(token), `Missing from admin email: ${token}`);
+  assert.ok(!alert.includes("Approve or reject"));
+  assert.ok(!alert.includes("background:#1f6f9c"));
 });
