@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimiter";
-import { notifyInvitationRequest, parseInvitationRequest } from "@/lib/invitations/requests";
+import { notifyInvitationRequest, parseInvitationRequest, sendInvitationRequestReceipt } from "@/lib/invitations/requests";
 
 // Public "request an invitation" form on the landing page. An admin approves or
 // rejects each request; approval sends a normal single-use member invitation.
@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
   // 23505: this address already has an open request. Don't alert the team twice.
   if (error?.code === "23505") return received();
   if (error || !data) return NextResponse.json({ error: "Requests are temporarily unavailable" }, { status: 503, headers: noStore });
-  await notifyInvitationRequest({ ...request, id: data.id });
+  // Both emails are best-effort after persistence. Do not turn provider failures
+  // into misleading retries or disclose whether an address already exists.
+  await Promise.all([notifyInvitationRequest({ ...request, id: data.id }), sendInvitationRequestReceipt(request)]);
   return received();
 }

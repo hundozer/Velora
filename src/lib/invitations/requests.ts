@@ -74,3 +74,82 @@ export function approvedInvitationEmail(token: string, language: "en" | "cs") {
 </div>`;
   return { subject: copy.subject, html };
 }
+
+
+/**
+ * Invitation request receipt. Uses the official 2026 Intimo overlap lockup,
+ * palette and typographic hierarchy from docs/brand/BRAND.md.
+ * No implied approval, expiry deadline or invented activity.
+ */
+export function invitationRequestReceiptEmail(language: "en" | "cs") {
+  const cs = language === "cs";
+  const copy = cs
+    ? {
+        subject: "Tvoji žádost jsme přijali · Intimo",
+        preheader: "Žádost o pozvánku je u nás. Další krok je na nás.",
+        kicker: "Žádost přijata",
+        line1: "Dveře jsou zatím",
+        line2: "pootevřené.",
+        greeting: "Díky, že ses ozval(a).",
+        body: "Tvoji žádost o pozvánku jsme přijali. Teď ji projdeme.",
+        detail: "Intimo je soukromá komunita pro dospělé. Pokud ti pozvánku schválíme, přijde ti další e-mail s osobním odkazem.",
+        button: "Prohlédnout Intimo",
+        note: "Teď už nemusíš dělat nic dalšího.",
+        footer: "Tento e-mail ti přišel, protože jsi na intimo.live požádal(a) o pozvánku. Intimo je určeno pouze osobám starším 18 let.",
+        tagline: "Hranice první. Pak chemie.",
+      }
+    : {
+        subject: "We received your request · Intimo",
+        preheader: "Your invitation request is in. The next step is ours.",
+        kicker: "Request received",
+        line1: "The door is",
+        line2: "slightly open.",
+        greeting: "Thanks for reaching out.",
+        body: "We've received your invitation request. We'll review it from here.",
+        detail: "Intimo is a private adults-only community. If your request is approved, we'll email you a personal invitation link.",
+        button: "Explore Intimo",
+        note: "There's nothing else you need to do right now.",
+        footer: "You received this email because you requested an invitation at intimo.live. Intimo is for adults aged 18+.",
+        tagline: "Boundaries first. Then chemistry.",
+      };
+  const html = `<!doctype html>
+<html lang="${cs ? "cs" : "en"}">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${copy.subject}</title></head>
+<body style="margin:0;padding:0;background-color:#191C20;color:#F1E8DC;font-family:'Plus Jakarta Sans',Arial,Helvetica,sans-serif;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${copy.preheader}</div>
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#191C20;border-collapse:collapse;">
+<tr><td align="center" style="padding:38px 16px 48px;">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:560px;border-collapse:collapse;">
+<tr><td style="padding:0 0 32px;">
+<a href="https://intimo.live" aria-label="Intimo" style="display:inline-block;text-decoration:none;">
+<img src="https://intimo.live/brand/intimo-logo-dark@3x.png" width="164" alt="Intimo" style="display:block;width:164px;max-width:100%;height:auto;border:0;">
+</a></td></tr>
+<tr><td style="background-color:#252B31;border:1px solid #46525E;padding:44px 34px 38px;">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<tr><td style="font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#A8D5EF;padding-bottom:24px;">${copy.kicker}</td></tr>
+<tr><td style="font-family:'Instrument Serif',Georgia,'Times New Roman',serif;font-size:46px;line-height:1.05;font-weight:400;letter-spacing:-1px;color:#F1E8DC;padding:0 0 28px;">${copy.line1}<br><span style="font-style:italic;color:#E0704F;">${copy.line2}</span></td></tr>
+<tr><td style="font-size:16px;line-height:1.7;color:#F1E8DC;padding:0 0 12px;">${copy.greeting}</td></tr>
+<tr><td style="font-size:15px;line-height:1.8;color:#CFC7BC;padding:0 0 14px;">${copy.body}</td></tr>
+<tr><td style="font-size:15px;line-height:1.8;color:#CFC7BC;padding:0 0 30px;">${copy.detail}</td></tr>
+<tr><td style="padding:0 0 24px;"><a href="https://intimo.live" style="display:inline-block;background-color:#E0704F;color:#191C20;border-radius:999px;text-decoration:none;font-size:14px;font-weight:600;padding:15px 26px;">${copy.button}</a></td></tr>
+<tr><td style="border-top:1px solid #46525E;padding-top:20px;font-size:13px;line-height:1.6;color:#A9A39E;">${copy.note}</td></tr>
+</table></td></tr>
+<tr><td style="padding:26px 3px 10px;font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:20px;color:#F1E8DC;">${copy.tagline}</td></tr>
+<tr><td style="font-size:11px;line-height:1.65;color:#A9A39E;padding:0 3px;">${copy.footer}</td></tr>
+<tr><td style="padding:17px 3px 0;font-size:11px;"><a href="https://intimo.live" style="color:#A8D5EF;text-decoration:underline;">intimo.live</a></td></tr>
+</table></td></tr></table>
+</body></html>`;
+  return { subject: copy.subject, html };
+}
+
+/** Send only for a newly stored request; do not turn delivery issues into duplicate requests. */
+export async function sendInvitationRequestReceipt(request: InvitationRequestInput): Promise<boolean> {
+  const email = invitationRequestReceiptEmail(request.language);
+  try {
+    const result = await ResendClient.sendEmail({ to: request.email, subject: email.subject, html: email.html });
+    return result.delivered && result.provider === "RESEND_API";
+  } catch {
+    console.warn("[INVITATION REQUEST RECEIPT FAILED]");
+    return false;
+  }
+}
