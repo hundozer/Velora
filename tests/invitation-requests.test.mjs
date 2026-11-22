@@ -48,3 +48,23 @@ test("approval reuses member invitations; rejection sends nothing; addresses are
   assert.doesNotMatch(admin, /export async function (GET|POST|PATCH)[^]*?searchParams\.get\("decision"\)/, "no one-click GET decisions from email links");
   assert.match(read("src/components/admin/AdminCommandCenter.tsx"), /<AdminInvitationRequestsConsole\/>/);
 });
+
+
+test("new invitation requests receive a branded acknowledgment but existing requests do not", () => {
+  const route = read("src/app/api/invitation-requests/route.ts");
+  const lib = read("src/lib/invitations/requests.ts");
+  assert.match(route, /if \(existing\?\.length\) return received\(\);/);
+  assert.match(route, /if \(error\?\.code === "23505"\) return received\(\);/);
+  assert.match(route, /sendInvitationRequestReceipt\(request\)/);
+  assert.ok(route.indexOf("sendInvitationRequestReceipt(request)") > route.indexOf("if (error || !data)"), "send only after a persisted new request");
+  assert.match(lib, /invitationRequestReceiptEmail\(language: "en" \| "cs"\)/);
+  assert.match(lib, /intimo-logo-dark@3x\.png/);
+  assert.match(lib, /#191C20/);
+  assert.match(lib, /#E0704F/);
+  assert.match(lib, /#A8D5EF/);
+  assert.match(lib, /Instrument Serif/);
+  assert.match(lib, /Plus Jakarta Sans/);
+  assert.match(lib, /If your request is approved/);
+  assert.match(lib, /Pokud ti pozvánku schválíme/);
+  assert.doesNotMatch(lib.slice(lib.indexOf("export function invitationRequestReceiptEmail")), /we will email you after review|ozveme se ti po posouzení/i);
+});
