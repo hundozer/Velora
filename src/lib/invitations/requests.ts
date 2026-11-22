@@ -32,26 +32,21 @@ export const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => ({ "
 
 /** Branded administrator email, using docs/brand/BRAND.md and a safe, read-only review link. */
 export function adminInvitationRequestEmail(request: InvitationRequestInput & { id: string }) {
-  const cs = request.language === "cs";
+  // Staff notifications are always in English, irrespective of applicant language.
+  // Preserve the applicant's own words verbatim: translations can change intent.
   const review = `https://intimo.live/admin/invitations?request=${encodeURIComponent(request.id)}`;
-  const identity = cs
-    ? ({ WOMAN: "Žena", MAN: "Muž", COUPLE: "Pár", OTHER: "Jiné" } as const)[request.identity]
-    : IDENTITIES[request.identity];
-  const location = cs
-    ? ({ PRAGUE: "Praha", CZECHIA: "Česko", ABROAD: "Zahraničí" } as const)[request.basedIn]
-    : BASED_IN[request.basedIn];
-  const subject = cs ? `Intimo · Nová žádost · ${identity}, ${location}` : `Intimo · New request · ${identity}, ${location}`;
-  const kicker = cs ? "Nová žádost o pozvánku" : "New invitation request";
-  const heading = cs ? "Někdo čeká" : "Someone is";
-  const turn = cs ? "za dveřmi." : "at the door.";
-  const person = cs ? "Žadatel" : "Applicant";
-  const lookingFor = cs ? "Co hledá" : "Their message";
-  const cta = cs ? "Posoudit žádost" : "Review application";
-  const note = cs
-    ? "Schválení odešle osobní pozvánku. Zamítnutí neposílá e-mail."
-    : "Approving sends a personal invitation. Rejecting sends no email.";
-  const tagline = cs ? "Hranice první. Pak chemie." : "Boundaries first. Then chemistry.";
-  const html = `<!doctype html><html lang="${cs ? "cs" : "en"}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(subject)}</title></head>
+  const identity = IDENTITIES[request.identity];
+  const location = BASED_IN[request.basedIn];
+  const subject = `Intimo · New request · ${identity}, ${location}`;
+  const kicker = "New invitation request";
+  const heading = "Someone is";
+  const turn = "at the door.";
+  const person = "Applicant";
+  const lookingFor = "Message (original)";
+  const cta = "Review application";
+  const note = "Approving sends a personal invitation. Rejecting sends no email.";
+  const tagline = "Boundaries first. Then chemistry.";
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(subject)}</title></head>
 <body style="margin:0;padding:0;background:#191C20;color:#F1E8DC;font-family:'Plus Jakarta Sans',Arial,Helvetica,sans-serif">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#191C20;border-collapse:collapse"><tr><td align="center" style="padding:38px 16px 48px">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:560px;border-collapse:collapse">
@@ -62,14 +57,14 @@ export function adminInvitationRequestEmail(request: InvitationRequestInput & { 
 <tr><td style="font-family:'Instrument Serif',Georgia,'Times New Roman',serif;font-weight:400;font-size:45px;line-height:1.07;letter-spacing:-1px;color:#F1E8DC;padding-bottom:28px">${heading}<br><span style="font-style:italic;color:#E0704F">${turn}</span></td></tr>
 <tr><td style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#A9A39E;padding-bottom:8px">${person}</td></tr>
 <tr><td style="font-size:19px;line-height:1.5;color:#F1E8DC;overflow-wrap:anywhere;word-break:break-word;padding-bottom:12px">${escapeHtml(request.email)}</td></tr>
-<tr><td style="font-size:14px;color:#CFC7BC;padding-bottom:26px">${identity} · ${location} · ${cs ? "Čeština" : "English"}</td></tr>
+<tr><td style="font-size:14px;color:#CFC7BC;padding-bottom:26px">${identity} · ${location} · ${request.language === "cs" ? "Czech" : "English"}</td></tr>
 <tr><td style="border-top:1px solid #46525E;padding-top:24px;font-size:11px;letter-spacing:2px;color:#A9A39E;text-transform:uppercase;padding-bottom:12px">${lookingFor}</td></tr>
 <tr><td style="font-family:'Instrument Serif',Georgia,serif;font-size:25px;font-style:italic;font-weight:400;line-height:1.45;color:#F1E8DC;padding-bottom:28px;overflow-wrap:anywhere">${escapeHtml(request.intent)}</td></tr>
 <tr><td style="padding-bottom:24px"><a href="${review}" style="display:inline-block;border-radius:999px;background:#E0704F;color:#191C20;padding:15px 26px;font-size:14px;font-weight:600;text-decoration:none">${cta}</a></td></tr>
 <tr><td style="border-top:1px solid #46525E;padding-top:20px;font-size:12px;line-height:1.65;color:#A9A39E">${note}</td></tr>
 </table></td></tr>
 <tr><td style="padding:26px 3px 9px;font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:20px;color:#F1E8DC">${tagline}</td></tr>
-<tr><td style="padding:0 3px;font-size:11px;line-height:1.6;color:#A9A39E">Intimo · ${cs ? "Interní oznámení administrátorovi" : "Internal administrator notification"}</td></tr>
+<tr><td style="padding:0 3px;font-size:11px;line-height:1.6;color:#A9A39E">Intimo · Internal administrator notification</td></tr>
 </table></td></tr></table></body></html>`;
   return { subject, html };
 }
