@@ -78,13 +78,20 @@ export async function GET(req: NextRequest) {
     nowDate.setUTCMonth(nowDate.getUTCMonth() - 3);
     const lastDay = new Date(Date.UTC(nowDate.getUTCFullYear(), nowDate.getUTCMonth()+1, 0)).getUTCDate();
     nowDate.setUTCDate(Math.min(day, lastDay));
-    const { count, error } = await auth.db.from("member_email_invites")
-      .select("id", { count: "exact", head: true })
-      .eq("inviter_profile_id", auth.actor.profileId)
-      .in("status", ["PENDING","SENT","REDEEMED"])
-      .gte("created_at", nowDate.toISOString());
-    if (error) return NextResponse.json({ error: "Invitation allowance unavailable" }, { status: 503, headers: noStore });
-    remaining = Math.max(0, 3 - (count ?? 0));
+    const [emails, links] = await Promise.all([
+      auth.db.from("member_email_invites")
+        .select("id", { count: "exact", head: true })
+        .eq("inviter_profile_id", auth.actor.profileId)
+        .in("status", ["PENDING","SENT","REDEEMED"])
+        .gte("created_at", nowDate.toISOString()),
+      auth.db.from("invitation_codes")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_profile_id", auth.actor.profileId)
+        .eq("source_label", "MEMBER_SHARE_LINK")
+        .gte("created_at", nowDate.toISOString()),
+    ]);
+    if (emails.error || links.error) return NextResponse.json({ error: "Invitation allowance unavailable" }, { status: 503, headers: noStore });
+    remaining = Math.max(0, 3 - (emails.count ?? 0) - (links.count ?? 0));
   }
   return NextResponse.json({
     eligible: true, unlimited: auth.foundingMember, remaining,
