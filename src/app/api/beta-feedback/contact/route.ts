@@ -11,7 +11,7 @@ export async function POST(req:NextRequest){
    return NextResponse.json({error:"Verified membership required"},{status:403,headers});
  if(Date.now()<Date.parse(BETA_FEEDBACK_OPEN_AT)||Date.now()>=Date.parse(BETA_FEEDBACK_CLOSE_AT))
    return NextResponse.json({error:"Follow-up signups are not open yet."},{status:403,headers});
- const rate=await checkRateLimit("beta-feedback-contact:"+session.actor.userId,2,86400);
+ const rate=(await checkRateLimit("beta-feedback-contact:"+session.actor.userId,2,86400));
  if(!rate.allowed)return NextResponse.json({error:"Too many requests"},{status:429,headers});
  let input:unknown;
  try{input=await req.json();}catch{return NextResponse.json({error:"Invalid request"},{status:400,headers});}
