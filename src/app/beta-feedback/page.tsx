@@ -19,7 +19,7 @@ export default function BetaFeedbackPage(){
  const [contactSaved,setContactSaved]=React.useState(false);
  const open=Date.now()>=Date.parse(BETA_FEEDBACK_OPEN_AT)&&Date.now()<Date.parse(BETA_FEEDBACK_CLOSE_AT);
  const group=betaFeedbackQuestions.slice(step*5,step*5+5);
- const label=(en:string,cs:string)=>language==="cs"?cs:en;
+ const label=(en:string,_cs:string)=>t(en);
  const field=(id:number,value:string|number)=>setAnswers(prev=>({...prev,["q"+id]:value}));
  const extra=(id:number,value:string)=>setAnswers(prev=>({...prev,["q"+id+"_extra"]:value}));
  async function submit(){
