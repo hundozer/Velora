@@ -4,7 +4,7 @@ import React from "react";
 import { Copy, Link2 } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 
-export function MemberShareInvite() {
+export function MemberShareInvite({ onCreated, disabled = false }: { onCreated?: () => void; disabled?: boolean }) {
   const { t } = useTranslation();
   const [link, setLink] = React.useState("");
   const [busy, setBusy] = React.useState(false);
@@ -39,6 +39,7 @@ export function MemberShareInvite() {
       if (typeof payload.url !== "string" || !payload.url.startsWith("https://intimo.live/register?invite="))
         throw new Error("Invitation link could not be created.");
       setLink(payload.url);
+      onCreated?.();
       // The link remains visible for manual copying if clipboard permission is denied.
       try { await navigator.clipboard.writeText(payload.url); setCopied(true); } catch { /* manual copy remains */ }
     } catch (cause) {
@@ -48,7 +49,7 @@ export function MemberShareInvite() {
 
   return (
     <div className="mt-5 space-y-3">
-      <button type="button" onClick={link ? copy : create} disabled={busy}
+      <button type="button" onClick={link ? copy : create} disabled={busy || (!link && disabled)}
         className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-velora-warm px-6 text-sm font-semibold text-velora-paper disabled:opacity-50">
         {link ? <Copy className="h-4 w-4" aria-hidden /> : <Link2 className="h-4 w-4" aria-hidden />}
         {busy ? t("Creating link…") : link ? t("Copy my invite link") : t("Create and copy my invite link")}
