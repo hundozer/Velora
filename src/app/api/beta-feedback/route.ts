@@ -12,7 +12,7 @@ export async function POST(req:NextRequest){
  const now=Date.now();
  if(now<Date.parse(BETA_FEEDBACK_OPEN_AT)||now>=Date.parse(BETA_FEEDBACK_CLOSE_AT))
    return NextResponse.json({error:"The beta questionnaire is not open yet."},{status:403,headers});
- const rate=await checkRateLimit("beta-feedback:"+session.actor.userId,2,86400);
+ const rate=(await checkRateLimit("beta-feedback:"+session.actor.userId,2,86400));
  if(!rate.allowed)return NextResponse.json({error:"Feedback submitted too frequently."},{status:429,headers});
  const size=Number(req.headers.get("content-length")||0);
  if(size>20000)return NextResponse.json({error:"Submission too large"},{status:413,headers});
