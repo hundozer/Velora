@@ -68,7 +68,7 @@ ON CONFLICT (profile_id) DO NOTHING;
 CREATE OR REPLACE FUNCTION public.refund_failed_beta_email_invite()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $
 BEGIN
- IF NEW.is_beta_bonus AND NEW.status='FAILED' AND OLD.status IS DISTINCT FROM 'FAILED' THEN
+ IF NEW.is_beta_bonus AND NEW.status='FAILED' AND OLD.status='PENDING' THEN
    PERFORM pg_advisory_xact_lock(hashtextextended(NEW.inviter_profile_id::text,173));
    UPDATE public.beta_tester_invite_rewards SET bonus_used=greatest(0,bonus_used-1)
    WHERE profile_id=NEW.inviter_profile_id;
