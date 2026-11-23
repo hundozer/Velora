@@ -66,7 +66,7 @@ ON CONFLICT (profile_id) DO NOTHING;
 -- Failed delivery must not consume a beta thank-you invitation.
 -- This fires only for a transition into FAILED on a bonus email invite.
 CREATE OR REPLACE FUNCTION public.refund_failed_beta_email_invite()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
 BEGIN
  IF NEW.is_beta_bonus AND NEW.status='FAILED' AND OLD.status='PENDING' THEN
    PERFORM pg_advisory_xact_lock(hashtextextended(NEW.inviter_profile_id::text,173));
@@ -74,7 +74,7 @@ BEGIN
    WHERE profile_id=NEW.inviter_profile_id;
  END IF;
  RETURN NEW;
-END $;
+END $$;
 REVOKE ALL ON FUNCTION public.refund_failed_beta_email_invite() FROM PUBLIC,anon,authenticated;
 DROP TRIGGER IF EXISTS beta_refund_failed_invite ON public.member_email_invites;
 CREATE TRIGGER beta_refund_failed_invite AFTER UPDATE OF status ON public.member_email_invites
