@@ -93,7 +93,7 @@ export function FoundingMemberInvites() {
       <p className="mt-1 text-xs leading-5 text-velora-textMuted">{t("Private totals. Recipient addresses and other members’ activity stay private.")}</p>
       <div className="mt-4 grid grid-cols-3 gap-3">
         {([
-          [t("Sent"), totals.issued],
+          [t("Issued"), totals.issued],
           [t("Joined"), totals.joined],
           [t("Awaiting signup"), totals.awaiting],
         ] as const).map(([label, value]) => (
