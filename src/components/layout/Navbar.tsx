@@ -21,7 +21,6 @@ import {
   Settings,
   LogOut,
   Image as ImageIcon,
-  Video,
   Megaphone,
   Heart,
   Bookmark,
@@ -139,12 +138,6 @@ export const Navbar: React.FC = () => {
                     className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
                   >
                     <ImageIcon className="w-4 h-4 text-velora-accent" />{t("My Photos")}</Link>
-
-                  <Link
-                    href={`/profile/${profile?.id || "me"}?tab=VIDEOS`}
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
-                  >
-                    <Video className="w-4 h-4 text-velora-success" />{t("My Videos")}</Link>
 
                   <Link
                     href={`/profile/${profile?.id || "me"}?tab=ADS`}
