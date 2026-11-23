@@ -22,6 +22,8 @@ test("beta extras and rolling allowance are independent across both paths",async
  assert.equal((sql.match(/pg_advisory_xact_lock/g)||[]).length,2);
  assert.equal((sql.match(/is_beta_bonus=false AND created_at/g)||[]).length,4);
  assert.match(sql,/bonus_used<bonus_total/);
+ assert.match(sql,/CREATE TRIGGER beta_refund_failed_invite/);
+ assert.match(sql,/NEW\.status='FAILED' AND OLD\.status='PENDING'/);
  assert.match(sql,/REVOKE ALL ON public\.beta_tester_invite_rewards FROM PUBLIC, anon, authenticated/);
  const route=await read("src/app/api/member/invitations/route.ts");
  assert.match(route,/beta_tester_invite_rewards/);
