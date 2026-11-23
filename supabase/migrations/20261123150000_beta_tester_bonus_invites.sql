@@ -5,6 +5,9 @@
 -- DROP FUNCTION public.award_beta_invite_on_redeem(); DROP TABLE public.beta_tester_invite_rewards;
 -- DROP TABLE public.beta_eligible_invitation_codes. Do not erase issued invites.
 
+ALTER TABLE public.member_email_invites ADD COLUMN IF NOT EXISTS is_beta_bonus boolean NOT NULL DEFAULT false;
+ALTER TABLE public.invitation_codes ADD COLUMN IF NOT EXISTS is_beta_bonus boolean NOT NULL DEFAULT false;
+
 CREATE TABLE IF NOT EXISTS public.beta_eligible_invitation_codes (
   code_id uuid PRIMARY KEY REFERENCES public.invitation_codes(id) ON DELETE RESTRICT,
   added_at timestamptz NOT NULL DEFAULT now()
@@ -63,7 +66,7 @@ ON CONFLICT (profile_id) DO NOTHING;
 -- can a beta recipient spend one of their 3 one-time reward invites.
 CREATE OR REPLACE FUNCTION public.claim_member_share_invite(p_inviter uuid,p_token_hash text)
 RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
-DECLARE v_id uuid; v_membership text; v_issued bigint; v_bonus uuid;
+DECLARE v_id uuid; v_membership text; v_issued bigint; v_bonus uuid; v_is_bonus boolean := false;
 BEGIN
  IF p_inviter IS NULL OR p_token_hash !~ '^[a-f0-9]{64}$'
  THEN RAISE EXCEPTION 'Invalid invitation input' USING errcode='22023'; END IF;
@@ -74,21 +77,22 @@ BEGIN
  IF v_membership IS DISTINCT FROM 'FOUNDING_MEMBER' THEN
    SELECT
       (SELECT count(*) FROM public.member_email_invites WHERE inviter_profile_id=p_inviter
-        AND status IN ('PENDING','SENT','REDEEMED') AND created_at>now()-interval '3 months')
+        AND status IN ('PENDING','SENT','REDEEMED') AND is_beta_bonus=false AND created_at>now()-interval '3 months')
       +
       (SELECT count(*) FROM public.invitation_codes WHERE owner_profile_id=p_inviter
-        AND source_label='MEMBER_SHARE_LINK' AND created_at>now()-interval '3 months')
+        AND source_label='MEMBER_SHARE_LINK' AND is_beta_bonus=false AND created_at>now()-interval '3 months')
    INTO v_issued;
    IF v_issued>=3 THEN
      UPDATE public.beta_tester_invite_rewards SET bonus_used=bonus_used+1
      WHERE profile_id=p_inviter AND available_at<=now() AND bonus_used<bonus_total
      RETURNING profile_id INTO v_bonus;
      IF v_bonus IS NULL THEN RAISE EXCEPTION 'Invitation allowance exhausted' USING errcode='P0001'; END IF;
+     v_is_bonus := true;
    END IF;
  END IF;
  INSERT INTO public.invitation_codes
-   (code_sha256,source_label,owner_name,owner_profile_id,max_uses,expires_at,created_by)
- VALUES (p_token_hash,'MEMBER_SHARE_LINK','Member invitation',p_inviter,1,now()+interval '30 days',p_inviter)
+   (code_sha256,source_label,owner_name,owner_profile_id,max_uses,expires_at,created_by,is_beta_bonus)
+ VALUES (p_token_hash,'MEMBER_SHARE_LINK','Member invitation',p_inviter,1,now()+interval '30 days',p_inviter,v_is_bonus)
  RETURNING id INTO v_id;
  RETURN v_id;
 END $$;
@@ -97,7 +101,7 @@ GRANT EXECUTE ON FUNCTION public.claim_member_share_invite(uuid,text) TO service
 
 CREATE OR REPLACE FUNCTION public.claim_member_email_invite(p_inviter uuid,p_email_hash text,p_token_hash text)
 RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
-DECLARE v_id uuid; v_membership text; v_issued bigint; v_bonus uuid;
+DECLARE v_id uuid; v_membership text; v_issued bigint; v_bonus uuid; v_is_bonus boolean := false;
 BEGIN
  IF p_inviter IS NULL OR p_email_hash !~ '^[a-f0-9]{64}$' OR p_token_hash !~ '^[a-f0-9]{64}$'
  THEN RAISE EXCEPTION 'Invalid invitation input' USING errcode='22023'; END IF;
@@ -108,23 +112,24 @@ BEGIN
  IF v_membership IS DISTINCT FROM 'FOUNDING_MEMBER' THEN
    SELECT
      (SELECT count(*) FROM public.member_email_invites WHERE inviter_profile_id=p_inviter
-       AND status IN ('PENDING','SENT','REDEEMED') AND created_at>now()-interval '3 months')
+       AND status IN ('PENDING','SENT','REDEEMED') AND is_beta_bonus=false AND created_at>now()-interval '3 months')
      +
      (SELECT count(*) FROM public.invitation_codes WHERE owner_profile_id=p_inviter
-       AND source_label='MEMBER_SHARE_LINK' AND created_at>now()-interval '3 months')
+       AND source_label='MEMBER_SHARE_LINK' AND is_beta_bonus=false AND created_at>now()-interval '3 months')
    INTO v_issued;
    IF v_issued>=3 THEN
      UPDATE public.beta_tester_invite_rewards SET bonus_used=bonus_used+1
      WHERE profile_id=p_inviter AND available_at<=now() AND bonus_used<bonus_total
      RETURNING profile_id INTO v_bonus;
      IF v_bonus IS NULL THEN RAISE EXCEPTION 'Invitation allowance exhausted' USING errcode='P0001'; END IF;
+     v_is_bonus := true;
    END IF;
  END IF;
  IF EXISTS(SELECT 1 FROM public.member_email_invites WHERE recipient_sha256=p_email_hash
    AND status IN ('PENDING','SENT','REDEEMED') AND created_at>now()-interval '30 days')
  THEN RAISE EXCEPTION 'This address has received a recent invitation' USING errcode='23505'; END IF;
- INSERT INTO public.member_email_invites(inviter_profile_id,recipient_sha256,token_sha256,expires_at)
- VALUES(p_inviter,p_email_hash,p_token_hash,now()+interval '30 days') RETURNING id INTO v_id;
+ INSERT INTO public.member_email_invites(inviter_profile_id,recipient_sha256,token_sha256,expires_at,is_beta_bonus)
+ VALUES(p_inviter,p_email_hash,p_token_hash,now()+interval '30 days',v_is_bonus) RETURNING id INTO v_id;
  RETURN v_id;
 END $$;
 REVOKE ALL ON FUNCTION public.claim_member_email_invite(uuid,text,text) FROM PUBLIC,anon,authenticated;
