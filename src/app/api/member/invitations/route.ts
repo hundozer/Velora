@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     .order("created_at", { ascending: false }).limit(20);
   if (recentError) return NextResponse.json({ error: "Invitation history unavailable" }, { status: 503, headers: noStore });
 
-  const [issued, joined, outstanding, failed] = await Promise.all([
+  const [issued, joined, outstanding, failed, memberLinks] = await Promise.all([
     auth.db.from("member_email_invites").select("id", { count: "exact", head: true })
       .eq("inviter_profile_id", auth.actor.profileId).in("status", ["SENT","REDEEMED"]),
     auth.db.from("member_email_invites").select("id", { count: "exact", head: true })
@@ -40,8 +40,10 @@ export async function GET(req: NextRequest) {
       .gt("expires_at", new Date().toISOString()),
     auth.db.from("member_email_invites").select("id", { count: "exact", head: true })
       .eq("inviter_profile_id", auth.actor.profileId).eq("status", "FAILED"),
+    auth.db.from("invitation_codes").select("uses,max_uses,expires_at,revoked_at")
+      .eq("owner_profile_id", auth.actor.profileId).eq("source_label", "MEMBER_SHARE_LINK").limit(1000),
   ]);
-  if ([issued, joined, outstanding, failed].some(result => result.error)) {
+  if ([issued, joined, outstanding, failed, memberLinks].some(result => result.error)) {
     return NextResponse.json({ error: "Invitation metrics unavailable" }, { status: 503, headers: noStore });
   }
 
@@ -96,8 +98,14 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     eligible: true, unlimited: auth.foundingMember, remaining,
     allowance: auth.foundingMember ? null : 3, period: auth.foundingMember ? null : "3 months",
-    totals: { issued: issued.count ?? 0, joined: joined.count ?? 0,
-      awaiting: outstanding.count ?? 0, failed: failed.count ?? 0 },
+    totals: {
+      issued: (issued.count ?? 0) + (memberLinks.data?.length ?? 0),
+      joined: (joined.count ?? 0) + (memberLinks.data ?? []).reduce((total, link) => total + link.uses, 0),
+      awaiting: (outstanding.count ?? 0) + (memberLinks.data ?? []).filter(link =>
+        !link.revoked_at && link.uses < link.max_uses && new Date(link.expires_at).getTime() > Date.now()
+      ).length,
+      failed: failed.count ?? 0,
+    },
     history,
   }, { headers: noStore });
 }
