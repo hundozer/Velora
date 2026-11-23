@@ -73,6 +73,7 @@ export async function GET(req: NextRequest) {
   });
 
   let remaining: number | null = null;
+  let betaReward: { available: boolean; remaining: number; total: number } | null = null;
   if (!auth.foundingMember) {
     const nowDate = new Date();
     const day = nowDate.getUTCDate();
@@ -80,7 +81,7 @@ export async function GET(req: NextRequest) {
     nowDate.setUTCMonth(nowDate.getUTCMonth() - 3);
     const lastDay = new Date(Date.UTC(nowDate.getUTCFullYear(), nowDate.getUTCMonth()+1, 0)).getUTCDate();
     nowDate.setUTCDate(Math.min(day, lastDay));
-    const [emails, links] = await Promise.all([
+    const [emails, links, reward] = await Promise.all([
       auth.db.from("member_email_invites")
         .select("id", { count: "exact", head: true })
         .eq("inviter_profile_id", auth.actor.profileId)
@@ -91,12 +92,18 @@ export async function GET(req: NextRequest) {
         .eq("owner_profile_id", auth.actor.profileId)
         .eq("source_label", "MEMBER_SHARE_LINK")
         .gte("created_at", nowDate.toISOString()),
+      auth.db.from("beta_tester_invite_rewards").select("bonus_total,bonus_used,available_at")
+        .eq("profile_id", auth.actor.profileId).maybeSingle(),
     ]);
-    if (emails.error || links.error) return NextResponse.json({ error: "Invitation allowance unavailable" }, { status: 503, headers: noStore });
-    remaining = Math.max(0, 3 - (emails.count ?? 0) - (links.count ?? 0));
+    if (emails.error || links.error || reward.error) return NextResponse.json({ error: "Invitation allowance unavailable" }, { status: 503, headers: noStore });
+    const standardRemaining = Math.max(0, 3 - (emails.count ?? 0) - (links.count ?? 0));
+    const bonusRemaining = reward.data && new Date(reward.data.available_at).getTime() <= Date.now()
+      ? Math.max(0, reward.data.bonus_total - reward.data.bonus_used) : 0;
+    remaining = standardRemaining + bonusRemaining;
+    betaReward = reward.data ? { available: new Date(reward.data.available_at).getTime() <= Date.now(), remaining: bonusRemaining, total: reward.data.bonus_total } : null;
   }
   return NextResponse.json({
-    eligible: true, unlimited: auth.foundingMember, remaining,
+    eligible: true, unlimited: auth.foundingMember, remaining, betaReward,
     allowance: auth.foundingMember ? null : 3, period: auth.foundingMember ? null : "3 months",
     totals: {
       issued: (issued.count ?? 0) + (memberLinks.data?.length ?? 0),
