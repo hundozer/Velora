@@ -86,11 +86,13 @@ export async function GET(req: NextRequest) {
         .select("id", { count: "exact", head: true })
         .eq("inviter_profile_id", auth.actor.profileId)
         .in("status", ["PENDING","SENT","REDEEMED"])
+        .eq("is_beta_bonus", false)
         .gte("created_at", nowDate.toISOString()),
       auth.db.from("invitation_codes")
         .select("id", { count: "exact", head: true })
         .eq("owner_profile_id", auth.actor.profileId)
         .eq("source_label", "MEMBER_SHARE_LINK")
+        .eq("is_beta_bonus", false)
         .gte("created_at", nowDate.toISOString()),
       auth.db.from("beta_tester_invite_rewards").select("bonus_total,bonus_used,available_at")
         .eq("profile_id", auth.actor.profileId).maybeSingle(),
