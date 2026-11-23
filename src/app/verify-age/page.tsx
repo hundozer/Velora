@@ -100,9 +100,9 @@ export default function VerifyAgePage() {
   if (check.state === "VERIFIED") return shell(<>
     {header}
     <section className="rounded-2xl border border-emerald-400/25 bg-emerald-400/10 p-5">
-      <p className="flex items-center gap-2 font-semibold text-velora-textPrimary"><ShieldCheck className="h-5 w-5 text-velora-success" aria-hidden />{t("You're in. Your age check is approved.")}</p>
+      <p className="flex items-center gap-2 font-semibold text-velora-textPrimary"><ShieldCheck className="h-5 w-5 text-velora-success" aria-hidden />{t("You're in. Welcome to Intimo.")}</p>
       {/* A full page load, so the app picks up the approval instead of the status it loaded earlier. */}
-      <a href="/dashboard" className="mt-4 inline-flex min-h-11 items-center rounded-full bg-velora-warm px-6 text-sm font-semibold text-velora-paper">{t("Go to Intimo")}</a>
+      <a href="/dashboard" className="mt-4 inline-flex min-h-11 items-center rounded-full bg-velora-warm px-6 text-sm font-semibold text-velora-paper">{t("Come in")}</a>
     </section>
   </>);
 
@@ -131,7 +131,7 @@ export default function VerifyAgePage() {
 
   return shell(<>
     {header}
-    <p className="text-sm leading-relaxed text-velora-textSecondary">{check.state === "RETRY" ? t("We need a new selfie from you. Please follow the steps again with the new code.") : t("We check everyone to make sure we are all adults here. It takes a minute, and only our team sees your selfie.")}</p>
+    <p className="text-sm leading-relaxed text-velora-textSecondary">{check.state === "RETRY" ? t("We need one more selfie from you. Same steps, new code.") : t("We check everyone to make sure we are all adults here. It takes a minute, and only our team sees your selfie.")}</p>
 
     <section className="space-y-4 rounded-2xl border border-velora-accent/30 bg-velora-accent/5 p-5">
       <p className="text-sm font-semibold text-velora-textPrimary">{t("1. Write this code somewhere we can read it — a napkin, a coaster or even your hand.")}</p>
@@ -139,8 +139,8 @@ export default function VerifyAgePage() {
       <p className="text-xs text-velora-textMuted">{t("The code works for 24 hours and only once.")}</p>
       <p className="text-sm font-semibold text-velora-textPrimary">{check.couple ? t("2. Take a selfie together with {partner}, showing the code", { partner: check.partnerName || t("your partner") }) : t("2. Take a selfie showing the code beside your face")}</p>
       <ul className="list-disc space-y-1 pl-5 text-sm text-velora-textSecondary">
-        <li>{t("Faces clearly visible, good light, no filters or sunglasses.")}</li>
-        <li>{t("Keep it clothed and simple. This is not a profile photo.")}</li>
+        <li>{t("Faces visible, good light, no filters or sunglasses.")}</li>
+        <li>{t("Clothes on, keep it simple. This one isn\'t for your profile.")}</li>
         {check.couple && <li>{t("Everyone on your profile must be in the same photo.")}</li>}
       </ul>
     </section>

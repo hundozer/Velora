@@ -53,7 +53,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={resetAndClose} title={t("Security & Compliance Report")}>
+    <Modal isOpen={isOpen} onClose={resetAndClose} title={t("Tell us what happened")}>
       {submitted ? (
         <div className="text-center space-y-4 py-6 text-left">
           <CheckCircle2 className="w-12 h-12 text-velora-success mx-auto" />
@@ -67,7 +67,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             <ShieldAlert className="w-6 h-6 text-velora-danger shrink-0" />
             <div>
               <h4 className="text-sm font-bold text-velora-textPrimary">{t("Report @{targetUsername}", { targetUsername })}</h4>
-              <p className="text-[11px] text-velora-textMuted">{t("Intimo strictly enforces 18+ verification, consent, and non-harassment rules.")}</p>
+              <p className="text-[11px] text-velora-textMuted">{t("Adults only. Consent always. No harassment. Tell us if something feels wrong.")}</p>
             </div>
           </div>
 
@@ -78,18 +78,18 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               onChange={(e) => setReason(e.target.value)}
               className="w-full bg-velora-card border border-ink/10 rounded-2xl p-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
             >
-              <option value="SUSPECTED_MINOR">{t("Suspected minor (critical)")}</option>
-              <option value="NON_CONSENSUAL_INTIMATE_CONTENT">{t("Non-consensual intimate content (critical)")}</option>
+              <option value="SUSPECTED_MINOR">{t("Someone might be under 18 (urgent)")}</option>
+              <option value="NON_CONSENSUAL_INTIMATE_CONTENT">{t("Intimate content shared without consent (urgent)")}</option>
               <option value="NON_CONSENSUAL_SCREENSHOT">{t("Shared screenshot or recording without consent")}</option>
               <option value="HARASSMENT">{t("Harassment")}</option>
               <option value="THREATS">{t("Threats")}</option>
-              <option value="IMPERSONATION">{t("Impersonation")}</option>
+              <option value="IMPERSONATION">{t("Pretending to be someone else")}</option>
               <option value="SCAM_FRAUD">{t("Scam or fraud")}</option>
               <option value="ILLEGAL_CONTENT">{t("Illegal content")}</option>
-              <option value="EXPLOITATION_TRAFFICKING">{t("Exploitation or trafficking concern (critical)")}</option>
+              <option value="EXPLOITATION_TRAFFICKING">{t("Exploitation or trafficking (urgent)")}</option>
               <option value="COPYRIGHT_INFRINGEMENT">{t("Copyright infringement")}</option>
               <option value="PRIVACY_VIOLATION">{t("Privacy violation")}</option>
-              <option value="PROHIBITED_COMMERCIAL_SEXUAL_SERVICES">{t("Prohibited commercial sexual services")}</option>
+              <option value="PROHIBITED_COMMERCIAL_SEXUAL_SERVICES">{t("Selling sex or paid sexual services")}</option>
               <option value="SPAM">{t("Spam")}</option>
               <option value="OTHER">{t("Other")}</option>
             </select>
@@ -101,12 +101,12 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               rows={3}
               value={details}
               onChange={(e) => setDetails(e.target.value)}
-              placeholder={t("Provide specific details about messages or behavior...")}
+              placeholder={t("Tell us in your own words: which messages, when, what happened...")}
               className="w-full bg-ink/5 border border-ink/10 rounded-2xl p-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
             />
           </div>
 
-          <p className="text-[11px] text-velora-textMuted">{t("Do not upload or redistribute illegal material. Moderators can preserve existing platform content by its reference. Additional evidence may be requested securely.")}</p>
+          <p className="text-[11px] text-velora-textMuted">{t("Please don’t upload anything illegal, even as proof. If it is already on Intimo, tell us where to find it.")}</p>
           {submitError && <p className="text-xs text-velora-danger" role="alert">{submitError}</p>}
 
           <div className="flex gap-3 pt-2">
@@ -116,7 +116,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               className="w-2/3 text-xs font-bold uppercase tracking-wider"
               onClick={handleSubmit}
               disabled={details.trim().length < 10}
-            >{t("Send report")}</Button>
+            >{t("Send to our team")}</Button>
           </div>
         </div>
       )}

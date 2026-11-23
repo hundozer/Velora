@@ -69,8 +69,8 @@ export default function IdentityPage() {
   const back = <Link href="/me" className="inline-flex items-center gap-1 text-xs text-velora-textMuted hover:text-velora-textPrimary"><ArrowLeft className="h-3.5 w-3.5" aria-hidden />{t("Me")}</Link>;
   if (status === "loading") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textMuted">{t("Loading…")}</main>;
   if (status === "signed-out") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textSecondary"><Link href="/auth/login?returnTo=%2Fme%2Fidentity" className="text-velora-accent underline">{t("Sign in")}</Link>{" "}{t("to edit your identity details.")}</main>;
-  if (status === "unavailable") return <main className="mx-auto max-w-2xl space-y-4 px-4 py-10">{back}<p className="text-sm text-velora-textSecondary">{t("Identity details are coming soon. Nothing to do yet.")}</p></main>;
-  if (status === "error") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-danger">{t("Your details could not be loaded. Please refresh.")}</main>;
+  if (status === "unavailable") return <main className="mx-auto max-w-2xl space-y-4 px-4 py-10">{back}<p className="text-sm text-velora-textSecondary">{t("Identity details are on their way. Nothing to do here yet.")}</p></main>;
+  if (status === "error") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-danger">{t("We couldn't load your details. Refresh the page?")}</main>;
 
   const field = "mt-2 block w-full rounded-lg border border-velora-control bg-velora-paper px-4 py-3 text-base text-velora-ink placeholder:text-velora-muted focus:border-velora-accent focus:outline-none focus:ring-2 focus:ring-velora-accent/30";
   const chip = (active: boolean) => `min-h-10 rounded-full border px-4 text-sm transition ${active ? "border-velora-accent bg-velora-accent text-velora-paper font-semibold" : "border-ink/15 text-velora-ink hover:border-velora-accent"}`;
@@ -89,7 +89,7 @@ export default function IdentityPage() {
       <header className="space-y-2">
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-accent">{t("Identity")}</p>
         <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">{t("In your own words")}</h1>
-        <p className="text-sm leading-relaxed text-velora-textSecondary">{t("Everything here is optional. Add only what you want people to know, and choose who sees each part. Friends means people whose request you accepted.")}</p>
+        <p className="text-sm leading-relaxed text-velora-textSecondary">{t("All of this is optional. Share only what you want people to know, and choose who sees each part. Friends are people whose request you accepted.")}</p>
       </header>
 
       <section className="rounded-2xl border border-ink/10 bg-ink/[0.02] p-4">
@@ -99,7 +99,7 @@ export default function IdentityPage() {
             <button key={item.value} type="button" aria-pressed={form.orientation === item.value} onClick={() => set({ orientation: form.orientation === item.value ? null : item.value })} className={chip(form.orientation === item.value)}>{t(item.label)}</button>
           ))}
         </div>
-        <label className="mt-4 block text-sm font-semibold text-velora-ink">{t("Or describe it yourself")}
+        <label className="mt-4 block text-sm font-semibold text-velora-ink">{t("Or say it your way")}
           <input value={form.orientationNote} maxLength={LIMITS.note} onChange={(event) => set({ orientationNote: event.target.value })} placeholder={t("e.g. mostly into women, still exploring")} className={field} />
         </label>
         {audiencePicker("orientation", form.visibility.orientation)}
