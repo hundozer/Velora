@@ -12,6 +12,7 @@ type InviteRecord = {
 type InviteStatus = {
   eligible: boolean; unlimited?: boolean; remaining?: number | null; allowance?: number;
   period?: string; error?: string;
+  betaReward?: { available: boolean; remaining: number; total: number } | null;
   totals?: { issued: number; joined: number; awaiting: number; failed: number };
   history?: InviteRecord[];
 };
@@ -63,6 +64,13 @@ export function FoundingMemberInvites() {
         <h2 id="founding-invite-heading" className="text-xl font-bold text-ink">{t("Invite friends")}</h2>
         <p className="mt-2 max-w-2xl text-sm text-velora-textSecondary">{t("Intimo is invitation-only. Bring people you know who would belong here.")}</p>
         <p className="mt-2 text-xs text-velora-textMuted">{status.unlimited ? t("Unlimited invitations for Founding Members.") : <>{t("Three invitations every three months.")} {typeof status.remaining === "number" ? `${status.remaining} ${t("remaining")}` : ""}</>}</p>
+        {!status.unlimited && status.betaReward && (
+          <p className="mt-2 text-xs leading-5 text-velora-accent" role="status">
+            {status.betaReward.available
+              ? t("Beta thank-you: {count} of 3 extra invitations left.", { count: status.betaReward.remaining })
+              : t("Beta thank-you: 3 extra invitations unlock in January.")}
+          </p>
+        )}
       </div>
     </div>
     <MemberShareInvite onCreated={() => void refresh()} disabled={status.remaining === 0} />
