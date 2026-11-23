@@ -6,6 +6,7 @@ import { Compass, Heart, ImagePlus, MessageSquare, Settings, UserRound } from "l
 import { useAuth } from "@/context/AuthContext";
 import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
 import { FoundingMemberInvites } from "@/components/community/FoundingMemberInvites";
+import { BetaWelcome } from "@/components/community/BetaWelcome";
 
 export default function DashboardPage() {
   const { t } = useTranslation();
@@ -25,6 +26,7 @@ export default function DashboardPage() {
         <p className="mt-3 max-w-2xl text-sm leading-6 text-velora-textSecondary">{t("Your home starts empty and grows only from real profiles, conversations and connections you choose.")}</p>
       </section>
 
+      <BetaWelcome />
       <FoundingMemberInvites />
 
       <section aria-labelledby="profile-progress" className="rounded-3xl border border-ink/10 bg-ink/[0.035] p-6">
