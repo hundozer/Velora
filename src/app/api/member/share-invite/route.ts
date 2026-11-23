@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   if (actor.status !== "authenticated" || actor.actor.accountStatus !== "ACTIVE" || !actor.actor.emailVerified)
     return NextResponse.json({ error: "Active verified membership required" }, { status: 403, headers });
 
-  const rate = await checkRateLimit(`member-share-invite:${actor.actor.userId}`, 8, 24 * 60 * 60);
+  const rate = (await checkRateLimit(`member-share-invite:${actor.actor.userId}`, 8, 24 * 60 * 60));
   if (!rate.allowed) return NextResponse.json({ error: "Too many invitation links today. Try again tomorrow." }, { status: 429, headers });
 
   const db = getServerSupabase();
