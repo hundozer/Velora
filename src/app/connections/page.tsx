@@ -69,8 +69,8 @@ export default function ConnectionsPage() {
       {loading ? <p className="mt-8 text-velora-muted">{t("Loading…")}</p> : selected.length === 0 ? (
         <div className="intimo-member-panel mt-9 px-7 py-12">
           <h2 className="intimo-member-subheading">{t(filter === "RECEIVED" ? "No requests waiting." : filter === "SENT" ? "No requests sent." : "Your circle starts here.")}</h2>
-          <p className="mt-2 text-sm text-velora-ink2">{t("Connect with people you want to know beyond a single conversation.")}</p>
-          <Link href="/people" className="mt-5 inline-flex min-h-11 items-center font-semibold text-velora-copperInk underline underline-offset-4">{t("Discover people")}</Link>
+          <p className="mt-2 text-sm leading-6 text-velora-ink2">{t(filter === "RECEIVED" ? "When someone asks to connect, you'll see it here. You choose whether to accept." : filter === "SENT" ? "Requests you've sent will appear here until they're accepted or cancelled." : "A connection starts with a mutual yes. Find someone whose profile feels right to you.")}</p>
+          <Link href="/people" className="mt-5 inline-flex min-h-11 items-center rounded-full bg-velora-warm px-6 text-sm font-semibold text-velora-paper">{t("Explore people")}</Link>
         </div>
       ) : (
         <div className="divide-y divide-velora-line">
