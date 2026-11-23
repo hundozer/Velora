@@ -1,9 +1,9 @@
 "use client";
 import React from "react";
 import {betaFeedbackQuestions} from "@/lib/betaFeedback";
-type Row={id:string;submitted_at:string;language:"en"|"cs";answers:Record<string,string|number|null>};
+type Row={id:string;submitted_on:string;language:"en"|"cs";answers:Record<string,string|number|null>};
 type Summary={id:number;count:number;average:number|null;distribution:Record<string,number>};
-type Contact={id:string;submitted_at:string;contact:string};
+type Contact={id:string;submitted_on:string;contact:string};
 export function AdminBetaFeedbackConsole(){
  const [data,setData]=React.useState<{total:number;responses:Row[];contacts:Contact[];summary:Summary[];limit:number}|null>(null);
  const [error,setError]=React.useState("");
@@ -35,14 +35,14 @@ export function AdminBetaFeedbackConsole(){
   </section>
   <section className="space-y-3"><h2 className="text-lg font-semibold text-ink">Individual responses</h2>
    {data.responses.length===0?<p className="text-sm text-velora-textMuted">No responses yet.</p>:data.responses.map(row=><details key={row.id} className="rounded-xl border border-velora-line bg-velora-card p-4">
-    <summary className="cursor-pointer text-sm font-semibold text-ink">{new Date(row.submitted_at).toLocaleDateString("en-GB")} · {row.language.toUpperCase()} · Anonymous response</summary>
+    <summary className="cursor-pointer text-sm font-semibold text-ink">{new Date(row.submitted_on).toLocaleDateString("en-GB")} · {row.language.toUpperCase()} · Anonymous response</summary>
     <dl className="mt-4 space-y-4">{betaFeedbackQuestions.map(q=><div key={q.id}><dt className="text-sm font-semibold text-velora-textSecondary">{q.id}. {q.en}</dt><dd className="mt-1 whitespace-pre-wrap break-words text-sm text-ink">{String(row.answers["q"+q.id]??"No answer")}</dd>{q.extra&&row.answers["q"+q.id+"_extra"]&&<dd className="mt-1 whitespace-pre-wrap break-words text-xs text-velora-textSecondary">{String(row.answers["q"+q.id+"_extra"])}</dd>}</div>)}</dl>
    </details>)}
   </section>
   <section className="space-y-3 rounded-xl border border-velora-line bg-velora-surface p-5">
    <h2 className="text-lg font-semibold text-ink">Optional follow-up contacts</h2>
    <p className="text-xs text-velora-textSecondary">Stored independently from survey responses. No matching or attribution is possible from stored identifiers.</p>
-   {data.contacts.length===0?<p className="text-sm text-velora-textMuted">No contact opt-ins.</p>:<ul className="space-y-2">{data.contacts.map(c=><li className="break-all text-sm text-ink" key={c.id}>{c.contact} · {new Date(c.submitted_at).toLocaleDateString("en-GB")}</li>)}</ul>}
+   {data.contacts.length===0?<p className="text-sm text-velora-textMuted">No contact opt-ins.</p>:<ul className="space-y-2">{data.contacts.map(c=><li className="break-all text-sm text-ink" key={c.id}>{c.contact} · {new Date(c.submitted_on).toLocaleDateString("en-GB")}</li>)}</ul>}
   </section>
  </div>;
 }
