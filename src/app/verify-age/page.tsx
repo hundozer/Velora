@@ -100,7 +100,7 @@ export default function VerifyAgePage() {
   if (check.state === "VERIFIED") return shell(<>
     {header}
     <section className="rounded-2xl border border-emerald-400/25 bg-emerald-400/10 p-5">
-      <p className="flex items-center gap-2 font-semibold text-velora-textPrimary"><ShieldCheck className="h-5 w-5 text-velora-success" aria-hidden />{t("You're in. Your age check is approved.")}</p>
+      <p className="flex items-center gap-2 font-semibold text-velora-textPrimary"><ShieldCheck className="h-5 w-5 text-velora-success" aria-hidden />{t("You're in. Welcome to Intimo.")}</p>
       {/* A full page load, so the app picks up the approval instead of the status it loaded earlier. */}
       <a href="/dashboard" className="mt-4 inline-flex min-h-11 items-center rounded-full bg-velora-warm px-6 text-sm font-semibold text-velora-paper">{t("Come in")}</a>
     </section>
