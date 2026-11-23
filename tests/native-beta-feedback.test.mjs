@@ -9,7 +9,7 @@ test("Carolinka's 14 anonymous answers and separate question 15 opt-in are prese
  assert.match(definitions,/id:3[^\n]*kind:"scale"/);
  assert.match(definitions,/id:9[^\n]*kind:"choice"/);
  assert.match(definitions,/id:12[^\n]*kind:"scale"/);
- assert.match(definitions,/\["en","cs"\]|language IN \('en','cs'\)/);
+ assert.match(await get("src/app/api/beta-feedback/route.ts"),/\["en","cs"\]/);
  const page=await get("src/app/beta-feedback/page.tsx");
  assert.match(page,/15-minute follow-up conversation/);
  assert.match(page,/beta-feedback\/contact/);
