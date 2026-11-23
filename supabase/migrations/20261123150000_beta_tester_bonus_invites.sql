@@ -4,6 +4,8 @@
 -- DROP TRIGGER beta_reward_on_code_redemption ON public.invitation_code_redemptions;
 -- DROP FUNCTION public.award_beta_invite_on_redeem(); DROP TABLE public.beta_tester_invite_rewards;
 -- DROP TABLE public.beta_eligible_invitation_codes. Do not erase issued invites.
+-- DROP TRIGGER beta_refund_failed_invite ON public.member_email_invites;
+-- DROP FUNCTION public.refund_failed_beta_email_invite();
 
 ALTER TABLE public.member_email_invites ADD COLUMN IF NOT EXISTS is_beta_bonus boolean NOT NULL DEFAULT false;
 ALTER TABLE public.invitation_codes ADD COLUMN IF NOT EXISTS is_beta_bonus boolean NOT NULL DEFAULT false;
@@ -60,6 +62,23 @@ SELECT p.id,r.code_id FROM public.invitation_code_redemptions r
 JOIN public.beta_eligible_invitation_codes e ON e.code_id=r.code_id
 JOIN public.profiles p ON p.id=r.auth_id
 ON CONFLICT (profile_id) DO NOTHING;
+
+-- Failed delivery must not consume a beta thank-you invitation.
+-- This fires only for a transition into FAILED on a bonus email invite.
+CREATE OR REPLACE FUNCTION public.refund_failed_beta_email_invite()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $
+BEGIN
+ IF NEW.is_beta_bonus AND NEW.status='FAILED' AND OLD.status IS DISTINCT FROM 'FAILED' THEN
+   PERFORM pg_advisory_xact_lock(hashtextextended(NEW.inviter_profile_id::text,173));
+   UPDATE public.beta_tester_invite_rewards SET bonus_used=greatest(0,bonus_used-1)
+   WHERE profile_id=NEW.inviter_profile_id;
+ END IF;
+ RETURN NEW;
+END $;
+REVOKE ALL ON FUNCTION public.refund_failed_beta_email_invite() FROM PUBLIC,anon,authenticated;
+DROP TRIGGER IF EXISTS beta_refund_failed_invite ON public.member_email_invites;
+CREATE TRIGGER beta_refund_failed_invite AFTER UPDATE OF status ON public.member_email_invites
+FOR EACH ROW EXECUTE FUNCTION public.refund_failed_beta_email_invite();
 
 -- Both issuing paths lock the same inviter and spend the standard allowance
 -- first. Only after 3 regular invites have been issued in the rolling window
