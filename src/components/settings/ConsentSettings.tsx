@@ -26,7 +26,7 @@ export function ConsentSettings() {
     fetch("/api/privacy/consents", { credentials: "same-origin", cache: "no-store" })
       .then((response) => (response.ok ? response.json() : Promise.reject()))
       .then((payload: Payload) => setData(payload))
-      .catch(() => setError(t("Your consents could not be loaded. Please try again.")));
+      .catch(() => setError(t("We couldn't load your consents. Try again?")));
   }, [t]);
   React.useEffect(load, [load]);
 
@@ -39,7 +39,7 @@ export function ConsentSettings() {
     } catch { /* network failure: reported below */ }
     finally { setBusy(null); setConfirming(null); setAgreed(false); }
     // The error stays visible after the reload; a failed deletion also shows "Delete now".
-    if (!ok) setError(t("That didn't work. Please try again."));
+    if (!ok) setError(t("That didn't work. One more try?"));
     load();
   }
 
@@ -47,7 +47,7 @@ export function ConsentSettings() {
   const status = (state?: ConsentState) => {
     if (!state) return "";
     if (state.granted) return t("Given on {date}", { date: date(state.since) });
-    if (state.needsRenewal) return t("Given for an earlier wording. Please review it.");
+    if (state.needsRenewal) return t("You said yes to an older wording. Have a look at the new one?");
     return t("Not given");
   };
 
@@ -71,7 +71,7 @@ export function ConsentSettings() {
     <section className="space-y-3" aria-labelledby="consent-title">
       <div>
         <h3 id="consent-title" className="flex items-center gap-2 text-xs font-bold text-ink"><ShieldCheck className="h-4 w-4 text-velora-success" aria-hidden />{t("Your consents")}</h3>
-        <p className="mt-1 text-[11px] leading-5 text-velora-textMuted">{t("Intimo asks separately before storing the most personal parts of your profile. Each choice is recorded with its date and the exact wording you agreed to.")}</p>
+        <p className="mt-1 text-[11px] leading-5 text-velora-textMuted">{t("Before we keep the most personal parts of your profile, we ask. Separately, every time. Each answer is saved with its date and the exact words you said yes to.")}</p>
       </div>
       {error && <p role="alert" className="text-xs font-semibold text-velora-danger">{error}</p>}
       {!data && !error && <p className="text-xs text-velora-textMuted">{t("Loading…")}</p>}
@@ -113,7 +113,7 @@ export function ConsentSettings() {
                 <Link href="/me/identity" className="inline-flex min-h-9 items-center rounded-full border border-velora-accent/40 px-4 text-xs font-semibold text-velora-accent">{t("Add orientation and identity details")}</Link>
                 <label className="flex items-start gap-2 text-[11px] leading-5 text-ink">
                   <input type="checkbox" checked={agreed} onChange={(event) => setAgreed(event.target.checked)} className="mt-0.5 h-4 w-4 accent-velora-accent" />
-                  <span>{t("I agree to the wording above.")}</span>
+                  <span>{t("I agree to the words above.")}</span>
                 </label>
                 <button type="button" disabled={!agreed || busy === type} onClick={() => void change(type, true)} className="min-h-9 rounded-full bg-velora-warm px-4 text-xs font-semibold text-velora-paper disabled:opacity-50">{busy === type ? t("One moment…") : t("Give consent")}</button>
               </div>
