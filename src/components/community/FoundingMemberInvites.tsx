@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { MemberShareInvite } from "@/components/community/MemberShareInvite";
 import { Mail, Send, Crown } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 
@@ -64,7 +65,10 @@ export function FoundingMemberInvites() {
         <p className="mt-2 text-xs text-velora-textMuted">{status.unlimited ? t("Unlimited invitations for Founding Members.") : <>{t("Three invitations every three months.")} {typeof status.remaining === "number" ? `${status.remaining} ${t("remaining")}` : ""}</>}</p>
       </div>
     </div>
-    <form onSubmit={send} className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
+    <MemberShareInvite />
+    <details className="mt-5 border-t border-ink/10 pt-4">
+      <summary className="cursor-pointer text-sm font-semibold text-velora-textSecondary">{t("Or send an invitation by email")}</summary>
+    <form onSubmit={send} className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
       <label className="block text-sm font-semibold text-ink">
         <span className="mb-2 inline-flex items-center gap-2"><Mail className="h-4 w-4" aria-hidden />{t("Their email address")}</span>
         <input required type="email" autoComplete="off" maxLength={254} value={email} onChange={event => setEmail(event.target.value)}
@@ -83,6 +87,7 @@ export function FoundingMemberInvites() {
       {message && <p role="status" className="text-sm text-velora-success sm:col-span-2">{message}</p>}
       {error && <p role="alert" className="text-sm text-velora-danger sm:col-span-2">{error}</p>}
     </form>
+    </details>
     {totals && <div className="mt-7 border-t border-ink/10 pt-6">
       <h3 className="text-sm font-bold text-ink">{t("Your invitations")}</h3>
       <p className="mt-1 text-xs leading-5 text-velora-textMuted">{t("Private totals. Recipient addresses and other members’ activity stay private.")}</p>
