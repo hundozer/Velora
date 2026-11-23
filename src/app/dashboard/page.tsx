@@ -25,6 +25,30 @@ export default function DashboardPage() {
         <p className="mt-3 max-w-2xl text-sm leading-6 text-velora-textSecondary">{t("Your home starts empty and grows only from real profiles, conversations and connections you choose.")}</p>
       </section>
 
+      <section aria-labelledby="first-steps" className="rounded-3xl border border-velora-line bg-velora-surface p-6 sm:p-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-velora-accent">{t("Your first days")}</p>
+        <h2 id="first-steps" className="mt-2 font-display text-3xl font-normal text-ink sm:text-4xl">{t("Make yourself at home")}</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-velora-textSecondary">{t("No rush. These four steps help you settle in and meet people on your terms.")}</p>
+        <ol className="mt-6 grid gap-3 sm:grid-cols-2">
+          {([
+            ["Check your age", "Only adults can enter the community.", "/verify-age"],
+            ["Make your profile yours", "Let people know a little about you.", `/profile/${profile?.id || "me"}`],
+            ["Choose what you share", "Your privacy and consent stay in your hands.", "/settings#privacy"],
+            ["Meet someone", "Explore profiles and start a conversation when you're ready.", "/people"],
+          ] as const).map(([heading, description, href], index) => (
+            <li key={href}>
+              <Link href={href} className="flex h-full min-h-24 items-start gap-4 rounded-2xl border border-velora-line bg-velora-card p-4 transition hover:border-velora-accent/60">
+                <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-velora-accent/50 text-sm font-semibold text-velora-accent">{index + 1}</span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-ink">{t(heading)}</span>
+                  <span className="mt-1 block text-xs leading-5 text-velora-textSecondary">{t(description)}</span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ol>
+      </section>
+
       <FoundingMemberInvites />
 
       <section aria-labelledby="profile-progress" className="rounded-3xl border border-ink/10 bg-ink/[0.035] p-6">
