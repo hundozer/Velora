@@ -65,7 +65,7 @@ export function FoundingMemberInvites() {
         <p className="mt-2 text-xs text-velora-textMuted">{status.unlimited ? t("Unlimited invitations for Founding Members.") : <>{t("Three invitations every three months.")} {typeof status.remaining === "number" ? `${status.remaining} ${t("remaining")}` : ""}</>}</p>
       </div>
     </div>
-    <MemberShareInvite />
+    <MemberShareInvite onCreated={() => void refresh()} disabled={status.remaining === 0} />
     <details className="mt-5 border-t border-ink/10 pt-4">
       <summary className="cursor-pointer text-sm font-semibold text-velora-textSecondary">{t("Or send an invitation by email")}</summary>
     <form onSubmit={send} className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
