@@ -19,7 +19,7 @@ test("beta extras and rolling allowance are independent across both paths",async
  assert.match(sql,/ADD COLUMN IF NOT EXISTS is_beta_bonus boolean NOT NULL DEFAULT false/g);
  assert.equal((sql.match(/v_is_bonus := true/g)||[]).length,2);
  assert.equal((sql.match(/bonus_used=bonus_used\+1/g)||[]).length,2);
- assert.equal((sql.match(/pg_advisory_xact_lock/g)||[]).length,2);
+ assert.equal((sql.match(/pg_advisory_xact_lock/g)||[]).length,3); // two claim paths plus failed-email refund
  assert.equal((sql.match(/is_beta_bonus=false AND created_at/g)||[]).length,4);
  assert.match(sql,/bonus_used<bonus_total/);
  assert.match(sql,/CREATE TRIGGER beta_refund_failed_invite/);
