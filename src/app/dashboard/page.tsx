@@ -2,10 +2,11 @@
 
 import { useTranslation } from "@/context/LanguageContext";
 import Link from "next/link";
-import { Compass, Heart, ImagePlus, MessageSquare, Settings, UserRound } from "lucide-react";
+import { ClipboardList, Compass, Heart, ImagePlus, MessageSquare, Settings, UserRound } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
 import { FoundingMemberInvites } from "@/components/community/FoundingMemberInvites";
+import { BETA_FEEDBACK_OPEN_AT, BETA_FEEDBACK_CLOSE_AT } from "@/lib/betaFeedback";
 
 export default function DashboardPage() {
   const { t } = useTranslation();
@@ -48,6 +49,25 @@ export default function DashboardPage() {
           ))}
         </ol>
       </section>
+
+      {Date.now() < Date.parse(BETA_FEEDBACK_CLOSE_AT) && (
+        <section aria-labelledby="beta-feedback-heading" className="rounded-3xl border border-velora-accent/40 bg-velora-card p-6 sm:p-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[.18em] text-velora-accent">{t("December beta")}</p>
+              <h2 id="beta-feedback-heading" className="mt-2 font-display text-3xl text-ink">{t("Help shape Intimo")}</h2>
+              <p className="mt-2 max-w-xl text-sm text-velora-textSecondary">
+                {Date.now() >= Date.parse(BETA_FEEDBACK_OPEN_AT)
+                  ? t("Tell us what works and what doesn't. A few minutes, in your own words.")
+                  : t("Our short beta feedback questionnaire opens on 15 December.")}
+              </p>
+            </div>
+            <Link href="/beta-feedback" className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-velora-warm px-6 py-3 text-sm font-semibold text-velora-paper">
+              <ClipboardList className="h-4 w-4" aria-hidden="true" />{t("View beta feedback form")}
+            </Link>
+          </div>
+        </section>
+      )}
 
       <FoundingMemberInvites />
 
