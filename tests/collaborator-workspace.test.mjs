@@ -20,7 +20,7 @@ test("collaborator metrics are limited to her own invitations and anonymous aggr
  assert.match(api,/answers\.length>=5/);
  assert.doesNotMatch(api,/beta_feedback_contacts/);
  assert.doesNotMatch(api,/direct_messages|profile_email|select\("email/);
- assert.match(api,/allowed:false/);
+ assert.match(api,/allowed:\s*false/);
 });
 test("workspace menu appears in both desktop and mobile account menus",async()=>{
  const navbar=await read("src/components/layout/Navbar.tsx");
