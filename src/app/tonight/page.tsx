@@ -5,6 +5,7 @@ import { Logo } from "@/components/brand/Logo";
 import React from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { PragueDiscovery } from "@/components/plans/PragueDiscovery";
 import { useAuth } from "@/context/AuthContext";
 import { BehindTheDoorLanding } from "@/components/landing/BehindTheDoorLanding";
 import { ReportModal } from "@/components/safety/ReportModal";
@@ -222,6 +223,8 @@ export default function TonightPage() {
           )}
         </div>
       </section>
+
+      {!eventFilter && plans && <div className="mx-auto max-w-5xl md:mt-6"><PragueDiscovery plans={plans} now={now} /></div>}
 
       <div className="mx-auto max-w-5xl space-y-0 md:mt-6 md:space-y-6">
         {mine.length > 0 && (

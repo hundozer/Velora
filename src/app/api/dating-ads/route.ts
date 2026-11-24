@@ -37,6 +37,7 @@ function toPlan(row: PlanRow, author: Author | undefined, viewerAreaId: string |
     categoryLabel: planCategoryLabel(row.category),
     title: row.title,
     text: row.text,
+    areaId: row.area_id || null,
     areaName: areaById(row.area_id)?.name || null,
     distance: bucket ? DISTANCE_BUCKET_LABELS[bucket] : null,
     startsAt: planStartsAt(row),

@@ -37,6 +37,25 @@ Product decisions optimise for their safety, control and willingness to stay, no
 
 ---
 
+## Prague discovery / Heatmapa-inspired roadmap (24 November 2026)
+
+**Product decision:** borrow Heatmapa's quick, time-sensitive discovery experience, not continuous location tracking. Carolinka cited the *feeling of the app*, not a request for user-tracking heatmaps. The goal is to discover real Prague plans or approved events and safely take action.
+
+**Safety baseline:** Prague-first; no precise GPS, geolocation permission, home pins, member live location, or fabricated activity. All exposed area positions represent published districts, never addresses.
+
+| ID | Phase | Acceptance scope | Status |
+|---|---|---|---|
+| PD-01 | Sprint 1 · Discovery | List/area toggle within Tonight, district and time filters, real visible member plans and published Scene events; preserve server authorization, blocking, moderation, reply eligibility and event links; truthful empty state | 🟡 Code on feature branch, pending CI and production |
+| PD-02 | Sprint 1 · Privacy | No individual member markers. Plan-area indicators only for at least three distinct visible authors per district; published events separately marked. Never show private meeting coordinates or imply the diagram is a street map | 🟡 Implemented; acceptance review pending |
+| PD-03 | Sprint 2 · Connections | Smooth discovery → plan → eligibility-checked reply, event organiser link; preserve selected filters and report/block controls | ⬜ Planned after beta |
+| PD-04 | Sprint 2 · Scene | Curated event supply, controlled public venue labels, and accessible discovery; no private guest-list addresses or inferred attendance | ⬜ Planned |
+| PD-05 | Sprint 3 · Community pulse | Consider aggregate activity only with sufficient diversity and privacy protections against small-cohort inference and differencing. No personal real-time heatmap | ⬜ Deferred |
+| PD-06 | Validation | Test two-account blocked/allowed plan visibility, event filters, low-density and empty states, accessibility, mobile UX, and member conversion. Evaluate with beta testers before expansion | ⬜ Pending |
+
+**Release gate:** CI unit, TypeScript, lint and build; production READY; browser acceptance for allowed and blocked adult accounts and low-density Prague areas. A successful build alone does not prove the full journey.
+
+---
+
 ## Current priority: Founding Member feedback track  (milestone `FM-founding`, from 16 November 2026)
 **Source:** Founding Member vision document (Carolinka, November 2026). **Objective:** close the trust,
 privacy and safety gaps a founding member must see closed before recruiting, then prepare revenue.

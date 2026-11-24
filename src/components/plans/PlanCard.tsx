@@ -7,7 +7,7 @@ import { clock, glanceTime } from "@/lib/tonight.mjs";
 
 export type Plan = {
   id: string; authorId: string; authorName: string; authorAvatar: string; authorAge: number | null; authorIsCouple: boolean; authorVerified: boolean;
-  category: string; categoryLabel: string; title: string; text: string; areaName: string | null; distance: string | null;
+  category: string; categoryLabel: string; title: string; text: string; areaId?: string | null; areaName: string | null; distance: string | null;
   startsAt: string; expiresAt: string; endsIn: string; replyTypes: string[]; minAge: number; maxAge: number; requireVerified: boolean; requireMedia: boolean;
   status: string; live: boolean; isMine: boolean;
   /** Who may reply, in words, and whether this viewer can — computed by the server's reply rule. */
