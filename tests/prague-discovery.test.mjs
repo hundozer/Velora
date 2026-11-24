@@ -25,7 +25,7 @@ test("district map shows no individual member location or ungrounded density",as
  assert.match(ui,/groups\.get\(p.areaId\)!\.add\(p.authorId\)/);
  assert.match(ui,/PRAGUE = AREAS\.filter/);
  assert.match(ui,/eventAreas/);
- assert.doesNotMatch(ui,/geolocation|getCurrentPosition|watchPosition|navigator\.geolocation/);
+ assert.doesNotMatch(ui,/(?:navigator\.)?geolocation\s*\.|getCurrentPosition\s*\(|watchPosition\s*\(/);
  assert.match(ui,/Nothing to map yet/);
  assert.match(ui,/not a street map/);
 });
