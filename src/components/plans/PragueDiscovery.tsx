@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Compass, List, Map as MapIcon, CalendarDays, MapPin } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
-import { AREAS, areaById } from "@/lib/areas.mjs";
+import { AREAS } from "@/lib/areas.mjs";
 import { clock } from "@/lib/tonight.mjs";
 import { replyHref, type Plan } from "@/components/plans/PlanCard";
 import type { SceneEvent } from "@/components/scene/SceneEventCard";
