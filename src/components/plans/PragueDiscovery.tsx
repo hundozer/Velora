@@ -40,17 +40,20 @@ export function PragueDiscovery({ plans, now }:{plans:Plan[];now:Date|null}) {
  const [view,setView]=React.useState<"list"|"map">("list");
  const [window,setWindow]=React.useState<Window>("all");
  const [area,setArea]=React.useState("");
+ const [filtersReady,setFiltersReady]=React.useState(false);
  React.useEffect(()=>{
-   const context=parseTonightDiscovery(window.location.search);
+   const context=parseTonightDiscovery(globalThis.window.location.search);
    setView(context.view);setWindow(context.when as Window);setArea(context.area);
+   setFiltersReady(true);
  },[]);
  const context={view,when:window,area};
  React.useEffect(()=>{
    // Preserve only allowlisted filters; never store identity or geographic coordinates.
+   if(!filtersReady)return;
    const next=tonightDiscoveryHref(context);
    const current=globalThis.window.location.pathname+globalThis.window.location.search;
    if(current!==next)globalThis.window.history.replaceState(globalThis.window.history.state,"",next);
- },[view,window,area]);
+ },[view,window,area,filtersReady]);
  const [events,setEvents]=React.useState<SceneEvent[]>([]);
  const [sceneError,setSceneError]=React.useState("");
  React.useEffect(()=>{
