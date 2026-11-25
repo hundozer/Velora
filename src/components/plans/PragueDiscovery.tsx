@@ -68,7 +68,7 @@ export function PragueDiscovery({ plans, now }:{plans:Plan[];now:Date|null}) {
  const filteredEvents=React.useMemo(()=>events.filter(e=>(!area||e.areaId===area)&&(!now||planInWindow(e.startsAt,e.endsAt||new Date(new Date(e.startsAt).getTime()+6*3600000).toISOString(),window,now))),[events,area,window,now]);
  const eventAreas=React.useMemo(()=>[...new Set(filteredEvents.filter(e=>e.areaId&&PRAGUE.some(a=>a.id===e.areaId)).map(e=>e.areaId as string))],[filteredEvents]);
  const known=filteredPlans.length+filteredEvents.length;
- return <section aria-labelledby="prague-discover-heading" className="mx-auto max-w-5xl border-y border-velora-line bg-velora-card px-5 py-8 sm:rounded-[28px] sm:border sm:px-8">
+ return <section aria-labelledby="prague-discover-heading" className="mx-auto max-w-5xl border-y border-velora-line bg-velora-card px-5 py-8 sm:border sm:px-8">
    <div className="flex flex-wrap items-start justify-between gap-4">
      <div>
        <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[.2em] text-velora-copperInk"><Compass className="h-4 w-4"/>{t("Prague discovery")}</p>
@@ -76,8 +76,8 @@ export function PragueDiscovery({ plans, now }:{plans:Plan[];now:Date|null}) {
        <p className="mt-2 max-w-lg text-sm leading-6 text-velora-textSecondary">{t("Real member plans and approved scene events. Explore by Prague area, without live tracking.")}</p>
      </div>
      <div className="inline-flex rounded-full border border-velora-line p-1" role="group" aria-label={t("Discovery view")}>
-       <button type="button" aria-pressed={view==="list"} onClick={()=>setView("list")} className={`flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold ${view==="list"?"bg-velora-warm text-velora-paper":"text-velora-ink2"}`}><List className="h-4 w-4"/>{t("List")}</button>
-       <button type="button" aria-pressed={view==="map"} onClick={()=>setView("map")} className={`flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold ${view==="map"?"bg-velora-warm text-velora-paper":"text-velora-ink2"}`}><MapIcon className="h-4 w-4"/>{t("Areas")}</button>
+       <button type="button" aria-pressed={view==="list"} onClick={()=>setView("list")} className={`flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold ${view==="list"?"bg-velora-accent text-velora-paper":"text-velora-ink2"}`}><List className="h-4 w-4"/>{t("List")}</button>
+       <button type="button" aria-pressed={view==="map"} onClick={()=>setView("map")} className={`flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold ${view==="map"?"bg-velora-accent text-velora-paper":"text-velora-ink2"}`}><MapIcon className="h-4 w-4"/>{t("Areas")}</button>
      </div>
    </div>
    <div className="mt-6 flex flex-wrap gap-3">
@@ -112,15 +112,15 @@ export function PragueDiscovery({ plans, now }:{plans:Plan[];now:Date|null}) {
      <p className="mt-3 text-xs leading-5 text-velora-textMuted">{t("Area illustration, not a street map. Only approved public events are marked. Member plans are listed privately, not plotted or counted on the map.")}</p>
      <button type="button" onClick={()=>setView("list")} className="mt-3 min-h-11 text-sm font-semibold text-velora-accent underline">{t("See matching plans and events")}</button>
    </div> : <div className="mt-6 space-y-4">
-     {known===0?<div className="rounded-xl border border-dashed border-velora-line p-6"><p className="text-sm text-velora-textSecondary">{t("Nothing published for these filters yet. You can make the first move.")}</p><Link href="/tonight/new" className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-velora-accent underline">{t("Post a plan")}</Link></div>:null}
-     {filteredPlans.map(p=><article key={p.id} className="rounded-xl border border-velora-line bg-velora-surface p-4">
+     {known===0?<div className="border border-dashed border-velora-line p-6"><p className="text-sm text-velora-textSecondary">{t("Nothing published for these filters yet. You can make the first move.")}</p><Link href="/tonight/new" className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-velora-accent underline">{t("Post a plan")}</Link></div>:null}
+     {filteredPlans.map(p=><article key={p.id} className="border border-velora-line bg-velora-surface p-4">
        <p className="flex flex-wrap items-center gap-2 text-xs text-velora-textMuted"><span className="rounded-full border border-velora-copper/50 px-2 py-1">{t("Member plan")}</span>{p.areaName||t("Area not specified")} · {clock(p.startsAt)}</p>
        <h3 className="mt-2 font-display text-xl text-ink"><Link href={discoveryPlanHref(p.id,context)} className="hover:underline">{p.title}</Link></h3>
        <p className="mt-2 text-xs text-velora-textSecondary">{p.authorName} · {t(p.categoryLabel)}</p>
        {p.eligibilityText && <p className="mt-2 text-sm text-velora-ink2">{t(p.eligibilityText)}</p>}
        {p.canReply&&<Link href={replyHref(p)} className="mt-3 inline-flex min-h-11 items-center rounded-full bg-velora-warm px-4 text-sm font-semibold text-velora-paper">{t("Reply")}</Link>}
      </article>)}
-     {filteredEvents.map(e=><article key={e.id} className="rounded-xl border border-velora-line bg-velora-surface p-4">
+     {filteredEvents.map(e=><article key={e.id} className="border border-velora-line bg-velora-surface p-4">
        <p className="flex flex-wrap items-center gap-2 text-xs text-velora-textMuted"><span className="rounded-full border border-velora-accent/50 px-2 py-1">{t("Published event")}</span>{e.areaName||t("Area not specified")} · {labelDate(e.startsAt,language)}</p>
        <h3 className="mt-2 font-display text-xl text-ink">{e.title}</h3>
        <p className="mt-1 text-sm text-velora-textSecondary">{e.organiser}</p>
