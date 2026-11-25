@@ -124,7 +124,7 @@ export function PragueDiscovery({ plans, now }:{plans:Plan[];now:Date|null}) {
        <p className="flex flex-wrap items-center gap-2 text-xs text-velora-textMuted"><span className="rounded-full border border-velora-accent/50 px-2 py-1">{t("Published event")}</span>{e.areaName||t("Area not specified")} · {labelDate(e.startsAt,language)}</p>
        <h3 className="mt-2 font-display text-xl text-ink">{e.title}</h3>
        <p className="mt-1 text-sm text-velora-textSecondary">{e.organiser}</p>
-       <Link href={`/scene?event=${encodeURIComponent(e.id)}`} className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-velora-accent underline">{t("View event")}</Link>
+       <div className="mt-3 flex flex-wrap items-center gap-4"><Link href={`/scene?event=${encodeURIComponent(e.id)}`} className="inline-flex min-h-11 items-center text-sm font-semibold text-velora-accent underline">{t("View event")}</Link>{e.companyWindow && <Link href={`/tonight?event=${encodeURIComponent(e.id)}`} className="inline-flex min-h-11 items-center text-sm font-semibold text-velora-accent underline">{t("Find company for this event")}</Link>}</div>
      </article>)}
      {sceneError&&<p role="status" className="text-xs text-velora-textMuted">{t("Scene events could not be loaded. Member plans remain available.")}</p>}
    </div>}
