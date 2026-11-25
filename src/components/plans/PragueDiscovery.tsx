@@ -2,18 +2,20 @@
 
 import React from "react";
 import Link from "next/link";
-import { Compass, List, Map as MapIcon, CalendarDays, MapPin } from "lucide-react";
+import { Compass, List, Map as MapIcon, CalendarDays } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 import { AREAS } from "@/lib/areas.mjs";
 import { clock } from "@/lib/tonight.mjs";
+import { discoveryPlanHref, parseTonightDiscovery, tonightDiscoveryHref } from "@/lib/tonightDiscovery.mjs";
 import { replyHref, type Plan } from "@/components/plans/PlanCard";
 import type { SceneEvent } from "@/components/scene/SceneEventCard";
 
 /**
  * Phase 1 Prague discovery: deliberately an AREA overview, not a tracking map.
  * Only broad preselected districts; no user coordinates, device geolocation, or live presence.
- * A district shows a plan marker only when >=3 DISTINCT eligible authors have plans there.
- * Published public scene listings are separate and never counted as people.
+ * Map indicators show ONLY organizer-published events, never individual member plans.
+ * Member plans remain in the existing permission-filtered list. This prevents
+ * differencing attacks through area and time filters on low-density groups.
  */
 const PRAGUE = AREAS.filter((a) => a.kind === "PRAGUE_DISTRICT" && a.lat != null && a.lng != null);
 const BOUNDS = { west: 14.29, east: 14.68, north: 50.15, south: 49.97 };
@@ -38,6 +40,17 @@ export function PragueDiscovery({ plans, now }:{plans:Plan[];now:Date|null}) {
  const [view,setView]=React.useState<"list"|"map">("list");
  const [window,setWindow]=React.useState<Window>("all");
  const [area,setArea]=React.useState("");
+ React.useEffect(()=>{
+   const context=parseTonightDiscovery(window.location.search);
+   setView(context.view);setWindow(context.when as Window);setArea(context.area);
+ },[]);
+ const context={view,when:window,area};
+ React.useEffect(()=>{
+   // Preserve only allowlisted filters; never store identity or geographic coordinates.
+   const next=tonightDiscoveryHref(context);
+   const current=globalThis.window.location.pathname+globalThis.window.location.search;
+   if(current!==next)globalThis.window.history.replaceState(globalThis.window.history.state,"",next);
+ },[view,window,area]);
  const [events,setEvents]=React.useState<SceneEvent[]>([]);
  const [sceneError,setSceneError]=React.useState("");
  React.useEffect(()=>{
@@ -50,15 +63,6 @@ export function PragueDiscovery({ plans, now }:{plans:Plan[];now:Date|null}) {
  },[]);
  const filteredPlans=React.useMemo(()=>plans.filter(p=>(!area||p.areaId===area)&&(!now||planInWindow(p.startsAt,p.expiresAt,window,now))),[plans,area,window,now]);
  const filteredEvents=React.useMemo(()=>events.filter(e=>(!area||e.areaId===area)&&(!now||planInWindow(e.startsAt,e.endsAt||new Date(new Date(e.startsAt).getTime()+6*3600000).toISOString(),window,now))),[events,area,window,now]);
- const mapPlans=React.useMemo(()=>{
-   const groups=new Map<string,Set<string>>();
-   for(const p of filteredPlans){
-     if(!p.areaId||!PRAGUE.some(a=>a.id===p.areaId))continue;
-     if(!groups.has(p.areaId))groups.set(p.areaId,new Set());
-     groups.get(p.areaId)!.add(p.authorId);
-   }
-   return [...groups].filter(([,authors])=>authors.size>=3).map(([areaId,authors])=>({areaId,count:authors.size}));
- },[filteredPlans]);
  const eventAreas=React.useMemo(()=>[...new Set(filteredEvents.filter(e=>e.areaId&&PRAGUE.some(a=>a.id===e.areaId)).map(e=>e.areaId as string))],[filteredEvents]);
  const known=filteredPlans.length+filteredEvents.length;
  return <section aria-labelledby="prague-discover-heading" className="mx-auto max-w-5xl border-y border-velora-line bg-velora-card px-5 py-8 sm:rounded-[28px] sm:border sm:px-8">
@@ -93,23 +97,24 @@ export function PragueDiscovery({ plans, now }:{plans:Plan[];now:Date|null}) {
            <path d="M7 45Q30 59 48 42T93 61" fill="none" stroke="#A8D5EF" strokeWidth="2"/>
          </svg>
          {PRAGUE.map(a=>{
-           const p=point(a),density=mapPlans.find(x=>x.areaId===a.id),hasEvent=eventAreas.includes(a.id);
-           if(!density&&!hasEvent)return null;
-           return <button type="button" key={a.id} onClick={()=>setArea(a.id)} title={a.name} aria-label={t("{area}: explore listings",{area:a.name})}
-             className={`absolute flex min-h-11 min-w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-velora-paper text-[11px] font-bold shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent ${density?"bg-velora-copper text-white":"bg-velora-night text-velora-onPhoto"}`}
-             style={{left:`${p.x}%`,top:`${p.y}%`}}>{hasEvent?<CalendarDays className="h-4 w-4" aria-hidden/>:<MapPin className="h-4 w-4" aria-hidden/>}</button>;
+           const p=point(a),hasEvent=eventAreas.includes(a.id);
+           if(!hasEvent)return null;
+           return <button type="button" key={a.id} onClick={()=>{setArea(a.id);setView("list");}} title={a.name} aria-label={t("{area}: explore listings",{area:a.name})}
+             className={`absolute flex min-h-11 min-w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-velora-paper text-[11px] font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent bg-velora-night text-velora-onPhoto`}
+             style={{left:`${p.x}%`,top:`${p.y}%`}}><CalendarDays className="h-4 w-4" aria-hidden/></button>;
          })}
-         {mapPlans.length===0&&eventAreas.length===0&&<div className="absolute inset-0 flex items-center justify-center px-8 text-center text-sm text-velora-textSecondary">{t("Nothing to map yet. Try another time or explore the list.")}</div>}
+         {eventAreas.length===0&&<div className="absolute inset-0 flex items-center justify-center px-8 text-center text-sm text-velora-textSecondary">{t("Nothing to map yet. Try another time or explore the list.")}</div>}
        </div>
      </div>
-     <p className="mt-3 text-xs leading-5 text-velora-textMuted">{t("Area-only illustration, not a street map. Public events may appear by district; member-plan areas appear only with at least three different authors. No exact pins or member GPS.")}</p>
+     <p className="mt-3 text-xs leading-5 text-velora-textMuted">{t("Area illustration, not a street map. Only approved public events are marked. Member plans are listed privately, not plotted or counted on the map.")}</p>
      <button type="button" onClick={()=>setView("list")} className="mt-3 min-h-11 text-sm font-semibold text-velora-accent underline">{t("See matching plans and events")}</button>
    </div> : <div className="mt-6 space-y-4">
      {known===0?<div className="rounded-xl border border-dashed border-velora-line p-6"><p className="text-sm text-velora-textSecondary">{t("Nothing published for these filters yet. You can make the first move.")}</p><Link href="/tonight/new" className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-velora-accent underline">{t("Post a plan")}</Link></div>:null}
      {filteredPlans.map(p=><article key={p.id} className="rounded-xl border border-velora-line bg-velora-surface p-4">
        <p className="flex flex-wrap items-center gap-2 text-xs text-velora-textMuted"><span className="rounded-full border border-velora-copper/50 px-2 py-1">{t("Member plan")}</span>{p.areaName||t("Area not specified")} · {clock(p.startsAt)}</p>
-       <h3 className="mt-2 font-display text-xl text-ink"><Link href={`/tonight/invitation/${encodeURIComponent(p.id)}`} className="hover:underline">{p.title}</Link></h3>
+       <h3 className="mt-2 font-display text-xl text-ink"><Link href={discoveryPlanHref(p.id,context)} className="hover:underline">{p.title}</Link></h3>
        <p className="mt-2 text-xs text-velora-textSecondary">{p.authorName} · {t(p.categoryLabel)}</p>
+       {p.eligibilityText && <p className="mt-2 text-sm text-velora-ink2">{t(p.eligibilityText)}</p>}
        {p.canReply&&<Link href={replyHref(p)} className="mt-3 inline-flex min-h-11 items-center rounded-full bg-velora-warm px-4 text-sm font-semibold text-velora-paper">{t("Reply")}</Link>}
      </article>)}
      {filteredEvents.map(e=><article key={e.id} className="rounded-xl border border-velora-line bg-velora-surface p-4">
