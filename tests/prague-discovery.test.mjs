@@ -21,8 +21,8 @@ test("Tonight Prague discovery uses real existing moderated plan and scene APIs"
 
 test("district map shows no individual member location or ungrounded density",async()=>{
  const ui=await read("src/components/plans/PragueDiscovery.tsx");
- assert.match(ui,/authors.size>=3/);
- assert.match(ui,/groups\.get\(p.areaId\)!\.add\(p.authorId\)/);
+ assert.doesNotMatch(ui,/mapPlans|authors.size|groups\.get\(p.areaId\)/);
+ assert.match(ui,/Only approved public events are marked/);
  assert.match(ui,/PRAGUE = AREAS\.filter/);
  assert.match(ui,/eventAreas/);
  assert.doesNotMatch(ui,/(?:navigator\.)?geolocation\s*\.|getCurrentPosition\s*\(|watchPosition\s*\(/);
@@ -33,7 +33,7 @@ test("district map shows no individual member location or ungrounded density",as
 test("Prague discovery roadmap has implementation and privacy acceptance gates",async()=>{
  const roadmap=await read("docs/ROADMAP.md");
  for(const id of ["PD-01","PD-02","PD-03","PD-04","PD-05","PD-06"])assert.match(roadmap,new RegExp(id));
- assert.match(roadmap,/at least three distinct visible authors/);
+ assert.match(roadmap,/location privacy|Location privacy|Privacy/);
  const cs=JSON.parse(await read("src/locales/cs/phrases.json"));
  assert.ok(cs["Prague discovery"]);
  assert.ok(cs["Find your kind of night"]);

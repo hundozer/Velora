@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Portrait } from "@/components/media/Portrait";
 import { PlanCard, type Plan } from "@/components/plans/PlanCard";
 import { ReportModal } from "@/components/safety/ReportModal";
+import { parseTonightDiscovery, tonightDiscoveryHref } from "@/lib/tonightDiscovery.mjs";
 
 /** A private deep link. Opening it never sends a reply or publishes a Story. */
 export default function InvitationPage({ params }: { params: { id: string } }) {
@@ -14,6 +15,10 @@ export default function InvitationPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
   const [report, setReport] = React.useState(false);
+  const [backHref, setBackHref] = React.useState("/tonight");
+  React.useEffect(() => {
+    setBackHref(tonightDiscoveryHref(parseTonightDiscovery(globalThis.window.location.search)));
+  }, []);
   async function endInvitation() {
     if (!plan || !window.confirm(t("End this invitation now?"))) return;
     try {
@@ -46,7 +51,7 @@ export default function InvitationPage({ params }: { params: { id: string } }) {
     return () => clearTimeout(timer);
   }, [plan]);
   return <main className="mx-auto max-w-2xl px-5 pb-28 pt-6">
-    <Link href="/tonight" className="inline-flex min-h-11 items-center underline">{t("Back to Tonight")}</Link>
+    <Link href={backHref} className="inline-flex min-h-11 items-center underline">{t("Back to your discovery")}</Link>
     {loading ? <p role="status" className="py-12">{t("Opening invitation…")}</p> : !plan ? <div className="py-12"><h1 className="font-display text-4xl">{t("This invitation is unavailable.")}</h1><p role="status" className="mt-4">{t(error) || t("It may have ended, or may no longer be visible to you.")}</p></div> : <>
       <p className="mt-6 text-sm uppercase tracking-widest text-velora-accent">{t("Take us out")}</p>
       <h1 className="mt-3 break-words font-display text-5xl leading-tight">{t(plan.title)}</h1>
@@ -55,6 +60,9 @@ export default function InvitationPage({ params }: { params: { id: string } }) {
         <span><span className="block text-lg font-semibold">{plan.authorName}</span><span className="text-sm text-velora-muted">{t("Open profile & boundaries")}</span></span>
       </Link>
       <PlanCard showTitle={false} plan={plan} onEnd={endInvitation} onReport={() => setReport(true)}/>
+      {!plan.isMine && !plan.canReply && <p role="status" className="mt-4 border-l-2 border-velora-accent pl-4 text-sm text-velora-ink2">{plan.eligibilityText ? t(plan.eligibilityText) : t("Replies are not available for this invitation.")}</p>}
+      {!plan.isMine && plan.canReply && <p className="mt-3 text-xs text-velora-muted">{t("Opening Messages never sends a message automatically. Reply permissions are checked again when you send.")}</p>}
+      {plan.sceneEventId && <Link href={`/scene?event=${encodeURIComponent(plan.sceneEventId)}`} className="mt-4 inline-flex min-h-11 items-center text-sm text-velora-accent underline">{t("View the linked public event")}</Link>}
       {error && <p role="alert">{t(error)}</p>}
       <p className="mt-4 text-sm leading-relaxed text-velora-ink2">{t("Send a private pitch: suggest a place, say what caught your eye, and give them something to say yes to. Replies go only to the host’s Messages. A couple profile speaks for that account; everyone involved still agrees for themselves.")}</p>
       <p className="mt-4 text-sm text-velora-muted">{t("Chatting is a first step. Agree on the details together. Nobody owes a meeting, a reply or sex.")}</p>
