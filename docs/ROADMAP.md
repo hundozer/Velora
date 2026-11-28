@@ -1,5 +1,10 @@
 # Intimo roadmap
 
+## Design-system migration (28 November 2026)
+
+In progress on `refactor/intimo-design-system-migration`. Authentication and email styling updated; 100 route files inventoried. Full legacy-token retirement, rendered visual verification and regression acceptance remain open. See [migration inventory](DESIGN_MIGRATION_2026-11-28.md). Not approved for production.
+
+
 Effort: S ≤2 days · M ≤1 week · L ≤2 weeks · XL >2 weeks (one senior full-stack engineer).
 Each item is a GitHub issue whose title starts with its ID, grouped by milestone. `→` marks a dependency.
 `PRODUCT_VISION.md` (why) and `MVP_DEFINITION.md` (what launches) describe the same product as this file (when).
