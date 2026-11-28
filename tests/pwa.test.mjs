@@ -19,7 +19,7 @@ test("service worker caches only the generic offline page", async () => {
   const sw = await read("public/sw.js");
   assert.match(sw, /if \(event\.request\.mode !== "navigate"\) return;/);
   assert.doesNotMatch(sw, /cache\.put|addAll\(/);
-  assert.match(await read("public/offline.html"), /Nothing private is stored on this device/);
+  assert.match(await read("public/offline.html"), /This page contains no personal information\./);
 });
 
 test("notification permission is only requested after an explicit tap", async () => {
