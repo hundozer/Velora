@@ -326,13 +326,13 @@ function OnboardingForm() {
 
   return (
     <FlowScreen step={steps.length} total={steps.length} title={t("Almost there.")}>
-      <label className={`flex aspect-[4/5] w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-[2rem] border-2 border-dashed border-velora-gold/50 bg-velora-gold/5 transition hover:border-velora-gold ${photoProgress !== null ? "pointer-events-none" : ""}`}>
+      <label className={`flex aspect-[4/5] w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-[2rem] border-2 border-dashed border-velora-accent/50 bg-velora-accent/5 transition hover:border-velora-accent ${photoProgress !== null ? "pointer-events-none" : ""}`}>
         {photoProgress !== null
           ? <span className="text-3xl font-bold text-velora-textPrimary">{photoProgress}%</span>
-          : <><Camera className="h-14 w-14 text-velora-gold" /><span className="text-2xl font-semibold text-velora-textPrimary">{t("Choose a photo")}</span></>}
+          : <><Camera className="h-14 w-14 text-velora-accent" /><span className="text-2xl font-semibold text-velora-textPrimary">{t("Choose a photo")}</span></>}
         <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={photoProgress !== null} onChange={uploadPhoto} />
       </label>
-      <p className="flex items-center gap-2 text-base text-velora-textMuted"><Heart className="h-4 w-4 text-velora-gold" aria-hidden />{t("Members only. Keep it non-explicit.")}</p>
+      <p className="flex items-center gap-2 text-base text-velora-textMuted"><Heart className="h-4 w-4 text-velora-accent" aria-hidden />{t("Members only. Keep it non-explicit.")}</p>
       <p className="text-sm leading-6 text-velora-textSecondary">{t("Your profile photo is optional. The separate private age check is required before joining the community.")}</p>
       <div className="border-l-2 border-velora-accent bg-velora-surface px-4 py-3"><p className="font-semibold text-velora-ink">{t("Next: private age check")}</p><p className="mt-1 text-sm text-velora-ink2">{t("Take a private selfie with a one-time code. Our team will review it before you can use the community.")}</p></div>
       {errorLine}
