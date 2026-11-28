@@ -40,12 +40,11 @@ function Featured({ plan, onReport }: { plan: Plan; onReport: (plan: Plan) => vo
         </>
       ) : (
         <div aria-hidden className="absolute inset-0 -z-10">
-          <div className="absolute left-1/2 top-[34%] h-[70vmin] w-[70vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-velora-copper/25 blur-3xl" />
           <p className="absolute left-6 top-20 font-display text-[clamp(6rem,30vw,11rem)] leading-none text-velora-onPhoto/90 sm:left-10">{clock(plan.startsAt)}</p>
         </div>
       )}
       <div className="px-6 pb-10 pt-40 sm:px-10 md:max-w-2xl md:pb-14">
-        <p className="flex items-center gap-2 text-[14px] text-velora-onPhoto/85"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-velora-copperLight" />{t("Happening now · since {clock}", { clock: clock(plan.startsAt) })}</p>
+        <p className="flex items-center gap-2 text-[14px] text-velora-onPhoto/85"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-velora-accentHover" />{t("Happening now · since {clock}", { clock: clock(plan.startsAt) })}</p>
         <h2 className="mt-3 font-display text-[clamp(2rem,8.5vw,3rem)] leading-[1.08]"><Link href={`/tonight/invitation/${plan.id}`} className="hover:underline">{t(plan.title)}</Link></h2><PlanEventLink plan={plan}/>
         <p className="mt-4 text-[15px] text-velora-onPhoto/85">{plan.authorName}{plan.authorAge && !plan.authorIsCouple ? `, ${plan.authorAge}` : ""}{" "}{t("· until {clock}", { clock: clock(plan.expiresAt) })}{plan.areaName ? ` · ${plan.areaName}` : ""}</p>
         {plan.text && <p className="mt-2 max-w-lg text-[15px] leading-relaxed text-velora-onPhoto/80">{t(plan.text)}</p>}
@@ -69,12 +68,12 @@ function Later({ title, plans, onReport }: { title: string; plans: Plan[]; onRep
       <ol className="mt-6 space-y-8">
         {byHour(plans).map((bucket) => (
           <li key={bucket.hour} className="grid grid-cols-[3.25rem_1fr] gap-x-3">
-            <span className="font-display text-[44px] leading-none text-velora-copperLight">{String(bucket.hour).padStart(2, "0")}</span>
-            <ol className="space-y-8 border-l border-velora-copper/70 pl-6 pt-12">
+            <span className="font-display text-[44px] leading-none text-velora-accentHover">{String(bucket.hour).padStart(2, "0")}</span>
+            <ol className="space-y-8 border-l border-velora-accent/70 pl-6 pt-12">
               {bucket.plans.map((plan) => (
                 <li key={plan.id} className="relative">
-                  <span aria-hidden className="absolute -left-[1.84rem] top-3 h-2.5 w-2.5 rounded-full bg-velora-copper" />
-                  <p className="font-display text-[34px] leading-none text-velora-copperLight">{clock(plan.startsAt)}<span className="ml-2 font-sans text-[14px] text-velora-onPhoto/75">{t("until {clock}", { clock: clock(plan.expiresAt) })}</span></p>
+                  <span aria-hidden className="absolute -left-[1.84rem] top-3 h-2.5 w-2.5 rounded-full bg-velora-accent" />
+                  <p className="font-display text-[34px] leading-none text-velora-accentHover">{clock(plan.startsAt)}<span className="ml-2 font-sans text-[14px] text-velora-onPhoto/75">{t("until {clock}", { clock: clock(plan.expiresAt) })}</span></p>
                   <h3 className="mt-2 font-display text-[25px] leading-[1.15]"><Link href={`/tonight/invitation/${plan.id}`} className="hover:underline">{t(plan.title)}</Link></h3><PlanEventLink plan={plan}/>
                   <p className="mt-1 text-[14px] text-velora-onPhoto/75">{plan.authorName}{plan.areaName ? ` · ${plan.areaName}` : ""}</p>
                   <div className="mt-2"><Eligibility plan={plan} dark /></div>
@@ -103,7 +102,7 @@ function Tomorrow({ plans, onReport }: { plans: Plan[]; onReport: (plan: Plan) =
       <ol className="mt-6 divide-y divide-velora-line">
         {plans.map((plan) => (
           <li key={plan.id} className="py-6 first:pt-0">
-            <p className="font-display text-[30px] leading-none text-velora-copperInk">{glanceTime(plan, undefined, t, locale)}<span className="ml-2 font-sans text-[14px] text-velora-muted">{t("until {clock}", { clock: clock(plan.expiresAt) })}</span></p>
+            <p className="font-display text-[30px] leading-none text-velora-accent">{glanceTime(plan, undefined, t, locale)}<span className="ml-2 font-sans text-[14px] text-velora-muted">{t("until {clock}", { clock: clock(plan.expiresAt) })}</span></p>
             <h3 className="mt-2 font-display text-[24px] leading-[1.15] text-velora-ink"><Link href={`/tonight/invitation/${plan.id}`} className="hover:underline">{t(plan.title)}</Link></h3><PlanEventLink plan={plan}/>
             <p className="mt-1 text-[14px] text-velora-muted">{plan.authorName}{plan.areaName ? ` · ${plan.areaName}` : ""}</p>
             <div className="mt-2"><Eligibility plan={plan} /></div>
@@ -187,15 +186,14 @@ export default function TonightPage() {
   return (
     <div ref={root} className="min-h-[calc(100dvh-11rem)] bg-velora-surface pb-20 md:min-h-screen md:pb-12">
       <section className="relative isolate overflow-hidden border-y border-velora-line bg-velora-surface md:mx-auto md:mt-6 md:max-w-5xl md:border">
-        <div aria-hidden className="absolute -right-24 top-10 -z-10 h-80 w-80 rounded-full bg-velora-copperLight/30 blur-3xl" />
         <header className="flex items-center justify-between px-6 pt-3 sm:px-10 md:pt-6">
           <Link href="/" aria-label={t("Intimo")} className="text-velora-ink md:invisible"><Logo className="h-7 w-auto" /></Link>
           <Link href={eventFilter ? `/tonight/new?event=${encodeURIComponent(eventFilter)}` : "/tonight/new"} className="inline-flex min-h-11 items-center gap-1.5 text-[15px] font-semibold text-velora-ink"><Plus className="h-4 w-4" aria-hidden />{t("Invite")}</Link>
         </header>
         <div className="px-6 pb-10 pt-8 sm:px-10">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-velora-copperInk">{now ? t("Prague, tonight · {value}", { value: clock(now) }) : t("Prague, tonight")}</p>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-velora-accent">{now ? t("Prague, tonight · {value}", { value: clock(now) }) : t("Prague, tonight")}</p>
           {eventFilter && <p className="mt-3 text-sm text-velora-ink2">{t("Company invitations for this event ·")}{" "}<Link href={`/scene?event=${encodeURIComponent(eventFilter)}`} className="text-velora-accent underline">{t("View event")}</Link> · <a href="/tonight" className="text-velora-accent underline">{t("All Plans")}</a></p>}
-          <h1 className="intimo-member-heading mt-4">{t("Take us out.")}<br /><em className="text-velora-copperInk">{t("Or make the first move.")}</em></h1>
+          <h1 className="intimo-member-heading mt-4">{t("Take us out.")}<br /><em className="text-velora-warm">{t("Or make the first move.")}</em></h1>
 
           {error && <p role="alert" className="mt-6 border-l-2 border-velora-crimson pl-4 text-[15px] text-velora-crimson">{t(error)}</p>}
           {plans === null || !now ? (
@@ -209,7 +207,7 @@ export default function TonightPage() {
             <ol aria-label={t("At a glance")} className="mt-8 divide-y divide-velora-line/80">
               {glance.map((plan) => (
                 <li key={plan.id} className="grid grid-cols-[5.5rem_1fr_auto] items-baseline gap-x-3 py-3.5">
-                  <span className="font-display text-[26px] leading-none text-velora-copperInk">{glanceTime(plan, now ?? undefined, t, locale)}</span>
+                  <span className="font-display text-[26px] leading-none text-velora-accent">{glanceTime(plan, now ?? undefined, t, locale)}</span>
                   <span className="min-w-0">
                     <span className="line-clamp-2 block text-[16px] font-semibold leading-snug text-velora-ink">{t(plan.title)}</span>
                     <span className="block truncate text-[14px] text-velora-muted">{t("{authorName} · until {clock}", { authorName: plan.authorName, clock: clock(plan.expiresAt) })}</span>
@@ -233,7 +231,7 @@ export default function TonightPage() {
             <ol className="mt-4 divide-y divide-velora-line">
               {mine.map((plan) => (
                 <li key={plan.id} className="py-4">
-                  <p className="font-display text-[24px] leading-none text-velora-copperInk">{clock(plan.startsAt)}<span className="ml-2 font-sans text-[14px] text-velora-muted">{t("until {clock}", { clock: clock(plan.expiresAt) })}</span></p>
+                  <p className="font-display text-[24px] leading-none text-velora-accent">{clock(plan.startsAt)}<span className="ml-2 font-sans text-[14px] text-velora-muted">{t("until {clock}", { clock: clock(plan.expiresAt) })}</span></p>
                   <p className="mt-1.5 font-display text-[22px] leading-tight text-velora-ink"><Link href={`/tonight/invitation/${plan.id}`} className="hover:underline">{t(plan.title)}</Link></p><PlanEventLink plan={plan}/>
                   <p className="mt-1 text-[14px] text-velora-muted">{t("Open to {value}. Replies arrive in Messages.", { value: plan.audience || "everyone" })}</p>
                   <Link href={sharePlanHref(plan)} className="mr-6 inline-flex min-h-11 items-center text-[15px] text-velora-accent underline">{t("Share to your Story")}</Link>
