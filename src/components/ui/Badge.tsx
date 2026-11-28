@@ -20,12 +20,12 @@ export const Badge: React.FC<BadgeProps> = ({ type, label, className }) => {
         <span
           className={twMerge(
             clsx(
-              "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-velora-gold/15 text-velora-gold border border-velora-gold/30 backdrop-blur-md",
+              "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-velora-accent/15 text-velora-accent border border-velora-accent/30 backdrop-blur-md",
               className
             )
           )}
         >
-          <CheckCircle2 className="w-3.5 h-3.5 text-velora-gold fill-velora-gold/20" />
+          <CheckCircle2 className="w-3.5 h-3.5 text-velora-accent fill-velora-accent/20" />
           {t(label) || t("Verified Adult")}
         </span>
       );
@@ -86,7 +86,7 @@ export const Badge: React.FC<BadgeProps> = ({ type, label, className }) => {
         <span
           className={twMerge(
             clsx(
-              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-ink/10 text-velora-textPrimary border border-ink/10",
+              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-ink/10 text-velora-ink border border-ink/10",
               className
             )
           )}
