@@ -16,7 +16,7 @@ export default function AboutPage() {
       <div className="text-center space-y-4">
         <Badge type="verified" label={t("Kink. Consent. Prague.")} />
         <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">{t("Desire belongs")}{" "}<br />
-          <span className="gold-gradient-text">{t("in the conversation.")}</span>
+          <span className="text-velora-warm">{t("in the conversation.")}</span>
         </h1>
         <p className="text-sm text-velora-textSecondary max-w-2xl mx-auto leading-relaxed">{t("Intimo is for adults in Prague looking for sex partners, dates and people who share their kinks. Singles, couples, queer, experienced or just curious. You can know exactly what you want, or still be finding the words.")}</p>
       </div>
@@ -28,7 +28,7 @@ export default function AboutPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card variant="goldBorder" className="p-8 space-y-4">
-          <ShieldCheck className="w-8 h-8 text-velora-gold" />
+          <ShieldCheck className="w-8 h-8 text-velora-accent" />
           <h2 className="text-4xl font-display font-bold text-velora-textPrimary">{t("Desire does not mean entitlement.")}</h2>
           <p className="text-xs text-velora-textSecondary leading-relaxed">{t("A profile is not consent. Neither is a photo, a match in tastes or a yes from last night. Ask. Listen. Take a no without arguing. If someone crosses a line, you can block and report them.")}</p>
         </Card>
