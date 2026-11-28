@@ -10,9 +10,9 @@ export function AuthShell({ title, subtitle, children, footer }: { title: string
     <div className="mx-auto flex min-h-[100dvh] w-full max-w-xl flex-col justify-center px-5 py-10">
       <Link href="/" aria-label={t("Intimo")} className="mb-10 inline-block text-velora-ink"><Logo className="h-9 w-auto" /></Link>
       <h1 className="font-display text-5xl leading-[1.02] text-velora-ink sm:text-6xl">{t(title)}</h1>
-      {subtitle && <p className="mt-3 text-lg text-velora-textSecondary">{t(subtitle)}</p>}
+      {subtitle && <p className="mt-3 text-lg text-velora-ink2">{t(subtitle)}</p>}
       <div className="mt-10 space-y-5">{children}</div>
-      {footer && <div className="mt-8 text-lg text-velora-textSecondary">{footer}</div>}
+      {footer && <div className="mt-8 text-lg text-velora-ink2">{footer}</div>}
     </div>
   );
 }
@@ -21,15 +21,15 @@ export function AuthField({ id, label, ...props }: { id: string; label: string }
   const { t } = useTranslation();
   return (
     <div className="space-y-2">
-      <label htmlFor={id} className="block text-base font-semibold text-velora-textSecondary">{t(label)}</label>
-      <input id={id} name={id} className="min-h-16 w-full rounded-3xl border border-velora-control bg-velora-surface px-6 text-xl text-velora-textPrimary placeholder:text-velora-textMuted focus:border-velora-gold focus:ring-2 focus:ring-velora-gold/30" {...props} />
+      <label htmlFor={id} className="block text-base font-semibold text-velora-ink2">{t(label)}</label>
+      <input id={id} name={id} className="min-h-16 w-full rounded-3xl border border-velora-control bg-velora-surface px-6 text-xl text-velora-ink placeholder:text-velora-muted focus:border-velora-accent focus:ring-2 focus:ring-velora-accent/30" {...props} />
     </div>
   );
 }
 
 export function AuthMessage({ tone, children }: { tone: "error" | "info"; children: React.ReactNode }) {
   return (
-    <p role={tone === "error" ? "alert" : "status"} className={tone === "error" ? "rounded-2xl bg-red-500/10 px-5 py-4 text-base text-velora-danger" : "rounded-2xl bg-velora-gold/10 px-5 py-4 text-base text-velora-textPrimary"}>
+    <p role={tone === "error" ? "alert" : "status"} className={tone === "error" ? "rounded-2xl bg-red-500/10 px-5 py-4 text-base text-velora-danger" : "rounded-2xl bg-velora-accent/10 px-5 py-4 text-base text-velora-ink"}>
       {children}
     </p>
   );
