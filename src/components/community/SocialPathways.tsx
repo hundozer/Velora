@@ -22,14 +22,14 @@ export function SocialPathways() {
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         {pathways.map(({ key, eyebrow, title, description, href, action, Icon }) => (
-          <Link key={key} href={href} className="group flex min-w-0 flex-col rounded-2xl border border-velora-line bg-velora-paper p-4 text-velora-ink transition-colors hover:border-velora-copper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-velora-copper sm:p-5">
+          <Link key={key} href={href} className="group flex min-w-0 flex-col rounded-2xl border border-velora-line bg-velora-paper p-4 text-velora-ink transition-colors hover:border-velora-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-velora-accent sm:p-5">
             <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-velora-muted">{t(eyebrow)}</span>
-              <Icon aria-hidden className="h-5 w-5 shrink-0 text-velora-copper" />
+              <Icon aria-hidden className="h-5 w-5 shrink-0 text-velora-accent" />
             </div>
             <h3 className="mt-3 font-display text-2xl leading-tight">{t(title)}</h3>
             <p className="mt-2 flex-1 text-[13px] leading-relaxed text-velora-ink2">{t(description)}</p>
-            <span className="mt-4 inline-flex min-h-11 items-center gap-1 text-[13px] font-semibold text-velora-copperInk">{t(action)}<ArrowUpRight aria-hidden className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
+            <span className="mt-4 inline-flex min-h-11 items-center gap-1 text-[13px] font-semibold text-velora-accent">{t(action)}<ArrowUpRight aria-hidden className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
           </Link>
         ))}
       </div>
