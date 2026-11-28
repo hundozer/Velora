@@ -56,7 +56,7 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
         <div className="text-center space-y-4 py-6 text-left">
           <CheckCircle2 className="w-12 h-12 text-velora-success mx-auto" />
           <h3 className="text-xl font-display font-bold text-velora-textPrimary text-center">{t("Sent for review.")}</h3>
-          <p className="text-xs text-velora-textMuted leading-relaxed glass-panel p-4 rounded-2xl">{t("Your photo verification selfie has been submitted for manual review. No government identity document is required for this badge.")}</p>
+          <p className="text-xs text-velora-textMuted leading-relaxed bg-velora-surface border border-velora-line p-4 rounded-2xl">{t("Your photo verification selfie has been submitted for manual review. No government identity document is required for this badge.")}</p>
           <Button variant="gold" size="sm" className="w-full font-bold uppercase" onClick={handleReset}>{t("Close")}</Button>
         </div>
       ) : (
@@ -64,7 +64,7 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
           {/* Level Overview Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Level 1 */}
-            <div className="p-4 glass-panel rounded-2xl border border-ink/10 flex items-start gap-3">
+            <div className="p-4 bg-velora-surface border border-velora-line rounded-2xl border border-ink/10 flex items-start gap-3">
               <div className="p-2 rounded-xl bg-blue-500/10 text-velora-accent shrink-0">
                 <Mail className="w-4 h-4" />
               </div>
@@ -78,7 +78,7 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
             </div>
 
             {/* Level 2 */}
-            <div className="p-4 glass-panel rounded-2xl border border-ink/10 flex items-start gap-3">
+            <div className="p-4 bg-velora-surface border border-velora-line rounded-2xl border border-ink/10 flex items-start gap-3">
               <div className="p-2 rounded-xl bg-purple-500/10 text-velora-signal shrink-0">
                 <Phone className="w-4 h-4" />
               </div>
@@ -96,11 +96,11 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
               onClick={() => setSelectedLevel("LEVEL_3_PROFILE_BIOMETRIC")}
               className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3 ${
                 selectedLevel === "LEVEL_3_PROFILE_BIOMETRIC"
-                  ? "glass-panel-gold border-velora-gold shadow-gold-glow"
-                  : "glass-panel hover:border-ink/20"
+                  ? "bg-velora-surface border border-velora-accent/25 border-velora-accent"
+                  : "bg-velora-surface border border-velora-line hover:border-ink/20"
               }`}
             >
-              <div className="p-2 rounded-xl bg-velora-gold/10 text-velora-gold shrink-0">
+              <div className="p-2 rounded-xl bg-velora-accent/10 text-velora-accent shrink-0">
                 <UserCheck className="w-4 h-4" />
               </div>
               <div className="text-xs">
@@ -114,8 +114,8 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
               onClick={() => setSelectedLevel("LEVEL_4_CREATOR")}
               className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3 ${
                 selectedLevel === "LEVEL_4_CREATOR"
-                  ? "glass-panel-gold border-velora-accent shadow-gold-glow"
-                  : "glass-panel hover:border-ink/20"
+                  ? "bg-velora-surface border border-velora-accent/25 border-velora-accent"
+                  : "bg-velora-surface border border-velora-line hover:border-ink/20"
               }`}
             >
               <div className="p-2 rounded-xl bg-velora-accent/10 text-velora-accent shrink-0">
@@ -135,8 +135,8 @@ export const VerificationWizard: React.FC<VerificationWizardProps> = ({
               <p className="text-xs text-velora-textMuted">{t("Upload one selfie while holding a handwritten note showing Intimo, your username, and today's date.")}</p>
 
               <div className="grid grid-cols-1 gap-4">
-                <div className="p-4 glass-panel rounded-2xl border border-dashed border-ink/20 text-center space-y-2">
-                  <Upload className="w-5 h-5 text-velora-gold mx-auto" />
+                <div className="p-4 bg-velora-surface border border-velora-line rounded-2xl border border-dashed border-ink/20 text-center space-y-2">
+                  <Upload className="w-5 h-5 text-velora-accent mx-auto" />
                   <p className="text-xs font-bold text-velora-textPrimary">{t("Upload verification selfie")}</p>
                   <Button variant="glass" size="sm" className="text-[10px] border-ink/10">{t("Choose a selfie")}</Button>
                 </div>
