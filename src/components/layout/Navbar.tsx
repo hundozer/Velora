@@ -74,12 +74,12 @@ export const Navbar: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className="p-2.5 rounded-full bg-ink/5 border border-ink/10 text-velora-textSecondary hover:text-velora-gold hover:bg-ink/10 transition-colors relative"
+                className="p-2.5 rounded-full bg-ink/5 border border-ink/10 text-velora-ink2 hover:text-velora-accent hover:bg-ink/10 transition-colors relative"
                 title={t("Notifications")}
               >
                 <Bell className="w-4 h-4" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-velora-gold text-velora-bg font-bold text-[10px] flex items-center justify-center shadow-gold-glow animate-pulse">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-velora-accent text-velora-paper font-bold text-[10px] flex items-center justify-center animate-pulse">
                     {unreadCount}
                   </span>
                 )}
@@ -108,7 +108,7 @@ export const Navbar: React.FC = () => {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={profile.avatarUrl} alt={t("User avatar")} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="w-full h-full flex items-center justify-center text-sm font-bold text-velora-gold" aria-label={t("Profile without an avatar")}>
+                    <span className="w-full h-full flex items-center justify-center text-sm font-bold text-velora-accent" aria-label={t("Profile without an avatar")}>
                       {(profile?.displayName || user.username || "I").slice(0, 1).toUpperCase()}
                     </span>
                   )}
@@ -121,8 +121,8 @@ export const Navbar: React.FC = () => {
                   onClick={() => setIsUserDropdownOpen(false)}
                 >
                   <div className="px-4 py-3 border-b border-ink/10 mb-1">
-                    <p className="text-sm font-bold text-velora-textPrimary">{profile?.displayName || user.username}</p>
-                    <p className="text-xs text-velora-textMuted truncate">{user.email}</p>
+                    <p className="text-sm font-bold text-velora-ink">{profile?.displayName || user.username}</p>
+                    <p className="text-xs text-velora-muted truncate">{user.email}</p>
                     <div className="mt-2">
                       <Badge type={role === "CREATOR" ? "creator" : role === "COUPLE" ? "couple" : role === "ADMIN" ? "admin" : "verified"} />
                     </div>
@@ -130,39 +130,39 @@ export const Navbar: React.FC = () => {
 
                   <Link
                     href={`/profile/${profile?.id || "me"}`}
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-ink2 hover:text-velora-ink hover:bg-ink/5 rounded-xl font-medium"
                   >
-                    <User className="w-4 h-4 text-velora-gold" />{t("My Profile")}</Link>
+                    <User className="w-4 h-4 text-velora-accent" />{t("My Profile")}</Link>
 
                   <Link
                     href="/albums/manage"
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-ink2 hover:text-velora-ink hover:bg-ink/5 rounded-xl font-medium"
                   >
                     <ImageIcon className="w-4 h-4 text-velora-accent" />{t("My Photos")}</Link>
 
                   <Link
                     href={`/profile/${profile?.id || "me"}?tab=ADS`}
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-ink2 hover:text-velora-ink hover:bg-ink/5 rounded-xl font-medium"
                   >
                     <Megaphone className="w-4 h-4 text-velora-danger" />{t("My Dating Ads")}</Link>
 
                   <Link
                     href="/favorites"
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl font-medium"
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-velora-ink2 hover:text-velora-ink hover:bg-ink/5 rounded-xl font-medium"
                   >
                     <Bookmark className="w-4 h-4 text-velora-accent" />{t("Saved items")}</Link>
 
-                  <Link href="/connections" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-velora-textPrimary hover:bg-ink/5"><UsersRound className="h-4 w-4 text-velora-gold" />{t("Connections")}</Link>
+                  <Link href="/connections" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-velora-ink hover:bg-ink/5"><UsersRound className="h-4 w-4 text-velora-accent" />{t("Connections")}</Link>
 
-                  <Link href="/me/invite" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-velora-textPrimary hover:bg-ink/5"><MailPlus className="h-4 w-4 text-velora-gold" />{t("Invite friends")}</Link>
+                  <Link href="/me/invite" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-velora-ink hover:bg-ink/5"><MailPlus className="h-4 w-4 text-velora-accent" />{t("Invite friends")}</Link>
                   <FoundingMemberMenuLink />
                   <CollaboratorWorkspaceMenuLink />
 
                   <Link
                     href="/settings"
-                    className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-textSecondary hover:text-velora-textPrimary hover:bg-ink/5 rounded-xl"
+                    className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-velora-ink2 hover:text-velora-ink hover:bg-ink/5 rounded-xl"
                   >
-                    <Settings className="w-4 h-4 text-velora-textMuted" />{t("Account settings")}</Link>
+                    <Settings className="w-4 h-4 text-velora-muted" />{t("Account settings")}</Link>
 
                   <button
                     onClick={() => signOut("/")}
