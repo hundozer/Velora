@@ -57,9 +57,9 @@ export function FoundingMemberInvites() {
   }
 
   const totals = status.totals;
-  return <section aria-labelledby="founding-invite-heading" className="rounded-3xl border border-velora-gold/40 bg-velora-card p-6 sm:p-8">
+  return <section aria-labelledby="founding-invite-heading" className="rounded-3xl border border-velora-accent/40 bg-velora-card p-6 sm:p-8">
     <div className="flex items-start gap-3">
-      <Crown className="mt-1 h-6 w-6 shrink-0 text-velora-gold" aria-hidden />
+      <Crown className="mt-1 h-6 w-6 shrink-0 text-velora-accent" aria-hidden />
       <div className="min-w-0 flex-1">
         <h2 id="founding-invite-heading" className="text-xl font-bold text-ink">{t("Invite friends")}</h2>
         <p className="mt-2 max-w-2xl text-sm text-velora-textSecondary">{t("Intimo is invitation-only. Bring people you know who would belong here.")}</p>
@@ -81,7 +81,7 @@ export function FoundingMemberInvites() {
         <span className="mb-2 inline-flex items-center gap-2"><Mail className="h-4 w-4" aria-hidden />{t("Their email address")}</span>
         <input required type="email" autoComplete="off" maxLength={254} value={email} onChange={event => setEmail(event.target.value)}
           placeholder="friend@example.com"
-          className="block min-h-12 w-full rounded-xl border border-velora-line bg-velora-surface px-4 text-ink outline-none focus:ring-2 focus:ring-velora-gold" />
+          className="block min-h-12 w-full rounded-xl border border-velora-line bg-velora-surface px-4 text-ink outline-none focus:ring-2 focus:ring-velora-accent" />
       </label>
       <button type="submit" disabled={sending || !email.trim() || !permissionConfirmed || status.remaining === 0}
         className="inline-flex min-h-12 items-center justify-center gap-2 self-end rounded-full bg-velora-warm px-5 font-semibold text-velora-paper disabled:cursor-not-allowed disabled:opacity-40">
