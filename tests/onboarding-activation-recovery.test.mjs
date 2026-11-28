@@ -21,9 +21,9 @@ test("one pending area submit cannot create multiple profiles and errors remain 
   assert.match(wizard, /if \(submittingRef.current\) return/);
   assert.match(wizard, /submittingRef.current = true/);
   assert.match(wizard, /submittingRef.current = false/);
-  assert.match(wizard, /disabled=\{!areaId \|\| submitting\}/);
+  assert.match(wizard, /disabled=\{!readyToCreate \|\| submitting\}/);
   assert.match(wizard, /onClick=\{\(\) => void createProfile\(areaId\)\}/);
-  assert.match(wizard, /setAreaGroup\(value\); setAreaId\(""\)/);
+  assert.match(wizard, /setAreaGroup\(event.target.value as "prague" \| "nearby" \| "elsewhere"\); setAreaId\(""\)/);
   assert.match(wizard, /area.kind === "PRAGUE_DISTRICT"/);
   assert.match(wizard, /\{errorLine\}/);
   assert.doesNotMatch(wizard, /\{t\(errorLine\)\}/);

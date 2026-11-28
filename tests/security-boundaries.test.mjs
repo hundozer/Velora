@@ -251,7 +251,7 @@ test("onboarding creates a verified-session-owned adult profile without self-gra
   assert.match(onboarding, /label=\{t\("Date of birth"\)\}/);
   assert.match(onboarding, /const basicsValid =/);
   assert.match(onboarding, /const basicsValid = onboardingBasicsAreValid\(displayName, dateOfBirth\);/);
-  assert.match(onboarding, /disabled=\{!basicsValid\}/);
+  assert.match(onboarding, /disabled=\{!basicsValid \|\| !partnerValid\}/);
   assert.match(onboarding, /Intimo is only available to adults aged 18 or older/);
 });
 

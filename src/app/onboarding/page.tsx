@@ -19,12 +19,12 @@ import {
 } from "@/lib/onboardingPolicy.mjs";
 
 type ProfileKind = "" | "SINGLE" | "COUPLE";
-type StepId = "kind" | "identity" | "relationship" | "name" | "birthday" | "partner" | "looking" | "area" | "photo";
+type StepId = "kind" | "about" | "basics" | "intent" | "photo";
 
-// One question per screen. Message permission, orientation and headline keep
-// their safe defaults here and live in Privacy Center / profile editing.
-function stepsFor(kind: ProfileKind): StepId[] {
-  return ["kind", "identity", "relationship", "name", "birthday", ...(kind === "COUPLE" ? ["partner" as const] : []), "looking", "area", "photo"];
+// Five easy stages. Required profile fields remain unchanged; private orientation,
+// boundaries and message permissions retain existing safe defaults and separate controls.
+function stepsFor(): StepId[] {
+  return ["kind", "about", "basics", "intent", "photo"];
 }
 
 function birthdayError(value: string, who: "you" | "partner") {
@@ -86,8 +86,10 @@ function OnboardingForm() {
     const area = AREAS.find(a => a.id === val("areaId"));
     if (area) setAreaGroup(area.kind === "PRAGUE_DISTRICT" ? "prague" : area.kind === "NEAR_PRAGUE" ? "nearby" : "elsewhere");
     const candidate = val("step");
-    setStep((candidate && ["kind", "identity", "relationship", "name", "birthday", "partner", "looking", "area"].includes(candidate))
-      ? candidate as StepId : "kind");
+    // Encrypted drafts from the previous nine-screen journey remain readable.
+    const legacy: Record<string, StepId> = { identity: "about", relationship: "about", name: "basics", birthday: "basics", partner: "basics", looking: "intent", area: "intent" };
+    const migrated = legacy[candidate] || candidate;
+    setStep(["kind", "about", "basics", "intent"].includes(migrated) ? migrated as StepId : "kind");
     setSavedDraft(null);
     setDraftNotice("Your saved answers have been restored. Review them before continuing.");
   }
@@ -95,7 +97,7 @@ function OnboardingForm() {
     if (draftBusy || !draftConsent) return;
     setDraftBusy(true); setDraftNotice("");
     try {
-      const draft = { step, profileType, gender, relationshipStatus, displayName, dateOfBirth,
+      const draft = { step: ({ about: "identity", basics: "birthday", intent: "area" } as Record<string, string>)[step] || step, profileType, gender, relationshipStatus, displayName, dateOfBirth,
         partnerDisplayName, partnerDateOfBirth, lookingFor, areaId };
       const response = await fetch("/api/onboarding/draft", { method: "PUT",
         credentials: "same-origin", headers: { "Content-Type": "application/json" },
@@ -118,7 +120,7 @@ function OnboardingForm() {
     finally { setDraftBusy(false); }
   }
 
-  const steps = stepsFor(profileType);
+  const steps = stepsFor();
   const index = steps.indexOf(step);
   const next = () => { setError(""); setStep(steps[index + 1]); };
   const back = index > 0 && step !== "photo" ? () => { setError(""); setStep(steps[index - 1]); } : undefined;
@@ -139,9 +141,10 @@ function OnboardingForm() {
     </details> : null,
   };
 
-  const nameValid = displayName.trim().length >= 2 && displayName.trim().length <= 80;
   const basicsValid = onboardingBasicsAreValid(displayName, dateOfBirth);
   const partnerValid = !whoIsHereError({ profileType, gender, relationshipStatus, partnerDisplayName, partnerDateOfBirth });
+  const aboutValid = Boolean(gender) && Boolean(relationshipStatus) && relationshipOptionsFor(profileType).some(item => item.value === relationshipStatus);
+  const readyToCreate = basicsValid && partnerValid && lookingFor.length > 0 && Boolean(areaId);
 
   async function createProfile(area: string) {
     if (submittingRef.current) return;
@@ -219,7 +222,7 @@ function OnboardingForm() {
     }
   }
 
-  const errorLine = error ? <p role="alert" className="rounded-2xl bg-red-500/10 px-5 py-4 text-base text-velora-danger">{t(error)}</p> : null;
+  const errorLine = error ? <p role="alert" className="border-l-2 border-velora-danger bg-velora-surface px-4 py-3 text-sm text-velora-danger">{t(error)}</p> : null;
 
   // Do not collect DOB, identity or intimate preferences when we have no
   // invitation credential to finish registration. No token or draft is stored
@@ -237,94 +240,92 @@ function OnboardingForm() {
 
   if (step === "kind") return (
     <FlowScreen {...screen} title={t("Who's coming in?")}>
-      <ChoiceCard icon={<User className="h-7 w-7" />} label={t("Just me")} selected={profileType === "SINGLE"} onClick={() => { if (profileType !== "SINGLE") { setGender(""); setRelationshipStatus(""); } setProfileType("SINGLE"); setStep("identity"); }} />
-      <ChoiceCard icon={<Users className="h-7 w-7" />} label={t("We're a couple")} selected={profileType === "COUPLE"} onClick={() => { if (profileType !== "COUPLE") { setGender(""); setRelationshipStatus(""); } setProfileType("COUPLE"); setStep("identity"); }} />
+      <ChoiceCard icon={<User className="h-7 w-7" />} label={t("Just me")} selected={profileType === "SINGLE"} onClick={() => { if (profileType !== "SINGLE") { setGender(""); setRelationshipStatus(""); } setProfileType("SINGLE"); setStep("about"); }} />
+      <ChoiceCard icon={<Users className="h-7 w-7" />} label={t("We're a couple")} selected={profileType === "COUPLE"} onClick={() => { if (profileType !== "COUPLE") { setGender(""); setRelationshipStatus(""); } setProfileType("COUPLE"); setStep("about"); }} />
     </FlowScreen>
   );
 
-  if (step === "identity") return (
-    <FlowScreen {...screen} title={profileType === "COUPLE" ? t("You are…") : t("I am a…")}>
-      {(profileType === "COUPLE" ? COUPLE_COMPOSITIONS : INDIVIDUAL_IDENTITIES).map((item) => (
-        <ChoiceCard key={item.value} label={t(item.label)} selected={gender === item.value} onClick={() => { setGender(item.value); next(); }} />
-      ))}
+  if (step === "about") return (
+    <FlowScreen {...screen} title={profileType === "COUPLE" ? t("Tell us about you both") : t("Tell us about yourself")}
+      action={<BigButton disabled={!aboutValid} onClick={next}>{t("Continue")}</BigButton>}>
+      <p className="text-sm text-velora-muted">{t("Choose what fits. You can edit these later.")}</p>
+      <fieldset className="space-y-3">
+        <legend className="mb-3 text-sm font-semibold text-velora-ink2">{t("Identity")}</legend>
+        <div className="grid grid-cols-2 gap-2">
+          {(profileType === "COUPLE" ? COUPLE_COMPOSITIONS : INDIVIDUAL_IDENTITIES).map((item) => (
+            <ChoiceCard key={item.value} compact label={t(item.label)} selected={gender === item.value}
+              onClick={() => setGender(item.value)} />
+          ))}
+        </div>
+      </fieldset>
+      <fieldset className="space-y-3 pt-4">
+        <legend className="mb-3 text-sm font-semibold text-velora-ink2">{t("Your relationship")}</legend>
+        <div className="grid grid-cols-2 gap-2">
+          {relationshipOptionsFor(profileType).map((item) => (
+            <ChoiceCard key={item.value} compact label={t(item.label)} selected={relationshipStatus === item.value}
+              onClick={() => setRelationshipStatus(item.value)} />
+          ))}
+        </div>
+      </fieldset>
     </FlowScreen>
   );
 
-  if (step === "relationship") return (
-    <FlowScreen {...screen} title={profileType === "COUPLE" ? t("Your relationship") : t("Your situation")}>
-      {relationshipOptionsFor(profileType).map((item) => (
-        <ChoiceCard key={item.value} label={t(item.label)} selected={relationshipStatus === item.value} onClick={() => { setRelationshipStatus(item.value); next(); }} />
-      ))}
-    </FlowScreen>
-  );
-
-  if (step === "name") return (
-    <FlowScreen {...screen} title={profileType === "COUPLE" ? t("Your nickname") : t("What should we call you?")} action={<BigButton disabled={!nameValid} onClick={next}>{t("Continue")}</BigButton>}>
-      <form onSubmit={(event) => { event.preventDefault(); if (nameValid) next(); }}>
-        <BigInput label={t("Nickname")} autoFocus value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={80} autoComplete="nickname" placeholder={t("e.g. Nina")} />
-      </form>
-    </FlowScreen>
-  );
-
-  if (step === "birthday") return (
-    <FlowScreen {...screen} title={t("Your birthday")} action={<BigButton disabled={!basicsValid} onClick={next}>{t("Continue")}</BigButton>}>
-      <BigInput label={t("Date of birth")} type="date" value={dateOfBirth} onChange={(event) => setDateOfBirth(event.target.value)} autoComplete="bday" error={birthdayError(dateOfBirth, "you")} />
-      <p className="text-base text-velora-textMuted">{t("Members see your age, never the date.")}</p>
-    </FlowScreen>
-  );
-
-  if (step === "partner") return (
-    <FlowScreen {...screen} title={t("Your partner")} action={<BigButton disabled={!partnerValid} onClick={next}>{t("Continue")}</BigButton>}>
+  if (step === "basics") return (
+    <FlowScreen {...screen} title={t("What should we call you?")}
+      action={<BigButton disabled={!basicsValid || !partnerValid} onClick={next}>{t("Continue")}</BigButton>}>
       <div className="space-y-5">
-        <BigInput label={t("Their nickname")} value={partnerDisplayName} onChange={(event) => setPartnerDisplayName(event.target.value)} maxLength={80} placeholder={t("e.g. Tom")} />
-        <BigInput label={t("Their date of birth")} type="date" value={partnerDateOfBirth} onChange={(event) => setPartnerDateOfBirth(event.target.value)} error={birthdayError(partnerDateOfBirth, "partner")} />
+        <form onSubmit={(event) => { event.preventDefault(); if (basicsValid && partnerValid) next(); }} className="space-y-5">
+          <BigInput label={t("Nickname")} autoFocus value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={80} autoComplete="nickname" placeholder={t("e.g. Nina")} />
+          <BigInput label={t("Date of birth")} type="date" value={dateOfBirth} onChange={(event) => setDateOfBirth(event.target.value)} autoComplete="bday" error={birthdayError(dateOfBirth, "you")} />
+          {profileType === "COUPLE" && <>
+            <p className="pt-2 text-sm font-semibold text-velora-ink2">{t("Your partner")}</p>
+            <BigInput label={t("Their nickname")} value={partnerDisplayName} onChange={(event) => setPartnerDisplayName(event.target.value)} maxLength={80} placeholder={t("e.g. Tom")} />
+            <BigInput label={t("Their date of birth")} type="date" value={partnerDateOfBirth} onChange={(event) => setPartnerDateOfBirth(event.target.value)} error={birthdayError(partnerDateOfBirth, "partner")} />
+          </>}
+        </form>
+        <p className="text-sm text-velora-muted">{t("Members see your age, never the date.")}</p>
       </div>
     </FlowScreen>
   );
 
-  if (step === "looking") return (
-    <FlowScreen {...screen} title={t("What brings you here?")} action={<BigButton disabled={lookingFor.length === 0} onClick={next}>{t("Continue")}</BigButton>}>
-      <p className="-mt-4 text-base text-velora-textMuted">{t("Pick as many as you like.")}</p>
-      {LOOKING_FOR.map((item) => (
-        <ChoiceCard key={item.value} compact label={t(item.label)} selected={lookingFor.includes(item.value)} onClick={() => setLookingFor((current) => current.includes(item.value) ? current.filter((value) => value !== item.value) : [...current, item.value])} />
-      ))}
-    </FlowScreen>
-  );
-
-
-  if (step === "area") return (
-    <FlowScreen {...screen} title={t("Where are you?")} action={<BigButton disabled={!areaId || submitting} onClick={() => void createProfile(areaId)}>{submitting ? t("Creating your profile…") : t("Continue")}</BigButton>}>
-      <p className="text-base leading-6 text-velora-textMuted">{t("Choose an approximate area, not your address. You can change it later.")}</p>
+  if (step === "intent") return (
+    <FlowScreen {...screen} title={t("What brings you here?")}
+      action={<BigButton disabled={!readyToCreate || submitting} onClick={() => void createProfile(areaId)}>{submitting ? t("Creating your profile…") : t("Continue")}</BigButton>}>
+      <p className="text-sm text-velora-muted">{t("Pick as many as you like.")}</p>
+      <fieldset>
+        <legend className="mb-3 text-sm font-semibold text-velora-ink2">{t("I'm interested in")}</legend>
+        <div className="flex flex-wrap gap-2">
+          {LOOKING_FOR.map((item) => (
+            <button key={item.value} type="button" aria-pressed={lookingFor.includes(item.value)}
+              onClick={() => setLookingFor(current => current.includes(item.value) ? current.filter(value => value !== item.value) : [...current, item.value])}
+              className={`min-h-11 rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${lookingFor.includes(item.value) ? "border-velora-accent bg-velora-accent/10 text-velora-ink" : "border-velora-line bg-velora-surface text-velora-ink2"}`}>
+              {t(item.label)}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+      <div className="space-y-3 pt-5">
+        <label htmlFor="onboarding-area-group" className="block text-sm font-semibold text-velora-ink2">{t("Your approximate area")}</label>
+        <select id="onboarding-area-group" value={areaGroup}
+          onChange={event => { setAreaGroup(event.target.value as "prague" | "nearby" | "elsewhere"); setAreaId(""); }}
+          className="min-h-12 w-full rounded-xl border border-velora-control bg-velora-surface px-4 text-base text-velora-ink">
+          <option value="prague">{t("Prague")}</option><option value="nearby">{t("Near Prague")}</option><option value="elsewhere">{t("Elsewhere")}</option>
+        </select>
+        <select aria-label={t("Choose your area")} value={areaId} onChange={event => { setAreaId(event.target.value); setError(""); }}
+          className="min-h-14 w-full rounded-xl border border-velora-control bg-velora-surface px-4 text-base text-velora-ink">
+          <option value="">{t("Choose your area")}</option>
+          {AREAS.filter(area => areaGroup === "prague" ? area.kind === "PRAGUE_DISTRICT" : areaGroup === "nearby" ? area.kind === "NEAR_PRAGUE" : area.kind === "CZECHIA" || area.kind === "ABROAD").map(area => (
+            <option key={area.id} value={area.id}>{area.name}{area.label ? ` · ${area.label}` : ""}</option>
+          ))}
+        </select>
+        <p className="text-xs text-velora-muted">{t("Choose an approximate area, not your address. You can change it later.")}</p>
+      </div>
       {errorLine}
-      <div role="group" aria-label={t("Choose an area group")} className="grid grid-cols-3 gap-2 rounded-2xl border border-velora-line bg-velora-surface p-2">
-        {([
-          ["prague", "Prague"],
-          ["nearby", "Near Prague"],
-          ["elsewhere", "Elsewhere"],
-        ] as const).map(([value, label]) => (
-          <button key={value} type="button" disabled={submitting} aria-pressed={areaGroup === value}
-            onClick={() => { setAreaGroup(value); setAreaId(""); setError(""); }}
-            className={`min-h-12 rounded-xl px-2 py-2 text-sm font-semibold transition disabled:opacity-50 ${areaGroup === value ? "bg-velora-accent text-velora-paper" : "text-velora-ink hover:bg-ink/10"}`}>
-            {t(label)}
-          </button>
-        ))}
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        {AREAS.filter(area => areaGroup === "prague" ? area.kind === "PRAGUE_DISTRICT" : areaGroup === "nearby" ? area.kind === "NEAR_PRAGUE" : area.kind === "CZECHIA" || area.kind === "ABROAD").map(area => (
-          <button key={area.id} type="button" disabled={submitting} aria-pressed={areaId === area.id}
-            onClick={() => { setAreaId(area.id); setError(""); }}
-            className={`min-h-16 rounded-2xl border-2 px-3 py-3 text-left transition active:scale-[0.98] disabled:opacity-50 ${areaId === area.id ? "border-velora-accent bg-velora-accent/[0.06]" : "border-velora-line bg-velora-surface hover:border-velora-ink/30"}`}>
-            <span className="block text-base font-semibold text-velora-textPrimary">{t(area.name)}</span>
-            {area.label && <span className="block text-xs leading-5 text-velora-textMuted">{t(area.label)}</span>}
-          </button>
-        ))}
-      </div>
-      {areaId && <p role="status" className="text-sm text-velora-textSecondary">{t("Selected area: {area}", { area: t(AREAS.find(area => area.id === areaId)?.name || "") })}</p>}
     </FlowScreen>
   );
 
   return (
-    <FlowScreen step={steps.length} total={steps.length} title={t("Add a photo")}>
+    <FlowScreen step={steps.length} total={steps.length} title={t("Almost there.")}>
       <label className={`flex aspect-[4/5] w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-[2rem] border-2 border-dashed border-velora-gold/50 bg-velora-gold/5 transition hover:border-velora-gold ${photoProgress !== null ? "pointer-events-none" : ""}`}>
         {photoProgress !== null
           ? <span className="text-3xl font-bold text-velora-textPrimary">{photoProgress}%</span>
@@ -333,8 +334,9 @@ function OnboardingForm() {
       </label>
       <p className="flex items-center gap-2 text-base text-velora-textMuted"><Heart className="h-4 w-4 text-velora-gold" aria-hidden />{t("Members only. Keep it non-explicit.")}</p>
       <p className="text-sm leading-6 text-velora-textSecondary">{t("Your profile photo is optional. The separate private age check is required before joining the community.")}</p>
+      <div className="border-l-2 border-velora-accent bg-velora-surface px-4 py-3"><p className="font-semibold text-velora-ink">{t("Next: private age check")}</p><p className="mt-1 text-sm text-velora-ink2">{t("Take a private selfie with a one-time code. Our team will review it before you can use the community.")}</p></div>
       {errorLine}
-      <button type="button" disabled={photoProgress !== null} onClick={() => window.location.replace("/verify-age")} className="w-full py-4 text-lg font-semibold text-velora-textSecondary hover:text-velora-textPrimary">{t("Skip for now")}</button>
+      <button type="button" disabled={photoProgress !== null} onClick={() => window.location.replace("/verify-age")} className="intimo-member-primary w-full py-4 text-base">{t("Continue to age check")}</button>
     </FlowScreen>
   );
 }

@@ -48,10 +48,16 @@ test("profile creation enforces onboarding v3 server-side and keeps only the par
   assert.doesNotMatch(route, /"CREATOR", "LIFESTYLE"/);
 });
 
-test("wizard asks one question per screen and ends in an optional first photo", async () => {
+test("five-stage wizard preserves required fields and optional first photo", async () => {
   const page = await read("src/app/onboarding/page.tsx");
-  assert.match(page, /return \["kind", "identity", "relationship", "name", "birthday", \.\.\.\(kind === "COUPLE" \? \["partner" as const\] : \[\]\), "looking", "area", "photo"\];/);
+  assert.match(page, /return \["kind", "about", "basics", "intent", "photo"\];/);
+  assert.match(page, /relationshipOptionsFor\(profileType\)/);
+  assert.match(page, /onboardingBasicsAreValid\(displayName, dateOfBirth\)/);
+  assert.match(page, /readyToCreate/);
+  assert.match(page, /partnerDisplayName/);
+  assert.match(page, /Next: private age check/);
   assert.match(page, /uploadFileToR2\(file, "avatars"/);
-  assert.match(page, /Skip for now/);
+  assert.match(page, /Continue to age check/);
+  assert.match(page, /profile photo is optional/);
   assert.match(page, /whoIsHereError\(/);
 });

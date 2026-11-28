@@ -56,7 +56,8 @@ test("onboarding asks for an area, not a free-form city", async () => {
   const page = await read("src/app/onboarding/page.tsx");
   assert.ok(page.includes('AREAS.filter(area => areaGroup === "prague" ? area.kind === "PRAGUE_DISTRICT"'));
   assert.ok(page.includes('areaGroup === "nearby" ? area.kind === "NEAR_PRAGUE"'));
-  assert.ok(page.includes('disabled={!areaId || submitting}'));
+  assert.ok(page.includes('disabled={!readyToCreate || submitting}'));
+  assert.match(page, /readyToCreate = basicsValid && partnerValid && lookingFor.length > 0 && Boolean\(areaId\)/);
   assert.match(page, /areaId: area,/);
   assert.doesNotMatch(page, /LOCATION_DATA/);
 });
