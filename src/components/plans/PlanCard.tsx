@@ -30,7 +30,7 @@ export function PlanCard({ plan, onEnd, onReport, showTitle = true }: { showTitl
   const { t, locale } = useTranslation();
   return (
     <article className="border-t border-velora-line py-5">
-      <p className="font-display text-[26px] leading-none text-velora-copperInk">
+      <p className="font-display text-[26px] leading-none text-velora-accent">
         {glanceTime(plan, undefined, t, locale)}<span className="ml-2 font-sans text-[14px] text-velora-muted">{t("until {clock}", { clock: clock(plan.expiresAt) })}{plan.areaName ? ` · ${plan.areaName}` : ""}</span>
       </p>
       {showTitle && <h3 className="mt-2 font-display text-[24px] leading-tight text-velora-ink"><Link href={`/tonight/invitation/${plan.id}`} className="hover:underline">{t(plan.title)}</Link></h3>}
