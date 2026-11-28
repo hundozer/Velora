@@ -8,7 +8,7 @@ export function FoundingMemberHub() {
   const { t } = useTranslation();
   return <main className="mx-auto max-w-3xl space-y-6 px-4 py-9 sm:px-6">
     <div className="flex items-start gap-4">
-      <Crown className="mt-1 h-8 w-8 text-velora-gold" aria-hidden />
+      <Crown className="mt-1 h-8 w-8 text-velora-accent" aria-hidden />
       <div>
         <h1 className="text-3xl font-bold text-ink">{t("Founding Member")}</h1>
         <p className="mt-2 text-sm text-velora-textSecondary">{t("Thank you for helping build Intimo from the beginning.")}</p>
@@ -16,6 +16,6 @@ export function FoundingMemberHub() {
     </div>
     <FoundingMemberInvites />
     <p className="text-sm text-velora-textMuted">{t("Your membership is recognition, not a moderator role. Founding Members can invite as many people as they like.")}</p>
-    <Link href="/me" className="inline-flex min-h-11 items-center text-sm font-semibold text-velora-gold">{t("Back to account")}</Link>
+    <Link href="/me" className="inline-flex min-h-11 items-center text-sm font-semibold text-velora-accent">{t("Back to account")}</Link>
   </main>;
 }
