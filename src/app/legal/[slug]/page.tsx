@@ -22,7 +22,7 @@ export default function LegalDraftPage({ params }: { params: { slug: string } })
   const t = serverT();
   return <main className="max-w-3xl mx-auto px-4 py-12 space-y-8">
     <div><h1 className="font-display font-bold text-ink text-5xl leading-[1.02] sm:text-6xl">{t(policy.title)}</h1><p className="mt-2 text-xs text-velora-textMuted">{t("Intimo • contact@intimo.live • Last updated: 2026-08-07")}</p></div>
-    {policy.sections.map(([title, body]) => <section key={title} className="space-y-2"><h2 className="text-lg font-bold text-velora-gold">{t(title)}</h2><p className="text-sm leading-7 text-velora-textSecondary">{t(body)}</p></section>)}
-    <Link href="/settings" className="text-sm text-velora-gold underline">{t("Open Privacy Center")}</Link>
+    {policy.sections.map(([title, body]) => <section key={title} className="space-y-2"><h2 className="text-lg font-bold text-velora-accent">{t(title)}</h2><p className="text-sm leading-7 text-velora-textSecondary">{t(body)}</p></section>)}
+    <Link href="/settings" className="text-sm text-velora-accent underline">{t("Open Privacy Center")}</Link>
   </main>;
 }
