@@ -72,12 +72,12 @@ export default function ActivityPage() {
           ) : (
             <div className="intimo-member-panel px-7 py-12 text-left">
               {tab === "VISITORS" && data.browseInvisibly ? (
-                <p className="text-sm text-velora-textSecondary">{t("You browse invisibly, so visitors are hidden for you too. Change it in")}{" "}<Link href="/settings" className="text-velora-gold underline">{t("Settings → Privacy")}</Link>.</p>
+                <p className="text-sm text-velora-textSecondary">{t("You browse invisibly, so visitors are hidden for you too. Change it in")}{" "}<Link href="/settings" className="text-velora-accent underline">{t("Settings → Privacy")}</Link>.</p>
               ) : (
                 <>
                   <h2 className="intimo-member-subheading text-velora-ink">{tab === "MUTUAL" ? t("No matches yet") : tab === "INTERESTED" ? t("Nobody yet") : t("No visitors yet")}</h2>
                   <p className="mt-2 text-sm text-velora-textSecondary">{t("A photo, your desires and a plan for tonight get you noticed faster.")}</p>
-                  <div className="mt-4 flex justify-center gap-4 text-sm font-semibold"><Link href="/people" className="text-velora-gold underline">{t("Find people")}</Link><Link href="/tonight/new" className="text-velora-gold underline">{t("Post a plan")}</Link></div>
+                  <div className="mt-4 flex justify-center gap-4 text-sm font-semibold"><Link href="/people" className="text-velora-accent underline">{t("Find people")}</Link><Link href="/tonight/new" className="text-velora-accent underline">{t("Post a plan")}</Link></div>
                 </>
               )}
             </div>
