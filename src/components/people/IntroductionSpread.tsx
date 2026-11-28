@@ -35,7 +35,7 @@ export function IntroductionSpread({ person, next, priority = false, onNext }: {
         </>
       ) : (
         <div aria-hidden className="absolute inset-0 -z-10">
-          <div className="absolute left-1/2 top-[38%] h-[70vmin] w-[70vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-velora-copper/25 blur-3xl" />
+          <div className="absolute left-1/2 top-[38%] h-[70vmin] w-[70vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-velora-accent/25 blur-3xl" />
           <span className="absolute right-6 top-24 font-display text-[9rem] italic leading-none text-velora-onPhoto/[0.07] md:right-16 md:top-16 md:text-[16rem]">{monogram(person.displayName)}</span>
         </div>
       )}
@@ -46,7 +46,7 @@ export function IntroductionSpread({ person, next, priority = false, onNext }: {
           <>
             {status && (
               <p className="flex items-center gap-2 text-[14px] text-velora-onPhoto/85">
-                {person.presence === "ONLINE" && <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-velora-copperLight motion-reduce:animate-none" />}
+                {person.presence === "ONLINE" && <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-velora-accentHover motion-reduce:animate-none" />}
                 {t(status)}
               </p>
             )}
