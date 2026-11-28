@@ -49,13 +49,13 @@ function CategoryPreferences({ endpoint, intro, pauseLabel, loadError, saveError
         return (
           <label key={category.value} className={`flex items-center justify-between gap-4 rounded-2xl border border-ink/10 bg-ink/5 p-4 ${allOff ? "opacity-50" : "cursor-pointer"}`}>
             <span className="text-sm text-velora-textPrimary">{t(category.label)}</span>
-            <input type="checkbox" className="h-4 w-4 accent-velora-gold" checked={on} disabled={allOff} onChange={() => save(on ? [...optOut, category.value] : optOut.filter((value) => value !== category.value))} />
+            <input type="checkbox" className="h-4 w-4 accent-velora-accent" checked={on} disabled={allOff} onChange={() => save(on ? [...optOut, category.value] : optOut.filter((value) => value !== category.value))} />
           </label>
         );
       })}
       <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-ink/10 bg-ink/5 p-4">
         <span className="text-sm text-velora-textPrimary">{t(pauseLabel)}</span>
-        <input type="checkbox" className="h-4 w-4 accent-velora-gold" checked={allOff} onChange={() => save(allOff ? optOut.filter((value) => value !== "ALL") : [...optOut, "ALL"])} />
+        <input type="checkbox" className="h-4 w-4 accent-velora-accent" checked={allOff} onChange={() => save(allOff ? optOut.filter((value) => value !== "ALL") : [...optOut, "ALL"])} />
       </label>
       {error && <p className="text-xs text-velora-danger" role="alert">{t(error)}</p>}
     </div>
