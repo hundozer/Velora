@@ -8,6 +8,12 @@ Authority: docs/brand/BRAND.md and src/app/globals.css. Authentication and notif
 
 Shared Button, Card, Input, Badge and Modal migrated to semantic styles. Primary/secondary Button variants added without removing legacy public variants. Navigation, device settings, install banner and installed notification offer updated. Touch targets and modal scrolling improved. No actual browser or device acceptance yet. Legacy token consumers across individual pages remain to be audited; do not remove aliases until that is done.
 
+## Subsequent implementation batches
+
+Account pages, discovery filters, profile stories, chat and plan screens migrated away from targeted gold/copper aliases; Founding Member promotion email palette aligned. Navigation and messaging regression assertions updated to preserve the same checks with Ice tokens. CI passed at 6496e38ac3fe9fce8861e8dcf7def8d8b59cba77 before the latest email and audit changes.
+
+Run `node scripts/audit-design-system.mjs` for the residual inventory; ordinary CI now emits it through tests/design-migration.test.mjs. Strict mode is available but not yet enabled because residual references must be reviewed. The scan is pattern-based, not proof of visual compliance or exhaustive color equivalence. Route checklist remains unverified in browser.
+
 ## Route inventory (discovered, not visually verified)
 
 - [ ] `src/app/about/page.tsx`
