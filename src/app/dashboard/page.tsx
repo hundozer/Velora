@@ -20,8 +20,8 @@ export default function DashboardPage() {
 
   return (
     <main className="mx-auto max-w-6xl space-y-8 px-4 py-10 sm:px-6">
-      <section className="rounded-3xl border border-velora-gold/30 bg-velora-card p-6 shadow-gold-glow sm:p-9">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-velora-gold">{t("Your Intimo home")}</p>
+      <section className="rounded-3xl border border-velora-accent/30 bg-velora-card p-6 sm:p-9">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-velora-accent">{t("Your Intimo home")}</p>
         <h1 className="mt-3 font-display font-bold text-ink text-5xl leading-[1.02] sm:text-6xl">{t("Welcome, {firstName}", { firstName })}</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-velora-textSecondary">{t("Your home starts empty and grows only from real profiles, conversations and connections you choose.")}</p>
       </section>
@@ -77,10 +77,10 @@ export default function DashboardPage() {
             <h2 id="profile-progress" className="text-lg font-bold text-ink">{t("Profile completion")}</h2>
             <p className="mt-1 text-sm text-velora-textMuted">{t("Calculated from your real profile fields.")}</p>
           </div>
-          <span className="text-2xl font-bold text-velora-gold">{completion}%</span>
+          <span className="text-2xl font-bold text-velora-accent">{completion}%</span>
         </div>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-ink/10" role="progressbar" aria-valuenow={completion} aria-valuemin={0} aria-valuemax={100}>
-          <div className="h-full rounded-full bg-gold-gradient" style={{ width: `${completion}%` }} />
+          <div className="h-full rounded-full bg-velora-accent" style={{ width: `${completion}%` }} />
         </div>
         {completion < 100 && (
           <Link href={`/profile/${profile?.id || "me"}`} className="mt-5 inline-flex items-center gap-2 rounded-full bg-velora-warm px-5 py-3 text-sm font-semibold text-velora-bg">
@@ -99,9 +99,9 @@ export default function DashboardPage() {
             ["View favourites", "Profiles you have genuinely saved appear here.", "/favorites", UserRound],
             ["Privacy and settings", "Control visibility, consent and your account.", "/settings", Settings],
           ].map(([title, copy, href, Icon]) => (
-            <Link key={String(href)} href={String(href)} className="group rounded-2xl border border-ink/10 bg-velora-card p-5 transition hover:border-velora-gold/50 hover:bg-ink/[0.06]">
-              <Icon className="h-6 w-6 text-velora-gold" />
-              <h3 className="mt-4 font-bold text-ink group-hover:text-velora-gold">{t(String(title))}</h3>
+            <Link key={String(href)} href={String(href)} className="group rounded-2xl border border-ink/10 bg-velora-card p-5 transition hover:border-velora-accent/50 hover:bg-ink/[0.06]">
+              <Icon className="h-6 w-6 text-velora-accent" />
+              <h3 className="mt-4 font-bold text-ink group-hover:text-velora-accent">{t(String(title))}</h3>
               <p className="mt-2 text-sm leading-5 text-velora-textMuted">{t(String(copy))}</p>
             </Link>
           ))}
