@@ -37,6 +37,22 @@ Product decisions optimise for their safety, control and willingness to stay, no
 
 ---
 
+## Onboarding UX V2 — five-stage beta journey (28 November 2026)
+
+**Goal:** Tinder-level ease of interaction without Tinder's swiping mechanics or reduced privacy. Consolidate the old eight / nine onboarding screens to five stages for both single and couple profiles, using the same validated fields and existing invitation, email, manual age-verification and server-side consent gates.
+
+| ID | Change | Status |
+|---|---|---|
+| OB-01 | Stages: Who's joining → Identity + relationship → Nickname + DOB (+ partner details) → Interests + approximate area → Optional profile photo / age check handoff | 🟡 Feature PR candidate; production pending |
+| OB-02 | Mobile interaction: compact chips, selectable identity cards, searchable-through-native area select, consistent sticky CTA, flat brand-aligned controls, keyboard-friendly text entry | 🟡 Feature PR candidate; production pending |
+| OB-03 | Existing explicit opt-in encrypted seven-day draft; migrate prior draft step IDs at resume; no sensitive browser persistence or implicit tracking | 🟡 Feature PR candidate; test pending |
+| OB-04 | Mandatory age check unchanged: private one-time-code selfie, manual review, no member access before approval; photo remains optional | 🟡 Feature PR candidate; E2E pending |
+| OB-05 | Release acceptance: tests/typecheck/lint/build; single and couple pathways, expiry/error/recovery, area and interest selection, 320/375/430 px + keyboard, accessible focus and physical-device PWA verification | ⬜ Browser/device walkthrough outstanding |
+
+**Measurement:** no event logging of personal answers. Only after a privacy review consider anonymous aggregate funnel completion by stage, without counting small cohorts or attaching identities.
+
+---
+
 ## Prague discovery / Heatmapa-inspired roadmap (24 November 2026)
 
 **Product decision:** borrow Heatmapa's quick, time-sensitive discovery experience, not continuous location tracking. Carolinka cited the *feeling of the app*, not a request for user-tracking heatmaps. The goal is to discover real Prague plans or approved events and safely take action.
