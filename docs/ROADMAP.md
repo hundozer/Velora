@@ -43,10 +43,10 @@ Product decisions optimise for their safety, control and willingness to stay, no
 
 | ID | Change | Status |
 |---|---|---|
-| OB-01 | Stages: Who's joining → Identity + relationship → Nickname + DOB (+ partner details) → Interests + approximate area → Optional profile photo / age check handoff | 🟡 Feature PR candidate; production pending |
-| OB-02 | Mobile interaction: compact chips, selectable identity cards, searchable-through-native area select, consistent sticky CTA, flat brand-aligned controls, keyboard-friendly text entry | 🟡 Feature PR candidate; production pending |
-| OB-03 | Existing explicit opt-in encrypted seven-day draft; migrate prior draft step IDs at resume; no sensitive browser persistence or implicit tracking | 🟡 Feature PR candidate; test pending |
-| OB-04 | Mandatory age check unchanged: private one-time-code selfie, manual review, no member access before approval; photo remains optional | 🟡 Feature PR candidate; E2E pending |
+| OB-01 | Stages: Who's joining → Identity + relationship → Nickname + DOB (+ partner details) → Interests + approximate area → Optional profile photo / age check handoff | ✅ Deployed in PR #215 (28 Nov 2026); automated checks passed, browser acceptance pending |
+| OB-02 | Mobile interaction: compact chips, selectable identity cards, searchable-through-native area select, consistent sticky CTA, flat brand-aligned controls, keyboard-friendly text entry | ✅ Deployed in PR #215 (28 Nov 2026); automated checks passed, browser acceptance pending |
+| OB-03 | Existing explicit opt-in encrypted seven-day draft; migrate prior draft step IDs at resume; no sensitive browser persistence or implicit tracking | ✅ Deployed in PR #215; tests passed, manual draft-resume acceptance pending |
+| OB-04 | Mandatory age check unchanged: private one-time-code selfie, manual review, no member access before approval; photo remains optional | ✅ Existing manual age verification unchanged; E2E acceptance pending |
 | OB-05 | Release acceptance: tests/typecheck/lint/build; single and couple pathways, expiry/error/recovery, area and interest selection, 320/375/430 px + keyboard, accessible focus and physical-device PWA verification | ⬜ Browser/device walkthrough outstanding |
 
 **Measurement:** no event logging of personal answers. Only after a privacy review consider anonymous aggregate funnel completion by stage, without counting small cohorts or attaching identities.
