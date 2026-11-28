@@ -46,7 +46,7 @@ test("People never shows member counts and keeps the editorial patterns", async 
 test("text navigation marks the current place with a dot and darkens over introductions", async () => {
   const nav = await read("src/components/layout/MobileNavigation.tsx");
   assert.match(nav, /aria-current=\{active \? "page" : undefined\}/);
-  assert.match(nav, /bg-velora-copper/);
+  assert.match(nav, /bg-velora-accent/);
   assert.match(nav, /useNavTone\(\)/);
   assert.doesNotMatch(nav, /lucide-react/, "words, not icons");
   const spread = await read("src/components/people/IntroductionSpread.tsx");
