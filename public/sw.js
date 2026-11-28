@@ -1,7 +1,7 @@
 // Intimo service worker (P1-23). Deliberately minimal and private:
 // it caches only a generic offline page, never member content, API
 // responses or images, so nothing personal is stored on the device.
-const OFFLINE_CACHE = "intimo-offline-v1";
+const OFFLINE_CACHE = "intimo-offline-v2";
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {
@@ -18,7 +18,11 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.mode !== "navigate") return; // network only for everything else
-  event.respondWith(fetch(event.request).catch(() => caches.match(OFFLINE_URL)));
+  event.respondWith(fetch(event.request).catch(async () => {
+    // Navigations only. Do not cache or expose private page content.
+    const cached = await caches.match(OFFLINE_URL);
+    return cached || Response.error();
+  }));
 });
 
 // Web push (Phase 2). Payloads are discreet by design: the title is always
