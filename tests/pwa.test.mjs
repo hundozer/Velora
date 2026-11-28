@@ -17,7 +17,7 @@ test("manifest is installable and discreet", async () => {
 
 test("service worker caches only the generic offline page", async () => {
   const sw = await read("public/sw.js");
-  assert.match(sw, /if \(event\.request\.mode !== "navigate"\) return;/);
+  assert.match(sw, /if \(event\.request\.mode !== "navigate" \|\| event\.request\.method !== "GET"\) return;/);
   assert.doesNotMatch(sw, /cache\.put|addAll\(/);
   assert.match(await read("public/offline.html"), /This page contains no personal information\./);
 });

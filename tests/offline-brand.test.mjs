@@ -14,8 +14,10 @@ test("offline shell follows official Intimo palette, not legacy gold styling", a
 });
 test("PWA service worker rotates shell cache, never caches private member content", async () => {
   const worker = await read("public/sw.js");
-  assert.match(worker, /intimo-offline-v2/);
+  assert.match(worker, /intimo-offline-v3/);
   assert.match(worker, /event\.request\.mode !== "navigate"/);
-  assert.match(worker, /caches\.match\(OFFLINE_URL\)/);
+  assert.match(worker, /cache\.match\(OFFLINE_URL\)/);
+  assert.match(worker, /cache: "reload"/);
+  assert.match(worker, /key.startsWith\("intimo-offline-"\)/);
   assert.doesNotMatch(worker, /cache\.put\(event\.request/);
 });
