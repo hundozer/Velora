@@ -240,8 +240,8 @@ function OnboardingForm() {
 
   if (step === "kind") return (
     <FlowScreen {...screen} title={t("Who's coming in?")}>
-      <ChoiceCard icon={<User className="h-7 w-7" />} label={t("Just me")} selected={profileType === "SINGLE"} onClick={() => { if (profileType !== "SINGLE") { setGender(""); setRelationshipStatus(""); } setProfileType("SINGLE"); setStep("identity"); }} />
-      <ChoiceCard icon={<Users className="h-7 w-7" />} label={t("We're a couple")} selected={profileType === "COUPLE"} onClick={() => { if (profileType !== "COUPLE") { setGender(""); setRelationshipStatus(""); } setProfileType("COUPLE"); setStep("identity"); }} />
+      <ChoiceCard icon={<User className="h-7 w-7" />} label={t("Just me")} selected={profileType === "SINGLE"} onClick={() => { if (profileType !== "SINGLE") { setGender(""); setRelationshipStatus(""); } setProfileType("SINGLE"); setStep("about"); }} />
+      <ChoiceCard icon={<Users className="h-7 w-7" />} label={t("We're a couple")} selected={profileType === "COUPLE"} onClick={() => { if (profileType !== "COUPLE") { setGender(""); setRelationshipStatus(""); } setProfileType("COUPLE"); setStep("about"); }} />
     </FlowScreen>
   );
 
