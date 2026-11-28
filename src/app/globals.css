@@ -20,9 +20,6 @@
   --accent: 168 213 239;     /* #A8D5EF ice blue */
   --accent-hover: 197 230 249;
   --blush: 42 57 68;
-  --copper: 168 213 239;
-  --copper-ink: 168 213 239;
-  --copper-light: 197 230 249;
   --sage: 162 218 187;
   --night: 18 22 26;
   --danger: 255 167 158;
@@ -63,16 +60,6 @@ body {
 ::-webkit-scrollbar-track { background: rgb(var(--paper)); }
 ::-webkit-scrollbar-thumb { background: rgb(var(--ink) / 0.15); border-radius: 9999px; }
 
-/* Shared surfaces keep older screens on the same theme. */
-.glass-panel,
-.glass-panel-gold {
-  background: rgb(var(--surface));
-  border: 1px solid rgb(var(--line));
-}
-.glass-panel-gold { border-color: rgb(var(--accent) / 0.25); }
-
-.gold-gradient-text { color: rgb(var(--accent)); }
-.gold-border-glow { box-shadow: 0 0 0 1px rgb(var(--accent) / 0.2); }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

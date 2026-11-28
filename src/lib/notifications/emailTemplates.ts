@@ -10,31 +10,31 @@ export class IntimoEmailTemplates {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>${title}</title>
         <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0c10; color: #e5e5e7; margin: 0; padding: 40px 20px; line-height: 1.5; }
-          .container { max-width: 560px; margin: 0 auto; background: #13151b; border: 1px solid rgba(212, 175, 55, 0.35); border-radius: 24px; padding: 40px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8); }
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #191C20; color: #F1E8DC; margin: 0; padding: 40px 20px; line-height: 1.5; }
+          .container { max-width: 560px; margin: 0 auto; background: #252B31; border: 1px solid #46525E; border-radius: 0; padding: 40px;  }
           .logo { text-align: center; margin-bottom: 28px; }
-          .logo-mark { font-family: Georgia, serif; font-size: 32px; font-weight: bold; color: #d4af37; letter-spacing: 2px; }
-          .logo-sub { font-size: 10px; letter-spacing: 3px; color: #a1a1aa; text-transform: uppercase; margin-top: 4px; }
-          .title { font-family: Georgia, serif; font-size: 24px; font-weight: bold; color: #f3e5ab; text-align: center; margin-bottom: 12px; }
-          .subtitle { font-size: 13px; color: #a1a1aa; text-align: center; margin-bottom: 32px; line-height: 1.6; }
-          .content-box { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 24px; margin-bottom: 28px; font-size: 13px; color: #d1d5db; }
+          .logo-mark { font-size: 22px; font-weight: 600; color: #F1E8DC; }
+          .logo-sub { font-size: 10px; letter-spacing: 3px; color: #A9A39E; text-transform: uppercase; margin-top: 4px; }
+          .title { font-family: Georgia, serif; font-size: 28px; font-weight: 400; color: #F1E8DC; text-align: center; margin-bottom: 12px; }
+          .subtitle { font-size: 13px; color: #A9A39E; text-align: center; margin-bottom: 32px; line-height: 1.6; }
+          .content-box { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 0; padding: 24px; margin-bottom: 28px; font-size: 13px; color: #CFC7BC; }
           .button-container { text-align: center; margin: 32px 0; }
-          .btn { display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #f3e5ab 100%); color: #0b0c10; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; padding: 16px 36px; border-radius: 9999px; text-decoration: none; box-shadow: 0 4px 20px rgba(212, 175, 55, 0.35); }
-          .link-box { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(212, 175, 55, 0.2); padding: 12px; border-radius: 12px; font-size: 11px; word-break: break-all; color: #d4af37; text-align: center; margin-top: 20px; font-family: monospace; }
-          .footer { margin-top: 36px; font-size: 11px; color: #71717a; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 24px; }
-          .alert-badge { display: inline-block; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; padding: 4px 12px; border-radius: 9999px; margin-bottom: 12px; }
+          .btn { display: inline-block; background: #E0704F; color: #191C20; font-weight: 600; font-size: 14px; padding: 16px 36px; border-radius: 9999px; text-decoration: none;  }
+          .link-box { background: rgba(0, 0, 0, 0.4); border: 1px solid #46525E; padding: 12px; border-radius: 12px; font-size: 11px; word-break: break-all; color: #A8D5EF; text-align: center; margin-top: 20px; font-family: monospace; }
+          .footer { margin-top: 36px; font-size: 11px; color: #A9A39E; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 24px; }
+          .alert-badge { display: inline-block; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #FFA79E; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; padding: 4px 12px; border-radius: 9999px; margin-bottom: 12px; }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="logo">
-            <div class="logo-mark">INTIMO</div>
+            <div class="logo-mark">Intimo</div>
             <div class="logo-sub">Private Members Club</div>
           </div>
           ${bodyContent}
           <div class="footer">
             Intimo International • High-Discretion Adult Marketplace<br>
-            Support & Privacy Desk: <a href="mailto:${this.SUPPORT_EMAIL}" style="color: #d4af37; text-decoration: none;">${this.SUPPORT_EMAIL}</a><br>
+            Support & Privacy Desk: <a href="mailto:${this.SUPPORT_EMAIL}" style="color: #A8D5EF; text-decoration: none;">${this.SUPPORT_EMAIL}</a><br>
             © 2026 Intimo. All rights reserved.
           </div>
         </div>
@@ -98,7 +98,7 @@ export class IntimoEmailTemplates {
       <div class="content-box">
         <p style="margin-top: 0;"><strong>Account Recovery</strong></p>
         <p>We received a request to reset the password for your Intimo account. If you initiated this request, click below to set a new password.</p>
-        <p style="margin-bottom: 0; color: #fca5a5;">If you did not request a password reset, please change your credentials immediately or contact support.</p>
+        <p style="margin-bottom: 0; color: #FFA79E;">If you did not request a password reset, please change your credentials immediately or contact support.</p>
       </div>
       <div class="button-container">
         <a href="${resetLink}" class="btn">Reset Password Now</a>
@@ -120,7 +120,7 @@ export class IntimoEmailTemplates {
       </div>
       <div class="content-box">
         <p style="margin-top: 0;"><strong>Activity Details:</strong></p>
-        <p style="font-family: monospace; color: #d4af37;">${details}</p>
+        <p style="font-family: monospace; color: #A8D5EF;">${details}</p>
         <p style="margin-bottom: 0;">If this activity was authorized by you, no further action is required. If you suspect unauthorized access, lock your account immediately.</p>
       </div>
       <div class="button-container">

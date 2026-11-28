@@ -12,8 +12,8 @@ import { useUnreadCounts } from "@/lib/notifications/useUnreadCounts";
 
 /**
  * Bottom navigation as words (approved v33): People · Tonight · Messages · You,
- * the current one marked with a copper dot. Dark variant over dark openings.
- * Something new on Messages or You shows as a small copper dot beside the word
+ * the current one marked with a Ice dot. Dark variant over dark openings.
+ * Something new on Messages or You shows as a small Ice dot beside the word
  * (never a public number); tapping the current tab scrolls back to the top.
  */
 export const MobileNavigation: React.FC = () => {
@@ -57,7 +57,7 @@ export const MobileNavigation: React.FC = () => {
             >
               <span className="relative">
                 {t(item.label)}
-                {fresh && <span aria-hidden data-unread className="absolute -right-2.5 top-0 h-1.5 w-1.5 rounded-full bg-velora-copper" />}
+                {fresh && <span aria-hidden data-unread className="absolute -right-2.5 top-0 h-1.5 w-1.5 rounded-full bg-velora-accent" />}
               </span>
               {fresh && <span className="sr-only">{item.href === "/messages" ? t("New messages") : t("New notifications")}</span>}
               <span aria-hidden className={`mt-1.5 h-1 w-1 rounded-full ${active ? "bg-velora-warm" : "bg-transparent"}`} />

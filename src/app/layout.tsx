@@ -71,7 +71,7 @@ export default function RootLayout({
   const lang = serverLang();
   return (
     <html lang={lang}>
-      <body className="antialiased bg-intimo-bg text-intimo-textPrimary min-h-screen flex flex-col selection:bg-intimo-gold/30 selection:text-intimo-gold pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+      <body className="antialiased bg-intimo-bg text-intimo-textPrimary min-h-screen flex flex-col selection:bg-intimo-accent/30 selection:text-intimo-accent pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
         <LanguageProvider initialLanguage={lang}>
           <AuthProvider>
             <Navbar />

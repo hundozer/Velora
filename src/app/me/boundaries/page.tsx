@@ -8,7 +8,7 @@ import { BOUNDARY_GROUPS, BOUNDARY_KINDS, BOUNDARY_PREFERENCES, type BoundaryPre
 
 const PREFERENCE_STYLE: Record<BoundaryPreference, string> = {
   COMFORTABLE: "border-emerald-400/60 bg-emerald-400/10 text-velora-textPrimary",
-  ASK_FIRST: "border-velora-gold bg-velora-gold/15 text-velora-textPrimary",
+  ASK_FIRST: "border-velora-accent bg-velora-accent/15 text-velora-textPrimary",
   NOT_INTERESTED: "border-red-400/60 bg-red-500/10 text-velora-danger",
 };
 
@@ -60,14 +60,14 @@ export default function BoundariesPage() {
   }
 
   if (status === "loading") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textMuted">{t("Loading…")}</main>;
-  if (status === "signed-out") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textSecondary"><Link href="/auth/login?returnTo=%2Fme%2Fboundaries" className="text-velora-gold underline">{t("Sign in")}</Link>{" "}{t("to set your boundaries.")}</main>;
+  if (status === "signed-out") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textSecondary"><Link href="/auth/login?returnTo=%2Fme%2Fboundaries" className="text-velora-accent underline">{t("Sign in")}</Link>{" "}{t("to set your boundaries.")}</main>;
   if (status === "error") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-danger">{t("Your boundaries could not be loaded. Please refresh.")}</main>;
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 px-4 pb-32 pt-6">
       <Link href="/me" className="inline-flex items-center gap-1 text-xs text-velora-textMuted hover:text-velora-textPrimary"><ArrowLeft className="h-3.5 w-3.5" aria-hidden />{t("Me")}</Link>
       <header className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">{t("Boundaries")}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-accent">{t("Boundaries")}</p>
         <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">{t("How to approach you")}</h1>
         <p className="text-sm leading-relaxed text-velora-textSecondary">{t("Members see these on your profile. “Not interested” on first messages and photos is enforced, so the message or request can't be sent.")}</p>
       </header>
@@ -98,7 +98,7 @@ export default function BoundariesPage() {
         </section>
       ))}
 
-      <p className="text-xs text-velora-textMuted">{t("Who can message you at all is in")}{" "}<Link href="/settings" className="text-velora-gold underline">{t("Settings → Privacy")}</Link>.</p>
+      <p className="text-xs text-velora-textMuted">{t("Who can message you at all is in")}{" "}<Link href="/settings" className="text-velora-accent underline">{t("Settings → Privacy")}</Link>.</p>
 
       <div className="fixed inset-x-0 bottom-16 z-30 border-t border-ink/10 bg-velora-bg/95 px-4 py-3 backdrop-blur md:bottom-0">
         <div className="mx-auto flex max-w-2xl items-center gap-3">

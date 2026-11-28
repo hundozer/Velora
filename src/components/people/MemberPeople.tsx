@@ -63,7 +63,7 @@ async function fetchIntroductions(): Promise<Person[]> {
 function ModeSwitch({ view, onChange, dark }: { view: View; onChange: (view: View) => void; dark: boolean }) {
   const { t } = useTranslation();
   const item = (value: View, label: string) => (
-    <button type="button" aria-pressed={view === value} onClick={() => onChange(value)} className={`min-h-11 border-b-2 pb-0.5 text-[15px] transition-colors ${view === value ? `border-velora-copper font-semibold ${dark ? "text-velora-onPhoto md:text-velora-ink" : "text-velora-ink"}` : `border-transparent ${dark ? "text-velora-onPhoto/75 hover:text-velora-onPhoto md:text-velora-muted md:hover:text-velora-ink" : "text-velora-muted hover:text-velora-ink"}`}`}>{t(label)}</button>
+    <button type="button" aria-pressed={view === value} onClick={() => onChange(value)} className={`min-h-11 border-b-2 pb-0.5 text-[15px] transition-colors ${view === value ? `border-velora-accent font-semibold ${dark ? "text-velora-onPhoto md:text-velora-ink" : "text-velora-ink"}` : `border-transparent ${dark ? "text-velora-onPhoto/75 hover:text-velora-onPhoto md:text-velora-muted md:hover:text-velora-ink" : "text-velora-muted hover:text-velora-ink"}`}`}>{t(label)}</button>
   );
   return <nav aria-label={t("People view")} className="flex items-center gap-5">{item("introductions", "Introductions")}{item("everyone", "Everyone")}</nav>;
 }

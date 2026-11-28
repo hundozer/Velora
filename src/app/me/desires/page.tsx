@@ -9,8 +9,8 @@ import { DESIRES, DESIRE_CATEGORIES, DESIRE_STATES, defaultVisibility, type Desi
 type Selection = { state: DesireState; visibility: DesireVisibility };
 
 const STATE_STYLE: Record<DesireState, string> = {
-  LOVE: "border-velora-gold bg-velora-gold/20 text-velora-textPrimary",
-  INTO: "border-velora-gold/70 bg-velora-gold/10 text-velora-textPrimary",
+  LOVE: "border-velora-accent bg-velora-accent/20 text-velora-textPrimary",
+  INTO: "border-velora-accent/70 bg-velora-accent/10 text-velora-textPrimary",
   CURIOUS: "border-ink/40 bg-ink/10 text-velora-textPrimary",
   NOT_FOR_ME: "border-ink/25 bg-ink/5 text-velora-textSecondary",
   HARD_LIMIT: "border-red-400/60 bg-red-500/10 text-velora-danger",
@@ -78,7 +78,7 @@ export default function DesiresPage() {
   }
 
   if (status === "loading") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textMuted">{t("Loading…")}</main>;
-  if (status === "signed-out") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textSecondary"><Link href="/auth/login?returnTo=%2Fme%2Fdesires" className="text-velora-gold underline">{t("Sign in")}</Link>{" "}{t("to set your desires.")}</main>;
+  if (status === "signed-out") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-textSecondary"><Link href="/auth/login?returnTo=%2Fme%2Fdesires" className="text-velora-accent underline">{t("Sign in")}</Link>{" "}{t("to set your desires.")}</main>;
   if (status === "error") return <main className="mx-auto max-w-2xl px-4 py-10 text-sm text-velora-danger">{t("Your desires could not be loaded. Please refresh.")}</main>;
 
   const count = Object.keys(selections).length;
@@ -86,14 +86,14 @@ export default function DesiresPage() {
     <main className="mx-auto max-w-2xl space-y-6 px-4 pb-32 pt-6">
       <Link href="/me" className="inline-flex items-center gap-1 text-xs text-velora-textMuted hover:text-velora-textPrimary"><ArrowLeft className="h-3.5 w-3.5" aria-hidden />{t("Me")}</Link>
       <header className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">{t("Desires")}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-accent">{t("Desires")}</p>
         <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">{t("What you're into")}</h1>
         <p className="text-sm leading-relaxed text-velora-textSecondary">{t("Mark only what you want to. Members see shared desires first. Hard limits are shown so nobody has to guess; “Not for me” is always private.")}</p>
       </header>
 
       {!consented && (
         <label className="flex cursor-pointer gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 p-4 text-sm leading-relaxed text-velora-textSecondary">
-          <input type="checkbox" className="mt-1 h-4 w-4 accent-velora-gold" checked={consentChecked} onChange={(event) => setConsentChecked(event.target.checked)} />
+          <input type="checkbox" className="mt-1 h-4 w-4 accent-velora-accent" checked={consentChecked} onChange={(event) => setConsentChecked(event.target.checked)} />
           <span><ShieldCheck className="mr-1 inline h-4 w-4 text-velora-success" aria-hidden />{t("I explicitly consent to Intimo storing my desires and showing the visible ones to signed-in members. I can withdraw this in Privacy settings, which erases them.")}</span>
         </label>
       )}

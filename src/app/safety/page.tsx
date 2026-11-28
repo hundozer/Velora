@@ -19,7 +19,7 @@ export default function SafetyPage() {
       <div className="space-y-6">
         <Card variant="glass" className="p-8 space-y-4">
           <div className="flex items-center gap-3">
-            <ShieldCheck className="w-6 h-6 text-velora-gold" />
+            <ShieldCheck className="w-6 h-6 text-velora-accent" />
             <h2 className="text-3xl font-display font-bold text-velora-textPrimary">{t("1. Strict 18+ Verification (2257 Compliance)")}</h2>
           </div>
           <p className="text-xs text-velora-textSecondary leading-relaxed">{t("All users, creators, and media participants on Intimo undergo strict age and identity verification prior to uploading content or sending messages. Records are securely stored in accordance with international 18+ compliance regulations.")}</p>

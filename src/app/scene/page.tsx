@@ -7,7 +7,7 @@ import { SceneEventCard, type SceneEvent } from "@/components/scene/SceneEventCa
 import { AreaSelect } from "@/components/profile/AreaSelect";
 import { SCENE_KINDS } from "@/lib/scene.mjs";
 
-const field = "w-full rounded-2xl border border-ink/10 bg-ink/5 px-4 py-3 text-sm text-velora-textPrimary outline-none focus:border-velora-gold/60";
+const field = "w-full rounded-2xl border border-ink/10 bg-ink/5 px-4 py-3 text-sm text-velora-textPrimary outline-none focus:border-velora-accent/60";
 
 /** Prague Scene (P1-21): real sex-positive events, curated by the Intimo team. */
 export default function ScenePage() {
@@ -37,11 +37,11 @@ export default function ScenePage() {
     <main className="mx-auto max-w-3xl space-y-6 px-4 pb-24 pt-6">
       <header className="flex items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-gold">{t("Prague Scene")}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-velora-accent">{t("Prague Scene")}</p>
           <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">{t("Out in the city")}</h1>
           <p className="mt-1 text-sm text-velora-textSecondary">{t("Munches, workshops and parties run by Prague's sex-positive community. Hand-picked by us; booking is with the organiser.")}</p>
         </div>
-        {user && !suggesting && <button type="button" onClick={() => setSuggesting(true)} className="min-h-11 shrink-0 rounded-full border border-ink/15 px-4 text-sm font-semibold text-velora-textPrimary hover:border-velora-gold/50">{t("Suggest")}</button>}
+        {user && !suggesting && <button type="button" onClick={() => setSuggesting(true)} className="min-h-11 shrink-0 rounded-full border border-ink/15 px-4 text-sm font-semibold text-velora-textPrimary hover:border-velora-accent/50">{t("Suggest")}</button>}
       </header>
       <a href="/scene" className="inline-flex min-h-11 items-center text-sm text-velora-accent underline">{t("All Prague events")}</a>
       <a href="/guest-list" className="inline-flex min-h-11 items-center text-sm text-velora-accent underline">{t("Small gatherings · Guest List")}</a>

@@ -66,7 +66,7 @@ export function MobileInstallBanner() {
   return (
     <>
       <aside aria-label={t("Install Intimo on your phone")} className="md:hidden relative z-30 border-b border-velora-line bg-velora-night px-4 py-3 text-velora-onPhoto">
-        <div className="mx-auto flex max-w-xl items-center gap-3">
+        <div className="mx-auto flex max-w-xl items-center gap-2 sm:gap-3">
           <Image src="/icons/icon-192.png" width={48} height={48} alt="" className="h-12 w-12 shrink-0 rounded-xl" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold leading-tight text-velora-onPhoto">{t("Intimo on your phone")}</p>
@@ -75,7 +75,7 @@ export function MobileInstallBanner() {
           <button type="button" disabled={busy} onClick={() => void install()} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1 rounded-full bg-velora-warm px-3 text-xs font-semibold text-velora-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-velora-accent disabled:opacity-50">
             <Download size={15} aria-hidden />{t("Install")}
           </button>
-          <button type="button" onClick={dismiss} aria-label={t("Dismiss install banner")} className="flex h-11 w-8 shrink-0 items-center justify-center text-velora-onPhoto/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent"><X size={20} aria-hidden /></button>
+          <button type="button" onClick={dismiss} aria-label={t("Dismiss install banner")} className="flex h-11 w-11 shrink-0 items-center justify-center text-velora-onPhoto/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-velora-accent"><X size={20} aria-hidden /></button>
         </div>
       </aside>
       <Sheet open={guide} onClose={() => setGuide(false)} label={t("Install Intimo on your phone")} footer={<button type="button" onClick={() => setGuide(false)} className="min-h-12 w-full rounded-full bg-velora-warm px-5 font-semibold text-velora-paper">{t("Got it")}</button>}>

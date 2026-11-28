@@ -52,9 +52,9 @@ export function ChoiceCard({ label, icon, selected, onClick, compact = false }: 
       onClick={onClick}
       className={`flex w-full items-center gap-4 rounded-xl border text-left font-semibold text-velora-textPrimary transition-colors ${compact ? "min-h-14 px-3 text-sm sm:px-4 sm:text-base" : "min-h-16 px-5 text-lg"} ${selected ? "border-velora-accent bg-velora-accent/[0.06]" : "border-velora-line bg-velora-surface hover:border-velora-ink/30"}`}
     >
-      {icon && <span className="flex h-10 w-10 shrink-0 items-center justify-center text-velora-gold">{icon}</span>}
+      {icon && <span className="flex h-10 w-10 shrink-0 items-center justify-center text-velora-accent">{icon}</span>}
       <span className="flex-1">{t(label)}</span>
-      {selected && <Check className="h-6 w-6 shrink-0 text-velora-gold" aria-hidden />}
+      {selected && <Check className="h-6 w-6 shrink-0 text-velora-accent" aria-hidden />}
     </button>
   );
 }

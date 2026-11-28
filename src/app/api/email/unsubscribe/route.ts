@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function page(title: string, body: string, status = 200) {
-  return new NextResponse(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Intimo</title></head><body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0A0B0E;color:#F5F1E8;font-family:system-ui,sans-serif;text-align:center;padding:24px"><main><h1 style="font-family:Georgia,serif;color:#D4AF37">${title}</h1><p style="color:#A8A29A">${body}</p></main></body></html>`, { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
+  return new NextResponse(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Intimo</title></head><body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#191C20;color:#F1E8DC;font-family:system-ui,sans-serif;text-align:center;padding:24px"><main><h1 style="font-family:Georgia,serif;font-weight:400;color:#A8D5EF">${title}</h1><p style="color:#A9A39E">${body}</p></main></body></html>`, { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
 }
 
 export async function GET(req: NextRequest) {

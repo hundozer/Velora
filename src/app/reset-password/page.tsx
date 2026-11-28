@@ -21,7 +21,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <AuthShell title={t("Reset password")} subtitle={t("We'll email you a link to choose a new one")} footer={<Link href="/login" className="text-velora-gold hover:underline">{t("Back to sign in")}</Link>}>
+    <AuthShell title={t("Reset password")} subtitle={t("We'll email you a link to choose a new one")} footer={<Link href="/login" className="text-velora-accent hover:underline">{t("Back to sign in")}</Link>}>
       {sent ? <AuthMessage tone="info">{t("If an account exists for {trim}, a reset link is on its way. It expires in one hour.", { trim: email.trim() })}</AuthMessage> : (
         <form onSubmit={submit} className="space-y-4" noValidate>
           <AuthField id="email" label={t("Email")} type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />

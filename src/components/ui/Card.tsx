@@ -20,9 +20,9 @@ export const Card: React.FC<CardProps> = ({
   const baseStyles = "rounded-2xl overflow-hidden transition-colors duration-200 relative";
 
   const variants = {
-    glass: "glass-panel",
-    solid: "bg-velora-card border border-velora-border",
-    goldBorder: "glass-panel-gold",
+    glass: "bg-velora-surface border border-velora-line",
+    solid: "bg-velora-surface border border-velora-line",
+    goldBorder: "bg-velora-surface border border-velora-accent/25",
   };
 
   const hoverStyles = hoverEffect

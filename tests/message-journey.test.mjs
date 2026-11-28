@@ -27,7 +27,7 @@ test("the chat keeps every server-side rule and only frames them", async () => {
   assert.match(chat, /checked=\{photoExplicit && explicitAllowed\} disabled=\{!explicitAllowed\}/);
   assert.match(chat, /emptyThread && !openersHidden/);
   assert.match(chat, /If you'd like a start/);
-  assert.match(chat, /border-l-2 border-velora-copper/, "plan quote with a copper rule");
+  assert.match(chat, /border-l-2 border-velora-accent/, "plan quote with an Ice rule");
   assert.doesNotMatch(chat, /bg-gold-gradient|shadow-gold-glow|Amateri/);
   const page = await read("src/app/messages/page.tsx");
   assert.match(page, /useState<"list" \| "thread">\(targetUserId \? "thread" : "list"\)/);

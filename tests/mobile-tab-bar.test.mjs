@@ -10,7 +10,7 @@ const read = (file) => fs.readFile(path.join(root, file), "utf8");
 test("tab bar shows a discreet unread dot, never a number", async () => {
   const nav = await read("src/components/layout/MobileNavigation.tsx");
   assert.match(nav, /useUnreadCounts\(user \? profile\?\.id : undefined, pathname\)/);
-  assert.match(nav, /data-unread className="absolute -right-2\.5 top-0 h-1\.5 w-1\.5 rounded-full bg-velora-copper"/);
+  assert.match(nav, /data-unread className="absolute -right-2\.5 top-0 h-1\.5 w-1\.5 rounded-full bg-velora-accent"/);
   assert.doesNotMatch(nav, /\{item\.unread\}/, "the tab bar must not print unread numbers");
   assert.match(nav, /window\.scrollTo\(\{ top: 0, behavior: "smooth" \}\)/);
 });

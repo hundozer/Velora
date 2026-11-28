@@ -44,11 +44,11 @@ export function unsubscribeUrl(profileId: string, category: string) {
 
 export function renderReturnEmail(category: EmailCategory, profileId: string) {
   const copy = COPY[category];
-  return `<!doctype html><html><body style="margin:0;background:#191C20;font-family:system-ui,sans-serif;color:#EDF1F4">
+  return `<!doctype html><html><body style="margin:0;background:#191C20;font-family:system-ui,sans-serif;color:#F1E8DC">
 <div style="max-width:480px;margin:0 auto;padding:32px 24px;text-align:center">
-<p style="font-family:Georgia,serif;font-size:22px;color:#A8D5EF;margin:0 0 16px">Intimo</p>
+<p style="font-size:22px;font-weight:600;color:#F1E8DC;margin:0 0 16px">Intimo</p>
 <p style="font-size:16px;margin:0 0 24px">${copy.line}</p>
-<a href="${BASE_URL}${copy.path}" style="display:inline-block;background:#A8D5EF;color:#191C20;text-decoration:none;font-weight:700;padding:12px 24px;border-radius:999px">${copy.cta}</a>
-<p style="font-size:12px;color:#AAB7C3;margin:32px 0 0">We never put names or messages in emails.<br><a href="${unsubscribeUrl(profileId, category)}" style="color:#AAB7C3">Stop these emails</a> · <a href="${unsubscribeUrl(profileId, "ALL")}" style="color:#AAB7C3">Stop all Intimo emails</a></p>
+<a href="${BASE_URL}${copy.path}" style="display:inline-block;background:#E0704F;color:#191C20;text-decoration:none;font-weight:600;padding:12px 24px;border-radius:999px">${copy.cta}</a>
+<p style="font-size:12px;color:#A9A39E;margin:32px 0 0">We never put names or messages in emails.<br><a href="${unsubscribeUrl(profileId, category)}" style="color:#A9A39E">Stop these emails</a> · <a href="${unsubscribeUrl(profileId, "ALL")}" style="color:#A9A39E">Stop all Intimo emails</a></p>
 </div></body></html>`;
 }

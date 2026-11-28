@@ -86,7 +86,7 @@ export function InstalledAppNotificationOffer() {
     <Sheet open={open} onClose={finish} label={t("Get discreet notifications")}
       footer={
         <div className="grid grid-cols-2 gap-3">
-          <button type="button" disabled={busy} onClick={finish} className="min-h-12 rounded-xl border border-velora-line px-4 text-sm font-semibold text-velora-ink disabled:opacity-60">{t("Not now")}</button>
+          <button type="button" disabled={busy} onClick={finish} className="min-h-12 rounded-full border border-velora-ink/30 px-4 text-sm font-semibold text-velora-ink disabled:opacity-60">{t("Not now")}</button>
           <button type="button" disabled={busy} onClick={() => void allow()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-velora-warm px-4 text-sm font-semibold text-velora-paper disabled:opacity-60"><Bell size={17} aria-hidden />{t(busy ? "Enabling…" : "Allow notifications")}</button>
         </div>
       }>

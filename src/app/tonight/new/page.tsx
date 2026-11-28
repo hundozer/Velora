@@ -163,7 +163,7 @@ export default function NewInvitationPage() {
         <div role="radiogroup" aria-label={t("When")} className="mt-4">
           {(["tonight", "tomorrow"] as const).map((value) => (
             <button key={value} type="button" role="radio" aria-checked={day === value} onClick={() => { setDay(value); setSheet(null); }} className={`flex w-full items-baseline justify-between py-1.5 text-left font-display text-[30px] ${day === value ? "text-velora-ink" : "text-velora-muted"}`}>
-              {value === "tonight" ? t("Tonight") : t("Tomorrow")}{day === value && <span className="font-sans text-[14px] text-velora-copperInk">{t("Selected")}</span>}
+              {value === "tonight" ? t("Tonight") : t("Tomorrow")}{day === value && <span className="font-sans text-[14px] text-velora-accent">{t("Selected")}</span>}
             </button>
           ))}
         </div>
@@ -211,7 +211,7 @@ export default function NewInvitationPage() {
         <div role="radiogroup" aria-label={t("Kind of plan")} className="mt-4">
           {PLAN_CATEGORIES.map((item) => (
             <button key={item.value} type="button" role="radio" aria-checked={category === item.value} onClick={() => { setCategory(item.value); setSheet(null); }} className={`flex w-full items-baseline justify-between py-1.5 text-left font-display text-[28px] ${category === item.value ? "text-velora-ink" : "text-velora-muted"}`}>
-              {t(item.label)}{category === item.value && <span className="font-sans text-[14px] text-velora-copperInk">{t("Selected")}</span>}
+              {t(item.label)}{category === item.value && <span className="font-sans text-[14px] text-velora-accent">{t("Selected")}</span>}
             </button>
           ))}
         </div>
