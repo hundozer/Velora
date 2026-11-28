@@ -18,7 +18,7 @@ const listWords = (words: string[]) => words.length <= 1 ? words.join("") : `${w
 /** A word in the filter sentence: looks like text, opens the sheet at its section. */
 function Word({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="inline text-velora-copperInk underline decoration-velora-copper decoration-dotted decoration-2 underline-offset-[5px] hover:decoration-solid">
+    <button type="button" onClick={onClick} className="inline text-velora-accent underline decoration-velora-accent decoration-dotted decoration-2 underline-offset-[5px] hover:decoration-solid">
       {children}
     </button>
   );
@@ -52,7 +52,7 @@ export function FilterSentence({ filters, onOpen, onSearch }: { filters: Filters
         {extras.map((extra) => <React.Fragment key={extra.text}>, <Word onClick={() => onOpen(extra.key)}>{t(extra.text)}</Word></React.Fragment>)}{t(", here now first.{value}", { value: " " })}
         {extras.length === 0 && <button type="button" onClick={() => onOpen("only")} className="text-[15px] text-velora-muted underline underline-offset-4 hover:text-velora-ink">{t("More")}</button>}
       </p>
-      <label className="mt-4 flex items-center gap-3 border-b border-velora-ink/70 pb-2 focus-within:border-velora-copperInk">
+      <label className="mt-4 flex items-center gap-3 border-b border-velora-ink/70 pb-2 focus-within:border-velora-accent">
         <Search className="h-4 w-4 shrink-0 text-velora-ink" aria-hidden />
         <span className="sr-only">{t("Search by name or neighbourhood")}</span>
         <input type="search" value={q} onChange={(event) => setQ(event.target.value)} maxLength={40} placeholder={t("Name or neighbourhood")} className="w-full bg-transparent text-[17px] text-velora-ink placeholder:text-velora-muted focus:outline-none" />
@@ -66,7 +66,7 @@ function Choice({ selected, onClick, children, type = "radio" }: { selected: boo
   return (
     <button type="button" role={type} aria-checked={selected} onClick={onClick} className={`flex w-full items-baseline justify-between py-1.5 text-left font-display text-[28px] leading-tight transition-colors ${selected ? "text-velora-ink" : "text-velora-muted hover:text-velora-ink2"}`}>
       <span>{children}</span>
-      {selected && <span className="font-sans text-[14px] text-velora-copperInk">{t("Selected")}</span>}
+      {selected && <span className="font-sans text-[14px] text-velora-accent">{t("Selected")}</span>}
     </button>
   );
 }
@@ -115,17 +115,17 @@ export function FilterSheet({ open, section, initial, sharedDesires, onClose, on
       <Label id="within">{t("Within")}</Label>
       <div role="radiogroup" aria-label={t("Within")} className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
         {DISTANCE_OPTIONS.map((option) => (
-          <button key={option.km} type="button" role="radio" aria-checked={draft.withinKm === option.km} onClick={() => setDraft({ ...draft, withinKm: option.km })} className={`min-h-11 border-b-2 font-display text-[30px] leading-tight ${draft.withinKm === option.km ? "border-velora-copper text-velora-ink" : "border-transparent text-velora-muted hover:text-velora-ink2"}`}>{t("{km} km", { km: option.km })}</button>
+          <button key={option.km} type="button" role="radio" aria-checked={draft.withinKm === option.km} onClick={() => setDraft({ ...draft, withinKm: option.km })} className={`min-h-11 border-b-2 font-display text-[30px] leading-tight ${draft.withinKm === option.km ? "border-velora-accent text-velora-ink" : "border-transparent text-velora-muted hover:text-velora-ink2"}`}>{t("{km} km", { km: option.km })}</button>
         ))}
-        <button type="button" role="radio" aria-checked={draft.withinKm === null} onClick={() => setDraft({ ...draft, withinKm: null })} className={`min-h-11 border-b-2 font-display text-[30px] leading-tight ${draft.withinKm === null ? "border-velora-copper text-velora-ink" : "border-transparent text-velora-muted hover:text-velora-ink2"}`}>{t("All Prague")}</button>
+        <button type="button" role="radio" aria-checked={draft.withinKm === null} onClick={() => setDraft({ ...draft, withinKm: null })} className={`min-h-11 border-b-2 font-display text-[30px] leading-tight ${draft.withinKm === null ? "border-velora-accent text-velora-ink" : "border-transparent text-velora-muted hover:text-velora-ink2"}`}>{t("All Prague")}</button>
       </div>
       <p className="mt-2 text-[14px] text-velora-muted">{t("Measured between Prague areas, never exact positions.")}</p>
 
       <Label id="age">{t("Aged")}</Label>
       <div className="flex items-baseline gap-3 font-display text-[28px] text-velora-ink">
-        <input type="number" inputMode="numeric" min={18} max={99} value={draft.minAge} aria-label={t("Youngest age")} onChange={(event) => setDraft({ ...draft, minAge: Math.min(99, Math.max(18, Number(event.target.value) || 18)) })} className="w-16 border-b border-velora-ink/40 bg-transparent text-center focus:border-velora-copperInk focus:outline-none" />
+        <input type="number" inputMode="numeric" min={18} max={99} value={draft.minAge} aria-label={t("Youngest age")} onChange={(event) => setDraft({ ...draft, minAge: Math.min(99, Math.max(18, Number(event.target.value) || 18)) })} className="w-16 border-b border-velora-ink/40 bg-transparent text-center focus:border-velora-accent focus:outline-none" />
         <span className="text-velora-muted">{t("to")}</span>
-        <input type="number" inputMode="numeric" min={18} max={99} value={draft.maxAge} aria-label={t("Oldest age")} onChange={(event) => setDraft({ ...draft, maxAge: Math.min(99, Math.max(18, Number(event.target.value) || 99)) })} className="w-16 border-b border-velora-ink/40 bg-transparent text-center focus:border-velora-copperInk focus:outline-none" />
+        <input type="number" inputMode="numeric" min={18} max={99} value={draft.maxAge} aria-label={t("Oldest age")} onChange={(event) => setDraft({ ...draft, maxAge: Math.min(99, Math.max(18, Number(event.target.value) || 99)) })} className="w-16 border-b border-velora-ink/40 bg-transparent text-center focus:border-velora-accent focus:outline-none" />
       </div>
 
       <Label id="only">{t("Only")}</Label>
