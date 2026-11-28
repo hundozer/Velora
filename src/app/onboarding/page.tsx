@@ -23,7 +23,7 @@ type StepId = "kind" | "about" | "basics" | "intent" | "photo";
 
 // Five easy stages. Required profile fields remain unchanged; private orientation,
 // boundaries and message permissions retain existing safe defaults and separate controls.
-function stepsFor(kind: ProfileKind): StepId[] {
+function stepsFor(): StepId[] {
   return ["kind", "about", "basics", "intent", "photo"];
 }
 
@@ -97,7 +97,7 @@ function OnboardingForm() {
     if (draftBusy || !draftConsent) return;
     setDraftBusy(true); setDraftNotice("");
     try {
-      const draft = { step, profileType, gender, relationshipStatus, displayName, dateOfBirth,
+      const draft = { step: ({ about: "identity", basics: "birthday", intent: "area" } as Record<string, string>)[step] || step, profileType, gender, relationshipStatus, displayName, dateOfBirth,
         partnerDisplayName, partnerDateOfBirth, lookingFor, areaId };
       const response = await fetch("/api/onboarding/draft", { method: "PUT",
         credentials: "same-origin", headers: { "Content-Type": "application/json" },
@@ -120,7 +120,7 @@ function OnboardingForm() {
     finally { setDraftBusy(false); }
   }
 
-  const steps = stepsFor(profileType);
+  const steps = stepsFor();
   const index = steps.indexOf(step);
   const next = () => { setError(""); setStep(steps[index + 1]); };
   const back = index > 0 && step !== "photo" ? () => { setError(""); setStep(steps[index - 1]); } : undefined;
@@ -141,7 +141,6 @@ function OnboardingForm() {
     </details> : null,
   };
 
-  const nameValid = displayName.trim().length >= 2 && displayName.trim().length <= 80;
   const basicsValid = onboardingBasicsAreValid(displayName, dateOfBirth);
   const partnerValid = !whoIsHereError({ profileType, gender, relationshipStatus, partnerDisplayName, partnerDateOfBirth });
   const aboutValid = Boolean(gender) && Boolean(relationshipStatus) && relationshipOptionsFor(profileType).some(item => item.value === relationshipStatus);
