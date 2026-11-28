@@ -17,11 +17,11 @@ export function IndexRow({ person }: { person: Person }) {
       <div className="group flex min-h-[84px] items-center gap-4 py-3 outline-offset-4">
         <StoryAvatar ownerId={person.id} src={person.avatarUrl} name={person.displayName} size={60}/>
         <Link href={`/profile/${person.id}`} className="min-w-0 flex-1 py-3">
-          <span className="block truncate font-display text-[24px] leading-tight text-velora-ink group-hover:text-velora-copperInk">{person.displayName}</span>
+          <span className="block truncate font-display text-[24px] leading-tight text-velora-ink group-hover:text-velora-accent">{person.displayName}</span>
           {person.foundingMember && <span className="mt-1 block"><FoundingMemberBadge /></span>}
           <span className="block truncate text-[14px] text-velora-muted">{metaLine(person, t) || " "}</span>
         </Link>
-        {person.presence === "ONLINE" && <span className="h-2 w-2 shrink-0 rounded-full bg-velora-copper" aria-label={t("Here now")} role="img" />}
+        {person.presence === "ONLINE" && <span className="h-2 w-2 shrink-0 rounded-full bg-velora-accent" aria-label={t("Here now")} role="img" />}
       </div>
     </li>
   );
@@ -76,7 +76,7 @@ export function PeopleIndex({ people, loading, hasMore, loadingMore, onLoadMore,
       {groups.map((group) => (
         <section key={group.label} aria-label={t(group.label)}>
           <h3 className="sticky top-0 z-10 -mx-5 flex items-baseline justify-between bg-velora-surface/95 px-5 py-3 backdrop-blur-sm sm:-mx-8 sm:px-8 md:top-16 lg:top-20">
-            <span className="font-display text-[22px] italic text-velora-copperInk">{t(group.label)}</span>
+            <span className="font-display text-[22px] italic text-velora-accent">{t(group.label)}</span>
             {farDown && <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-[14px] text-velora-ink2 underline underline-offset-4">{t("Back to top")}</button>}
           </h3>
           <ul>{group.people.map((person) => <IndexRow key={person.id} person={person} />)}</ul>
