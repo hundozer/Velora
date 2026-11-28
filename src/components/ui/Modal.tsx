@@ -83,15 +83,15 @@ export const Modal: React.FC<ModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 15 }}
             transition={{ duration: 0.2 }}
-            className={`relative w-full ${maxWidthClasses[maxWidth]} glass-panel-gold rounded-3xl p-6 sm:p-8 shadow-2xl shadow-black z-10`}
+            className={`relative w-full ${maxWidthClasses[maxWidth]} bg-velora-surface border border-velora-line rounded-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto p-4 sm:p-8 z-10`}
           >
             <div className="flex items-center justify-between pb-4 border-b border-ink/10 mb-6">
-              {title && <h3 id={titleId} className="text-xl font-semibold tracking-wide text-velora-textPrimary font-display">{t(title)}</h3>}
+              {title && <h3 id={titleId} className="text-xl font-semibold tracking-wide text-velora-ink font-display">{t(title)}</h3>}
               {showCloseButton && (
                 <button
                   onClick={onClose}
                   aria-label={t("Close dialog")}
-                  className="p-1 rounded-full text-velora-textSecondary hover:text-velora-gold hover:bg-ink/5 transition-colors ml-auto"
+                  className="min-h-11 min-w-11 flex items-center justify-center rounded-full text-velora-ink2 hover:text-velora-accent hover:bg-ink/5 transition-colors ml-auto"
                 >
                   <X className="w-5 h-5" />
                 </button>
