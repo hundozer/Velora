@@ -258,17 +258,17 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-ink/10 pb-6">
         <div className="flex items-center gap-3">
-          <Settings className="w-8 h-8 text-velora-gold" />
+          <Settings className="w-8 h-8 text-velora-accent" />
           <div>
             <h1 className="intimo-member-heading">{t("Privacy, Safety & Regional Settings")}</h1>
-            <p className="text-xs text-velora-textSecondary mt-1">{t("Manage messaging permissions, privacy rights, consent and safety controls.")}</p>
+            <p className="text-xs text-velora-ink2 mt-1">{t("Manage messaging permissions, privacy rights, consent and safety controls.")}</p>
           </div>
         </div>
 
         <Button
           variant="gold"
           size="sm"
-          className="text-xs font-bold uppercase tracking-wider gap-2 shadow-gold-glow shrink-0"
+          className="text-xs font-bold uppercase tracking-wider gap-2 shrink-0"
           onClick={handleSave}
         >
           <CheckCircle2 className="w-4 h-4" />{" "}{t("Save settings")}</Button>
@@ -285,14 +285,14 @@ export default function SettingsPage() {
         <input type="file" ref={avatarInputRef} accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarUpload} />
         <input type="file" ref={coverInputRef} accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleCoverUpload} />
 
-        <h2 className="text-sm font-display font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-ink/10 pb-3">
-          <UserCheck className="w-4 h-4 text-velora-gold" />{t("Private Identity, Avatar & Cover Banner")}</h2>
+        <h2 className="text-sm font-display font-bold text-velora-ink uppercase tracking-wider flex items-center gap-2 border-b border-ink/10 pb-3">
+          <UserCheck className="w-4 h-4 text-velora-accent" />{t("Private Identity, Avatar & Cover Banner")}</h2>
 
         <div className="space-y-6">
           {/* Avatar & Cover Upload Buttons */}
           <div className="flex flex-wrap items-center gap-6 pb-2 border-b border-ink/5">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl border-2 border-velora-gold/60 overflow-hidden bg-velora-card relative group shrink-0">
+              <div className="w-16 h-16 rounded-2xl border-2 border-velora-accent/60 overflow-hidden bg-velora-surface relative group shrink-0">
                 <span className="absolute inset-0 flex items-center justify-center bg-velora-accent/5"><UserCheck className="h-7 w-7 text-velora-accent" /></span>
                 {avatarUrl && !avatarImageFailed && <img src={avatarUrl} alt={t("Your profile avatar")} onError={() => setAvatarImageFailed(true)} className="relative h-full w-full object-cover" />}
                 <button
@@ -301,21 +301,21 @@ export default function SettingsPage() {
                   className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
                   title={t("New profile photo")}
                 >
-                  <Camera className="w-5 h-5 text-velora-gold" />
+                  <Camera className="w-5 h-5 text-velora-accent" />
                 </button>
               </div>
               <div>
                 <p className="text-xs font-bold text-ink">{t("Profile Picture / Avatar")}</p>
-                <p className="text-[10px] text-velora-textMuted mb-2">{t("JPEG, PNG or WebP · non-explicit · max 15 MB")}</p>
+                <p className="text-[10px] text-velora-muted mb-2">{t("JPEG, PNG or WebP · non-explicit · max 15 MB")}</p>
                 <Button variant="glass" size="sm" disabled={Boolean(mediaUpload)} onClick={() => avatarInputRef.current?.click()} className="text-[11px] gap-1.5">
-                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUpload?.kind === "avatar" ? t("Uploading {progress}%", { progress: mediaUpload.progress }) : t("New profile photo")}
+                  <Camera className="w-3.5 h-3.5 text-velora-accent" /> {mediaUpload?.kind === "avatar" ? t("Uploading {progress}%", { progress: mediaUpload.progress }) : t("New profile photo")}
                 </Button>
               </div>
             </div>
 
             <div className="flex items-center gap-4 border-l border-ink/10 pl-6">
-              <div className="w-24 h-16 rounded-2xl border border-ink/20 overflow-hidden bg-velora-card relative group shrink-0">
-                <span className="absolute inset-0 flex items-center justify-center bg-ink/[0.03]"><ImageIcon className="h-7 w-7 text-velora-textMuted" /></span>
+              <div className="w-24 h-16 rounded-2xl border border-ink/20 overflow-hidden bg-velora-surface relative group shrink-0">
+                <span className="absolute inset-0 flex items-center justify-center bg-ink/[0.03]"><ImageIcon className="h-7 w-7 text-velora-muted" /></span>
                 {coverUrl && !coverImageFailed && <img src={coverUrl} alt={t("Your profile cover")} onError={() => setCoverImageFailed(true)} className="relative h-full w-full object-cover" />}
                 <button
                   type="button"
@@ -323,21 +323,21 @@ export default function SettingsPage() {
                   className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
                   title={t("New cover photo")}
                 >
-                  <Camera className="w-5 h-5 text-velora-gold" />
+                  <Camera className="w-5 h-5 text-velora-accent" />
                 </button>
               </div>
               <div>
                 <p className="text-xs font-bold text-ink">{t("Cover Banner Image")}</p>
-                <p className="text-[10px] text-velora-textMuted mb-2">{t("JPEG, PNG or WebP · non-explicit · max 15 MB")}</p>
+                <p className="text-[10px] text-velora-muted mb-2">{t("JPEG, PNG or WebP · non-explicit · max 15 MB")}</p>
                 <Button variant="glass" size="sm" disabled={Boolean(mediaUpload)} onClick={() => coverInputRef.current?.click()} className="text-[11px] gap-1.5">
-                  <Camera className="w-3.5 h-3.5 text-velora-gold" /> {mediaUpload?.kind === "cover" ? t("Uploading {progress}%", { progress: mediaUpload.progress }) : t("New cover photo")}
+                  <Camera className="w-3.5 h-3.5 text-velora-accent" /> {mediaUpload?.kind === "cover" ? t("Uploading {progress}%", { progress: mediaUpload.progress }) : t("New cover photo")}
                 </Button>
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">{t("Club Nickname / Display Name")}</label>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-velora-ink2 mb-2">{t("Club Nickname / Display Name")}</label>
             <Input
               type="text"
               value={nickname}
@@ -345,26 +345,26 @@ export default function SettingsPage() {
               placeholder={t("Enter your nickname (e.g. Lucas, Prince Charming, Valerie)")}
               className="w-full text-xs"
             />
-            <p className="text-[10px] text-velora-textMuted mt-1.5">{t("This nickname will represent your verified identity across Intimo feeds, messaging, and community salons.")}</p>
+            <p className="text-[10px] text-velora-muted mt-1.5">{t("This nickname will represent your verified identity across Intimo feeds, messaging, and community salons.")}</p>
           </div>
 
           <div>
-            <label htmlFor="settings-area" className="block text-xs font-semibold uppercase tracking-wider text-velora-textSecondary mb-2">{t("Your area")}</label>
+            <label htmlFor="settings-area" className="block text-xs font-semibold uppercase tracking-wider text-velora-ink2 mb-2">{t("Your area")}</label>
             <AreaSelect
               id="settings-area"
               value={areaId}
               onChange={setAreaId}
-              className="w-full rounded-xl border border-ink/10 bg-ink/5 px-3 py-2.5 text-xs text-velora-textPrimary outline-none focus:border-velora-gold/60"
+              className="w-full rounded-xl border border-ink/10 bg-ink/5 px-3 py-2.5 text-xs text-velora-ink outline-none focus:border-velora-accent/60"
             />
-            <p className="text-[10px] text-velora-textMuted mt-1.5">{t("Members see your district and a rough distance, never your position.")}</p>
+            <p className="text-[10px] text-velora-muted mt-1.5">{t("Members see your district and a rough distance, never your position.")}</p>
           </div>
         </div>
       </Card>
 
       <Card variant="glass" className="p-6 space-y-5 scroll-mt-24" id="privacy">
-        <h2 className="text-sm font-display font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-ink/10 pb-3">
+        <h2 className="text-sm font-display font-bold text-velora-ink uppercase tracking-wider flex items-center gap-2 border-b border-ink/10 pb-3">
           <EyeOff className="w-4 h-4 text-velora-success" />{" "}{t("Privacy Center")}</h2>
-        <p className="text-xs text-velora-textSecondary">{t("Choose an audience for your profile and each kind of information. New intimate details and media stay private until you change them.")}</p>
+        <p className="text-xs text-velora-ink2">{t("Choose an audience for your profile and each kind of information. New intimate details and media stay private until you change them.")}</p>
 
         <div className="space-y-3">
           <VisibilityChoice
@@ -410,7 +410,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="flex flex-col gap-3 rounded-2xl border border-velora-accent/20 bg-velora-accent/[0.04] p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div><p className="text-xs font-bold text-ink">{t("Photos, videos, and albums")}</p><p className="mt-1 text-[11px] leading-5 text-velora-textMuted">{t("Choose Public, Members, Followers, or Private separately for every album. Switch an album to Private to hide it without deleting it.")}</p></div>
+          <div><p className="text-xs font-bold text-ink">{t("Photos, videos, and albums")}</p><p className="mt-1 text-[11px] leading-5 text-velora-muted">{t("Choose Public, Members, Followers, or Private separately for every album. Switch an album to Private to hide it without deleting it.")}</p></div>
           <Link href="/albums/manage" className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-velora-accent/40 px-4 text-xs font-bold text-velora-accent transition hover:bg-velora-accent/10">{t("Manage media visibility")}</Link>
         </div>
         <ConsentSettings />
@@ -418,27 +418,27 @@ export default function SettingsPage() {
 
       {/* Emails (P1-11) */}
       <Card variant="glass" className="p-6 space-y-4">
-        <h2 className="text-sm font-display font-bold text-velora-textPrimary uppercase tracking-wider border-b border-ink/10 pb-3">{t("Emails")}</h2>
+        <h2 className="text-sm font-display font-bold text-velora-ink uppercase tracking-wider border-b border-ink/10 pb-3">{t("Emails")}</h2>
         <EmailPreferences />
       </Card>
 
       {/* Device notifications (web push) */}
       <Card variant="glass" className="p-6 space-y-4">
-        <h2 className="text-sm font-display font-bold text-velora-textPrimary uppercase tracking-wider border-b border-ink/10 pb-3">{t("Device notifications")}</h2>
+        <h2 className="text-sm font-display font-bold text-velora-ink uppercase tracking-wider border-b border-ink/10 pb-3">{t("Device notifications")}</h2>
         <AppOnThisDevice />
         <PushPreferences />
       </Card>
 
       {/* SECTION 3: GDPR DATA PRIVACY & ACCOUNT ERASURE */}
       <Card variant="glass" className="p-6 space-y-6">
-        <h2 className="text-sm font-display font-bold text-velora-textPrimary uppercase tracking-wider flex items-center gap-2 border-b border-ink/10 pb-3">
+        <h2 className="text-sm font-display font-bold text-velora-ink uppercase tracking-wider flex items-center gap-2 border-b border-ink/10 pb-3">
           <Shield className="w-4 h-4 text-velora-success" />{t("GDPR Data Rights & Account Management")}</h2>
 
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-velora-surface border border-velora-line rounded-2xl">
             <div>
-              <h4 className="text-xs font-bold text-velora-textPrimary">{t("Export Personal Data Archive (GDPR Art. 20)")}</h4>
-              <p className="text-[11px] text-velora-textMuted mt-0.5">{t("Download a server-generated JSON export of your profile, messages, connections, consent history, and dating ads.")}</p>
+              <h4 className="text-xs font-bold text-velora-ink">{t("Export Personal Data Archive (GDPR Art. 20)")}</h4>
+              <p className="text-[11px] text-velora-muted mt-0.5">{t("Download a server-generated JSON export of your profile, messages, connections, consent history, and dating ads.")}</p>
             </div>
             <Button
               variant="glass"
@@ -450,33 +450,33 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-3 rounded-2xl border border-ink/10 p-4">
-            <div><h4 className="text-xs font-bold text-velora-textPrimary">{t("Exercise another privacy right")}</h4><p className="mt-1 text-[11px] text-velora-textMuted">{t("Request access, correction, restriction of processing, or object to specific processing. Each request receives a durable reference and reviewed response.")}</p></div>
-            <label className="block text-xs text-velora-textSecondary"><span className="mb-2 block font-semibold">{t("Right requested")}</span><select value={rightsType} onChange={(event) => setRightsType(event.target.value)} className="w-full rounded-xl border border-ink/10 bg-ink/5 p-3 text-ink"><option className="bg-velora-card" value="CORRECTION">{t("Correct my data")}</option><option className="bg-velora-card" value="RESTRICTION">{t("Restrict processing")}</option><option className="bg-velora-card" value="OBJECTION">{t("Object to processing")}</option><option className="bg-velora-card" value="ACCESS">{t("Reviewed access request")}</option></select></label>
-            <label className="block text-xs text-velora-textSecondary"><span className="mb-2 block font-semibold">{t("What should Intimo review?")}</span><textarea value={rightsDetails} onChange={(event) => setRightsDetails(event.target.value)} rows={4} maxLength={4000} className="w-full rounded-xl border border-ink/10 bg-ink/5 p-3 text-ink" placeholder={t("Describe the data or processing involved (minimum 20 characters).")} /></label>
+            <div><h4 className="text-xs font-bold text-velora-ink">{t("Exercise another privacy right")}</h4><p className="mt-1 text-[11px] text-velora-muted">{t("Request access, correction, restriction of processing, or object to specific processing. Each request receives a durable reference and reviewed response.")}</p></div>
+            <label className="block text-xs text-velora-ink2"><span className="mb-2 block font-semibold">{t("Right requested")}</span><select value={rightsType} onChange={(event) => setRightsType(event.target.value)} className="w-full rounded-xl border border-ink/10 bg-ink/5 p-3 text-ink"><option className="bg-velora-surface" value="CORRECTION">{t("Correct my data")}</option><option className="bg-velora-surface" value="RESTRICTION">{t("Restrict processing")}</option><option className="bg-velora-surface" value="OBJECTION">{t("Object to processing")}</option><option className="bg-velora-surface" value="ACCESS">{t("Reviewed access request")}</option></select></label>
+            <label className="block text-xs text-velora-ink2"><span className="mb-2 block font-semibold">{t("What should Intimo review?")}</span><textarea value={rightsDetails} onChange={(event) => setRightsDetails(event.target.value)} rows={4} maxLength={4000} className="w-full rounded-xl border border-ink/10 bg-ink/5 p-3 text-ink" placeholder={t("Describe the data or processing involved (minimum 20 characters).")} /></label>
             {rightsMessage && <p role="status" className="text-xs text-velora-success">{t(rightsMessage)}</p>}
             <Button variant="glass" size="sm" disabled={rightsPending || rightsDetails.trim().length < 20} onClick={submitRightsRequest}>{rightsPending ? t("Submitting…") : t("Submit privacy request")}</Button>
           </div>
 
           <ReportsAndDecisions />
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl border border-velora-gold/30">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-velora-surface border border-velora-line rounded-2xl border border-velora-accent/30">
             <div>
-              <h4 className="text-xs font-bold text-velora-gold">{t("Log out of Intimo")}</h4>
-              <p className="text-[11px] text-velora-textMuted mt-0.5">{t("Sign out of your active session on this device.")}</p>
+              <h4 className="text-xs font-bold text-velora-accent">{t("Log out of Intimo")}</h4>
+              <p className="text-[11px] text-velora-muted mt-0.5">{t("Sign out of your active session on this device.")}</p>
             </div>
             <Button
               variant="gold"
               size="sm"
-              className="text-xs font-bold shrink-0 gap-2 shadow-gold-glow"
+              className="text-xs font-bold shrink-0 gap-2"
               onClick={() => logout()}
             >
               <LogOut className="w-4 h-4" />{" "}{t("Log out")}</Button>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass-panel rounded-2xl border border-red-500/30">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-velora-surface border border-velora-line rounded-2xl border border-red-500/30">
             <div>
               <h4 className="text-xs font-bold text-velora-danger">{t("Permanently Delete Intimo Account (GDPR Right to be Forgotten)")}</h4>
-              <p className="text-[11px] text-velora-textMuted mt-0.5">{t("Start permanent deletion of your profile data, messages, and media, subject to documented safety/legal retention exceptions.")}</p>
+              <p className="text-[11px] text-velora-muted mt-0.5">{t("Start permanent deletion of your profile data, messages, and media, subject to documented safety/legal retention exceptions.")}</p>
             </div>
             <Button
               variant="danger"
@@ -545,7 +545,7 @@ function VisibilityChoice({ icon, title, description, value, options, onChange }
   return <section className="intimo-member-panel p-5">
     <div className="flex gap-3">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ink/5 text-velora-accent">{icon}</div>
-      <div><h3 className="text-sm font-bold text-ink">{t(title)}</h3><p className="mt-1 text-[11px] leading-5 text-velora-textMuted">{t(description)}</p></div>
+      <div><h3 className="text-sm font-bold text-ink">{t(title)}</h3><p className="mt-1 text-[11px] leading-5 text-velora-muted">{t(description)}</p></div>
     </div>
     <div className="mt-4 flex flex-wrap gap-2">
       {options.map(([optionValue, label]) => <button key={optionValue} type="button" aria-pressed={value === optionValue} onClick={() => onChange(optionValue)} className={`min-h-9 rounded-full border px-3.5 text-xs font-semibold transition ${value === optionValue ? "border-velora-accent bg-velora-accent text-velora-paper" : "border-ink/10 bg-ink/[0.02] text-ink hover:border-ink/25 hover:text-ink"}`}>{t(label)}</button>)}
@@ -562,7 +562,7 @@ function PrivacyToggle({ title, description, checked, disabled = false, onChange
 }) {
   const { t } = useTranslation();
   return <label className={`intimo-member-panel flex cursor-pointer items-center justify-between gap-4 p-5 ${disabled ? "cursor-not-allowed opacity-50" : ""}`}>
-    <span><strong className="block text-xs text-ink">{t(title)}</strong><span className="mt-1 block text-[11px] leading-4 text-velora-textMuted">{t(description)}</span></span>
+    <span><strong className="block text-xs text-ink">{t(title)}</strong><span className="mt-1 block text-[11px] leading-4 text-velora-muted">{t(description)}</span></span>
     <span className={`relative h-6 w-11 shrink-0 rounded-full transition focus-within:outline focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-velora-accent ${checked ? "bg-velora-accent" : "bg-ink/10"}`}><input className="sr-only" type="checkbox" checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} /><span className={`absolute top-1 h-4 w-4 rounded-full shadow transition ${checked ? "left-6 bg-velora-paper" : "left-1 bg-velora-ink"}`} /></span>
   </label>;
 }
