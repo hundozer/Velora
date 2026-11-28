@@ -227,7 +227,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           <h1 className="font-display text-[40px] leading-none text-velora-ink">{t("Messages")}</h1>
           <div className="mt-4 flex gap-5" role="tablist" aria-label={t("Message folders")}>
             {([["INBOX", "Inbox", 0], ["UNREAD", "Unread", unreadCount], ["REQUESTS", "Requests", requestCount]] as const).map(([value, label, count]) => (
-              <button key={value} type="button" role="tab" aria-selected={folder === value} onClick={() => setFolder(value)} className={`min-h-11 border-b-2 text-[15px] transition-colors ${folder === value ? "border-velora-copper font-semibold text-velora-ink" : "border-transparent text-velora-muted hover:text-velora-ink"}`}>
+              <button key={value} type="button" role="tab" aria-selected={folder === value} onClick={() => setFolder(value)} className={`min-h-11 border-b-2 text-[15px] transition-colors ${folder === value ? "border-velora-accent font-semibold text-velora-ink" : "border-transparent text-velora-muted hover:text-velora-ink"}`}>
                 {t(label)}{count > 0 ? ` · ${count}` : ""}
               </button>
             ))}
@@ -248,7 +248,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   <button type="button" onClick={() => onSelectConversation(c)} aria-current={isActive?"true":undefined} className="min-w-0 flex-1 py-2 text-left">
                     <span className="flex items-baseline justify-between gap-2">
                       <span className={`truncate font-display text-[22px] leading-tight ${c.unreadCount > 0 ? "text-velora-ink" : "text-velora-ink"}`}>{c.participant.displayName}</span>
-                      {c.participant.isOnline && <span className="h-2 w-2 shrink-0 rounded-full bg-velora-copper" role="img" aria-label={t("Here now")} />}
+                      {c.participant.isOnline && <span className="h-2 w-2 shrink-0 rounded-full bg-velora-accent" role="img" aria-label={t("Here now")} />}
                     </span>
                     <span className={`block truncate text-[14px] ${c.unreadCount > 0 ? "font-semibold text-velora-ink" : "text-velora-muted"}`}>{c.lastMessage?.content || t("Conversation started")}</span>
                   </button>
@@ -288,7 +288,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
         <div ref={threadScrollRef} className="min-h-0 flex-1 overscroll-contain overflow-y-auto px-4 py-4 md:px-8 md:py-5">
           {context.plan && (
-            <blockquote className="mb-5 border-l-2 border-velora-copper pl-4">
+            <blockquote className="mb-5 border-l-2 border-velora-accent pl-4">
               <p className="text-[14px] text-velora-ink2">{t("Replying to {her} invitation", { her })}{planWindow(context.plan) ? ` · ${planWindow(context.plan).replace(" until ", ` ${t("until")} `)}` : ""}</p>
               <p className="mt-1 font-display text-[26px] leading-[1.15] text-velora-ink">{t(context.plan.title)}</p>
             </blockquote>
@@ -331,7 +331,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               </div>
               <ul>
                 {openers.map((opener) => (
-                  <li key={opener}><button type="button" onClick={() => { setInputMessage(opener); inputRef.current?.focus(); }} className="py-1 text-left font-display text-[22px] italic leading-snug text-velora-copperInk hover:text-velora-ink">&ldquo;{opener}&rdquo;</button></li>
+                  <li key={opener}><button type="button" onClick={() => { setInputMessage(opener); inputRef.current?.focus(); }} className="py-1 text-left font-display text-[22px] italic leading-snug text-velora-accent hover:text-velora-ink">&ldquo;{opener}&rdquo;</button></li>
                 ))}
               </ul>
             </div>
