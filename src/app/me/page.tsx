@@ -41,7 +41,7 @@ export default function MePage() {
         <h1 className="font-display font-bold text-velora-textPrimary text-5xl leading-[1.02] sm:text-6xl">{t("Your account")}</h1>
         <p className="text-sm text-velora-textSecondary">{t("Sign in to see your profile, messages and settings.")}</p>
         <div className="flex justify-center gap-3">
-          <button onClick={() => signIn()} className="min-h-11 rounded-full border border-velora-gold/40 px-5 text-sm font-bold text-velora-gold">{t("Sign in")}</button>
+          <button onClick={() => signIn()} className="min-h-11 rounded-full border border-velora-accent/40 px-5 text-sm font-bold text-velora-accent">{t("Sign in")}</button>
           <button onClick={() => signIn("signup")} className="min-h-11 rounded-full bg-velora-warm px-5 text-sm font-semibold text-velora-bg">{t("Join with an invitation")}</button>
         </div>
       </main>
@@ -53,11 +53,11 @@ export default function MePage() {
     <main className="intimo-member-page intimo-grain mx-auto max-w-2xl space-y-6 px-5 pb-24 pt-6 sm:space-y-8 sm:px-8 sm:pt-10">
       <div className="flex items-center gap-4">
         {profile?.id&&<StoryAvatar ownerId={profile.id} name={name} src={profile.avatarUrl} size={64} fallbackHref="/stories"/>}
-        {!profile?.id&&<div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-velora-gold/50 bg-velora-card">
+        {!profile?.id&&<div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-velora-accent/50 bg-velora-card">
           {profile?.avatarUrl
             ? // eslint-disable-next-line @next/next/no-img-element
               <img src={profile.avatarUrl} alt="" className="h-full w-full object-cover" />
-            : <span className="text-xl font-bold text-velora-gold">{name.slice(0, 1).toUpperCase()}</span>}
+            : <span className="text-xl font-bold text-velora-accent">{name.slice(0, 1).toUpperCase()}</span>}
         </div>}
         <div className="min-w-0">
           <h1 className="intimo-member-heading truncate text-[clamp(2.5rem,11vw,4rem)] leading-tight md:text-[clamp(3.25rem,8vw,6.25rem)]">{name}</h1>
