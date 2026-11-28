@@ -76,7 +76,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             <select
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full bg-velora-card border border-ink/10 rounded-2xl p-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
+              className="w-full bg-velora-card border border-ink/10 rounded-2xl p-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-accent"
             >
               <option value="SUSPECTED_MINOR">{t("Someone might be under 18 (urgent)")}</option>
               <option value="NON_CONSENSUAL_INTIMATE_CONTENT">{t("Intimate content shared without consent (urgent)")}</option>
@@ -102,7 +102,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               placeholder={t("Tell us in your own words: which messages, when, what happened...")}
-              className="w-full bg-ink/5 border border-ink/10 rounded-2xl p-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-gold"
+              className="w-full bg-ink/5 border border-ink/10 rounded-2xl p-3 text-xs text-velora-textPrimary focus:outline-none focus:border-velora-accent"
             />
           </div>
 
