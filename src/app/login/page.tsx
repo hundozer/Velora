@@ -41,7 +41,7 @@ function LoginForm() {
   };
 
   return (
-    <AuthShell title={t("Back for more?")} subtitle={t("Sign in to Intimo.")} footer={<>{t("Have an invitation?")}{" "}<Link href="/register" className="font-semibold text-velora-gold hover:underline">{t("Register with invitation")}</Link></>}>
+    <AuthShell title={t("Back for more?")} subtitle={t("Sign in to Intimo.")} footer={<>{t("Have an invitation?")}{" "}<Link href="/register" className="font-semibold text-velora-accent hover:underline">{t("Register with invitation")}</Link></>}>
       <form onSubmit={signIn} className="space-y-4" noValidate>
         <AuthField id="email" label={t("Email")} type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <AuthField id="password" label={t("Password")} type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
@@ -50,8 +50,8 @@ function LoginForm() {
         <button type="submit" disabled={busy || !email || !password} className={submitClass}>{busy ? t("Signing in…") : t("Sign in")}</button>
       </form>
       <div className="flex flex-col items-center gap-3 border-t border-ink/[0.06] pt-4 text-sm">
-        <button type="button" onClick={sendMagicLink} disabled={busy} className="font-semibold text-velora-gold hover:underline disabled:opacity-50">{t("Email me a sign-in link instead")}</button>
-        <Link href="/reset-password" className="text-velora-textSecondary hover:text-velora-textPrimary">{t("Forgot your password?")}</Link>
+        <button type="button" onClick={sendMagicLink} disabled={busy} className="font-semibold text-velora-accent hover:underline disabled:opacity-50">{t("Email me a sign-in link instead")}</button>
+        <Link href="/reset-password" className="text-velora-ink2 hover:text-velora-ink">{t("Forgot your password?")}</Link>
       </div>
     </AuthShell>
   );
