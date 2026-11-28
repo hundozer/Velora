@@ -70,29 +70,29 @@ export function AppOnThisDevice() {
 
   return (
     <section className="space-y-3 rounded-2xl border border-ink/10 bg-ink/[0.02] p-4">
-      <h2 className="flex items-center gap-2 text-sm font-semibold text-velora-textPrimary"><Smartphone className="h-4 w-4 text-velora-gold" aria-hidden />{t("Intimo on this device")}</h2>
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-velora-ink"><Smartphone className="h-4 w-4 text-velora-accent" aria-hidden />{t("Intimo on this device")}</h2>
       {installed ? (
-        <p className="text-xs text-velora-textSecondary">{t("Installed. It opens like an app and shows only “Intimo” on your home screen.")}</p>
+        <p className="text-xs text-velora-ink2">{t("Installed. It opens like an app and shows only “Intimo” on your home screen.")}</p>
       ) : installPrompt ? (
-        <button type="button" onClick={install} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-velora-warm px-4 text-xs font-semibold text-velora-bg"><Download className="h-4 w-4" aria-hidden />{t("Add to home screen")}</button>
+        <button type="button" onClick={install} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-velora-warm px-4 text-xs font-semibold text-velora-paper"><Download className="h-4 w-4" aria-hidden />{t("Add to home screen")}</button>
       ) : isIos ? (
-        <p className="text-xs text-velora-textSecondary">{t("On iPhone: tap Share, then “Add to Home Screen”. The icon shows only “Intimo”.")}</p>
+        <p className="text-xs text-velora-ink2">{t("On iPhone: tap Share, then “Add to Home Screen”. The icon shows only “Intimo”.")}</p>
       ) : (
-        <p className="text-xs text-velora-textSecondary">{t("Use your browser menu → “Install app” or “Add to home screen”.")}</p>
+        <p className="text-xs text-velora-ink2">{t("Use your browser menu → “Install app” or “Add to home screen”.")}</p>
       )}
       {support === "needs-install" ? (
-        <p className="flex items-center gap-2 text-xs text-velora-textMuted"><Bell className="h-3.5 w-3.5" aria-hidden />{t("To get notifications on iPhone, add Intimo to your Home Screen first, then open it from there.")}</p>
+        <p className="flex items-center gap-2 text-xs text-velora-muted"><Bell className="h-3.5 w-3.5" aria-hidden />{t("To get notifications on iPhone, add Intimo to your Home Screen first, then open it from there.")}</p>
       ) : permission !== "unsupported" && (
         <div className="space-y-2">
           {permission === "denied" ? (
-            <p className="text-xs text-velora-textMuted">{t("Notifications are blocked in your browser settings.")}</p>
+            <p className="text-xs text-velora-muted">{t("Notifications are blocked in your browser settings.")}</p>
           ) : subscribed ? (
             <>
               <p className="flex items-center gap-2 text-xs text-velora-success"><Bell className="h-3.5 w-3.5" aria-hidden />{t("Notifications are on for this device. They never show message text or names.")}</p>
-              <button type="button" onClick={disableNotifications} disabled={busy} className="inline-flex min-h-10 items-center gap-2 rounded-full border border-ink/15 px-4 text-xs font-semibold text-velora-textSecondary hover:border-velora-gold/50 disabled:opacity-50"><BellOff className="h-4 w-4" aria-hidden />{t("Turn off on this device")}</button>
+              <button type="button" onClick={disableNotifications} disabled={busy} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-ink/15 px-4 text-xs font-semibold text-velora-ink2 hover:border-velora-accent/50 disabled:opacity-50"><BellOff className="h-4 w-4" aria-hidden />{t("Turn off on this device")}</button>
             </>
           ) : (
-            <button type="button" onClick={enableNotifications} disabled={busy} className="inline-flex min-h-10 items-center gap-2 rounded-full border border-ink/15 px-4 text-xs font-semibold text-velora-textSecondary hover:border-velora-gold/50 disabled:opacity-50"><Bell className="h-4 w-4" aria-hidden />{t("Allow discreet notifications")}</button>
+            <button type="button" onClick={enableNotifications} disabled={busy} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-ink/15 px-4 text-xs font-semibold text-velora-ink2 hover:border-velora-accent/50 disabled:opacity-50"><Bell className="h-4 w-4" aria-hidden />{t("Allow discreet notifications")}</button>
           )}
           {problem && <p className="text-xs text-velora-danger" role="alert">{t(problem)}</p>}
         </div>
