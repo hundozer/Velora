@@ -57,6 +57,7 @@ test("five-stage wizard preserves required fields and optional first photo", asy
   assert.match(page, /partnerDisplayName/);
   assert.match(page, /Next: private age check/);
   assert.match(page, /uploadFileToR2\(file, "avatars"/);
-  assert.match(page, /Skip for now/);
+  assert.match(page, /Continue to age check/);
+  assert.match(page, /profile photo is optional/);
   assert.match(page, /whoIsHereError\(/);
 });
