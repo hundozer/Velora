@@ -4,6 +4,10 @@ Status: partial implementation; not approved for release.
 
 Authority: docs/brand/BRAND.md and src/app/globals.css. Authentication and notification templates migrated to Graphite, Paper, Ice and Ember. Email-safe fallback typography retained; no remote logo dependency added to discreet email. Existing links, copy, unsubscribe signatures and permissions unchanged. Legacy aliases remain until all consumers are reviewed. Semantic warning colors are not prohibited.
 
+## Second implementation batch
+
+Shared Button, Card, Input, Badge and Modal migrated to semantic styles. Primary/secondary Button variants added without removing legacy public variants. Navigation, device settings, install banner and installed notification offer updated. Touch targets and modal scrolling improved. No actual browser or device acceptance yet. Legacy token consumers across individual pages remain to be audited; do not remove aliases until that is done.
+
 ## Route inventory (discovered, not visually verified)
 
 - [ ] `src/app/about/page.tsx`
