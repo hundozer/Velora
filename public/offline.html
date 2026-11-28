@@ -45,6 +45,9 @@
       status.textContent = "Reconnecting…";
       window.location.reload();
     }
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) { button.disabled = false; status.textContent = "Try reconnecting to Intimo."; }
+    });
     button.addEventListener("click", retry);
     window.addEventListener("online", function () {
       status.textContent = "Connection detected. Reconnecting…";
