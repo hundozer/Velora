@@ -18,12 +18,13 @@ test("authentication shell uses semantic design tokens", async () => {
   assert.match(source, /bg-velora-warm/);
 });
 
-// Report residual legacy references during ordinary CI without treating existing debt as a pass.
+// Enforce zero known legacy brand references during ordinary CI.
 test("repository design audit produces a machine-readable migration inventory", () => {
   const root = fileURLToPath(new URL("../", import.meta.url));
   const result = JSON.parse(execFileSync(process.execPath, ["scripts/audit-design-system.mjs"], { cwd: root, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 }));
   assert.ok(Array.isArray(result.findings));
   assert.equal(result.filesWithFindings, new Set(result.findings.map(x => x.file)).size);
+  assert.deepEqual(result.findings, [], "Legacy brand references must not return");
   console.log("INTIMO_DESIGN_AUDIT_BEGIN");
   console.log(JSON.stringify(result));
   console.log("INTIMO_DESIGN_AUDIT_END");
