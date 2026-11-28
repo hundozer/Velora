@@ -71,7 +71,7 @@ export function PragueDiscovery({ plans, now }:{plans:Plan[];now:Date|null}) {
  return <section aria-labelledby="prague-discover-heading" className="mx-auto max-w-5xl border-y border-velora-line bg-velora-card px-5 py-8 sm:border sm:px-8">
    <div className="flex flex-wrap items-start justify-between gap-4">
      <div>
-       <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[.2em] text-velora-copperInk"><Compass className="h-4 w-4"/>{t("Prague discovery")}</p>
+       <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[.2em] text-velora-accent"><Compass className="h-4 w-4"/>{t("Prague discovery")}</p>
        <h2 id="prague-discover-heading" className="mt-2 font-display text-3xl text-ink">{t("Find your kind of night")}</h2>
        <p className="mt-2 max-w-lg text-sm leading-6 text-velora-textSecondary">{t("Real member plans and approved scene events. Explore by Prague area, without live tracking.")}</p>
      </div>
@@ -114,7 +114,7 @@ export function PragueDiscovery({ plans, now }:{plans:Plan[];now:Date|null}) {
    </div> : <div className="mt-6 space-y-4">
      {known===0?<div className="border border-dashed border-velora-line p-6"><p className="text-sm text-velora-textSecondary">{t("Nothing published for these filters yet. You can make the first move.")}</p><Link href="/tonight/new" className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-velora-accent underline">{t("Post a plan")}</Link></div>:null}
      {filteredPlans.map(p=><article key={p.id} className="border border-velora-line bg-velora-surface p-4">
-       <p className="flex flex-wrap items-center gap-2 text-xs text-velora-textMuted"><span className="rounded-full border border-velora-copper/50 px-2 py-1">{t("Member plan")}</span>{p.areaName||t("Area not specified")} · {clock(p.startsAt)}</p>
+       <p className="flex flex-wrap items-center gap-2 text-xs text-velora-textMuted"><span className="rounded-full border border-velora-accent/50 px-2 py-1">{t("Member plan")}</span>{p.areaName||t("Area not specified")} · {clock(p.startsAt)}</p>
        <h3 className="mt-2 font-display text-xl text-ink"><Link href={discoveryPlanHref(p.id,context)} className="hover:underline">{p.title}</Link></h3>
        <p className="mt-2 text-xs text-velora-textSecondary">{p.authorName} · {t(p.categoryLabel)}</p>
        {p.eligibilityText && <p className="mt-2 text-sm text-velora-ink2">{t(p.eligibilityText)}</p>}
