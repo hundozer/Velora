@@ -4,7 +4,7 @@ import type { Config } from "tailwindcss";
 // opacity modifiers (bg-intimo-accent/10) keep working.
 const token = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
 
-// Legacy names (bg, card, gold, textPrimary…) are kept and mapped onto the new
+// Compatibility names (bg, card, textPrimary…) are mapped onto the new
 // semantic tokens so existing screens adopt the palette without rewrites.
 const intimoColors = {
   paper: token("paper"),
@@ -23,20 +23,12 @@ const intimoColors = {
   warm: token("warm"),
   warmHover: token("warm-hover"),
   blush: token("blush"),
-  copper: token("copper"),
-  copperInk: token("copper-ink"),
-  copperLight: token("copper-light"),
   sage: token("sage"),
   night: token("night"),
   bg: token("paper"),
   card: token("surface"),
   cardHover: token("sunken"),
   border: token("line"),
-  borderGold: token("accent"),
-  gold: token("accent"),
-  goldHover: token("accent-hover"),
-  amber: token("accent"),
-  roseGold: token("accent"),
   crimson: token("danger"),
   danger: token("danger"),
   success: token("success"),
@@ -67,14 +59,11 @@ const config: Config = {
       },
       backgroundImage: {
         // Kept as names for existing markup; flat accent, no gradients.
-        "gold-gradient": "linear-gradient(rgb(var(--accent)), rgb(var(--accent)))",
-        "gold-radial": "none",
         "dark-gradient": "none",
         "glass-gradient": "none",
       },
       boxShadow: {
         // Flat print look (BRAND.md §4): no drop shadows. Names kept for existing markup.
-        "gold-glow": "none",
         glass: "none",
         card: "none",
       },
