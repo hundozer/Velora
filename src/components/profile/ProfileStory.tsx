@@ -218,7 +218,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
         ) : (
           <>
             <TopBar onBack={onBack} backLabel={backLabel} BackIcon={BackIcon} menu={memberView && !isOwner ? { open: menuOpen, setOpen: setMenuOpen, favorite, onFavorite: toggleFavorite, onReport: () => { setMenuOpen(false); setReportOpen(true); }, onBlock: block } : undefined} />
-            <span aria-hidden className="pointer-events-none absolute right-6 top-14 font-display text-[7rem] italic leading-none text-velora-copper/15">{monogram(name)}</span>
+            <span aria-hidden className="pointer-events-none absolute right-6 top-14 font-display text-[7rem] italic leading-none text-velora-accent/15">{monogram(name)}</span>
           </>
         )}
       </div>
@@ -228,7 +228,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
           {memberView&&<div className="mb-4"><StoryAvatar ownerId={id} name={name} src={profile.avatarUrl} size={76}/></div>}
           {status && (
             <p className="flex items-center gap-2 text-[14px] text-velora-ink2">
-              {profile.presence === "ONLINE" && <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-velora-copper" />}{t(status)}
+              {profile.presence === "ONLINE" && <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-velora-accent" />}{t(status)}
             </p>
           )}
           <h1 className="mt-2 font-serif text-[clamp(3.8rem,15vw,6.5rem)] font-normal leading-[0.92] tracking-tight text-velora-ink">{name}{profile.age && !profile.isCoupleProfile ? `, ${profile.age}` : ""}</h1>
@@ -311,7 +311,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
           </section>
         )}
         {media.some((item) => item.type === "VIDEO") && <section aria-label={t("Videos")}><H2>{t("Videos")}</H2><div className="mt-4 grid grid-cols-2 gap-3">{media.filter((item) => item.type === "VIDEO").map((item) => <div key={item.id} className="overflow-hidden rounded-xl border border-velora-line bg-velora-surface"><video src={item.mediaUrl} controls preload="none" playsInline className="aspect-video w-full bg-black object-contain" aria-label={t(item.title)} /><p className="p-3 font-semibold text-velora-ink">{t(item.title)}</p></div>)}</div></section>}
-        {notice && <p role="status" className="border-l-2 border-velora-copper pl-4 text-[15px] text-velora-ink2">{t(notice)}</p>}
+        {notice && <p role="status" className="border-l-2 border-velora-accent pl-4 text-[15px] text-velora-ink2">{t(notice)}</p>}
       </div>
 
       <footer className={`sticky ${variant === "sheet" ? "bottom-0" : "bottom-16 md:bottom-0"} z-30 border-t border-velora-line bg-velora-night/95 px-6 pb-4 pt-4 backdrop-blur md:bottom-0 sm:px-10`}>
@@ -339,7 +339,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => void toggleInterest()} aria-pressed={interest.interested} className={`intimo-member-secondary gap-2 px-3 text-[14px] transition ${interest.interested ? "border-velora-warm text-velora-warm" : "hover:border-velora-accent"}`}><Heart className={`h-4 w-4 ${interest.interested ? "fill-current" : ""}`} aria-hidden />{t(interest.interested ? "Interested" : "I'm interested")}</button>
                 {friendStatus === "FRIENDS" ? (
-                  <Link href="/connections" className="flex min-h-11 items-center justify-center gap-2 border border-velora-copper px-3 text-[14px] font-semibold text-velora-copperInk"><UsersRound className="h-4 w-4" />{t("Connected")}</Link>
+                  <Link href="/connections" className="flex min-h-11 items-center justify-center gap-2 border border-velora-accent px-3 text-[14px] font-semibold text-velora-accent"><UsersRound className="h-4 w-4" />{t("Connected")}</Link>
                 ) : friendStatus === "OUTGOING" ? (
                   <button type="button" disabled={friendBusy} onClick={() => void friendAction("REMOVE")} className="min-h-11 border border-velora-line px-3 text-[14px] text-velora-ink2 disabled:opacity-50">{t("Request sent · Cancel")}</button>
                 ) : friendStatus === "INCOMING" ? (
@@ -350,7 +350,7 @@ export function ProfileStory({ id, variant, onBack }: { id: string; variant: "sh
               </div>
               <button type="button" onClick={() => void toggleFavorite()} aria-pressed={favorite} className="mt-3 inline-flex min-h-11 items-center gap-2 text-[14px] text-velora-ink2"><Bookmark className={`h-4 w-4 ${favorite ? "fill-current" : ""}`} />{t(favorite ? "Saved privately" : "Save privately")}</button>
               {friendStatus === "INCOMING" && <button type="button" disabled={friendBusy} onClick={() => void friendAction("DECLINE")} className="ml-4 min-h-11 text-[14px] text-velora-muted underline disabled:opacity-50">{t("Not now")}</button>}
-              {interest.mutual && <p className="mt-2 text-[14px] text-velora-copperInk">{t("You're both interested.")}</p>}
+              {interest.mutual && <p className="mt-2 text-[14px] text-velora-accent">{t("You're both interested.")}</p>}
             </>
           )}
         </div>
